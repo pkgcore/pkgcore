@@ -1,0 +1,8 @@
+==================================
+pshowkw - display package keywords
+==================================
+
+.. include:: pshowkw/_synopsis.rst
+.. include:: pshowkw/_description.rst
+.. include:: pshowkw/_options.rst
+.. include:: pshowkw/_subcommands.rst

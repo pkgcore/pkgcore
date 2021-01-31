@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile iuse_effective [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

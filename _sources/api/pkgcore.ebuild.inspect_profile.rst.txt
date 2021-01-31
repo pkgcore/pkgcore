@@ -1,0 +1,7 @@
+pkgcore.ebuild.inspect\_profile module
+======================================
+
+.. automodule:: pkgcore.ebuild.inspect_profile
+   :members:
+   :undoc-members:
+   :show-inheritance:

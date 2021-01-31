@@ -1,0 +1,7 @@
+pinspect profile status - output profile status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: status/_synopsis.rst
+.. include:: status/_description.rst
+.. include:: status/_options.rst
+.. include:: status/_subcommands.rst

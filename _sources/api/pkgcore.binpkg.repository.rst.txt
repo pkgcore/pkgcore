@@ -1,0 +1,7 @@
+pkgcore.binpkg.repository module
+================================
+
+.. automodule:: pkgcore.binpkg.repository
+   :members:
+   :undoc-members:
+   :show-inheritance:

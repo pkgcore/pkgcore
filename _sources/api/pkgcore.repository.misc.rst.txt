@@ -1,0 +1,7 @@
+pkgcore.repository.misc module
+==============================
+
+.. automodule:: pkgcore.repository.misc
+   :members:
+   :undoc-members:
+   :show-inheritance:

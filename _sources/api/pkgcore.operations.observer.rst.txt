@@ -1,0 +1,7 @@
+pkgcore.operations.observer module
+==================================
+
+.. automodule:: pkgcore.operations.observer
+   :members:
+   :undoc-members:
+   :show-inheritance:

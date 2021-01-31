@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.pkgsets.filelist module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.pkgsets.filelist module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.pkgsets.filelist">
+<span id="pkgcore-pkgsets-filelist-module"></span><h1>pkgcore.pkgsets.filelist module<a class="headerlink" href="#module-pkgcore.pkgsets.filelist" title="Permalink to this headline">¶</a></h1>
+<p>pkgset based around loading a list of atoms from a world file</p>
+<dl class="py class">
+<dt id="pkgcore.pkgsets.filelist.FileList">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.pkgsets.filelist.</code><code class="sig-name descname">FileList</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="n">gid</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">420</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/pkgsets/filelist.html#FileList"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.pkgsets.filelist.FileList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.pkgsets.filelist.FileList.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom_inst</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/pkgsets/filelist.html#FileList.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.pkgsets.filelist.FileList.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.pkgsets.filelist.FileList.error_on_subsets">
+<code class="sig-name descname">error_on_subsets</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.pkgsets.filelist.FileList.error_on_subsets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.pkgsets.filelist.FileList.flush">
+<code class="sig-name descname">flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/pkgsets/filelist.html#FileList.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.pkgsets.filelist.FileList.flush" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.pkgsets.filelist.FileList.pkgcore_config_type">
+<code class="sig-name descname">pkgcore_config_type</code><em class="property"> = &lt;pkgcore.config.hint.ConfigHint object&gt;</em><a class="headerlink" href="#pkgcore.pkgsets.filelist.FileList.pkgcore_config_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.pkgsets.filelist.FileList.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom_inst</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/pkgsets/filelist.html#FileList.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.pkgsets.filelist.FileList.remove" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.pkgsets.filelist.WorldFile">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.pkgsets.filelist.</code><code class="sig-name descname">WorldFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span><span class="o">=</span><span class="default_value">'/var/lib/portage/world'</span></em>, <em class="sig-param"><span class="n">gid</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">420</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/pkgsets/filelist.html#WorldFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.pkgsets.filelist.WorldFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.pkgsets.filelist.FileList" title="pkgcore.pkgsets.filelist.FileList"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.pkgsets.filelist.FileList</span></code></a></p>
+<p>Set of packages contained in the world file.</p>
+<dl class="py method">
+<dt id="pkgcore.pkgsets.filelist.WorldFile.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom_inst</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/pkgsets/filelist.html#WorldFile.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.pkgsets.filelist.WorldFile.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.pkgsets.filelist.WorldFile.error_on_subsets">
+<code class="sig-name descname">error_on_subsets</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.pkgsets.filelist.WorldFile.error_on_subsets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.pkgsets.filelist.WorldFile.pkgcore_config_type">
+<code class="sig-name descname">pkgcore_config_type</code><em class="property"> = &lt;pkgcore.config.hint.ConfigHint object&gt;</em><a class="headerlink" href="#pkgcore.pkgsets.filelist.WorldFile.pkgcore_config_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.pkgsets.filelist.WorldFile.remove">
+<code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom_inst</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/pkgsets/filelist.html#WorldFile.remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.pkgsets.filelist.WorldFile.remove" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.pkgsets.filelist module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

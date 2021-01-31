@@ -1,0 +1,7 @@
+pkgcore.system.libtool module
+=============================
+
+.. automodule:: pkgcore.system.libtool
+   :members:
+   :undoc-members:
+   :show-inheritance:

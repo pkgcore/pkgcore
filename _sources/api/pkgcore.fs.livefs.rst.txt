@@ -1,0 +1,7 @@
+pkgcore.fs.livefs module
+========================
+
+.. automodule:: pkgcore.fs.livefs
+   :members:
+   :undoc-members:
+   :show-inheritance:

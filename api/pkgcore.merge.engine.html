@@ -1,0 +1,334 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.merge.engine module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.engine module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.merge.engine">
+<span id="pkgcore-merge-engine-module"></span><h1>pkgcore.merge.engine module<a class="headerlink" href="#module-pkgcore.merge.engine" title="Permalink to this headline">¶</a></h1>
+<p>core engine for livefs modifications</p>
+<dl class="py class">
+<dt id="pkgcore.merge.engine.MergeEngine">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.engine.</code><code class="sig-name descname">MergeEngine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span></em>, <em class="sig-param"><span class="n">tempdir</span></em>, <em class="sig-param"><span class="n">hooks</span></em>, <em class="sig-param"><span class="n">csets</span></em>, <em class="sig-param"><span class="n">preserves</span></em>, <em class="sig-param"><span class="n">observer</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disable_plugins</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">parallelism</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.add_cset">
+<code class="sig-name descname">add_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cset_name</span></em>, <em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.add_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.add_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regiser a cset generator for use.</p>
+<p>The cset will be released from memory when it’s no longer used.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cset_name</strong> – what to call the generated cset</p></li>
+<li><p><strong>func</strong> – callable to get the cset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.add_preserved_cset">
+<code class="sig-name descname">add_preserved_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cset_name</span></em>, <em class="sig-param"><span class="n">func</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.add_preserved_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.add_preserved_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a cset generator for use.</p>
+<p>The cset will stay in memory until the engine finishes all steps.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cset_name</strong> – what to call the generated cset</p></li>
+<li><p><strong>func</strong> – callable to get the cset</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.add_trigger">
+<code class="sig-name descname">add_trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">hook_name</span></em>, <em class="sig-param"><span class="n">trigger</span></em>, <em class="sig-param"><span class="n">required_csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.add_trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.add_trigger" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a> instance to be executed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>hook_name</strong> – engine step to hook the trigger into</p></li>
+<li><p><strong>trigger</strong> – <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a> to add</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.alias_cset">
+<em class="property">static </em><code class="sig-name descname">alias_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alias</span></em>, <em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.alias_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias a cset to another</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.allow_reuse">
+<code class="sig-name descname">allow_reuse</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.allow_reuse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.execute_hook">
+<code class="sig-name descname">execute_hook</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">hook</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.execute_hook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.execute_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute any triggers bound to a hook point.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.generate_offset_cset">
+<em class="property">static </em><code class="sig-name descname">generate_offset_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em>, <em class="sig-param"><span class="n">cset_generator</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.generate_offset_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.generate_offset_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a cset with offset applied.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.get_install_livefs_intersect">
+<em class="property">static </em><code class="sig-name descname">get_install_livefs_intersect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.get_install_livefs_intersect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.get_install_livefs_intersect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.get_merged_cset">
+<code class="sig-name descname">get_merged_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">strip_offset</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.get_merged_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.get_merged_cset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.get_pkg_contents">
+<em class="property">static </em><code class="sig-name descname">get_pkg_contents</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em>, <em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.get_pkg_contents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.get_pkg_contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the cset of what files shall be merged to the livefs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.get_remove_cset">
+<em class="property">static </em><code class="sig-name descname">get_remove_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.get_remove_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.get_remove_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate the cset of what files shall be removed from the livefs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.get_replace_cset">
+<em class="property">static </em><code class="sig-name descname">get_replace_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.get_replace_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.get_replace_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the cset of what will be replaced going from old-&gt;new pkg.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.get_uninstall_livefs_intersect">
+<em class="property">static </em><code class="sig-name descname">get_uninstall_livefs_intersect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.get_uninstall_livefs_intersect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.get_uninstall_livefs_intersect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.get_writable_fsobj">
+<code class="sig-name descname">get_writable_fsobj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fsobj</span></em>, <em class="sig-param"><span class="n">prefer_reuse</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">empty</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.get_writable_fsobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.get_writable_fsobj" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.install">
+<em class="property">classmethod </em><code class="sig-name descname">install</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tempdir</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disable_plugins</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.install"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.install" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a MergeEngine instance configured for installing a pkg.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tempdir</strong> – tempspace for the merger to use; this space it must
+control alone, no sharing.</p></li>
+<li><p><strong>pkg</strong> – <a class="reference internal" href="pkgcore.package.metadata.html#pkgcore.package.metadata.package" title="pkgcore.package.metadata.package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.package.metadata.package</span></code></a> instance to install</p></li>
+<li><p><strong>offset</strong> – any livefs offset to force for modifications</p></li>
+<li><p><strong>disable_plugins</strong> – if enabled, run just the triggers passed in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><a class="reference internal" href="#pkgcore.merge.engine.MergeEngine" title="pkgcore.merge.engine.MergeEngine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MergeEngine</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.install_csets">
+<code class="sig-name descname">install_csets</code><em class="property"> = {'install': functools.partial(&lt;function alias_cset&gt;, 'new_cset'), 'install_existing': 'get_install_livefs_intersect', 'new_cset': functools.partial(&lt;function alias_cset&gt;, 'raw_new_cset'), 'replace': functools.partial(&lt;function alias_cset&gt;, 'new_cset'), 'resolved_install': &lt;function map_new_cset_livefs&gt;}</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.install_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.install_csets_preserve">
+<code class="sig-name descname">install_csets_preserve</code><em class="property"> = ['new_cset']</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.install_csets_preserve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.install_hooks">
+<code class="sig-name descname">install_hooks</code><em class="property"> = {'final': [], 'merge': [], 'post_merge': [], 'pre_merge': [], 'sanity_check': []}</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.install_hooks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.regenerate_csets">
+<code class="sig-name descname">regenerate_csets</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.regenerate_csets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.regenerate_csets" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal function, reset non preserverd csets.</p>
+<p>Used in transitioning between hook points</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.replace">
+<em class="property">classmethod </em><code class="sig-name descname">replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tempdir</span></em>, <em class="sig-param"><span class="n">old</span></em>, <em class="sig-param"><span class="n">new</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disable_plugins</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a MergeEngine instance configured for replacing a pkg.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tempdir</strong> – tempspace for the merger to use; this space it must
+control alone, no sharing.</p></li>
+<li><p><strong>old</strong> – <a class="reference internal" href="pkgcore.package.metadata.html#pkgcore.package.metadata.package" title="pkgcore.package.metadata.package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.package.metadata.package</span></code></a> instance to replace,
+must be from a livefs vdb</p></li>
+<li><p><strong>new</strong> – <a class="reference internal" href="pkgcore.package.metadata.html#pkgcore.package.metadata.package" title="pkgcore.package.metadata.package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.package.metadata.package</span></code></a> instance</p></li>
+<li><p><strong>offset</strong> – any livefs offset to force for modifications</p></li>
+<li><p><strong>disable_plugins</strong> – if enabled, run just the triggers passed in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><a class="reference internal" href="#pkgcore.merge.engine.MergeEngine" title="pkgcore.merge.engine.MergeEngine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MergeEngine</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.replace_cset">
+<code class="sig-name descname">replace_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">new_cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.replace_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.replace_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replace the cset referenced by this engine.</p>
+<p>Use only if you know what you’re doing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>name</strong> – name of the cset</p>
+</dd>
+<dt class="field-even">New_cset</dt>
+<dd class="field-even"><p>a contentsSet instance to use</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.replace_csets">
+<code class="sig-name descname">replace_csets</code><em class="property"> = {'install': functools.partial(&lt;function alias_cset&gt;, 'new_cset'), 'install_existing': 'get_install_livefs_intersect', 'modifying': &lt;function MergeEngine.&lt;lambda&gt;&gt;, 'new_cset': functools.partial(&lt;function alias_cset&gt;, 'raw_new_cset'), 'old_cset': 'get_uninstall_livefs_intersect', 'replace': 'get_replace_cset', 'resolved_install': &lt;function map_new_cset_livefs&gt;, 'uninstall': 'get_remove_cset', 'uninstall_existing': functools.partial(&lt;function alias_cset&gt;, 'uninstall')}</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.replace_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.replace_csets_preserve">
+<code class="sig-name descname">replace_csets_preserve</code><em class="property"> = ['new_cset', 'old_cset']</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.replace_csets_preserve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.replace_hooks">
+<code class="sig-name descname">replace_hooks</code><em class="property"> = {'final': [], 'merge': [], 'post_merge': [], 'post_unmerge': [], 'pre_merge': [], 'pre_unmerge': [], 'sanity_check': [], 'unmerge': []}</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.replace_hooks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.engine.MergeEngine.uninstall">
+<em class="property">classmethod </em><code class="sig-name descname">uninstall</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tempdir</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disable_plugins</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#MergeEngine.uninstall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.uninstall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a MergeEngine instance configured for uninstalling a pkg.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tempdir</strong> – tempspace for the merger to use; this space it must
+control alone, no sharing.</p></li>
+<li><p><strong>pkg</strong> – <a class="reference internal" href="pkgcore.package.metadata.html#pkgcore.package.metadata.package" title="pkgcore.package.metadata.package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.package.metadata.package</span></code></a> instance to uninstall,
+must be from a livefs vdb</p></li>
+<li><p><strong>offset</strong> – any livefs offset to force for modifications</p></li>
+<li><p><strong>disable_plugins</strong> – if enabled, run just the triggers passed in</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><a class="reference internal" href="#pkgcore.merge.engine.MergeEngine" title="pkgcore.merge.engine.MergeEngine"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MergeEngine</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.uninstall_csets">
+<code class="sig-name descname">uninstall_csets</code><em class="property"> = {'old_cset': 'get_uninstall_livefs_intersect', 'uninstall': functools.partial(&lt;function alias_cset&gt;, 'old_cset'), 'uninstall_existing': functools.partial(&lt;function alias_cset&gt;, 'uninstall')}</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.uninstall_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.uninstall_csets_preserve">
+<code class="sig-name descname">uninstall_csets_preserve</code><em class="property"> = ['old_cset']</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.uninstall_csets_preserve" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.engine.MergeEngine.uninstall_hooks">
+<code class="sig-name descname">uninstall_hooks</code><em class="property"> = {'final': [], 'post_unmerge': [], 'pre_unmerge': [], 'sanity_check': [], 'unmerge': []}</em><a class="headerlink" href="#pkgcore.merge.engine.MergeEngine.uninstall_hooks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.merge.engine.alias_cset">
+<code class="sig-prename descclassname">pkgcore.merge.engine.</code><code class="sig-name descname">alias_cset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">alias</span></em>, <em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#alias_cset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.alias_cset" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias a cset to another</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.merge.engine.map_new_cset_livefs">
+<code class="sig-prename descclassname">pkgcore.merge.engine.</code><code class="sig-name descname">map_new_cset_livefs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em>, <em class="sig-param"><span class="n">cset_name</span><span class="o">=</span><span class="default_value">'new_cset'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/engine.html#map_new_cset_livefs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.engine.map_new_cset_livefs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find symlinks on disk that redirect new_cset, and return a livefs localized cset.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.engine module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

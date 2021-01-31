@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.vdb.contents module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.contents module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.vdb.contents">
+<span id="pkgcore-vdb-contents-module"></span><h1>pkgcore.vdb.contents module<a class="headerlink" href="#module-pkgcore.vdb.contents" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.vdb.contents.ContentsFile">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.vdb.contents.</code><code class="sig-name descname">ContentsFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source</span></em>, <em class="sig-param"><span class="n">mutable</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">create</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/contents.html#ContentsFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.contents.ContentsFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.fs.contents.html#pkgcore.fs.contents.contentsSet" title="pkgcore.fs.contents.contentsSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fs.contents.contentsSet</span></code></a></p>
+<p>class wrapping a contents file</p>
+<dl class="py method">
+<dt id="pkgcore.vdb.contents.ContentsFile.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/contents.html#ContentsFile.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.contents.ContentsFile.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>add a new fs obj to the set</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>obj</strong> – must be a derivative of <code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsBase</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.vdb.contents.ContentsFile.clone">
+<code class="sig-name descname">clone</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">empty</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/contents.html#ContentsFile.clone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.contents.ContentsFile.clone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.vdb.contents.ContentsFile.flush">
+<code class="sig-name descname">flush</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/contents.html#ContentsFile.flush"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.contents.ContentsFile.flush" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.vdb.contents.LookupFsDev">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.vdb.contents.</code><code class="sig-name descname">LookupFsDev</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/contents.html#LookupFsDev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.contents.LookupFsDev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.fs.fs.html#pkgcore.fs.fs.fsDev" title="pkgcore.fs.fs.fsDev"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsDev</span></code></a></p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.contents module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

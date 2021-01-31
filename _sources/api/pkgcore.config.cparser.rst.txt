@@ -1,0 +1,7 @@
+pkgcore.config.cparser module
+=============================
+
+.. automodule:: pkgcore.config.cparser
+   :members:
+   :undoc-members:
+   :show-inheritance:

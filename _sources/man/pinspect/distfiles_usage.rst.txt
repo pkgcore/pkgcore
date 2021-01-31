@@ -1,0 +1,7 @@
+pinspect distfiles_usage - report detailing distfiles space usage for targeted repos
+------------------------------------------------------------------------------------
+
+.. include:: distfiles_usage/_synopsis.rst
+.. include:: distfiles_usage/_description.rst
+.. include:: distfiles_usage/_options.rst
+.. include:: distfiles_usage/_subcommands.rst

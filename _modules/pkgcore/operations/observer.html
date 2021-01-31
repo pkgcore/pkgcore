@@ -1,0 +1,271 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.operations.observer &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../operations.html" accesskey="U">pkgcore.operations</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.observer</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.operations.observer</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;null_output&quot;</span><span class="p">,</span> <span class="s2">&quot;formatter_output&quot;</span><span class="p">,</span> <span class="s2">&quot;file_handle_output&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;phase_observer&quot;</span><span class="p">,</span> <span class="s2">&quot;repo_observer&quot;</span><span class="p">,</span> <span class="s2">&quot;decorate_build_method&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.currying</span> <span class="kn">import</span> <span class="n">pre_curry</span>
+
+
+<span class="k">def</span> <span class="nf">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(),</span> <span class="n">kwds</span><span class="o">=</span><span class="p">{}):</span>
+    <span class="c1"># Note for interpolation, ValueError can be thrown by &#39;%2(s&#39;</span>
+    <span class="c1"># TypeError by &quot;%i&quot; % &quot;2&quot;, and KeyError via what you would expect.</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">kwds</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;both position and optional args cannot be &quot;</span>
+                <span class="s2">&quot;supplied: given msg(</span><span class="si">%r</span><span class="s2">), args(</span><span class="si">%r</span><span class="s2">), kwds(</span><span class="si">%r</span><span class="s2">)&quot;</span>
+                <span class="o">%</span> <span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">msg</span> <span class="o">%</span> <span class="n">args</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;observer interpolation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">, msg=</span><span class="si">{</span><span class="n">msg</span><span class="si">!r}</span><span class="s2">, args=</span><span class="si">{</span><span class="n">args</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">kwds</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">msg</span> <span class="o">%</span> <span class="n">kwds</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;observer interpolation error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">, msg=</span><span class="si">{</span><span class="n">msg</span><span class="si">!r}</span><span class="s2">, kwds=</span><span class="si">{</span><span class="n">kwds</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">msg</span>
+
+
+<div class="viewcode-block" id="null_output"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.null_output">[docs]</a><span class="k">class</span> <span class="nc">null_output</span><span class="p">:</span>
+
+<div class="viewcode-block" id="null_output.warn"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.null_output.warn">[docs]</a>    <span class="k">def</span> <span class="nf">warn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="null_output.error"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.null_output.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="null_output.info"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.null_output.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="null_output.debug"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.null_output.debug">[docs]</a>    <span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="null_output.write"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.null_output.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="null_output.flush"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.null_output.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="formatter_output"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.formatter_output">[docs]</a><span class="k">class</span> <span class="nc">formatter_output</span><span class="p">(</span><span class="n">null_output</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span> <span class="o">=</span> <span class="n">out</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="s1">&#39;verbosity&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<div class="viewcode-block" id="formatter_output.debug"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.formatter_output.debug">[docs]</a>    <span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_convert</span><span class="p">(</span><span class="s2">&quot;debug: &quot;</span> <span class="o">+</span> <span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="formatter_output.error"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.formatter_output.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">prefixes</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+            <span class="s1">&#39;prefixes&#39;</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39; * &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">reset</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">),</span> <span class="n">prefixes</span><span class="o">=</span><span class="n">prefixes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="formatter_output.info"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.formatter_output.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">prefixes</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+            <span class="s1">&#39;prefixes&#39;</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39; * &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">reset</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">),</span> <span class="n">prefixes</span><span class="o">=</span><span class="n">prefixes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="formatter_output.warn"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.formatter_output.warn">[docs]</a>    <span class="k">def</span> <span class="nf">warn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">prefixes</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+            <span class="s1">&#39;prefixes&#39;</span><span class="p">,</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;yellow&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39; * &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">reset</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">),</span> <span class="n">prefixes</span><span class="o">=</span><span class="n">prefixes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="formatter_output.write"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.formatter_output.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">autoline</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">),</span> <span class="n">autoline</span><span class="o">=</span><span class="n">autoline</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="formatter_output.flush"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.formatter_output.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="file_handle_output"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.file_handle_output">[docs]</a><span class="k">class</span> <span class="nc">file_handle_output</span><span class="p">(</span><span class="n">formatter_output</span><span class="p">):</span>
+
+<div class="viewcode-block" id="file_handle_output.debug"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.file_handle_output.debug">[docs]</a>    <span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;debug: </span><span class="si">{</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="file_handle_output.error"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.file_handle_output.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;error: </span><span class="si">{</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="file_handle_output.info"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.file_handle_output.info">[docs]</a>    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;info: </span><span class="si">{</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="file_handle_output.warn"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.file_handle_output.warn">[docs]</a>    <span class="k">def</span> <span class="nf">warn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;warning: </span><span class="si">{</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="file_handle_output.write"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.file_handle_output.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_convert</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="phase_observer"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.phase_observer">[docs]</a><span class="k">class</span> <span class="nc">phase_observer</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output</span> <span class="o">=</span> <span class="n">output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="s1">&#39;verbosity&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span> <span class="o">=</span> <span class="n">debug</span>
+
+<div class="viewcode-block" id="phase_observer.phase_start"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.phase_observer.phase_start">[docs]</a>    <span class="k">def</span> <span class="nf">phase_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;starting </span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="phase_observer.debug"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.phase_observer.debug">[docs]</a>    <span class="k">def</span> <span class="nf">debug</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+    <span class="n">info</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_output.info&quot;</span><span class="p">)</span>
+    <span class="n">warn</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_output.warn&quot;</span><span class="p">)</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_output.error&quot;</span><span class="p">)</span>
+    <span class="n">write</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_output.write&quot;</span><span class="p">)</span>
+    <span class="n">flush</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_output.flush&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="phase_observer.phase_end"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.phase_observer.phase_end">[docs]</a>    <span class="k">def</span> <span class="nf">phase_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;finished </span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="repo_observer"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.repo_observer">[docs]</a><span class="k">class</span> <span class="nc">repo_observer</span><span class="p">(</span><span class="n">phase_observer</span><span class="p">):</span>
+
+<div class="viewcode-block" id="repo_observer.trigger_start"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.repo_observer.trigger_start">[docs]</a>    <span class="k">def</span> <span class="nf">trigger_start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook</span><span class="p">,</span> <span class="n">trigger</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hook </span><span class="si">{</span><span class="n">hook</span><span class="si">}</span><span class="s2">: trigger: starting </span><span class="si">{</span><span class="n">trigger</span><span class="si">!r}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">hook</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="repo_observer.trigger_end"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.repo_observer.trigger_end">[docs]</a>    <span class="k">def</span> <span class="nf">trigger_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook</span><span class="p">,</span> <span class="n">trigger</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;hook </span><span class="si">{</span><span class="n">hook</span><span class="si">}</span><span class="s2">: trigger: finished </span><span class="si">{</span><span class="n">trigger</span><span class="si">!r}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">hook</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="repo_observer.installing_fs_obj"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.repo_observer.installing_fs_obj">[docs]</a>    <span class="k">def</span> <span class="nf">installing_fs_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&gt;&gt;&gt; </span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="repo_observer.removing_fs_obj"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.repo_observer.removing_fs_obj">[docs]</a>    <span class="k">def</span> <span class="nf">removing_fs_obj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&lt;&lt;&lt; </span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_reflection_func</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invoke</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_mk_observer_proxy</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">foo</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="n">target</span><span class="p">))</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="nb">object</span><span class="p">)):</span>
+            <span class="nb">locals</span><span class="p">()[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">pre_curry</span><span class="p">(</span><span class="n">_reflection_func</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">foo</span>
+
+
+<span class="k">class</span> <span class="nc">threadsafe_repo_observer</span><span class="p">(</span><span class="n">_mk_observer_proxy</span><span class="p">(</span><span class="n">repo_observer</span><span class="p">)):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span> <span class="o">=</span> <span class="n">observer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_invoke</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="o">.</span><span class="n">acquire</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observer</span><span class="p">,</span> <span class="n">attr</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="o">.</span><span class="n">release</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">wrap_build_method</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+    <span class="n">disable_observer</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;disable_observer&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">,</span> <span class="s1">&#39;phase_start&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">disable_observer</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">phase_start</span><span class="p">(</span><span class="n">phase</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">phase_end</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">ret</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ret</span>
+
+
+<div class="viewcode-block" id="decorate_build_method"><a class="viewcode-back" href="../../../api/pkgcore.operations.observer.html#pkgcore.operations.observer.decorate_build_method">[docs]</a><span class="k">def</span> <span class="nf">decorate_build_method</span><span class="p">(</span><span class="n">phase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pre_curry</span><span class="p">(</span><span class="n">wrap_build_method</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">f</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../operations.html" >pkgcore.operations</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.observer</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcore.restrictions.packages module
+====================================
+
+.. automodule:: pkgcore.restrictions.packages
+   :members:
+   :undoc-members:
+   :show-inheritance:

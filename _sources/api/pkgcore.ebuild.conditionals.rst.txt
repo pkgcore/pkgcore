@@ -1,0 +1,7 @@
+pkgcore.ebuild.conditionals module
+==================================
+
+.. automodule:: pkgcore.ebuild.conditionals
+   :members:
+   :undoc-members:
+   :show-inheritance:

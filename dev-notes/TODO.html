@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rough TODO &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Changes" href="changes.html" />
+    <link rel="prev" title="Developer Notes" href="../dev-notes.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="changes.html" title="Changes"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../dev-notes.html" title="Developer Notes"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Rough TODO</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="rough-todo">
+<h1>Rough TODO<a class="headerlink" href="#rough-todo" title="Permalink to this headline">¶</a></h1>
+<ul>
+<li><p>rip out use.* code from pkgcheck.addons.UseAddon.__init__, and
+generalize it into pkgcore.ebuild.repository</p></li>
+<li><p>not hugely important, but... make a cpython version of SlottedDict from
+pkgcore.util.obj; 3% reduction for full repo walk, thus not a real huge
+concern atm.</p></li>
+<li><p>userpriv for pebuild misbehaves..</p></li>
+<li><p><a class="reference external" href="http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/491285">http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/491285</a>
+check into, probably better then my crufty itersort; need to see how
+well heapqu's nlargest pop behaves (looks funky)</p></li>
+<li><p>look into converting MULTILIB_STRICT* crap over to a trigger</p></li>
+<li><p>install-sources trigger</p></li>
+<li><p>recreate verify-rdepends also</p></li>
+<li><p>observer objects for reporting back events from merging/unmerging
+cpython 'tee' is needed, contact harring for details.
+basic form of it is in now, but need something more powerful for
+parallelization
+elog is bound to this also</p></li>
+<li><p>Possibly convert to cpython:</p>
+<ul class="simple">
+<li><p>flat_hash.database._parse_data</p></li>
+<li><p>metadata.database._parse_data</p></li>
+<li><p>posixpath (os.path)</p></li>
+</ul>
+</li>
+<li><p>get the tree clean of direct /var/db/pkg access</p></li>
+<li><p>vdb2 format (ask harring for details).</p></li>
+<li><p>pkgcore.fs.ops.merge_contents; doesn't rewrite the contents set when a file
+it's merging is relying on symlinked directories for the full path; eg,
+/usr/share/X11/xkb/compiled -&gt; /var/blah, it records the former instead of
+recording the true absolute path.</p></li>
+<li><p>pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction
+to --replace to prefer vdb for matching atoms</p></li>
+<li><p>refactor pkgcore.ebuild.cpv.ver_cmp usage to avoid full cpv parsing when
+_cpv is in use;
+'nuff said, look in pkgcore.ebuild.cpv.cpy_ver_cmp</p></li>
+<li><p>modify repository.prototype.tree.match to take an optional comparison</p>
+<p>reasoning being that if we're just going to do a max, pass in the max so it
+has the option of doing the initial sorting without passing through
+visibility filters (which will trigger metadata lookups)</p>
+</li>
+<li><p>'app bundles'.  Reliant on serious overhauling of deps to do 'locked deps',
+but think of it as rpath based app stacks, a full apache stack compiled to
+run from /opt/blah for example.</p></li>
+<li><p>pkgcore.ebuild.gpgtree</p>
+<p>derivative of pkgcore.ebuild.ebuild_repository, this overloads
+ebuild_factory and eclass_cache so that gpg checks are done.
+This requires some hackery, partially dependent on config.central changes
+(see above).  Need a way to specify the trust ring to use, 'severity' level
+(different class targets works for me).
+Anyone who implements this deserves massive cookies.</p>
+</li>
+<li><p>pkgcore.ebuild.gpgprofile:
+Same as above.</p></li>
+<li><p>reintroduce locking of certain high level components using read/write;
+mainly, use it as a way to block sync'ing a repo that's being used to build,
+lock the vdb for updates, etc.</p></li>
+<li><p>preserve xattrs when merging files to properly support hardened profiles</p></li>
+<li><p>support standard emerge.log output so tools such as qlop work properly</p></li>
+<li><p>add FEATURES=parallel-fetch support for downloading distfiles in the
+background while building pkgs, possibly extend to support parallel downloads</p></li>
+<li><p>apply repo masks to related binpkgs (or handle masks somehow)</p></li>
+<li><p>remove deprecated PROVIDE and old style virtuals handling</p></li>
+<li><p>add argparse support for checking the inputted phase name with pebuild to
+make sure it exists, currently nonexistent input cause unhandled exceptions</p></li>
+<li><p>support repos.conf (SYNC is now deprecated)</p></li>
+<li><p>make profile defaults (LDFLAGS) override global settings from
+/usr/share/portage/config/make.globals or similar then apply user settings on
+top, currently LDFLAGS is explicitly set to an empty string in make.globals
+but the profile settings aren't overriding that</p></li>
+<li><p>support /etc/portage/mirrors</p></li>
+<li><p>support ACCEPT_PROPERTIES and /etc/portage/package.properties</p></li>
+<li><p>support ACCEPT_RESTRICT and /etc/portage/package.accept_restrict</p></li>
+<li><p>support pmerge --info (emerge --info workalike), requires support for
+info_vars and info_pkgs files from profiles</p></li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../dev-notes.html"
+                        title="previous chapter">Developer Notes</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="changes.html"
+                        title="next chapter">Changes</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="changes.html" title="Changes"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../dev-notes.html" title="Developer Notes"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Rough TODO</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

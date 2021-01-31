@@ -1,0 +1,7 @@
+pinspect eclass_usage - report of eclass usage for targeted repos
+-----------------------------------------------------------------
+
+.. include:: eclass_usage/_synopsis.rst
+.. include:: eclass_usage/_description.rst
+.. include:: eclass_usage/_options.rst
+.. include:: eclass_usage/_subcommands.rst

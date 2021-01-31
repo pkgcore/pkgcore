@@ -1,0 +1,7 @@
+pkgcore.config.hint module
+==========================
+
+.. automodule:: pkgcore.config.hint
+   :members:
+   :undoc-members:
+   :show-inheritance:

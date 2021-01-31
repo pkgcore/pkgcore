@@ -1,0 +1,7 @@
+pkgcore.pkgsets.filelist module
+===============================
+
+.. automodule:: pkgcore.pkgsets.filelist
+   :members:
+   :undoc-members:
+   :show-inheritance:

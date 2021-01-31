@@ -1,0 +1,168 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.sync.tar &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.tar</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.sync.tar</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;tar_syncer&quot;</span><span class="p">,)</span>
+
+<span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">ensure_dirs</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">base</span>
+<span class="kn">from</span> <span class="nn">.http</span> <span class="kn">import</span> <span class="n">http_syncer</span>
+
+
+<div class="viewcode-block" id="tar_syncer"><a class="viewcode-back" href="../../../api/pkgcore.sync.tar.html#pkgcore.sync.tar.tar_syncer">[docs]</a><span class="k">class</span> <span class="nc">tar_syncer</span><span class="p">(</span><span class="n">http_syncer</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">ExternalSyncer</span><span class="p">):</span>
+
+    <span class="n">binary</span> <span class="o">=</span> <span class="s1">&#39;tar&#39;</span>
+
+    <span class="n">supported_uris</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;tar+http://&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;tar+https://&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># TODO: support more of the less used file extensions</span>
+    <span class="n">supported_protocols</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">,</span> <span class="s1">&#39;https://&#39;</span><span class="p">)</span>
+    <span class="n">supported_exts</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;.tar.gz&#39;</span><span class="p">,</span> <span class="s1">&#39;.tar.bz2&#39;</span><span class="p">,</span> <span class="s1">&#39;.tar.xz&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="tar_syncer.parse_uri"><a class="viewcode-back" href="../../../api/pkgcore.sync.tar.html#pkgcore.sync.tar.tar_syncer.parse_uri">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">parse_uri</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">raw_uri</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">raw_uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">&quot;tar+http://&quot;</span><span class="p">,</span> <span class="s2">&quot;tar+https://&quot;</span><span class="p">)):</span>
+            <span class="n">raw_uri</span> <span class="o">=</span> <span class="n">raw_uri</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">raw_uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">supported_protocols</span><span class="p">)</span> <span class="ow">and</span> <span class="n">raw_uri</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">supported_exts</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">raw_uri</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">UriError</span><span class="p">(</span>
+                <span class="n">raw_uri</span><span class="p">,</span> <span class="s2">&quot;unsupported compression format for tarball archive&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">UriError</span><span class="p">(</span><span class="n">raw_uri</span><span class="p">,</span> <span class="s2">&quot;unsupported URI&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_pre_download</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># create temp file for downloading</span>
+        <span class="n">temp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">()</span>
+        <span class="n">tarball</span> <span class="o">=</span> <span class="n">temp</span><span class="o">.</span><span class="n">name</span>
+        <span class="c1"># make sure temp file is deleted on exit</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">close</span><span class="p">))</span>
+
+        <span class="c1"># determine names of tempdirs for staging</span>
+        <span class="n">basedir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="n">repos_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">basedir</span><span class="p">)</span>
+        <span class="n">repo_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">basedir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repos_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;.</span><span class="si">{</span><span class="n">repo_name</span><span class="si">}</span><span class="s1">.update.</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tempdir_old</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repos_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;.</span><span class="si">{</span><span class="n">repo_name</span><span class="si">}</span><span class="s1">.old.</span><span class="si">{</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">hex</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="c1"># remove temp repo dir on exit</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">tarball</span>
+
+    <span class="k">def</span> <span class="nf">_post_download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_post_download</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># create tempdir for staging decompression</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gid</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">SyncError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;failed creating repo update dir: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="n">exts</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;gz&#39;</span><span class="p">:</span> <span class="s1">&#39;gzip&#39;</span><span class="p">,</span> <span class="s1">&#39;bz2&#39;</span><span class="p">:</span> <span class="s1">&#39;bzip2&#39;</span><span class="p">,</span> <span class="s1">&#39;xz&#39;</span><span class="p">:</span> <span class="s1">&#39;xz&#39;</span><span class="p">}</span>
+        <span class="n">compression</span> <span class="o">=</span> <span class="n">exts</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="c1"># use tar instead of tarfile so we can easily strip leading path components</span>
+        <span class="c1"># TODO: programmatically determine how man components to strip?</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;tar&#39;</span><span class="p">,</span> <span class="s1">&#39;--extract&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;--</span><span class="si">{</span><span class="n">compression</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span>
+            <span class="s1">&#39;--strip-components=1&#39;</span><span class="p">,</span> <span class="s1">&#39;--no-same-owner&#39;</span><span class="p">,</span> <span class="s1">&#39;-C&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span>
+        <span class="p">]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">devnull</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spawn</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">pipes</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="mi">2</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">()})</span>
+        <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">SyncError</span><span class="p">(</span><span class="s1">&#39;failed to unpack tarball&#39;</span><span class="p">)</span>
+
+        <span class="c1"># TODO: verify gpg data if it exists</span>
+
+        <span class="c1"># move old repo out of the way and then move new, unpacked repo into place</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tempdir_old</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">SyncError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;failed to update repo: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="c1"># register old repo removal after it has been successfully replaced</span>
+        <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tempdir_old</span><span class="p">,</span> <span class="n">ignore_errors</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.tar</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

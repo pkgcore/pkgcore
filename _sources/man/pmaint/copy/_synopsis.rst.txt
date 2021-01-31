@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint copy [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-s SOURCE_REPO] [-i] target_repo query [query ...]

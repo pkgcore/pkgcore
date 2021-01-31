@@ -1,0 +1,20 @@
+pkgcore.fetch package
+=====================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.fetch.base
+   pkgcore.fetch.custom
+   pkgcore.fetch.errors
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.fetch
+   :members:
+   :undoc-members:
+   :show-inheritance:

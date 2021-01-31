@@ -1,0 +1,7 @@
+pinspect query get_profiles
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: get_profiles/_synopsis.rst
+.. include:: get_profiles/_description.rst
+.. include:: get_profiles/_options.rst
+.. include:: get_profiles/_subcommands.rst

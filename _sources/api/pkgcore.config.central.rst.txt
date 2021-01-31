@@ -1,0 +1,7 @@
+pkgcore.config.central module
+=============================
+
+.. automodule:: pkgcore.config.central
+   :members:
+   :undoc-members:
+   :show-inheritance:

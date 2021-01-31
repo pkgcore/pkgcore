@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile accept_keywords [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

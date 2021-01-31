@@ -1,0 +1,8 @@
+.. include:: sync.rst
+.. include:: copy.rst
+.. include:: regen.rst
+.. include:: perl-rebuild.rst
+.. include:: env-update.rst
+.. include:: mirror.rst
+.. include:: digest.rst
+.. include:: eclass.rst

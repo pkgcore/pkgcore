@@ -1,0 +1,87 @@
+Positional Arguments
+====================
+
+:target:  
+        extended atom matching of packages
+
+Base Options
+============
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--version        
+                 Show this program's version information and exit.
+                 
+                 When running from within a git repo or a version
+                 installed from git the latest commit hash and date will
+                 be shown.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.
+
+Config Options
+==============
+
+--add-config SECTION KEY VALUE  
+                                modify existing pkgcore config section
+
+--new-config SECTION KEY VALUE  
+                                add new pkgcore config section
+
+--empty-config                  
+                                skip loading user/system pkgcore config
+
+--config PATH                   
+                                use custom pkgcore config file
+
+--domain DOMAIN                 
+                                custom pkgcore domain to use for this operation
+
+Output Options
+==============
+
+-f FORMAT, --format FORMAT  
+                            Output table using specified tabular format (defaults to compressed,
+                            custom pshowkw format).
+                            
+                            Available formats: fancy_grid, github, grid, html, jira, latex, latex_booktabs, latex_raw, mediawiki, moinmoin, orgtbl, pipe, plain, presto, pshowkw, psql, rst, simple, textile, tsv, youtrack
+
+-c, --collapse              
+                            show collapsed list of arches
+
+Arch Options
+============
+
+-s, --stable          
+                      show stable arches
+
+-u, --unstable        
+                      show unstable arches
+
+-o, --only-unstable   
+                      show arches that only have unstable keywords
+
+-p, --prefix          
+                      show prefix and non-native arches
+
+-a ARCH, --arch ARCH  
+                      select arches to display
+
+Target Options
+==============
+
+-r REPO, --repo REPO  
+                      repo to query (defaults to all ebuild repos)

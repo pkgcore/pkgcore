@@ -1,0 +1,7 @@
+pconfig classes - list all classes referenced by the config
+-----------------------------------------------------------
+
+.. include:: classes/_synopsis.rst
+.. include:: classes/_description.rst
+.. include:: classes/_options.rst
+.. include:: classes/_subcommands.rst

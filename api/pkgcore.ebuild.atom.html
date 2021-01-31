@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.atom module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.atom module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.atom">
+<span id="pkgcore-ebuild-atom-module"></span><h1>pkgcore.ebuild.atom module<a class="headerlink" href="#module-pkgcore.ebuild.atom" title="Permalink to this headline">¶</a></h1>
+<p>gentoo ebuild atom, should be generalized into an agnostic base</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.atom.atom">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.atom.</code><code class="sig-name descname">atom</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#atom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.restrictions.boolean.html#pkgcore.restrictions.boolean.AndRestriction" title="pkgcore.restrictions.boolean.AndRestriction"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.boolean.AndRestriction</span></code></a></p>
+<p>Currently implements gentoo ebuild atom parsing.</p>
+<p>Should be converted into an agnostic dependency base.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.blocks">
+<code class="sig-name descname">blocks</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.blocks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.blocks_strongly">
+<code class="sig-name descname">blocks_strongly</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.blocks_strongly" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.blocks_temp_ignorable">
+<em class="property">property </em><code class="sig-name descname">blocks_temp_ignorable</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.blocks_temp_ignorable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.cnf_solutions">
+<code class="sig-name descname">cnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#atom.cnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.atom.cnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns solutions in CNF (conjunctive normalized form) of this instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.cpvstr">
+<code class="sig-name descname">cpvstr</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.cpvstr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.evaluate_conditionals">
+<code class="sig-name descname">evaluate_conditionals</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_cls</span></em>, <em class="sig-param"><span class="n">parent_seq</span></em>, <em class="sig-param"><span class="n">enabled</span></em>, <em class="sig-param"><span class="n">tristate</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#atom.evaluate_conditionals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.atom.evaluate_conditionals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.evaluate_depset">
+<code class="sig-name descname">evaluate_depset</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.ebuild.atom.atom.evaluate_depset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.intersects">
+<code class="sig-name descname">intersects</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">other</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#atom.intersects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.atom.intersects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if a passed in atom “intersects” this restriction’s atom.</p>
+<p>Two atoms “intersect” if a package can be constructed that
+matches both:</p>
+<ul class="simple">
+<li><p>if you query for just “dev-lang/python” it “intersects” both
+“dev-lang/python” and “&gt;=dev-lang/python-2.4”</p></li>
+<li><p>if you query for “=dev-lang/python-2.4” it “intersects”
+“&gt;=dev-lang/python-2.4” and “dev-lang/python” but not
+“&lt;dev-lang/python-2.3”</p></li>
+</ul>
+<p>USE and slot deps are also taken into account.</p>
+<p>The block/nonblock state of the atom is ignored.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.is_simple">
+<em class="property">property </em><code class="sig-name descname">is_simple</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.is_simple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.iter_cnf_solutions">
+<code class="sig-name descname">iter_cnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#atom.iter_cnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.atom.iter_cnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns solutions in CNF (conjunctive normalized form) of this instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.iter_dnf_solutions">
+<code class="sig-name descname">iter_dnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#atom.iter_dnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.atom.iter_dnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>generater yielding DNF (disjunctive normalized form) of this instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.negate">
+<code class="sig-name descname">negate</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.ebuild.atom.atom.negate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.negate_vers">
+<code class="sig-name descname">negate_vers</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.negate_vers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.no_usedeps">
+<em class="property">property </em><code class="sig-name descname">no_usedeps</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.no_usedeps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return atom object stripped of USE dependencies.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.op">
+<code class="sig-name descname">op</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.op" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.repo_id">
+<code class="sig-name descname">repo_id</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.repo_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.restrictions">
+<code class="sig-name descname">restrictions</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.restrictions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.slot">
+<code class="sig-name descname">slot</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.slot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.slot_operator">
+<code class="sig-name descname">slot_operator</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.slot_operator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.subslot">
+<code class="sig-name descname">subslot</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.subslot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.type">
+<code class="sig-name descname">type</code><em class="property"> = 'package'</em><a class="headerlink" href="#pkgcore.ebuild.atom.atom.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.atom.use">
+<code class="sig-name descname">use</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.use" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.atom.weak_blocker">
+<em class="property">property </em><code class="sig-name descname">weak_blocker</code><a class="headerlink" href="#pkgcore.ebuild.atom.atom.weak_blocker" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to blocks_temp_ignorable</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.atom.transitive_use_atom">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.atom.</code><code class="sig-name descname">transitive_use_atom</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#transitive_use_atom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.transitive_use_atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.atom.atom" title="pkgcore.ebuild.atom.atom"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.atom.atom</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.transitive_use_atom.cnf_solutions">
+<code class="sig-name descname">cnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.atom.transitive_use_atom.cnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns solutions in CNF (conjunctive normalized form) of this instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.transitive_use_atom.convert_to_conditionals">
+<code class="sig-name descname">convert_to_conditionals</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#transitive_use_atom.convert_to_conditionals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.transitive_use_atom.convert_to_conditionals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.transitive_use_atom.evaluate_conditionals">
+<code class="sig-name descname">evaluate_conditionals</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_cls</span></em>, <em class="sig-param"><span class="n">parent_seq</span></em>, <em class="sig-param"><span class="n">enabled</span></em>, <em class="sig-param"><span class="n">tristate_filter</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/atom.html#transitive_use_atom.evaluate_conditionals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.atom.transitive_use_atom.evaluate_conditionals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.transitive_use_atom.is_simple">
+<code class="sig-name descname">is_simple</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.ebuild.atom.transitive_use_atom.is_simple" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.atom.transitive_use_atom.iter_dnf_solutions">
+<code class="sig-name descname">iter_dnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.atom.transitive_use_atom.iter_dnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>generater yielding DNF (disjunctive normalized form) of this instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.atom.transitive_use_atom.restrictions">
+<code class="sig-name descname">restrictions</code><a class="headerlink" href="#pkgcore.ebuild.atom.transitive_use_atom.restrictions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.atom module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,48 @@
+pkgcore package
+===============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.binpkg
+   pkgcore.cache
+   pkgcore.config
+   pkgcore.ebuild
+   pkgcore.fetch
+   pkgcore.fs
+   pkgcore.merge
+   pkgcore.operations
+   pkgcore.package
+   pkgcore.pkgsets
+   pkgcore.plugins
+   pkgcore.repository
+   pkgcore.resolver
+   pkgcore.restrictions
+   pkgcore.sync
+   pkgcore.system
+   pkgcore.util
+   pkgcore.vdb
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.const
+   pkgcore.exceptions
+   pkgcore.gpg
+   pkgcore.log
+   pkgcore.os_data
+   pkgcore.plugin
+
+Module contents
+---------------
+
+.. automodule:: pkgcore
+   :members:
+   :undoc-members:
+   :show-inheritance:

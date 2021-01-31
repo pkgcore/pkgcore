@@ -1,0 +1,2490 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pinspect - repository inspection interface &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pkgcore" href="pkgcore.html" />
+    <link rel="prev" title="pebuild - low-level ebuild utility" href="pebuild.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pkgcore.html" title="pkgcore"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pebuild.html" title="pebuild - low-level ebuild utility"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" accesskey="U">Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pinspect - repository inspection interface</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pinspect-repository-inspection-interface">
+<h1>pinspect - repository inspection interface<a class="headerlink" href="#pinspect-repository-inspection-interface" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="synopsis">
+<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h2>
+<p>pinspect [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] {pkgsets,eapi_usage,license_usage,eclass_usage,mirror_usage,distfiles_usage,query,portageq,profile,digests} ...</p>
+</div>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>pinspect is used to extract various information from repos. For example,
+it can perform aggregated EAPI, license, eclass, and mirror usage queries
+across specified repos. Any repo type can be queried, e.g. ebuild,
+binary, or vdb.</p>
+<p>It also provides an interface to all profile specific metadata, e.g. package
+masks, inheritance trees, etc. This makes it easier to inspect profile
+differences without sorting through the inheritance tree and reading the raw
+files.</p>
+<p>Finally, a portageq compatible interface is provided for several commands that
+were historically used in ebuilds.</p>
+</div>
+<div class="section" id="base-options">
+<h2>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--version</span></kbd></dt>
+<dd><p>Show this program's version information and exit.</p>
+<p>When running from within a git repo or a version
+installed from git the latest commit hash and date will
+be shown.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="config-options">
+<h2>Config Options<a class="headerlink" href="#config-options" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>--add-config SECTION KEY VALUE</dt><dd><p>modify existing pkgcore config section</p>
+</dd>
+<dt>--new-config SECTION KEY VALUE</dt><dd><p>add new pkgcore config section</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--empty-config</span></kbd></dt>
+<dd><p>skip loading user/system pkgcore config</p>
+</dd>
+<dt><kbd><span class="option">--config <var>PATH</var></span></kbd></dt>
+<dd><p>use custom pkgcore config file</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="subcommands">
+<h2>Subcommands<a class="headerlink" href="#subcommands" title="Permalink to this headline">¶</a></h2>
+<p>report applets</p>
+<div class="section" id="pinspect-pkgsets-pkgset-related-introspection">
+<h3>pinspect pkgsets - pkgset related introspection<a class="headerlink" href="#pinspect-pkgsets-pkgset-related-introspection" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id1">
+<h3>Synopsis<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>pinspect pkgsets [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--all | pkgset [pkgset ...]]</p>
+</div>
+<div class="section" id="positional-arguments">
+<h3>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">pkgset</dt>
+<dd class="field-odd"><p>pkgset to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="optional-arguments">
+<h3>Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--all</span></kbd></dt>
+<dd><p>display info on all pkgsets</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id2">
+<h3>Base Options<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-eapi-usage-report-of-eapi-usage-for-targeted-repos">
+<h3>pinspect eapi_usage - report of eapi usage for targeted repos<a class="headerlink" href="#pinspect-eapi-usage-report-of-eapi-usage-for-targeted-repos" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id3">
+<h3>Synopsis<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>pinspect eapi_usage [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--no-final-summary] [--sort-by-name] [--first FIRST | --last LAST] [repo [repo ...]]</p>
+</div>
+<div class="section" id="id4">
+<h3>Positional Arguments<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">repo</dt>
+<dd class="field-odd"><p>repo(s) to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id5">
+<h3>Optional Arguments<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--no-final-summary</span></kbd></dt>
+<dd><p>disable outputting a summary of data across all repos</p>
+</dd>
+<dt><kbd><span class="option">--sort-by-name</span></kbd></dt>
+<dd><p>sort output by name, rather then by frequency</p>
+</dd>
+<dt><kbd><span class="option">--first <var>FIRST</var></span></kbd></dt>
+<dd><p>show only the first N detail items</p>
+</dd>
+<dt><kbd><span class="option">--last <var>LAST</var></span></kbd></dt>
+<dd><p>show only the last N detail items</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id6">
+<h3>Base Options<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-license-usage-report-of-license-usage-for-targeted-repos">
+<h3>pinspect license_usage - report of license usage for targeted repos<a class="headerlink" href="#pinspect-license-usage-report-of-license-usage-for-targeted-repos" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id7">
+<h3>Synopsis<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>pinspect license_usage [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--no-final-summary] [--sort-by-name] [--first FIRST | --last LAST] [repo [repo ...]]</p>
+</div>
+<div class="section" id="id8">
+<h3>Positional Arguments<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">repo</dt>
+<dd class="field-odd"><p>repo(s) to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id9">
+<h3>Optional Arguments<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--no-final-summary</span></kbd></dt>
+<dd><p>disable outputting a summary of data across all repos</p>
+</dd>
+<dt><kbd><span class="option">--sort-by-name</span></kbd></dt>
+<dd><p>sort output by name, rather then by frequency</p>
+</dd>
+<dt><kbd><span class="option">--first <var>FIRST</var></span></kbd></dt>
+<dd><p>show only the first N detail items</p>
+</dd>
+<dt><kbd><span class="option">--last <var>LAST</var></span></kbd></dt>
+<dd><p>show only the last N detail items</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id10">
+<h3>Base Options<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-eclass-usage-report-of-eclass-usage-for-targeted-repos">
+<h3>pinspect eclass_usage - report of eclass usage for targeted repos<a class="headerlink" href="#pinspect-eclass-usage-report-of-eclass-usage-for-targeted-repos" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id11">
+<h3>Synopsis<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<p>pinspect eclass_usage [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--no-final-summary] [--sort-by-name] [--first FIRST | --last LAST] [repo [repo ...]]</p>
+</div>
+<div class="section" id="id12">
+<h3>Positional Arguments<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">repo</dt>
+<dd class="field-odd"><p>repo(s) to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id13">
+<h3>Optional Arguments<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--no-final-summary</span></kbd></dt>
+<dd><p>disable outputting a summary of data across all repos</p>
+</dd>
+<dt><kbd><span class="option">--sort-by-name</span></kbd></dt>
+<dd><p>sort output by name, rather then by frequency</p>
+</dd>
+<dt><kbd><span class="option">--first <var>FIRST</var></span></kbd></dt>
+<dd><p>show only the first N detail items</p>
+</dd>
+<dt><kbd><span class="option">--last <var>LAST</var></span></kbd></dt>
+<dd><p>show only the last N detail items</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id14">
+<h3>Base Options<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-mirror-usage-report-of-src-uri-mirror-usage-for-targeted-repos">
+<h3>pinspect mirror_usage - report of SRC_URI mirror usage for targeted repos<a class="headerlink" href="#pinspect-mirror-usage-report-of-src-uri-mirror-usage-for-targeted-repos" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id15">
+<h3>Synopsis<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>pinspect mirror_usage [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--no-final-summary] [--sort-by-name] [--first FIRST | --last LAST] [repo [repo ...]]</p>
+</div>
+<div class="section" id="id16">
+<h3>Positional Arguments<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">repo</dt>
+<dd class="field-odd"><p>repo(s) to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id17">
+<h3>Optional Arguments<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--no-final-summary</span></kbd></dt>
+<dd><p>disable outputting a summary of data across all repos</p>
+</dd>
+<dt><kbd><span class="option">--sort-by-name</span></kbd></dt>
+<dd><p>sort output by name, rather then by frequency</p>
+</dd>
+<dt><kbd><span class="option">--first <var>FIRST</var></span></kbd></dt>
+<dd><p>show only the first N detail items</p>
+</dd>
+<dt><kbd><span class="option">--last <var>LAST</var></span></kbd></dt>
+<dd><p>show only the last N detail items</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id18">
+<h3>Base Options<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-distfiles-usage-report-detailing-distfiles-space-usage-for-targeted-repos">
+<h3>pinspect distfiles_usage - report detailing distfiles space usage for targeted repos<a class="headerlink" href="#pinspect-distfiles-usage-report-detailing-distfiles-space-usage-for-targeted-repos" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id19">
+<h3>Synopsis<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<p>pinspect distfiles_usage [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--no-final-summary | --no-repo-summary | --no-detail] [--sort-by-name] [--first FIRST | --last LAST] [--include-nonmirrored] [--include-restricted] [repo [repo ...]]</p>
+</div>
+<div class="section" id="id20">
+<h3>Positional Arguments<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">repo</dt>
+<dd class="field-odd"><p>repo(s) to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id21">
+<h3>Optional Arguments<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--no-final-summary</span></kbd></dt>
+<dd><p>disable outputting a summary of data across all repos</p>
+</dd>
+<dt><kbd><span class="option">--no-repo-summary</span></kbd></dt>
+<dd><p>disable outputting repo summaries</p>
+</dd>
+<dt><kbd><span class="option">--no-detail</span></kbd></dt>
+<dd><p>disable outputting a detail view of all repos</p>
+</dd>
+<dt><kbd><span class="option">--sort-by-name</span></kbd></dt>
+<dd><p>sort output by name, rather then by frequency</p>
+</dd>
+<dt><kbd><span class="option">--first <var>FIRST</var></span></kbd></dt>
+<dd><p>show only the first N detail items</p>
+</dd>
+<dt><kbd><span class="option">--last <var>LAST</var></span></kbd></dt>
+<dd><p>show only the last N detail items</p>
+</dd>
+<dt><kbd><span class="option">--include-nonmirrored</span></kbd></dt>
+<dd><p>if set, nonmirrored  distfiles will be included in the total</p>
+</dd>
+<dt><kbd><span class="option">--include-restricted</span></kbd></dt>
+<dd><p>if set, fetch restricted distfiles will be included in the total</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id22">
+<h3>Base Options<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-query-auxiliary-access-to-ebuild-repo-info-via-portageq-akin-api">
+<h3>pinspect query - auxiliary access to ebuild/repo info via portageq akin api<a class="headerlink" href="#pinspect-query-auxiliary-access-to-ebuild-repo-info-via-portageq-akin-api" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id23">
+<h3>Synopsis<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<p>pinspect query [-h] [--debug] [-q] [-v] [--color BOOLEAN] {best_version,env_var,get_profiles,get_repo_path,get_repos,has_version,mass_best_version} ...</p>
+</div>
+<div class="section" id="id24">
+<h3>Base Options<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id25">
+<h3>Subcommands<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<p>query commands</p>
+<div class="section" id="pinspect-query-best-version-return-the-maximum-visible-version-for-a-given-atom">
+<h4>pinspect query best_version - Return the maximum visible version for a given atom.<a class="headerlink" href="#pinspect-query-best-version-return-the-maximum-visible-version-for-a-given-atom" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id26">
+<h4>Synopsis<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h4>
+<p>pinspect query best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] atom</p>
+</div>
+<div class="section" id="id27">
+<h4>Positional Arguments<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">atom</dt>
+<dd class="field-odd"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id28">
+<h4>Optional Arguments<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+<dt><kbd><span class="option">--domain-at-root <var>DOMAIN</var></span></kbd></dt>
+<dd><p>specify the domain to use via its root path</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id29">
+<h4>Base Options<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-query-env-var-return-configuration-defined-variables">
+<h4>pinspect query env_var - return configuration defined variables.<a class="headerlink" href="#pinspect-query-env-var-return-configuration-defined-variables" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id30">
+<h4>Synopsis<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h4>
+<p>pinspect query env_var [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] variable [variable ...]</p>
+</div>
+<div class="section" id="id31">
+<h4>Positional Arguments<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">variable</dt>
+<dd class="field-odd"><p>variable to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id32">
+<h4>Optional Arguments<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+<dt><kbd><span class="option">--domain-at-root <var>DOMAIN</var></span></kbd></dt>
+<dd><p>specify the domain to use via its root path</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id33">
+<h4>Base Options<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-query-get-profiles">
+<h4>pinspect query get_profiles<a class="headerlink" href="#pinspect-query-get-profiles" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id34">
+<h4>Synopsis<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h4>
+<p>pinspect query get_profiles [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] repo_id</p>
+</div>
+<div class="section" id="id35">
+<h4>Positional Arguments<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">repo_id</dt>
+<dd class="field-odd"><p>repo_id to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id36">
+<h4>Optional Arguments<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+<dt><kbd><span class="option">--domain-at-root <var>DOMAIN</var></span></kbd></dt>
+<dd><p>specify the domain to use via its root path</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id37">
+<h4>Base Options<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-query-get-repo-path">
+<h4>pinspect query get_repo_path<a class="headerlink" href="#pinspect-query-get-repo-path" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id38">
+<h4>Synopsis<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h4>
+<p>pinspect query get_repo_path [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] repo_id</p>
+</div>
+<div class="section" id="id39">
+<h4>Positional Arguments<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">repo_id</dt>
+<dd class="field-odd"><p>repo_id to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id40">
+<h4>Optional Arguments<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+<dt><kbd><span class="option">--domain-at-root <var>DOMAIN</var></span></kbd></dt>
+<dd><p>specify the domain to use via its root path</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id41">
+<h4>Base Options<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-query-get-repos">
+<h4>pinspect query get_repos<a class="headerlink" href="#pinspect-query-get-repos" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id42">
+<h4>Synopsis<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h4>
+<p>pinspect query get_repos [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN]</p>
+</div>
+<div class="section" id="id43">
+<h4>Optional Arguments<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+<dt><kbd><span class="option">--domain-at-root <var>DOMAIN</var></span></kbd></dt>
+<dd><p>specify the domain to use via its root path</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id44">
+<h4>Base Options<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-query-has-version-return-0-if-an-atom-is-merged-1-if-not">
+<h4>pinspect query has_version - Return 0 if an atom is merged, 1 if not.<a class="headerlink" href="#pinspect-query-has-version-return-0-if-an-atom-is-merged-1-if-not" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id45">
+<h4>Synopsis<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h4>
+<p>pinspect query has_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] atom</p>
+</div>
+<div class="section" id="id46">
+<h4>Positional Arguments<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">atom</dt>
+<dd class="field-odd"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id47">
+<h4>Optional Arguments<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+<dt><kbd><span class="option">--domain-at-root <var>DOMAIN</var></span></kbd></dt>
+<dd><p>specify the domain to use via its root path</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id48">
+<h4>Base Options<a class="headerlink" href="#id48" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-query-mass-best-version-multiple-best-version-calls">
+<h4>pinspect query mass_best_version - multiple best_version calls.<a class="headerlink" href="#pinspect-query-mass-best-version-multiple-best-version-calls" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id49">
+<h4>Synopsis<a class="headerlink" href="#id49" title="Permalink to this headline">¶</a></h4>
+<p>pinspect query mass_best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] atom [atom ...]</p>
+</div>
+<div class="section" id="id50">
+<h4>Positional Arguments<a class="headerlink" href="#id50" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">atom</dt>
+<dd class="field-odd"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id51">
+<h4>Optional Arguments<a class="headerlink" href="#id51" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+<dt><kbd><span class="option">--domain-at-root <var>DOMAIN</var></span></kbd></dt>
+<dd><p>specify the domain to use via its root path</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id52">
+<h4>Base Options<a class="headerlink" href="#id52" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="pinspect-portageq-portageq-compatible-interface-to-query-commands">
+<h3>pinspect portageq - portageq compatible interface to query commands<a class="headerlink" href="#pinspect-portageq-portageq-compatible-interface-to-query-commands" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id53">
+<h3>Synopsis<a class="headerlink" href="#id53" title="Permalink to this headline">¶</a></h3>
+<p>pinspect portageq [-h] [--debug] [-q] [-v] [--color BOOLEAN] {best_version,envvar,envvar2,get_repo_news_path,get_repo_path,get_repos,has_version,mass_best_version,match} ...</p>
+</div>
+<div class="section" id="id54">
+<h3>Base Options<a class="headerlink" href="#id54" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id55">
+<h3>Subcommands<a class="headerlink" href="#id55" title="Permalink to this headline">¶</a></h3>
+<p>portageq commands</p>
+<div class="section" id="pinspect-portageq-best-version-return-the-maximum-visible-version-for-a-given-atom">
+<h4>pinspect portageq best_version - Return the maximum visible version for a given atom.<a class="headerlink" href="#pinspect-portageq-best-version-return-the-maximum-visible-version-for-a-given-atom" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id56">
+<h4>Synopsis<a class="headerlink" href="#id56" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom</p>
+</div>
+<div class="section" id="id57">
+<h4>Positional Arguments<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id58">
+<h4>Optional Arguments<a class="headerlink" href="#id58" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id59">
+<h4>Base Options<a class="headerlink" href="#id59" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-envvar-return-configuration-defined-variables-use-envvar2-instead-this-will-be-removed">
+<h4>pinspect portageq envvar - return configuration defined variables.  Use envvar2 instead, this will be removed.<a class="headerlink" href="#pinspect-portageq-envvar-return-configuration-defined-variables-use-envvar2-instead-this-will-be-removed" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id60">
+<h4>Synopsis<a class="headerlink" href="#id60" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq envvar [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [root] variable [variable ...]</p>
+</div>
+<div class="section" id="id61">
+<h4>Positional Arguments<a class="headerlink" href="#id61" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">variable</dt>
+<dd class="field-even"><p>variable to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id62">
+<h4>Optional Arguments<a class="headerlink" href="#id62" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id63">
+<h4>Base Options<a class="headerlink" href="#id63" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-envvar2-return-configuration-defined-variables">
+<h4>pinspect portageq envvar2 - return configuration defined variables.<a class="headerlink" href="#pinspect-portageq-envvar2-return-configuration-defined-variables" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id64">
+<h4>Synopsis<a class="headerlink" href="#id64" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq envvar2 [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root variable [variable ...]</p>
+</div>
+<div class="section" id="id65">
+<h4>Positional Arguments<a class="headerlink" href="#id65" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">variable</dt>
+<dd class="field-even"><p>variable to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id66">
+<h4>Optional Arguments<a class="headerlink" href="#id66" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id67">
+<h4>Base Options<a class="headerlink" href="#id67" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-get-repo-news-path">
+<h4>pinspect portageq get_repo_news_path<a class="headerlink" href="#pinspect-portageq-get-repo-news-path" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id68">
+<h4>Synopsis<a class="headerlink" href="#id68" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq get_repo_news_path [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [root] repo_id</p>
+</div>
+<div class="section" id="id69">
+<h4>Positional Arguments<a class="headerlink" href="#id69" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>root to inspect</p>
+</dd>
+<dt class="field-even">repo_id</dt>
+<dd class="field-even"><p>repo_id to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id70">
+<h4>Optional Arguments<a class="headerlink" href="#id70" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id71">
+<h4>Base Options<a class="headerlink" href="#id71" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-get-repo-path">
+<h4>pinspect portageq get_repo_path<a class="headerlink" href="#pinspect-portageq-get-repo-path" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id72">
+<h4>Synopsis<a class="headerlink" href="#id72" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq get_repo_path [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root repo_id</p>
+</div>
+<div class="section" id="id73">
+<h4>Positional Arguments<a class="headerlink" href="#id73" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">repo_id</dt>
+<dd class="field-even"><p>repo_id to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id74">
+<h4>Optional Arguments<a class="headerlink" href="#id74" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id75">
+<h4>Base Options<a class="headerlink" href="#id75" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-get-repos">
+<h4>pinspect portageq get_repos<a class="headerlink" href="#pinspect-portageq-get-repos" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id76">
+<h4>Synopsis<a class="headerlink" href="#id76" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq get_repos [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [root]</p>
+</div>
+<div class="section" id="id77">
+<h4>Positional Arguments<a class="headerlink" href="#id77" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id78">
+<h4>Optional Arguments<a class="headerlink" href="#id78" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id79">
+<h4>Base Options<a class="headerlink" href="#id79" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-has-version-return-0-if-an-atom-is-merged-1-if-not">
+<h4>pinspect portageq has_version - Return 0 if an atom is merged, 1 if not.<a class="headerlink" href="#pinspect-portageq-has-version-return-0-if-an-atom-is-merged-1-if-not" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id80">
+<h4>Synopsis<a class="headerlink" href="#id80" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq has_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom</p>
+</div>
+<div class="section" id="id81">
+<h4>Positional Arguments<a class="headerlink" href="#id81" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id82">
+<h4>Optional Arguments<a class="headerlink" href="#id82" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id83">
+<h4>Base Options<a class="headerlink" href="#id83" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-mass-best-version-multiple-best-version-calls">
+<h4>pinspect portageq mass_best_version - multiple best_version calls.<a class="headerlink" href="#pinspect-portageq-mass-best-version-multiple-best-version-calls" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id84">
+<h4>Synopsis<a class="headerlink" href="#id84" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq mass_best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom [atom ...]</p>
+</div>
+<div class="section" id="id85">
+<h4>Positional Arguments<a class="headerlink" href="#id85" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id86">
+<h4>Optional Arguments<a class="headerlink" href="#id86" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id87">
+<h4>Base Options<a class="headerlink" href="#id87" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-match-shorthand-for-pquery-installed">
+<h4>pinspect portageq match - shorthand for <cite>pquery --installed</cite><a class="headerlink" href="#pinspect-portageq-match-shorthand-for-pquery-installed" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id88">
+<h4>Synopsis<a class="headerlink" href="#id88" title="Permalink to this headline">¶</a></h4>
+<p>pinspect portageq match [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom</p>
+</div>
+<div class="section" id="id89">
+<h4>Positional Arguments<a class="headerlink" href="#id89" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id90">
+<h4>Optional Arguments<a class="headerlink" href="#id90" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id91">
+<h4>Base Options<a class="headerlink" href="#id91" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="pinspect-profile-profile-related-querying">
+<h3>pinspect profile - profile related querying<a class="headerlink" href="#pinspect-profile-profile-related-querying" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id92">
+<h3>Synopsis<a class="headerlink" href="#id92" title="Permalink to this headline">¶</a></h3>
+<p>pinspect profile [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-r REPO] {parent,eapi,status,deprecated,provided,system,use_expand,iuse_effective,masks,unmasks,bashrcs,keywords,accept_keywords,use,masked_use,stable_masked_use,forced_use,stable_forced_use,defaults,arch} ...</p>
+</div>
+<div class="section" id="id93">
+<h3>Base Options<a class="headerlink" href="#id93" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="subcommand-options">
+<h3>Subcommand Options<a class="headerlink" href="#subcommand-options" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-r <var>REPO</var></span>, <span class="option">--repo <var>REPO</var></span></kbd></dt>
+<dd><p>target repo</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id94">
+<h3>Subcommands<a class="headerlink" href="#id94" title="Permalink to this headline">¶</a></h3>
+<p>profile commands</p>
+<div class="section" id="pinspect-profile-parent-output-the-linearized-tree-of-inherited-parents">
+<h4>pinspect profile parent - output the linearized tree of inherited parents<a class="headerlink" href="#pinspect-profile-parent-output-the-linearized-tree-of-inherited-parents" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id95">
+<h4>Synopsis<a class="headerlink" href="#id95" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile parent [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id96">
+<h4>Positional Arguments<a class="headerlink" href="#id96" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id97">
+<h4>Base Options<a class="headerlink" href="#id97" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-eapi-output-eapi-support-required-for-reading-this-profile">
+<h4>pinspect profile eapi - output EAPI support required for reading this profile<a class="headerlink" href="#pinspect-profile-eapi-output-eapi-support-required-for-reading-this-profile" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id98">
+<h4>Synopsis<a class="headerlink" href="#id98" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile eapi [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id99">
+<h4>Positional Arguments<a class="headerlink" href="#id99" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id100">
+<h4>Base Options<a class="headerlink" href="#id100" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-status-output-profile-status">
+<h4>pinspect profile status - output profile status<a class="headerlink" href="#pinspect-profile-status-output-profile-status" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id101">
+<h4>Synopsis<a class="headerlink" href="#id101" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile status [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id102">
+<h4>Positional Arguments<a class="headerlink" href="#id102" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id103">
+<h4>Base Options<a class="headerlink" href="#id103" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-deprecated-dump-deprecation-notices-if-any">
+<h4>pinspect profile deprecated - dump deprecation notices, if any<a class="headerlink" href="#pinspect-profile-deprecated-dump-deprecation-notices-if-any" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id104">
+<h4>Synopsis<a class="headerlink" href="#id104" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile deprecated [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id105">
+<h4>Positional Arguments<a class="headerlink" href="#id105" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id106">
+<h4>Base Options<a class="headerlink" href="#id106" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-provided-list-all-package-provided-packages">
+<h4>pinspect profile provided - list all package.provided packages<a class="headerlink" href="#pinspect-profile-provided-list-all-package-provided-packages" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id107">
+<h4>Synopsis<a class="headerlink" href="#id107" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile provided [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id108">
+<h4>Positional Arguments<a class="headerlink" href="#id108" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id109">
+<h4>Base Options<a class="headerlink" href="#id109" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-system-output-the-system-package-set">
+<h4>pinspect profile system - output the system package set<a class="headerlink" href="#pinspect-profile-system-output-the-system-package-set" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id110">
+<h4>Synopsis<a class="headerlink" href="#id110" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile system [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id111">
+<h4>Positional Arguments<a class="headerlink" href="#id111" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id112">
+<h4>Base Options<a class="headerlink" href="#id112" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-use-expand-output-the-use-expand-configuration-for-this-profile">
+<h4>pinspect profile use_expand - output the USE_EXPAND configuration for this profile<a class="headerlink" href="#pinspect-profile-use-expand-output-the-use-expand-configuration-for-this-profile" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id113">
+<h4>Synopsis<a class="headerlink" href="#id113" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile use_expand [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id114">
+<h4>Positional Arguments<a class="headerlink" href="#id114" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id115">
+<h4>Base Options<a class="headerlink" href="#id115" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-iuse-effective-output-the-iuse-effective-value-for-this-profile">
+<h4>pinspect profile iuse_effective - output the IUSE_EFFECTIVE value for this profile<a class="headerlink" href="#pinspect-profile-iuse-effective-output-the-iuse-effective-value-for-this-profile" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id116">
+<h4>Synopsis<a class="headerlink" href="#id116" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile iuse_effective [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id117">
+<h4>Positional Arguments<a class="headerlink" href="#id117" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id118">
+<h4>Base Options<a class="headerlink" href="#id118" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-masks-inspect-package-masks">
+<h4>pinspect profile masks - inspect package masks<a class="headerlink" href="#pinspect-profile-masks-inspect-package-masks" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id119">
+<h4>Synopsis<a class="headerlink" href="#id119" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile masks [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id120">
+<h4>Positional Arguments<a class="headerlink" href="#id120" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id121">
+<h4>Base Options<a class="headerlink" href="#id121" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-unmasks-inspect-package-unmasks">
+<h4>pinspect profile unmasks - inspect package unmasks<a class="headerlink" href="#pinspect-profile-unmasks-inspect-package-unmasks" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id122">
+<h4>Synopsis<a class="headerlink" href="#id122" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile unmasks [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id123">
+<h4>Positional Arguments<a class="headerlink" href="#id123" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id124">
+<h4>Base Options<a class="headerlink" href="#id124" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-bashrcs-inspect-bashrcs">
+<h4>pinspect profile bashrcs - inspect bashrcs<a class="headerlink" href="#pinspect-profile-bashrcs-inspect-bashrcs" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id125">
+<h4>Synopsis<a class="headerlink" href="#id125" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile bashrcs [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id126">
+<h4>Positional Arguments<a class="headerlink" href="#id126" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id127">
+<h4>Base Options<a class="headerlink" href="#id127" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-keywords-inspect-package-keywords">
+<h4>pinspect profile keywords - inspect package.keywords<a class="headerlink" href="#pinspect-profile-keywords-inspect-package-keywords" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id128">
+<h4>Synopsis<a class="headerlink" href="#id128" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile keywords [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id129">
+<h4>Positional Arguments<a class="headerlink" href="#id129" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id130">
+<h4>Base Options<a class="headerlink" href="#id130" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-accept-keywords-inspect-package-accept-keywords">
+<h4>pinspect profile accept_keywords - inspect package.accept_keywords<a class="headerlink" href="#pinspect-profile-accept-keywords-inspect-package-accept-keywords" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id131">
+<h4>Synopsis<a class="headerlink" href="#id131" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile accept_keywords [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id132">
+<h4>Positional Arguments<a class="headerlink" href="#id132" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id133">
+<h4>Base Options<a class="headerlink" href="#id133" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-use-inspect-enabled-use-flags">
+<h4>pinspect profile use - inspect enabled USE flags<a class="headerlink" href="#pinspect-profile-use-inspect-enabled-use-flags" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id134">
+<h4>Synopsis<a class="headerlink" href="#id134" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id135">
+<h4>Positional Arguments<a class="headerlink" href="#id135" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id136">
+<h4>Base Options<a class="headerlink" href="#id136" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-masked-use-inspect-masked-use-flags">
+<h4>pinspect profile masked_use - inspect masked use flags<a class="headerlink" href="#pinspect-profile-masked-use-inspect-masked-use-flags" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id137">
+<h4>Synopsis<a class="headerlink" href="#id137" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile masked_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id138">
+<h4>Positional Arguments<a class="headerlink" href="#id138" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id139">
+<h4>Base Options<a class="headerlink" href="#id139" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-stable-masked-use-inspect-stable-masked-use-flags">
+<h4>pinspect profile stable_masked_use - inspect stable masked use flags<a class="headerlink" href="#pinspect-profile-stable-masked-use-inspect-stable-masked-use-flags" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id140">
+<h4>Synopsis<a class="headerlink" href="#id140" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile stable_masked_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id141">
+<h4>Positional Arguments<a class="headerlink" href="#id141" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id142">
+<h4>Base Options<a class="headerlink" href="#id142" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-forced-use-inspect-forced-use-flags">
+<h4>pinspect profile forced_use - inspect forced use flags<a class="headerlink" href="#pinspect-profile-forced-use-inspect-forced-use-flags" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id143">
+<h4>Synopsis<a class="headerlink" href="#id143" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile forced_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id144">
+<h4>Positional Arguments<a class="headerlink" href="#id144" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id145">
+<h4>Base Options<a class="headerlink" href="#id145" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-stable-forced-use-inspect-stable-forced-use-flags">
+<h4>pinspect profile stable_forced_use - inspect stable forced use flags<a class="headerlink" href="#pinspect-profile-stable-forced-use-inspect-stable-forced-use-flags" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id146">
+<h4>Synopsis<a class="headerlink" href="#id146" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile stable_forced_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id147">
+<h4>Positional Arguments<a class="headerlink" href="#id147" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id148">
+<h4>Base Options<a class="headerlink" href="#id148" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-defaults-inspect-defined-configuration-for-this-profile">
+<h4>pinspect profile defaults - inspect defined configuration for this profile<a class="headerlink" href="#pinspect-profile-defaults-inspect-defined-configuration-for-this-profile" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id149">
+<h4>Synopsis<a class="headerlink" href="#id149" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile defaults [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile [variables [variables ...]]</p>
+</div>
+<div class="section" id="id150">
+<h4>Positional Arguments<a class="headerlink" href="#id150" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+<dt class="field-even">variables</dt>
+<dd class="field-even"><p>if not specified, all settings are displayed. If given, output is limited to just those settings if they exist</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id151">
+<h4>Base Options<a class="headerlink" href="#id151" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-arch-output-the-arch-defined-for-this-profile">
+<h4>pinspect profile arch - output the arch defined for this profile<a class="headerlink" href="#pinspect-profile-arch-output-the-arch-defined-for-this-profile" title="Permalink to this headline">¶</a></h4>
+</div>
+<div class="section" id="id152">
+<h4>Synopsis<a class="headerlink" href="#id152" title="Permalink to this headline">¶</a></h4>
+<p>pinspect profile arch [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id153">
+<h4>Positional Arguments<a class="headerlink" href="#id153" title="Permalink to this headline">¶</a></h4>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id154">
+<h4>Base Options<a class="headerlink" href="#id154" title="Permalink to this headline">¶</a></h4>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="pinspect-digests-identify-what-packages-are-missing-digest-info">
+<h3>pinspect digests - identify what packages are missing digest info<a class="headerlink" href="#pinspect-digests-identify-what-packages-are-missing-digest-info" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id155">
+<h3>Synopsis<a class="headerlink" href="#id155" title="Permalink to this headline">¶</a></h3>
+<p>pinspect digests [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--domain DOMAIN] [repos [repos ...]]</p>
+</div>
+<div class="section" id="id156">
+<h3>Positional Arguments<a class="headerlink" href="#id156" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">repos</dt>
+<dd class="field-odd"><p>repo to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id157">
+<h3>Base Options<a class="headerlink" href="#id157" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id158">
+<h3>Config Options<a class="headerlink" href="#id158" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pinspect - repository inspection interface</a><ul>
+<li><a class="reference internal" href="#synopsis">Synopsis</a></li>
+<li><a class="reference internal" href="#description">Description</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#config-options">Config Options</a></li>
+<li><a class="reference internal" href="#subcommands">Subcommands</a><ul>
+<li><a class="reference internal" href="#pinspect-pkgsets-pkgset-related-introspection">pinspect pkgsets - pkgset related introspection</a></li>
+<li><a class="reference internal" href="#id1">Synopsis</a></li>
+<li><a class="reference internal" href="#positional-arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#optional-arguments">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id2">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-eapi-usage-report-of-eapi-usage-for-targeted-repos">pinspect eapi_usage - report of eapi usage for targeted repos</a></li>
+<li><a class="reference internal" href="#id3">Synopsis</a></li>
+<li><a class="reference internal" href="#id4">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id5">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id6">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-license-usage-report-of-license-usage-for-targeted-repos">pinspect license_usage - report of license usage for targeted repos</a></li>
+<li><a class="reference internal" href="#id7">Synopsis</a></li>
+<li><a class="reference internal" href="#id8">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id9">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id10">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-eclass-usage-report-of-eclass-usage-for-targeted-repos">pinspect eclass_usage - report of eclass usage for targeted repos</a></li>
+<li><a class="reference internal" href="#id11">Synopsis</a></li>
+<li><a class="reference internal" href="#id12">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id13">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id14">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-mirror-usage-report-of-src-uri-mirror-usage-for-targeted-repos">pinspect mirror_usage - report of SRC_URI mirror usage for targeted repos</a></li>
+<li><a class="reference internal" href="#id15">Synopsis</a></li>
+<li><a class="reference internal" href="#id16">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id17">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id18">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-distfiles-usage-report-detailing-distfiles-space-usage-for-targeted-repos">pinspect distfiles_usage - report detailing distfiles space usage for targeted repos</a></li>
+<li><a class="reference internal" href="#id19">Synopsis</a></li>
+<li><a class="reference internal" href="#id20">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id21">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id22">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-query-auxiliary-access-to-ebuild-repo-info-via-portageq-akin-api">pinspect query - auxiliary access to ebuild/repo info via portageq akin api</a></li>
+<li><a class="reference internal" href="#id23">Synopsis</a></li>
+<li><a class="reference internal" href="#id24">Base Options</a></li>
+<li><a class="reference internal" href="#id25">Subcommands</a><ul>
+<li><a class="reference internal" href="#pinspect-query-best-version-return-the-maximum-visible-version-for-a-given-atom">pinspect query best_version - Return the maximum visible version for a given atom.</a></li>
+<li><a class="reference internal" href="#id26">Synopsis</a></li>
+<li><a class="reference internal" href="#id27">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id28">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id29">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-query-env-var-return-configuration-defined-variables">pinspect query env_var - return configuration defined variables.</a></li>
+<li><a class="reference internal" href="#id30">Synopsis</a></li>
+<li><a class="reference internal" href="#id31">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id32">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id33">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-query-get-profiles">pinspect query get_profiles</a></li>
+<li><a class="reference internal" href="#id34">Synopsis</a></li>
+<li><a class="reference internal" href="#id35">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id36">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id37">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-query-get-repo-path">pinspect query get_repo_path</a></li>
+<li><a class="reference internal" href="#id38">Synopsis</a></li>
+<li><a class="reference internal" href="#id39">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id40">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id41">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-query-get-repos">pinspect query get_repos</a></li>
+<li><a class="reference internal" href="#id42">Synopsis</a></li>
+<li><a class="reference internal" href="#id43">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id44">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-query-has-version-return-0-if-an-atom-is-merged-1-if-not">pinspect query has_version - Return 0 if an atom is merged, 1 if not.</a></li>
+<li><a class="reference internal" href="#id45">Synopsis</a></li>
+<li><a class="reference internal" href="#id46">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id47">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id48">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-query-mass-best-version-multiple-best-version-calls">pinspect query mass_best_version - multiple best_version calls.</a></li>
+<li><a class="reference internal" href="#id49">Synopsis</a></li>
+<li><a class="reference internal" href="#id50">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id51">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id52">Base Options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pinspect-portageq-portageq-compatible-interface-to-query-commands">pinspect portageq - portageq compatible interface to query commands</a></li>
+<li><a class="reference internal" href="#id53">Synopsis</a></li>
+<li><a class="reference internal" href="#id54">Base Options</a></li>
+<li><a class="reference internal" href="#id55">Subcommands</a><ul>
+<li><a class="reference internal" href="#pinspect-portageq-best-version-return-the-maximum-visible-version-for-a-given-atom">pinspect portageq best_version - Return the maximum visible version for a given atom.</a></li>
+<li><a class="reference internal" href="#id56">Synopsis</a></li>
+<li><a class="reference internal" href="#id57">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id58">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id59">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-envvar-return-configuration-defined-variables-use-envvar2-instead-this-will-be-removed">pinspect portageq envvar - return configuration defined variables.  Use envvar2 instead, this will be removed.</a></li>
+<li><a class="reference internal" href="#id60">Synopsis</a></li>
+<li><a class="reference internal" href="#id61">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id62">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id63">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-envvar2-return-configuration-defined-variables">pinspect portageq envvar2 - return configuration defined variables.</a></li>
+<li><a class="reference internal" href="#id64">Synopsis</a></li>
+<li><a class="reference internal" href="#id65">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id66">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id67">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-get-repo-news-path">pinspect portageq get_repo_news_path</a></li>
+<li><a class="reference internal" href="#id68">Synopsis</a></li>
+<li><a class="reference internal" href="#id69">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id70">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id71">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-get-repo-path">pinspect portageq get_repo_path</a></li>
+<li><a class="reference internal" href="#id72">Synopsis</a></li>
+<li><a class="reference internal" href="#id73">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id74">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id75">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-get-repos">pinspect portageq get_repos</a></li>
+<li><a class="reference internal" href="#id76">Synopsis</a></li>
+<li><a class="reference internal" href="#id77">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id78">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id79">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-has-version-return-0-if-an-atom-is-merged-1-if-not">pinspect portageq has_version - Return 0 if an atom is merged, 1 if not.</a></li>
+<li><a class="reference internal" href="#id80">Synopsis</a></li>
+<li><a class="reference internal" href="#id81">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id82">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id83">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-mass-best-version-multiple-best-version-calls">pinspect portageq mass_best_version - multiple best_version calls.</a></li>
+<li><a class="reference internal" href="#id84">Synopsis</a></li>
+<li><a class="reference internal" href="#id85">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id86">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id87">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-match-shorthand-for-pquery-installed">pinspect portageq match - shorthand for <cite>pquery --installed</cite></a></li>
+<li><a class="reference internal" href="#id88">Synopsis</a></li>
+<li><a class="reference internal" href="#id89">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id90">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id91">Base Options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pinspect-profile-profile-related-querying">pinspect profile - profile related querying</a></li>
+<li><a class="reference internal" href="#id92">Synopsis</a></li>
+<li><a class="reference internal" href="#id93">Base Options</a></li>
+<li><a class="reference internal" href="#subcommand-options">Subcommand Options</a></li>
+<li><a class="reference internal" href="#id94">Subcommands</a><ul>
+<li><a class="reference internal" href="#pinspect-profile-parent-output-the-linearized-tree-of-inherited-parents">pinspect profile parent - output the linearized tree of inherited parents</a></li>
+<li><a class="reference internal" href="#id95">Synopsis</a></li>
+<li><a class="reference internal" href="#id96">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id97">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-eapi-output-eapi-support-required-for-reading-this-profile">pinspect profile eapi - output EAPI support required for reading this profile</a></li>
+<li><a class="reference internal" href="#id98">Synopsis</a></li>
+<li><a class="reference internal" href="#id99">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id100">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-status-output-profile-status">pinspect profile status - output profile status</a></li>
+<li><a class="reference internal" href="#id101">Synopsis</a></li>
+<li><a class="reference internal" href="#id102">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id103">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-deprecated-dump-deprecation-notices-if-any">pinspect profile deprecated - dump deprecation notices, if any</a></li>
+<li><a class="reference internal" href="#id104">Synopsis</a></li>
+<li><a class="reference internal" href="#id105">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id106">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-provided-list-all-package-provided-packages">pinspect profile provided - list all package.provided packages</a></li>
+<li><a class="reference internal" href="#id107">Synopsis</a></li>
+<li><a class="reference internal" href="#id108">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id109">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-system-output-the-system-package-set">pinspect profile system - output the system package set</a></li>
+<li><a class="reference internal" href="#id110">Synopsis</a></li>
+<li><a class="reference internal" href="#id111">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id112">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-use-expand-output-the-use-expand-configuration-for-this-profile">pinspect profile use_expand - output the USE_EXPAND configuration for this profile</a></li>
+<li><a class="reference internal" href="#id113">Synopsis</a></li>
+<li><a class="reference internal" href="#id114">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id115">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-iuse-effective-output-the-iuse-effective-value-for-this-profile">pinspect profile iuse_effective - output the IUSE_EFFECTIVE value for this profile</a></li>
+<li><a class="reference internal" href="#id116">Synopsis</a></li>
+<li><a class="reference internal" href="#id117">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id118">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-masks-inspect-package-masks">pinspect profile masks - inspect package masks</a></li>
+<li><a class="reference internal" href="#id119">Synopsis</a></li>
+<li><a class="reference internal" href="#id120">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id121">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-unmasks-inspect-package-unmasks">pinspect profile unmasks - inspect package unmasks</a></li>
+<li><a class="reference internal" href="#id122">Synopsis</a></li>
+<li><a class="reference internal" href="#id123">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id124">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-bashrcs-inspect-bashrcs">pinspect profile bashrcs - inspect bashrcs</a></li>
+<li><a class="reference internal" href="#id125">Synopsis</a></li>
+<li><a class="reference internal" href="#id126">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id127">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-keywords-inspect-package-keywords">pinspect profile keywords - inspect package.keywords</a></li>
+<li><a class="reference internal" href="#id128">Synopsis</a></li>
+<li><a class="reference internal" href="#id129">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id130">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-accept-keywords-inspect-package-accept-keywords">pinspect profile accept_keywords - inspect package.accept_keywords</a></li>
+<li><a class="reference internal" href="#id131">Synopsis</a></li>
+<li><a class="reference internal" href="#id132">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id133">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-use-inspect-enabled-use-flags">pinspect profile use - inspect enabled USE flags</a></li>
+<li><a class="reference internal" href="#id134">Synopsis</a></li>
+<li><a class="reference internal" href="#id135">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id136">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-masked-use-inspect-masked-use-flags">pinspect profile masked_use - inspect masked use flags</a></li>
+<li><a class="reference internal" href="#id137">Synopsis</a></li>
+<li><a class="reference internal" href="#id138">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id139">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-stable-masked-use-inspect-stable-masked-use-flags">pinspect profile stable_masked_use - inspect stable masked use flags</a></li>
+<li><a class="reference internal" href="#id140">Synopsis</a></li>
+<li><a class="reference internal" href="#id141">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id142">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-forced-use-inspect-forced-use-flags">pinspect profile forced_use - inspect forced use flags</a></li>
+<li><a class="reference internal" href="#id143">Synopsis</a></li>
+<li><a class="reference internal" href="#id144">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id145">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-stable-forced-use-inspect-stable-forced-use-flags">pinspect profile stable_forced_use - inspect stable forced use flags</a></li>
+<li><a class="reference internal" href="#id146">Synopsis</a></li>
+<li><a class="reference internal" href="#id147">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id148">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-defaults-inspect-defined-configuration-for-this-profile">pinspect profile defaults - inspect defined configuration for this profile</a></li>
+<li><a class="reference internal" href="#id149">Synopsis</a></li>
+<li><a class="reference internal" href="#id150">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id151">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-arch-output-the-arch-defined-for-this-profile">pinspect profile arch - output the arch defined for this profile</a></li>
+<li><a class="reference internal" href="#id152">Synopsis</a></li>
+<li><a class="reference internal" href="#id153">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id154">Base Options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#pinspect-digests-identify-what-packages-are-missing-digest-info">pinspect digests - identify what packages are missing digest info</a></li>
+<li><a class="reference internal" href="#id155">Synopsis</a></li>
+<li><a class="reference internal" href="#id156">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id157">Base Options</a></li>
+<li><a class="reference internal" href="#id158">Config Options</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pebuild.html"
+                        title="previous chapter">pebuild - low-level ebuild utility</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pkgcore.html"
+                        title="next chapter">pkgcore</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pkgcore.html" title="pkgcore"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pebuild.html" title="pebuild - low-level ebuild utility"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" >Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pinspect - repository inspection interface</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

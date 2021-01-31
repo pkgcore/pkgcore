@@ -1,0 +1,7 @@
+pkgcore.repository.wrapper module
+=================================
+
+.. automodule:: pkgcore.repository.wrapper
+   :members:
+   :undoc-members:
+   :show-inheritance:

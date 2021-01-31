@@ -1,0 +1,350 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.sync.base &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.base</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.sync.base</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;SyncError&quot;</span><span class="p">,</span> <span class="s2">&quot;UriError&quot;</span><span class="p">,</span> <span class="s2">&quot;MissingLocalUser&quot;</span><span class="p">,</span> <span class="s2">&quot;MissingBinary&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Syncer&quot;</span><span class="p">,</span> <span class="s2">&quot;ExternalSyncer&quot;</span><span class="p">,</span> <span class="s2">&quot;VcsSyncer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;GenericSyncer&quot;</span><span class="p">,</span> <span class="s2">&quot;DisabledSyncer&quot;</span><span class="p">,</span> <span class="s2">&quot;AutodetectSyncer&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pwd</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">process</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">os_data</span><span class="p">,</span> <span class="n">plugin</span>
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span><span class="p">,</span> <span class="n">configurable</span>
+<span class="kn">from</span> <span class="nn">..exceptions</span> <span class="kn">import</span> <span class="n">PkgcoreUserException</span>
+
+
+<div class="viewcode-block" id="SyncError"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.SyncError">[docs]</a><span class="k">class</span> <span class="nc">SyncError</span><span class="p">(</span><span class="n">PkgcoreUserException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic syncing error.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="UriError"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.UriError">[docs]</a><span class="k">class</span> <span class="nc">UriError</span><span class="p">(</span><span class="n">SyncError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">uri</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">uri</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">PathError</span><span class="p">(</span><span class="n">SyncError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="MissingLocalUser"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.MissingLocalUser">[docs]</a><span class="k">class</span> <span class="nc">MissingLocalUser</span><span class="p">(</span><span class="n">SyncError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">uri</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">uri</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MissingBinary"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.MissingBinary">[docs]</a><span class="k">class</span> <span class="nc">MissingBinary</span><span class="p">(</span><span class="n">SyncError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">binary</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">binary</span> <span class="o">=</span> <span class="n">binary</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">binary</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Syncer"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.Syncer">[docs]</a><span class="k">class</span> <span class="nc">Syncer</span><span class="p">:</span>
+
+    <span class="n">forcable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">supported_uris</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">supported_protocols</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">supported_exts</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="c1"># plugin system uses this.</span>
+    <span class="n">disabled</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span>
+        <span class="p">{</span><span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;opts&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;usersync&#39;</span><span class="p">:</span> <span class="s1">&#39;bool&#39;</span><span class="p">},</span>
+        <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;syncer&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">default_verbosity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">usersync</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="n">default_verbosity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">usersync</span> <span class="o">=</span> <span class="n">usersync</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">basedir</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_uri</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">gid</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split_users</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span> <span class="o">=</span> <span class="n">opts</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Syncer.parse_uri"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.Syncer.parse_uri">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse_uri</span><span class="p">(</span><span class="n">uri</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the real URI with any protocol prefix stripped.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">uri</span></div>
+
+<div class="viewcode-block" id="Syncer.is_usable_on_filepath"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.Syncer.is_usable_on_filepath">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">is_usable_on_filepath</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="Syncer.split_users"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.Syncer.split_users">[docs]</a>    <span class="k">def</span> <span class="nf">split_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_uri</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param raw_uri: string uri to split users from; harring::ferringb:pass</span>
+<span class="sd">          for example is local user &#39;harring&#39;, remote &#39;ferringb&#39;,</span>
+<span class="sd">          password &#39;pass&#39;</span>
+<span class="sd">        :return: (local user, remote user, remote pass), defaults to the</span>
+<span class="sd">            current process&#39;s uid if no local user specified</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">uri</span> <span class="o">=</span> <span class="n">raw_uri</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;::&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">usersync</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="p">):</span>
+                    <span class="n">stat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="p">)</span>
+                    <span class="n">uid</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_uid</span>
+                    <span class="n">gid</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_gid</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">uid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_uid</span>
+                    <span class="n">gid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_gid</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">uid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">uid</span>
+                <span class="n">gid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">gid</span>
+
+            <span class="k">return</span> <span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="p">,</span> <span class="n">raw_uri</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">uri</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;@&quot;</span><span class="p">):</span>
+                <span class="n">uri</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">uri</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="s1">&#39;/&#39;</span> <span class="ow">in</span> <span class="n">uri</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">or</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">uri</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">proto</span> <span class="o">=</span> <span class="n">uri</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">proto</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">proto</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+                <span class="n">uri</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">proto</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">uri</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">proto</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">//</span><span class="si">{</span><span class="n">uri</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="k">return</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">uri</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">pw_uid</span><span class="p">,</span> <span class="n">os_data</span><span class="o">.</span><span class="n">gid</span><span class="p">,</span> <span class="n">uri</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">MissingLocalUser</span><span class="p">(</span><span class="n">raw_uri</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Syncer.sync"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.Syncer.sync">[docs]</a>    <span class="k">def</span> <span class="nf">sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">disabled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">kwds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">forcable</span> <span class="ow">and</span> <span class="n">force</span><span class="p">:</span>
+            <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;force&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">verbosity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">verbosity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span>
+        <span class="c1"># output_fd is harded coded as stdout atm.</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sync</span><span class="p">(</span><span class="n">verbosity</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbosity</span><span class="p">,</span> <span class="n">output_fd</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_sync&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2"> syncer: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="si">}</span><span class="s2">&quot;</span>
+
+<div class="viewcode-block" id="Syncer.supports_uri"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.Syncer.supports_uri">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">supports_uri</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">level</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">supported_uris</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">level</span>
+        <span class="k">if</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">supported_protocols</span><span class="p">)</span> <span class="ow">and</span> <span class="n">uri</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">supported_exts</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="mi">0</span></div></div>
+
+
+<div class="viewcode-block" id="ExternalSyncer"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.ExternalSyncer">[docs]</a><span class="k">class</span> <span class="nc">ExternalSyncer</span><span class="p">(</span><span class="n">Syncer</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;Base class for syncers that spawn a binary to do the the actual work.&quot;&quot;&quot;</span>
+
+    <span class="n">binary</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># external env settings passed through to syncing commands</span>
+    <span class="n">env_whitelist</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;SSH_AUTH_SOCK&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_whitelist</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;binary_path&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">binary_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">require_binary</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">binary</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ExternalSyncer.require_binary"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.ExternalSyncer.require_binary">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">require_binary</span><span class="p">(</span><span class="n">bin_name</span><span class="p">,</span> <span class="n">fatal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">process</span><span class="o">.</span><span class="n">find_binary</span><span class="p">(</span><span class="n">bin_name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">process</span><span class="o">.</span><span class="n">CommandNotFound</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fatal</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MissingBinary</span><span class="p">(</span><span class="n">bin_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_plugin_disabled_check</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="n">disabled</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;_disabled&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">disabled</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s1">&#39;binary_path&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">binary</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">disabled</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_disabled</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">disabled</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_disabled</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="bp">cls</span><span class="o">.</span><span class="n">require_binary</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span> <span class="n">fatal</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">disabled</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_disabled</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">disabled</span>
+
+    <span class="k">def</span> <span class="nf">_spawn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">pipes</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">process</span><span class="o">.</span><span class="n">spawn</span><span class="o">.</span><span class="n">spawn</span><span class="p">(</span>
+            <span class="n">command</span><span class="p">,</span> <span class="n">fd_pipes</span><span class="o">=</span><span class="n">pipes</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">gid</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_rewrite_uri_from_stat</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="n">uri</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;//&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">uri</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">//</span><span class="si">%s</span><span class="s2">::</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                <span class="n">chunks</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwuid</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">st_uid</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">chunks</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="c1"># invalid uid, reuse the uri</span>
+            <span class="k">return</span> <span class="n">uri</span></div>
+
+
+<div class="viewcode-block" id="VcsSyncer"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.VcsSyncer">[docs]</a><span class="k">class</span> <span class="nc">VcsSyncer</span><span class="p">(</span><span class="n">ExternalSyncer</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbosity</span><span class="p">,</span> <span class="n">output_fd</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initial_pull</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span>
+            <span class="n">chdir</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">PathError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISDIR</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mode</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">PathError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basedir</span><span class="p">,</span> <span class="s2">&quot;isn&#39;t a directory&quot;</span><span class="p">)</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_existing</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span>
+            <span class="n">chdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">basedir</span>
+
+        <span class="c1"># we assume syncers support -v and -q for verbose and quiet output</span>
+        <span class="k">if</span> <span class="n">verbosity</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">command</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-q&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">command</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="s1">&#39;v&#39;</span> <span class="o">*</span> <span class="n">verbosity</span><span class="p">)</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_spawn</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">pipes</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="n">output_fd</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="n">output_fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+                          <span class="n">cwd</span><span class="o">=</span><span class="n">chdir</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span> <span class="o">==</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">_initial_pull</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_initial_pull&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_existing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_update_existing&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericSyncer"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.GenericSyncer">[docs]</a><span class="nd">@configurable</span><span class="p">(</span>
+    <span class="p">{</span><span class="s1">&#39;basedir&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;uri&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;usersync&#39;</span><span class="p">:</span> <span class="s1">&#39;bool&#39;</span><span class="p">,</span> <span class="s1">&#39;opts&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">},</span>
+    <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;syncer&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">GenericSyncer</span><span class="p">(</span><span class="n">basedir</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Syncer using the plugin system to find a syncer based on uri.&quot;&quot;&quot;</span>
+    <span class="n">plugins</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">plug</span><span class="o">.</span><span class="n">supports_uri</span><span class="p">(</span><span class="n">uri</span><span class="p">),</span> <span class="n">plug</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">plug</span> <span class="ow">in</span> <span class="n">plugin</span><span class="o">.</span><span class="n">get_plugins</span><span class="p">(</span><span class="s1">&#39;syncer&#39;</span><span class="p">))</span>
+    <span class="n">plugins</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">plugins</span> <span class="ow">or</span> <span class="n">plugins</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">UriError</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="s2">&quot;no known syncer support&quot;</span><span class="p">)</span>
+    <span class="c1"># XXX this is random if there is a tie. Should we raise an exception?</span>
+    <span class="k">return</span> <span class="n">plugins</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">](</span><span class="n">basedir</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DisabledSyncer"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.DisabledSyncer">[docs]</a><span class="k">class</span> <span class="nc">DisabledSyncer</span><span class="p">(</span><span class="n">Syncer</span><span class="p">):</span>
+
+    <span class="n">disabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AutodetectSyncer"><a class="viewcode-back" href="../../../api/pkgcore.sync.base.html#pkgcore.sync.base.AutodetectSyncer">[docs]</a><span class="nd">@configurable</span><span class="p">({</span><span class="s1">&#39;basedir&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;usersync&#39;</span><span class="p">:</span> <span class="s1">&#39;bool&#39;</span><span class="p">},</span> <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;syncer&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">AutodetectSyncer</span><span class="p">(</span><span class="n">basedir</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">plug</span> <span class="ow">in</span> <span class="n">plugin</span><span class="o">.</span><span class="n">get_plugins</span><span class="p">(</span><span class="s1">&#39;syncer&#39;</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">plug</span><span class="o">.</span><span class="n">is_usable_on_filepath</span><span class="p">(</span><span class="n">basedir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">plug</span><span class="p">(</span><span class="n">basedir</span><span class="p">,</span> <span class="o">*</span><span class="n">ret</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">DisabledSyncer</span><span class="p">(</span><span class="n">basedir</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.base</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcore.pkgsets.installed module
+================================
+
+.. automodule:: pkgcore.pkgsets.installed
+   :members:
+   :undoc-members:
+   :show-inheritance:

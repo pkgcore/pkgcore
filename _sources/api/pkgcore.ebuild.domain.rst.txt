@@ -1,0 +1,7 @@
+pkgcore.ebuild.domain module
+============================
+
+.. automodule:: pkgcore.ebuild.domain
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pkgcore.util.packages module
+============================
+
+.. automodule:: pkgcore.util.packages
+   :members:
+   :undoc-members:
+   :show-inheritance:

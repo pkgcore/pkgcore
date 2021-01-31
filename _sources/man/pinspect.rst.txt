@@ -1,0 +1,8 @@
+==========================================
+pinspect - repository inspection interface
+==========================================
+
+.. include:: pinspect/_synopsis.rst
+.. include:: pinspect/_description.rst
+.. include:: pinspect/_options.rst
+.. include:: pinspect/_subcommands.rst

@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ebuild EAPI &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Feature (FEATURES) categories" href="feature-breakdown.html" />
+    <link rel="prev" title="Checking the source out" href="developing.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="feature-breakdown.html" title="Feature (FEATURES) categories"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="developing.html" title="Checking the source out"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Ebuild EAPI</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ebuild-eapi">
+<h1>Ebuild EAPI<a class="headerlink" href="#ebuild-eapi" title="Permalink to this headline">¶</a></h1>
+<p>This should hold the proposed (with a chance of making it in), accepted, and
+implemented changes for ebuild format version 1.  A version 0 doc would also
+be a good idea ( no one has volunteered thus far ).</p>
+<div class="section" id="version-0-or-undefined-eapi-portage-2-0-52">
+<h2>Version 0 (or undefined eapi, &lt;=portage-2.0.52*)]<a class="headerlink" href="#version-0-or-undefined-eapi-portage-2-0-52" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="version-1">
+<h2>Version 1<a class="headerlink" href="#version-1" title="Permalink to this headline">¶</a></h2>
+<p>This should be fairly easy stuff to implement for the package manager,
+so this can actually happen in a fairly short timeframe.</p>
+<ul class="simple">
+<li><p>EAPI = 1 required</p></li>
+<li><p>src_configure phase is run before src_compile. If the ebuild or
+eclass does not override there is a default that does nothing.
+Things like econf should be run in this phase, allowing rerunning
+the build phase without rerunning configure during development.</p></li>
+<li><p>Make the default implementation of phases/functions available under
+a second name (possibly using EXPORT_FUNCTIONS) so you can call
+base_src_compile from your src_compile.</p></li>
+<li><p>default src_install. Exactly what goes in needs to be figured out,
+see bug 33544.</p></li>
+<li><p>RDEPEND=&quot;${RDEPEND-${DEPEND}}&quot; is no longer set by portage, same for eclass.</p></li>
+<li><p>(proposed) BDEPEND metadata addition, maybe. These are the
+dependencies that are run on the build system (toolchain, autotools
+etc). Useful for ROOT != &quot;/&quot;. Probably hard to get right for ebuild
+devs who always have ROOT=&quot;/&quot;.</p></li>
+<li><p>default IUSE support, IUSE=&quot;+gcj&quot; == USE=&quot;gcj&quot; unless the user disables it.</p></li>
+<li><p>GLEP 37 (&quot;Virtuals Deprecation&quot;), maybe. The glep is &quot;deferred&quot;. How
+much of this actually needs to be done? package.preferred?</p></li>
+<li><p>test depend, test src_uri (or represent test in the use namespace
+somehow). Possibilities: TEST_{SRC_URI,{B,R,}DEPEND}, test &quot;USE&quot;
+flag getting set by FEATURES=test.</p></li>
+<li><p>drop AA (unused).</p></li>
+<li><p>represent in metadata if the pkg needs pkg_preinst to have access to
+${D} or not. If this is not required a binpkg can be unpacked
+straight to root after pkg_preinst. If pkg_preinst needs access to
+${D} the binpkg is unpacked there as usual.</p></li>
+<li><p>use groups in some form (kill use_expand off).</p></li>
+<li><p>ebuilds can no longer use PORTDIR and ECLASSDIR(s); they break any
+potential remote, and are dodgey as all hell for multiple repos
+combined together.</p></li>
+<li><p>disallow direct access to /var/db/pkg</p></li>
+<li><p>deprecate ebuild access/awareness of PORTAGE_* vars; perl ebuilds
+security fix for PORTAGE_TMPDIR (rpath stripping in a way) might
+make this harder.</p></li>
+<li><p>use/slot deps, optionally repository deps.</p></li>
+<li><p>hard one to slide in, but change versioning rules; no longer allow
+1.006, require it to be 1.6</p></li>
+<li><p>pkg_setup must be sandboxable.</p></li>
+<li><p>allowed USE conditional configurations; new metadata key, extend
+depset syntax to include xor, represent allowed configurations.</p></li>
+<li><p>true incremental stacking support for metadata keys between
+eclasses/ebuilds; RESTRICT=-strip for example in the ebuild.</p></li>
+<li><p>drop -* from keywords; it's package.masking, use that instead (-arch
+is acceptable although daft)</p></li>
+<li><p>blockers aren't allowed in PDEPEND (the result of that is serious
+insanity for resolving)</p></li>
+</ul>
+</div>
+<div class="section" id="id1">
+<h2>Version 1+<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>Not sure about these. Maybe some can go into version 1, maybe they
+will happen later.</p>
+<ul class="simple">
+<li><p>Elibs</p></li>
+<li><p>some way to 'bind' a rdep/pdep so that it's explicit &quot;I'm locked
+against the version I was compiled against&quot;</p></li>
+<li><p>some form of optional metadata specifying that a binpkg works on
+multiple arches, iow it doesn't rely on compiled components.</p></li>
+<li><p>A way to move svn/cvs/etc source fetching over to the package
+manager. The current way of doing this through an eclass is a bit
+ugly since it requires write access to the distdir. Moving it to the
+package manager fixes that and allows integrating it with things
+like parallel fetch. This needs to be fleshed out.</p></li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Ebuild EAPI</a><ul>
+<li><a class="reference internal" href="#version-0-or-undefined-eapi-portage-2-0-52">Version 0 (or undefined eapi, &lt;=portage-2.0.52*)]</a></li>
+<li><a class="reference internal" href="#version-1">Version 1</a></li>
+<li><a class="reference internal" href="#id1">Version 1+</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="developing.html"
+                        title="previous chapter">Checking the source out</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="feature-breakdown.html"
+                        title="next chapter">Feature (FEATURES) categories</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="feature-breakdown.html" title="Feature (FEATURES) categories"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="developing.html" title="Checking the source out"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Ebuild EAPI</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

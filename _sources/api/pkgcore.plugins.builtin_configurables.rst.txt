@@ -1,0 +1,7 @@
+pkgcore.plugins.builtin\_configurables module
+=============================================
+
+.. automodule:: pkgcore.plugins.builtin_configurables
+   :members:
+   :undoc-members:
+   :show-inheritance:

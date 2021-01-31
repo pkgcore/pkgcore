@@ -1,0 +1,7 @@
+pkgcore.ebuild.resolver module
+==============================
+
+.. automodule:: pkgcore.ebuild.resolver
+   :members:
+   :undoc-members:
+   :show-inheritance:

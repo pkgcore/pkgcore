@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pinspect profile [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-r REPO] {parent,eapi,status,deprecated,provided,system,use_expand,iuse_effective,masks,unmasks,bashrcs,keywords,accept_keywords,use,masked_use,stable_masked_use,forced_use,stable_forced_use,defaults,arch} ...

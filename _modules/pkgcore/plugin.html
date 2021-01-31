@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.plugin &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.plugin</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.plugin</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Plugin system, heavily inspired by twisted&#39;s plugin system.&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;initialize_cache&quot;</span><span class="p">,</span> <span class="s2">&quot;get_plugins&quot;</span><span class="p">,</span> <span class="s2">&quot;get_plugin&quot;</span><span class="p">)</span>
+
+<span class="c1"># Implementation note: we have to be pretty careful about error</span>
+<span class="c1"># handling in here since some core functionality in pkgcore uses this</span>
+<span class="c1"># code. Since we can function without a cache we will generally be</span>
+<span class="c1"># noisy but keep working if something is wrong with the cache.</span>
+<span class="c1">#</span>
+<span class="c1"># Currently we explode if something is wrong with a plugin package</span>
+<span class="c1"># dir, but not if something prevents importing a module in it.</span>
+<span class="c1"># Rationale is the former should be a PYTHONPATH issue while the</span>
+<span class="c1"># latter an installed plugin issue. May have to change this if it</span>
+<span class="c1"># causes problems.</span>
+
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">importlib</span> <span class="kn">import</span> <span class="n">import_module</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">mappings</span><span class="p">,</span> <span class="n">modules</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">IGNORED_EXCEPTIONS</span>
+<span class="kn">from</span> <span class="nn">snakeoil.fileutils</span> <span class="kn">import</span> <span class="n">AtomicWriteFile</span><span class="p">,</span> <span class="n">readlines_ascii</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ensure_dirs</span><span class="p">,</span> <span class="n">listdir_files</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">,</span>
+                              <span class="n">unlink_if_exists</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">const</span><span class="p">,</span> <span class="n">os_data</span>
+<span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="n">logger</span>
+
+<span class="n">_plugin_data</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span>
+    <span class="s2">&quot;_plugin_data&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="s2">&quot;priority&quot;</span><span class="p">,</span> <span class="s2">&quot;source&quot;</span><span class="p">,</span> <span class="s2">&quot;target&quot;</span><span class="p">])</span>
+
+<span class="n">PLUGIN_ATTR</span> <span class="o">=</span> <span class="s1">&#39;pkgcore_plugins&#39;</span>
+
+<span class="n">CACHE_HEADER</span> <span class="o">=</span> <span class="s1">&#39;pkgcore plugin cache v3&#39;</span>
+<span class="n">CACHE_FILENAME</span> <span class="o">=</span> <span class="s1">&#39;plugincache&#39;</span>
+
+
+<span class="k">def</span> <span class="nf">_clean_old_caches</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;plugincache2&#39;</span><span class="p">,):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">unlink_if_exists</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;attempting to clean old plugin cache </span><span class="si">%r</span><span class="s2"> failed with </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">e</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">sort_plugs</span><span class="p">(</span><span class="n">plugs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">plugs</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">priority</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">source</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_process_plugins</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">filter_disabled</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">plug</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">:</span>
+        <span class="n">plug</span> <span class="o">=</span> <span class="n">_process_plugin</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">plug</span><span class="p">,</span> <span class="n">filter_disabled</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">plug</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">plug</span>
+
+
+<span class="k">def</span> <span class="nf">_process_plugin</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">plug</span><span class="p">,</span> <span class="n">filter_disabled</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plug</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">plug</span> <span class="o">=</span> <span class="n">modules</span><span class="o">.</span><span class="n">load_any</span><span class="p">(</span><span class="n">plug</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plug</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">modules</span><span class="o">.</span><span class="n">load_any</span><span class="p">(</span><span class="n">plug</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+        <span class="n">plugs</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">PLUGIN_ATTR</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">plugs</span> <span class="o">=</span> <span class="n">plugs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">plug</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">plugs</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">plug</span><span class="o">.</span><span class="n">target</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                <span class="s2">&quot;plugin cache for </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2"> is somehow wrong; no item at position </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">package</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">plug</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">plug</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">plug</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">plug</span> <span class="o">=</span> <span class="n">plugs</span><span class="p">[</span><span class="n">plug</span><span class="o">.</span><span class="n">target</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+            <span class="s2">&quot;package </span><span class="si">%s</span><span class="s2">, plug </span><span class="si">%s</span><span class="s2">; non int, non string.  wtf?&quot;</span><span class="p">,</span>
+            <span class="n">package</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">plug</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">filter_disabled</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plug</span><span class="p">,</span> <span class="s1">&#39;disabled&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;plugin </span><span class="si">%s</span><span class="s2"> is disabled, skipping&quot;</span><span class="p">,</span> <span class="n">plug</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plug</span><span class="p">,</span> <span class="s1">&#39;_plugin_disabled_check&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">f</span><span class="p">():</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;plugin </span><span class="si">%s</span><span class="s2"> is disabled, skipping&quot;</span><span class="p">,</span> <span class="n">plug</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">plug</span>
+
+<span class="k">def</span> <span class="nf">_read_cache_file</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read an existing cache file.&quot;&quot;&quot;</span>
+    <span class="n">stored_cache</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">cache_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">readlines_ascii</span><span class="p">(</span><span class="n">cache_path</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cache_data</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cache_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">CACHE_HEADER</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;plugin cache has a wrong header: </span><span class="si">%r</span><span class="s2">, regenerating&quot;</span><span class="p">,</span> <span class="n">cache_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">cache_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cache_data</span> <span class="o">=</span> <span class="n">cache_data</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cache_data</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">cache_data</span><span class="p">:</span>
+            <span class="n">module</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">entries</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">mtime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mtime</span><span class="p">)</span>
+            <span class="c1"># Needed because &#39;&#39;.split(&#39;:&#39;) == [&#39;&#39;], not []</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">entries</span><span class="p">:</span>
+                <span class="n">entries</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">entries</span> <span class="o">=</span> <span class="n">entries</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="s1">&#39;,&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span> <span class="o">%</span> <span class="mi">3</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="s2">&quot;failed reading cache </span><span class="si">%s</span><span class="s2">; entries field isn&#39;t &quot;</span>
+                        <span class="s2">&quot;divisable by 3: </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">,</span> <span class="n">entries</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">entries</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">entries</span><span class="p">)</span>
+                <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">val</span><span class="o">.</span><span class="n">isdigit</span><span class="p">():</span>
+                        <span class="n">val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">val</span>
+                <span class="n">entries</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="n">_plugin_data</span><span class="p">(</span>
+                        <span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">priority</span><span class="p">),</span>
+                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">package</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">f</span><span class="p">(</span><span class="n">target</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">entries</span><span class="p">,</span> <span class="n">entries</span><span class="p">,</span> <span class="n">entries</span><span class="p">))</span>
+            <span class="n">stored_cache</span><span class="p">[(</span><span class="n">module</span><span class="p">,</span> <span class="n">mtime</span><span class="p">)]</span> <span class="o">=</span> <span class="n">entries</span>
+    <span class="k">except</span> <span class="n">IGNORED_EXCEPTIONS</span><span class="p">:</span>
+        <span class="k">raise</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;failed reading cache; exception </span><span class="si">%s</span><span class="s2">, regenerating.&quot;</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+        <span class="n">stored_cache</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">stored_cache</span>
+
+<span class="k">def</span> <span class="nf">_write_cache_file</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">uid</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">gid</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Write a new cache file.&quot;&quot;&quot;</span>
+    <span class="n">cachefile</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cachefile</span> <span class="o">=</span> <span class="n">AtomicWriteFile</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">,</span> <span class="n">binary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">perms</span><span class="o">=</span><span class="mo">0o664</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">gid</span><span class="p">)</span>
+            <span class="n">cachefile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">CACHE_HEADER</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">mtime</span><span class="p">),</span> <span class="n">plugs</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">)):</span>
+                <span class="n">plugs</span> <span class="o">=</span> <span class="n">sort_plugs</span><span class="p">(</span><span class="n">plugs</span><span class="p">)</span>
+                <span class="n">plugs</span> <span class="o">=</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">plug</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">plug</span><span class="o">.</span><span class="n">priority</span><span class="si">}</span><span class="s1">,</span><span class="si">{</span><span class="n">plug</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">plug</span> <span class="ow">in</span> <span class="n">plugs</span><span class="p">)</span>
+                <span class="n">cachefile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="n">mtime</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="n">plugs</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">cachefile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># We cannot write a new cache. We should log this</span>
+            <span class="c1"># since it will have a performance impact.</span>
+
+            <span class="c1"># Use error, not exception for this one: the traceback</span>
+            <span class="c1"># is not necessary and too alarming.</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s1">&#39;Cannot write cache for </span><span class="si">%s</span><span class="s1">: </span><span class="si">%s</span><span class="s1">. &#39;</span>
+                         <span class="s1">&#39;Try running pplugincache.&#39;</span><span class="p">,</span>
+                         <span class="n">path</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cachefile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cachefile</span><span class="o">.</span><span class="n">discard</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="initialize_cache"><a class="viewcode-back" href="../../api/pkgcore.plugin.html#pkgcore.plugin.initialize_cache">[docs]</a><span class="k">def</span> <span class="nf">initialize_cache</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Determine available plugins in a package.</span>
+
+<span class="sd">    Writes cache files if they are stale and writing is possible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">modpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">package</span><span class="o">.</span><span class="vm">__file__</span><span class="p">)</span>
+    <span class="n">pkgpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">modpath</span><span class="p">))</span>
+    <span class="n">uid</span> <span class="o">=</span> <span class="n">gid</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="n">mode</span> <span class="o">=</span> <span class="mo">0o755</span>
+
+    <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+            <span class="c1"># use user-generated caches if they exist, fallback to module cache</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">USER_CACHE_PATH</span><span class="p">,</span> <span class="n">CACHE_FILENAME</span><span class="p">)):</span>
+                <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">USER_CACHE_PATH</span>
+            <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">SYSTEM_CACHE_PATH</span><span class="p">,</span> <span class="n">CACHE_FILENAME</span><span class="p">)):</span>
+                <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">SYSTEM_CACHE_PATH</span>
+                <span class="n">uid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_uid</span>
+                <span class="n">gid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_gid</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="mo">0o775</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">modpath</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># generate module cache when running from git repo, otherwise create system/user cache</span>
+            <span class="k">if</span> <span class="n">pkgpath</span> <span class="o">==</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">modpath</span>
+            <span class="k">elif</span> <span class="n">os_data</span><span class="o">.</span><span class="n">uid</span> <span class="ow">in</span> <span class="p">(</span><span class="n">os_data</span><span class="o">.</span><span class="n">root_uid</span><span class="p">,</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_uid</span><span class="p">):</span>
+                <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">SYSTEM_CACHE_PATH</span>
+                <span class="n">uid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_uid</span>
+                <span class="n">gid</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_gid</span>
+                <span class="n">mode</span> <span class="o">=</span> <span class="mo">0o775</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">const</span><span class="o">.</span><span class="n">USER_CACHE_PATH</span>
+
+    <span class="c1"># put pkgcore consumer plugins (e.g. pkgcheck) inside pkgcore cache dir</span>
+    <span class="k">if</span> <span class="n">cache_dir</span> <span class="ow">in</span> <span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">SYSTEM_CACHE_PATH</span><span class="p">,</span> <span class="n">const</span><span class="o">.</span><span class="n">USER_CACHE_PATH</span><span class="p">):</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="n">package</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">chunks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">):</span>
+            <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">chunks</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># package plugin cache, see above.</span>
+    <span class="n">package_cache</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+    <span class="n">stored_cache_name</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">CACHE_FILENAME</span><span class="p">)</span>
+    <span class="n">stored_cache</span> <span class="o">=</span> <span class="n">_read_cache_file</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">stored_cache_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">force</span><span class="p">:</span>
+        <span class="n">_clean_old_caches</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
+
+    <span class="c1"># Directory cache, mapping modulename to</span>
+    <span class="c1"># (mtime, set([keys]))</span>
+    <span class="n">modlist</span> <span class="o">=</span> <span class="n">listdir_files</span><span class="p">(</span><span class="n">modpath</span><span class="p">)</span>
+    <span class="n">modlist</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">modlist</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;.py&#39;</span>
+                  <span class="ow">and</span> <span class="n">x</span> <span class="o">!=</span> <span class="s1">&#39;__init__.py&#39;</span><span class="p">)</span>
+
+    <span class="n">cache_stale</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="c1"># Hunt for modules.</span>
+    <span class="n">actual_cache</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+    <span class="n">mtime_cache</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">defaultdictkey</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">x</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">modfullname</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">modlist</span><span class="p">):</span>
+        <span class="n">modname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">modfullname</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># It is an actual module. Check if its cache entry is valid.</span>
+        <span class="n">mtime</span> <span class="o">=</span> <span class="n">mtime_cache</span><span class="p">[</span><span class="n">pjoin</span><span class="p">(</span><span class="n">modpath</span><span class="p">,</span> <span class="n">modfullname</span><span class="p">)]</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">stored_cache</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="n">modname</span><span class="p">,</span> <span class="n">mtime</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">vals</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
+            <span class="c1"># Cache entry is stale.</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s1">&#39;stale because of </span><span class="si">%s</span><span class="s1">: actual </span><span class="si">%s</span><span class="s1"> != stored </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span>
+                <span class="n">modname</span><span class="p">,</span> <span class="n">mtime</span><span class="p">,</span> <span class="n">stored_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">modname</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">()))[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">cache_stale</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">entries</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">qualname</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">package</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">modname</span><span class="p">))</span>
+            <span class="n">module</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="n">qualname</span><span class="p">)</span>
+            <span class="n">registry</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">PLUGIN_ATTR</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">plugs</span> <span class="ow">in</span> <span class="n">registry</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">plug_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">plugs</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">plug_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="n">plug</span> <span class="o">=</span> <span class="n">_process_plugin</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">_plugin_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">qualname</span><span class="p">,</span> <span class="n">plug_name</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">plug</span> <span class="o">=</span> <span class="n">plug_name</span>
+                    <span class="k">if</span> <span class="n">plug</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="c1"># import failure, ignore it, error already logged</span>
+                        <span class="k">continue</span>
+                    <span class="n">priority</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">plug</span><span class="p">,</span> <span class="s1">&#39;priority&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">priority</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="s2">&quot;ignoring plugin </span><span class="si">%s</span><span class="s2">: has a non integer priority: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                            <span class="n">plug</span><span class="p">,</span> <span class="n">priority</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="k">if</span> <span class="n">plug_name</span> <span class="ow">is</span> <span class="n">plug</span><span class="p">:</span>
+                        <span class="c1"># this means it&#39;s an object, rather than a string; store</span>
+                        <span class="c1"># the offset.</span>
+                        <span class="n">plug_name</span> <span class="o">=</span> <span class="n">idx</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">_plugin_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">qualname</span><span class="p">,</span> <span class="n">plug_name</span><span class="p">)</span>
+                    <span class="n">vals</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">actual_cache</span><span class="p">[(</span><span class="n">modname</span><span class="p">,</span> <span class="n">mtime</span><span class="p">)]</span> <span class="o">=</span> <span class="n">vals</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">:</span>
+            <span class="n">package_cache</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">force</span> <span class="ow">or</span> <span class="nb">set</span><span class="p">(</span><span class="n">stored_cache</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="n">actual_cache</span><span class="p">):</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;updating cache </span><span class="si">%r</span><span class="s1"> for new plugins&#39;</span><span class="p">,</span> <span class="n">stored_cache_name</span><span class="p">)</span>
+        <span class="n">ensure_dirs</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">gid</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+        <span class="n">_write_cache_file</span><span class="p">(</span><span class="n">stored_cache_name</span><span class="p">,</span> <span class="n">actual_cache</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="n">uid</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">gid</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">sort_plugs</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">package_cache</span><span class="o">.</span><span class="n">items</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="get_plugins"><a class="viewcode-back" href="../../api/pkgcore.plugin.html#pkgcore.plugin.get_plugins">[docs]</a><span class="k">def</span> <span class="nf">get_plugins</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return all enabled plugins matching &quot;key&quot;.</span>
+
+<span class="sd">    Plugins with a C{disabled} attribute evaluating to C{True} are skipped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">package</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">package</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.plugins&#39;</span><span class="p">,</span> <span class="vm">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">_global_cache</span><span class="p">[</span><span class="n">package</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">plug</span> <span class="ow">in</span> <span class="n">_process_plugins</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">()),</span> <span class="n">filter_disabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">plug</span></div>
+
+
+<div class="viewcode-block" id="get_plugin"><a class="viewcode-back" href="../../api/pkgcore.plugin.html#pkgcore.plugin.get_plugin">[docs]</a><span class="k">def</span> <span class="nf">get_plugin</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">package</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get a single plugin matching this key.</span>
+
+<span class="sd">    This assumes all plugins for this key have a priority attribute.</span>
+<span class="sd">    If any of them do not the AttributeError is not stopped.</span>
+
+<span class="sd">    :return: highest-priority plugin or None if no plugin available.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">package</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">package</span> <span class="o">=</span> <span class="n">import_module</span><span class="p">(</span><span class="s1">&#39;.plugins&#39;</span><span class="p">,</span> <span class="vm">__name__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="n">cache</span> <span class="o">=</span> <span class="n">_global_cache</span><span class="p">[</span><span class="n">package</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">plug</span> <span class="ow">in</span> <span class="n">_process_plugins</span><span class="p">(</span><span class="n">package</span><span class="p">,</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">()),</span> <span class="n">filter_disabled</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="c1"># first returned will be the highest.</span>
+        <span class="k">return</span> <span class="n">plug</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<span class="k">def</span> <span class="nf">extend_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simpler version of the stdlib&#39;s :obj:`pkgutil.extend_path`.</span>
+
+<span class="sd">    It does not support &quot;.pkg&quot; files, and it does not require an</span>
+<span class="sd">    __init__.py (this is important: we want only one thing (pkgcore</span>
+<span class="sd">    itself) to install the __init__.py to avoid name clashes).</span>
+
+<span class="sd">    It also modifies the &quot;path&quot; list in place (and returns C{None})</span>
+<span class="sd">    instead of copying it and returning the modified copy.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="c1"># This could happen e.g. when this is called from inside a</span>
+        <span class="c1"># frozen package.  Return the path unchanged in that case.</span>
+        <span class="k">return</span>
+    <span class="c1"># Reconstitute as relative path.</span>
+    <span class="n">pname</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="o">*</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">entry</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">subdir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">pname</span><span class="p">)</span>
+        <span class="c1"># XXX This may still add duplicate entries to path on</span>
+        <span class="c1"># case-insensitive filesystems</span>
+        <span class="k">if</span> <span class="n">subdir</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+            <span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">subdir</span><span class="p">)</span>
+
+
+<span class="c1"># Global plugin cache. Mapping of package to package cache, which is a</span>
+<span class="c1"># mapping of plugin key to a list of module names.</span>
+<span class="n">_global_cache</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">defaultdictkey</span><span class="p">(</span><span class="n">initialize_cache</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.plugin</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

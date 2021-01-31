@@ -1,0 +1,7 @@
+pkgcore.sync.http module
+========================
+
+.. automodule:: pkgcore.sync.http
+   :members:
+   :undoc-members:
+   :show-inheritance:

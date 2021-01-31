@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tackling domain &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Testing" href="tests.html" />
+    <link rel="prev" title="Pkgcore/Portage differences" href="portage-differences.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tests.html" title="Testing"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="portage-differences.html" title="Pkgcore/Portage differences"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Tackling domain</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tackling-domain">
+<h1>Tackling domain<a class="headerlink" href="#tackling-domain" title="Permalink to this headline">¶</a></h1>
+<p>tag a 'x' in front of stuff that's been implemented</p>
+<p>unhandled (eg, figure these out) vars/features</p>
+<ul class="simple">
+<li><p>(user)?sandbox</p></li>
+<li><p>digest</p></li>
+<li><p>cvs (this option is a hack)</p></li>
+<li><p>fixpackages , which probably should be a sync thing (would need to
+bind the vdb and binpkg repo to it though)</p></li>
+<li><p>keep(temp|work), easy to implement, but where to define it?</p></li>
+<li><p>PORT_LOGDIR</p></li>
+<li><p>env overrides of use...</p></li>
+</ul>
+<p>vdb wrapper/vdb repo instantiation (either domain created wrapper, or
+required in the vdb repo section def)</p>
+<ul class="simple">
+<li><p>CONFIG_PROTECT*</p></li>
+<li><p>collision-protect</p></li>
+<li><p>no(doc|man|info|clean) (wrapper/mangler)</p></li>
+<li><p>suidctl</p></li>
+<li><p>nostrip. in effect, strip defaults to on; wrappers if after
+occasionally on, occasionally off.</p></li>
+<li><p>sfperms</p></li>
+</ul>
+<p>build section (vars)</p>
+<ul class="simple">
+<li><p>C(HOST|TARGET), (LD*|C*)FLAGS?</p></li>
+<li><p>(RESUME|FETCH)COMMAND are fetcher things, define it there.</p></li>
+<li><p>MAKEOPTS</p></li>
+<li><p>PORTAGE_NICENESS (imo)</p></li>
+<li><p>TMPDIR ?  or domain it?</p></li>
+</ul>
+<p>gpg is bound to repo, class type specifically. strict/severe are
+likely settings of it. the same applies for profiles.</p>
+<p>distlocks is a fetcher thing, specifically (probably) class type.</p>
+<p>buildpkgs is binpkg + filters.</p>
+<p>package.provided is used to generate a seperate vdb, a null vdb that
+returns those packages as installed.</p>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="portage-differences.html"
+                        title="previous chapter">Pkgcore/Portage differences</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tests.html"
+                        title="next chapter">Testing</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tests.html" title="Testing"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="portage-differences.html" title="Pkgcore/Portage differences"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Tackling domain</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

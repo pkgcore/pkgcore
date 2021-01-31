@@ -1,0 +1,258 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.resolver.choice_point &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.choice_point</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.resolver.choice_point</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;choice_point&quot;</span><span class="p">,)</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iter_stable_unique</span>
+
+
+<div class="viewcode-block" id="choice_point"><a class="viewcode-back" href="../../../api/pkgcore.resolver.choice_point.html#pkgcore.resolver.choice_point.choice_point">[docs]</a><span class="k">class</span> <span class="nc">choice_point</span><span class="p">:</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;__weakref__&quot;</span><span class="p">,</span> <span class="s2">&quot;atom&quot;</span><span class="p">,</span> <span class="s2">&quot;matches&quot;</span><span class="p">,</span> <span class="s2">&quot;matches_cur&quot;</span><span class="p">,</span> <span class="s2">&quot;solution_filters&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_prdeps&quot;</span><span class="p">,</span> <span class="s2">&quot;_rdeps&quot;</span><span class="p">,</span> <span class="s2">&quot;_deps&quot;</span><span class="p">,</span> <span class="s2">&quot;_bdeps&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">matches</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">matches</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">solution_filters</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="c1"># match solutions, remaining</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bdeps</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_deps</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rdeps</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prdeps</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return choice point state.</span>
+
+<span class="sd">        :return: A tuple consisting of the number of possible choices,</span>
+<span class="sd">            current matches&#39; repo, current package match, all possible</span>
+<span class="sd">            matches, cbuild build deps, chost build deps, runtime deps,</span>
+<span class="sd">            and post merge deps.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">solution_filters</span><span class="p">),</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bdeps</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_deps</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rdeps</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prdeps</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_filter_choices</span><span class="p">(</span><span class="n">cnf_reqs</span><span class="p">,</span> <span class="n">filterset</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">choices</span> <span class="ow">in</span> <span class="n">cnf_reqs</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">choices</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">filterset</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">l</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">yield</span> <span class="n">l</span>
+
+    <span class="k">def</span> <span class="nf">_internal_force_next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Force next pkg without triggering a reduce_atoms call.</span>
+
+<span class="sd">        :return: True if pkgs remain, False if no more remain</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reset_iters</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="choice_point.reduce_atoms"><a class="viewcode-back" href="../../../api/pkgcore.resolver.choice_point.html#pkgcore.resolver.choice_point.choice_point.reduce_atoms">[docs]</a>    <span class="k">def</span> <span class="nf">reduce_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Alter choice point atom set.</span>
+
+<span class="sd">        :param atom: set of package atoms</span>
+<span class="sd">        :type atom: set of :obj:`pkgcore.ebuild.atom.atom`</span>
+<span class="sd">        :return: True if no more pkgs remain or atoms were removed,</span>
+<span class="sd">            False if no atoms were removed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;no solutions remain&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="s2">&quot;__contains__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solution_filters</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solution_filters</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+
+        <span class="n">filterset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">solution_filters</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_internal_force_next</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="nb">round</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="nb">round</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="nb">round</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_internal_force_next</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+
+            <span class="k">for</span> <span class="n">depset_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_bdeps&quot;</span><span class="p">,</span> <span class="s2">&quot;_deps&quot;</span><span class="p">,</span> <span class="s2">&quot;_rdeps&quot;</span><span class="p">,</span> <span class="s2">&quot;_prdeps&quot;</span><span class="p">):</span>
+                <span class="n">depset</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depset_name</span><span class="p">)</span>
+                <span class="n">reqs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filter_choices</span><span class="p">(</span><span class="n">depset</span><span class="p">,</span> <span class="n">filterset</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">reqs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">depset</span><span class="p">):</span>
+                    <span class="k">break</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depset_name</span><span class="p">,</span> <span class="n">reqs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">round</span> <span class="o">&gt;</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="nf">_reset_iters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reset bdepend, depend, rdepend, and pdepend properties</span>
+<span class="sd">        to current matches&#39; related attributes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bdeps</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">bdepend</span><span class="o">.</span><span class="n">cnf_solutions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_deps</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">depend</span><span class="o">.</span><span class="n">cnf_solutions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rdeps</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">rdepend</span><span class="o">.</span><span class="n">cnf_solutions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prdeps</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">pdepend</span><span class="o">.</span><span class="n">cnf_solutions</span><span class="p">()</span>
+
+    <span class="n">slot</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;current_pkg.slot&quot;</span><span class="p">)</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;current_pkg.key&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">current_pkg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Current selected package.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;no packages remain&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;no more packages remain&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reset_iters</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span>
+
+<div class="viewcode-block" id="choice_point.force_next_pkg"><a class="viewcode-back" href="../../../api/pkgcore.resolver.choice_point.html#pkgcore.resolver.choice_point.choice_point.force_next_pkg">[docs]</a>    <span class="k">def</span> <span class="nf">force_next_pkg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Force next package to be selected from available matches.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduce_atoms</span><span class="p">([])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">bdepend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build time dependencies for CBUILD.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;no more solutions remain&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bdeps</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">depend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build time dependencies for CHOST.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;no more solutions remain&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deps</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rdepend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Runtime dependencies.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;no more solutions remain&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rdeps</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pdepend</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Post merge dependencies.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;no more solutions remain&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prdeps</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">matches</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_reset_iters</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">: (</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">matches_cur</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.choice_point</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

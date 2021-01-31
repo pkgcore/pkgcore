@@ -1,0 +1,7 @@
+pkgcore.ebuild.repository module
+================================
+
+.. automodule:: pkgcore.ebuild.repository
+   :members:
+   :undoc-members:
+   :show-inheritance:

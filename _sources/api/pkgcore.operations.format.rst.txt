@@ -1,0 +1,7 @@
+pkgcore.operations.format module
+================================
+
+.. automodule:: pkgcore.operations.format
+   :members:
+   :undoc-members:
+   :show-inheritance:

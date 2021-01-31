@@ -1,0 +1,7 @@
+pinspect profile stable_forced_use - inspect stable forced use flags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: stable_forced_use/_synopsis.rst
+.. include:: stable_forced_use/_description.rst
+.. include:: stable_forced_use/_options.rst
+.. include:: stable_forced_use/_subcommands.rst

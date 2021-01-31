@@ -1,0 +1,7 @@
+pkgcore.package.errors module
+=============================
+
+.. automodule:: pkgcore.package.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:

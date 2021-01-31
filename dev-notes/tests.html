@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Testing &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="perl CPAN" href="formats/cpan.html" />
+    <link rel="prev" title="Tackling domain" href="tackling-domain.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="formats/cpan.html" title="perl CPAN"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tackling-domain.html" title="Tackling domain"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Testing</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="testing">
+<h1>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h1>
+<p>We use twisted.trial for our tests, to run the test framework run:</p>
+<blockquote>
+<div><p>trial pkgcore</p>
+</div></blockquote>
+<p>Your own tests must be stored in pkgcore.test - furthermore, tests must
+pass when ran repeatedly (-u option). You will want at least twisted-2.2
+for that, &lt;2.2 has a few false positives.</p>
+<div class="section" id="testing-for-negative-assertions">
+<h2>Testing for negative assertions<a class="headerlink" href="#testing-for-negative-assertions" title="Permalink to this headline">¶</a></h2>
+<p>When coding it's easy to write test cases asserting that you get result xyz
+from foo, usually asserting the correct flow. This is ok if nothing goes
+wrong, but that doesn't normally happen. :)</p>
+<p>Negative assertions (there probably is a better term for it) means asserting
+failure conditions and ensuring that the code handles zyx properly when it
+gets thrown at it. Most test cases seem to miss this, resulting in bugs
+being able to hide away for when things go wrong.</p>
+</div>
+<div class="section" id="using-coverage">
+<h2>Using --coverage<a class="headerlink" href="#using-coverage" title="Permalink to this headline">¶</a></h2>
+<p>When writing tests for your code (or for existing code without any tests), it
+is very useful to use --coverage. Run <cite>trial --coverage &lt;path/to/test&gt;</cite>, and
+then check &lt;cwd&gt;/_trial_temp/coverage/&lt;test/module/name&gt;. Any lines prefixed
+with '&gt;&gt;&gt;&gt;&gt;' have not been covered by your tests. This should be rectified
+before your code is merged to mainline (though this is not always possible).
+Those lines prefixed with a number show the number of times that line of code
+is evaluated.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Testing</a><ul>
+<li><a class="reference internal" href="#testing-for-negative-assertions">Testing for negative assertions</a></li>
+<li><a class="reference internal" href="#using-coverage">Using --coverage</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tackling-domain.html"
+                        title="previous chapter">Tackling domain</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="formats/cpan.html"
+                        title="next chapter">perl CPAN</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="formats/cpan.html" title="perl CPAN"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tackling-domain.html" title="Tackling domain"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Testing</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

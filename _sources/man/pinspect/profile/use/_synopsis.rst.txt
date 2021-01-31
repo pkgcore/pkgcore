@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.repository.virtual module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.virtual module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.repository.virtual">
+<span id="pkgcore-repository-virtual-module"></span><h1>pkgcore.repository.virtual module<a class="headerlink" href="#module-pkgcore.repository.virtual" title="Permalink to this headline">¶</a></h1>
+<p>virtual repository, pkgs generated via callable</p>
+<dl class="py class">
+<dt id="pkgcore.repository.virtual.RestrictionRepo">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.virtual.</code><code class="sig-name descname">RestrictionRepo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo_id</span></em>, <em class="sig-param"><span class="n">restrictions</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">frozen</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">livefs</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/virtual.html#RestrictionRepo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.virtual.RestrictionRepo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.repository.virtual.tree" title="pkgcore.repository.virtual.tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.repository.virtual.tree</span></code></a></p>
+<p>Fake repo populated by packages matching a given restriction.</p>
+<dl class="py method">
+<dt id="pkgcore.repository.virtual.RestrictionRepo.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param">restrict</em>, <em class="sig-param">sorter=&lt;built-in function iter&gt;</em>, <em class="sig-param">pkg_cls=&lt;class 'pkgcore.repository.virtual.InjectedPkg'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/virtual.html#RestrictionRepo.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.virtual.RestrictionRepo.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator that yields packages match a restriction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>restrict</strong> (<a class="reference internal" href="pkgcore.restrictions.packages.html#pkgcore.restrictions.packages.PackageRestriction" title="pkgcore.restrictions.packages.PackageRestriction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.restrictions.packages.PackageRestriction</span></code></a>
+instance.) – restriction to search via</p></li>
+<li><p><strong>sorter</strong> – callable to do sorting during searching-
+if sorting the results, use this instead of sorting externally.</p></li>
+<li><p><strong>pkg_filter</strong> – callable to do package filtering</p></li>
+<li><p><strong>versioned</strong> – boolean controlling returning versioned or unversioned pkgs</p></li>
+<li><p><strong>raw_pkg_cls</strong> – custom package class to use for generating raw pkg instances</p></li>
+<li><p><strong>pkg_cls</strong> – custom package class to override raw pkg instances with</p></li>
+<li><p><strong>yield_none</strong> – if True then itermatch will yield None for every
+non-matching package. This is meant for use in combination with
+C{twisted.task.cooperate} or other async uses where itermatch
+should not wait many (wallclock) seconds between yielding
+packages. If you override this method you should yield
+None in long-running loops, strictly calling it for every package
+is not necessary.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.virtual.RestrictionRepo.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/virtual.html#RestrictionRepo.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.virtual.RestrictionRepo.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.virtual.RestrictionRepo.restriction">
+<em class="property">property </em><code class="sig-name descname">restriction</code><a class="headerlink" href="#pkgcore.repository.virtual.RestrictionRepo.restriction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.repository.virtual.tree">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.virtual.</code><code class="sig-name descname">tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">livefs</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">frozen</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/virtual.html#tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.virtual.tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.repository.prototype.html#pkgcore.repository.prototype.tree" title="pkgcore.repository.prototype.tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.tree</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.repository.virtual.tree.factory_kls">
+<code class="sig-name descname">factory_kls</code><a class="headerlink" href="#pkgcore.repository.virtual.tree.factory_kls" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="pkgcore.package.virtual.html#pkgcore.package.virtual.factory" title="pkgcore.package.virtual.factory"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.virtual.factory</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.virtual module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

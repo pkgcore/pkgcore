@@ -1,0 +1,23 @@
+pkgcore.restrictions package
+============================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.restrictions.boolean
+   pkgcore.restrictions.delegated
+   pkgcore.restrictions.packages
+   pkgcore.restrictions.restriction
+   pkgcore.restrictions.util
+   pkgcore.restrictions.values
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.restrictions
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,216 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.repository.misc &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.misc</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.repository.misc</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;nodeps_repo&quot;</span><span class="p">,</span> <span class="s2">&quot;caching_repo&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.iterables</span> <span class="kn">import</span> <span class="n">caching_iter</span><span class="p">,</span> <span class="n">iter_sort</span>
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">DirProxy</span><span class="p">,</span> <span class="n">GetAttrProxy</span>
+
+<span class="kn">from</span> <span class="nn">..ebuild.conditionals</span> <span class="kn">import</span> <span class="n">DepSet</span>
+<span class="kn">from</span> <span class="nn">..operations.repo</span> <span class="kn">import</span> <span class="n">operations_proxy</span>
+<span class="kn">from</span> <span class="nn">..package.mutated</span> <span class="kn">import</span> <span class="n">MutatedPkg</span>
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">packages</span>
+
+
+<div class="viewcode-block" id="nodeps_repo"><a class="viewcode-back" href="../../../api/pkgcore.repository.misc.html#pkgcore.repository.misc.nodeps_repo">[docs]</a><span class="k">class</span> <span class="nc">nodeps_repo</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Repository wrapper that returns wrapped pkgs with deps wiped.&quot;&quot;&quot;</span>
+
+    <span class="n">default_bdepend</span> <span class="o">=</span> <span class="n">default_depend</span> <span class="o">=</span> <span class="n">default_rdepend</span> <span class="o">=</span> <span class="n">default_pdepend</span> <span class="o">=</span> <span class="n">DepSet</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param repo: repository to wrap</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span> <span class="o">=</span> <span class="n">repo</span>
+
+<div class="viewcode-block" id="nodeps_repo.itermatch"><a class="viewcode-back" href="../../../api/pkgcore.repository.misc.html#pkgcore.repository.misc.nodeps_repo.itermatch">[docs]</a>    <span class="k">def</span> <span class="nf">itermatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">MutatedPkg</span><span class="p">(</span>
+            <span class="n">x</span><span class="p">,</span> <span class="n">overrides</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;bdepend&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_bdepend</span><span class="p">,</span>
+                          <span class="s2">&quot;depend&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_depend</span><span class="p">,</span>
+                          <span class="s2">&quot;rdepend&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_rdepend</span><span class="p">,</span>
+                          <span class="s2">&quot;pdepend&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_pdepend</span><span class="p">}</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="nodeps_repo.match"><a class="viewcode-back" href="../../../api/pkgcore.repository.misc.html#pkgcore.repository.misc.nodeps_repo.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">))</span></div>
+
+    <span class="fm">__getattr__</span> <span class="o">=</span> <span class="n">GetAttrProxy</span><span class="p">(</span><span class="s2">&quot;raw_repo&quot;</span><span class="p">)</span>
+    <span class="fm">__dir__</span> <span class="o">=</span> <span class="n">DirProxy</span><span class="p">(</span><span class="s2">&quot;raw_repo&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">restrict_repo</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Repository wrapper that skips packages matching a given restriction.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">repo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param restrict: package matching restriction</span>
+<span class="sd">        :param repo: repository to wrap</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span> <span class="o">=</span> <span class="n">repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span> <span class="o">=</span> <span class="n">restrict</span>
+
+    <span class="k">def</span> <span class="nf">itermatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">))</span>
+
+    <span class="fm">__getattr__</span> <span class="o">=</span> <span class="n">GetAttrProxy</span><span class="p">(</span><span class="s2">&quot;raw_repo&quot;</span><span class="p">)</span>
+    <span class="fm">__dir__</span> <span class="o">=</span> <span class="n">DirProxy</span><span class="p">(</span><span class="s2">&quot;raw_repo&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="caching_repo"><a class="viewcode-back" href="../../../api/pkgcore.repository.misc.html#pkgcore.repository.misc.caching_repo">[docs]</a><span class="k">class</span> <span class="nc">caching_repo</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Repository wrapper that overrides match, returning :obj:`caching_iter` instances.</span>
+
+<span class="sd">    Itermatch is slaved to match, in other words iterating over the</span>
+<span class="sd">    caching_iter.</span>
+
+<span class="sd">    Main use for this is to cache results from query lookups;</span>
+<span class="sd">    if matches restrict arg is in the cache, the caller gets a shared</span>
+<span class="sd">    caching_iter sequence, which may already be fully loaded with pkg</span>
+<span class="sd">    instances.</span>
+
+<span class="sd">    This can boost random lookup time pretty nicely, while helping to</span>
+<span class="sd">    hold instance in memory to avoid redoing work.</span>
+
+<span class="sd">    Cost of this of course is that involved objects are forced to stay</span>
+<span class="sd">    in memory till the cache is cleared.  General use, not usually what</span>
+<span class="sd">    you want- if you&#39;re making a lot of random queries that are duplicates</span>
+<span class="sd">    (resolver does this for example), caching helps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">operations_kls</span> <span class="o">=</span> <span class="n">operations_proxy</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db</span><span class="p">,</span> <span class="n">strategy</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param db: an instance supporting the repository protocol to cache</span>
+<span class="sd">          queries from.</span>
+<span class="sd">        :param strategy: forced sorting strategy for results.  If you don&#39;t</span>
+<span class="sd">          need sorting, pass in iter.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__db__</span> <span class="o">=</span> <span class="n">db</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__strategy__</span> <span class="o">=</span> <span class="n">strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cache__</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="caching_repo.match"><a class="viewcode-back" href="../../../api/pkgcore.repository.misc.html#pkgcore.repository.misc.caching_repo.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cache__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">restrict</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__cache__</span><span class="p">[</span><span class="n">restrict</span><span class="p">]</span> <span class="o">=</span> \
+                <span class="n">caching_iter</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">__db__</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">sorter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__strategy__</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+<div class="viewcode-block" id="caching_repo.itermatch"><a class="viewcode-back" href="../../../api/pkgcore.repository.misc.html#pkgcore.repository.misc.caching_repo.itermatch">[docs]</a>    <span class="k">def</span> <span class="nf">itermatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">restrict</span><span class="p">))</span></div>
+
+    <span class="fm">__getattr__</span> <span class="o">=</span> <span class="n">GetAttrProxy</span><span class="p">(</span><span class="s2">&quot;__db__&quot;</span><span class="p">)</span>
+    <span class="fm">__dir__</span> <span class="o">=</span> <span class="n">DirProxy</span><span class="p">(</span><span class="s2">&quot;__db__&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="caching_repo.clear"><a class="viewcode-back" href="../../../api/pkgcore.repository.misc.html#pkgcore.repository.misc.caching_repo.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__cache__</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">multiplex_sorting_repo</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sorter</span><span class="p">,</span> <span class="n">repos</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__repos__</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">repos</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sorter__</span> <span class="o">=</span> <span class="n">sorter</span>
+
+    <span class="k">def</span> <span class="nf">itermatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="n">repo_iters</span> <span class="o">=</span> <span class="p">[</span><span class="n">repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">)</span> <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repos__</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">iter_sort</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__sorter__</span><span class="p">,</span> <span class="o">*</span><span class="n">repo_iters</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">has_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repos__</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">repo</span><span class="o">.</span><span class="n">has_match</span><span class="p">(</span><span class="n">restrict</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.misc</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

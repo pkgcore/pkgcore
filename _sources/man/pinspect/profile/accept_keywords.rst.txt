@@ -1,0 +1,7 @@
+pinspect profile accept_keywords - inspect package.accept_keywords
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: accept_keywords/_synopsis.rst
+.. include:: accept_keywords/_description.rst
+.. include:: accept_keywords/_options.rst
+.. include:: accept_keywords/_subcommands.rst

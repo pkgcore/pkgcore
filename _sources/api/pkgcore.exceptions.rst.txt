@@ -1,0 +1,7 @@
+pkgcore.exceptions module
+=========================
+
+.. automodule:: pkgcore.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:

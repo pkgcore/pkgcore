@@ -1,0 +1,451 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.operations.format &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../operations.html" accesskey="U">pkgcore.operations</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.format</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.operations.format</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">build operation</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;build_base&#39;</span><span class="p">,</span> <span class="s1">&#39;install&#39;</span><span class="p">,</span> <span class="s1">&#39;uninstall&#39;</span><span class="p">,</span> <span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="s1">&#39;fetch_base&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;empty_build_op&#39;</span><span class="p">,</span> <span class="s1">&#39;FailedDirectory&#39;</span><span class="p">,</span> <span class="s1">&#39;GenericBuildError&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.dependant_methods</span> <span class="kn">import</span> <span class="n">ForcedDepends</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">fetch</span> <span class="k">as</span> <span class="n">_fetch_module</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">operations</span> <span class="k">as</span> <span class="n">_operations_mod</span>
+<span class="kn">from</span> <span class="nn">..exceptions</span> <span class="kn">import</span> <span class="n">PkgcoreUserException</span>
+<span class="kn">from</span> <span class="nn">..fetch</span> <span class="kn">import</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">fetch_errors</span>
+
+
+<div class="viewcode-block" id="fetch_base"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.fetch_base">[docs]</a><span class="k">class</span> <span class="nc">fetch_base</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">fetchables</span><span class="p">,</span> <span class="n">fetcher</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verified_files</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_basenames</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetchables</span> <span class="o">=</span> <span class="n">fetchables</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetcher</span> <span class="o">=</span> <span class="n">fetcher</span>
+
+<div class="viewcode-block" id="fetch_base.fetch_all"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.fetch_base.fetch_all">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_all</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="c1"># TODO: add parallel fetch support</span>
+        <span class="n">failures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fetchable</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetchables</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_one</span><span class="p">(</span><span class="n">fetchable</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+                <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fetchable</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">failures</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_failed_fetch</span><span class="p">(</span><span class="n">failures</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="fetch_base.fetch_one"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.fetch_base.fetch_one">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchable</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">retry</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">fetchable</span><span class="o">.</span><span class="n">filename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_basenames</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="c1"># fetching files without uri won&#39;t fly</span>
+        <span class="c1"># XXX hack atm, could use better logic but works for now</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetcher</span><span class="p">(</span><span class="n">fetchable</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">fetch_errors</span><span class="o">.</span><span class="n">ChksumFailure</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># checksum failed, rename file and try refetching</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fetcher</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="n">fetchable</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+            <span class="n">failed_filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fetchable</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">._failed_chksum_&#39;</span>
+            <span class="n">failed_path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fetcher</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="n">failed_filename</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">failed_path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">retry</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="n">observer</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="n">observer</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;renaming to </span><span class="si">{</span><span class="n">failed_filename</span><span class="si">!r}</span><span class="s1"> and refetching from upstream&#39;</span><span class="p">)</span>
+            <span class="n">observer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="c1"># refetch directly from upstream</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_one</span><span class="p">(</span><span class="n">fetchable</span><span class="o">.</span><span class="n">upstream</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">retry</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">fetch_errors</span><span class="o">.</span><span class="n">FetchFailed</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">fp</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verified_files</span><span class="p">[</span><span class="n">fp</span><span class="p">]</span> <span class="o">=</span> <span class="n">fetchable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_basenames</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">fetchable</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">_failed_fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchables</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="c1"># run pkg_nofetch phase for fetch restricted pkgs</span>
+        <span class="k">if</span> <span class="s1">&#39;fetch&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">restrict</span><span class="p">:</span>
+            <span class="c1"># This requires wrapped packages from a configured repo, otherwise</span>
+            <span class="c1"># buildables aren&#39;t available to run the pkg_nofetch phase.</span>
+            <span class="n">configured_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">unfiltered_repos</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="p">]</span>
+            <span class="n">pkgwrap</span> <span class="o">=</span> <span class="n">configured_repo</span><span class="o">.</span><span class="n">package_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="n">build_ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">build_pkg</span><span class="p">(</span><span class="n">pkgwrap</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">failed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">build_ops</span><span class="o">.</span><span class="n">nofetch</span><span class="p">()</span>
+            <span class="n">build_ops</span><span class="o">.</span><span class="n">cleanup</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">observer</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;failed fetching files: </span><span class="si">%s</span><span class="s2">::</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">operations</span><span class="p">(</span><span class="n">_operations_mod</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+
+    <span class="n">_fetch_kls</span> <span class="o">=</span> <span class="n">fetch_base</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">disable_overrides</span><span class="o">=</span><span class="p">(),</span>
+                 <span class="n">enable_overrides</span><span class="o">=</span><span class="p">()):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">disable_overrides</span><span class="p">,</span> <span class="n">enable_overrides</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_api_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_implementation_info</span><span class="p">()</span>
+
+    <span class="nd">@_operations_mod</span><span class="o">.</span><span class="n">is_standalone</span>
+    <span class="k">def</span> <span class="nf">_cmd_api_mergable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;built&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_api_sanity_check</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_implementation_sanity_check</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_implementation_sanity_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_api_localize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span><span class="p">):</span>
+        <span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span> <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_implementation_localize</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">),</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_api_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span><span class="p">):</span>
+        <span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span> <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_implementation_cleanup</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">),</span> <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_api_configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span><span class="p">):</span>
+        <span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span> <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_implementation_configure</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_check_support_fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_fetcher</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_generate_fetchables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mirroring</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mirroring</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">fetchables</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;_raw_pkg&#39;</span><span class="p">,</span> <span class="n">pkg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">fetchables</span><span class="p">,</span> <span class="n">_fetch_module</span><span class="o">.</span><span class="n">fetchable</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">_fetch_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_kls</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_generate_fetchables</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_find_fetcher</span><span class="p">())</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">cached_property</span>
+    <span class="k">def</span> <span class="nf">_mirror_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_kls</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_generate_fetchables</span><span class="p">(</span><span class="n">mirroring</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_find_fetcher</span><span class="p">())</span>
+
+    <span class="nd">@_operations_mod</span><span class="o">.</span><span class="n">is_standalone</span>
+    <span class="k">def</span> <span class="nf">_cmd_api_fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchables</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span><span class="p">):</span>
+        <span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span> <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span>
+        <span class="k">if</span> <span class="n">fetchables</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fetcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_op</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">fetchables</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="n">fetchables</span> <span class="o">=</span> <span class="p">[</span><span class="n">fetchables</span><span class="p">]</span>
+            <span class="n">fetcher</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_kls</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">fetchables</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_fetcher</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">fetcher</span><span class="o">.</span><span class="n">fetch_all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">))</span>
+
+    <span class="nd">@_operations_mod</span><span class="o">.</span><span class="n">is_standalone</span>
+    <span class="k">def</span> <span class="nf">_cmd_api_mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span><span class="p">):</span>
+        <span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span> <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">klass</span><span class="o">.</span><span class="n">sentinel</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mirror_op</span><span class="o">.</span><span class="n">fetch_all</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_find_fetcher</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fetcher</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;fetcher&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fetcher</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="s1">&#39;fetcher&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fetcher</span>
+
+
+<span class="k">class</span> <span class="nc">build_operations</span><span class="p">(</span><span class="n">operations</span><span class="p">):</span>
+
+    <span class="n">__required__</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;build&quot;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_api_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">failed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+            <span class="n">verified_files</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">verified_files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_op</span><span class="o">.</span><span class="n">verified_files</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_implementation_build</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_get_observer</span><span class="p">(</span><span class="n">observer</span><span class="p">),</span>
+            <span class="n">verified_files</span><span class="p">,</span>
+            <span class="n">clean</span><span class="o">=</span><span class="n">clean</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_api_buildable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_implementation_buildable</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_implementation_buildable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="build_base"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.build_base">[docs]</a><span class="k">class</span> <span class="nc">build_base</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ForcedDepends</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;finish&#39;</span><span class="p">:</span> <span class="s1">&#39;start&#39;</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<span class="k">class</span> <span class="nc">build</span><span class="p">(</span><span class="n">build_base</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;setup&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;unpack&quot;</span><span class="p">:</span> <span class="s2">&quot;setup&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;configure&quot;</span><span class="p">:</span> <span class="s2">&quot;prepare&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;prepare&quot;</span><span class="p">:</span> <span class="s2">&quot;unpack&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;compile&quot;</span><span class="p">:</span> <span class="s2">&quot;configure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;test&quot;</span><span class="p">:</span> <span class="s2">&quot;compile&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;install&quot;</span><span class="p">:</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;finalize&quot;</span><span class="p">:</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">verified_files</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verified_files</span> <span class="o">=</span> <span class="n">verified_files</span>
+
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">unpack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">install</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;finalize any build steps required&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;cleanup any working files/dirs created during building&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;setup&quot;</span><span class="p">,</span> <span class="s2">&quot;unpack&quot;</span><span class="p">,</span> <span class="s2">&quot;configure&quot;</span><span class="p">,</span> <span class="s2">&quot;compile&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">):</span>
+        <span class="nb">locals</span><span class="p">()[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;execute any </span><span class="si">%s</span><span class="s2"> steps required; &quot;</span>
+            <span class="s2">&quot;implementations of this interface should overide this as needed&quot;</span>
+            <span class="o">%</span> <span class="n">k</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;setup&quot;</span><span class="p">,</span> <span class="s2">&quot;unpack&quot;</span><span class="p">,</span> <span class="s2">&quot;configure&quot;</span><span class="p">,</span> <span class="s2">&quot;compile&quot;</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;finalize&quot;</span><span class="p">):</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="nb">locals</span><span class="p">()[</span><span class="n">k</span><span class="p">]</span>
+        <span class="n">o</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">o</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span>
+                              <span class="s2">&quot;:return: True on success, False on failure&quot;</span><span class="p">])</span>
+    <span class="k">del</span> <span class="n">o</span><span class="p">,</span> <span class="n">k</span>
+
+
+<div class="viewcode-block" id="install"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.install">[docs]</a><span class="k">class</span> <span class="nc">install</span><span class="p">(</span><span class="n">build_base</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;preinst&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postinst&quot;</span><span class="p">:</span> <span class="s2">&quot;preinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;finalize&quot;</span><span class="p">:</span> <span class="s2">&quot;postinst&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">newpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">newpkg</span>
+
+<div class="viewcode-block" id="install.add_triggers"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.install.add_triggers">[docs]</a>    <span class="k">def</span> <span class="nf">add_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="nf">preinst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;any pre merge steps needed&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">postinst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;any post merge steps needed&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;finalize any merge steps required&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="uninstall"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.uninstall">[docs]</a><span class="k">class</span> <span class="nc">uninstall</span><span class="p">(</span><span class="n">build_base</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;prerm&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postrm&quot;</span><span class="p">:</span> <span class="s2">&quot;prerm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;finalize&quot;</span><span class="p">:</span> <span class="s2">&quot;postrm&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">oldpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">oldpkg</span>
+
+<div class="viewcode-block" id="uninstall.add_triggers"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.uninstall.add_triggers">[docs]</a>    <span class="k">def</span> <span class="nf">add_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="nf">prerm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;any pre unmerge steps needed&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">postrm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;any post unmerge steps needed&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="uninstall.postinst"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.uninstall.postinst">[docs]</a>    <span class="k">def</span> <span class="nf">postinst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;any post unmerge steps needed&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;finalize any unmerge steps required&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="replace"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.replace">[docs]</a><span class="k">class</span> <span class="nc">replace</span><span class="p">(</span><span class="n">install</span><span class="p">,</span> <span class="n">uninstall</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;finalize&quot;</span><span class="p">:</span> <span class="s2">&quot;postinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postinst&quot;</span><span class="p">:</span> <span class="s2">&quot;postrm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postrm&quot;</span><span class="p">:</span> <span class="s2">&quot;prerm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;prerm&quot;</span><span class="p">:</span> <span class="s2">&quot;preinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;preinst&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">old_pkg</span><span class="p">,</span> <span class="n">new_pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="n">build_base</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span> <span class="o">=</span> <span class="n">new_pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span> <span class="o">=</span> <span class="n">old_pkg</span></div>
+
+
+<div class="viewcode-block" id="empty_build_op"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.empty_build_op">[docs]</a><span class="k">class</span> <span class="nc">empty_build_op</span><span class="p">(</span><span class="n">build_base</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+
+<div class="viewcode-block" id="empty_build_op.cleanup"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.empty_build_op.cleanup">[docs]</a>    <span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="empty_build_op.finalize"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.empty_build_op.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">BuildError</span><span class="p">(</span><span class="n">PkgcoreUserException</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<div class="viewcode-block" id="FailedDirectory"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.FailedDirectory">[docs]</a><span class="k">class</span> <span class="nc">FailedDirectory</span><span class="p">(</span><span class="n">BuildError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed creating/ensuring dir </span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GenericBuildError"><a class="viewcode-back" href="../../../api/pkgcore.operations.format.html#pkgcore.operations.format.GenericBuildError">[docs]</a><span class="k">class</span> <span class="nc">GenericBuildError</span><span class="p">(</span><span class="n">BuildError</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed build operation: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../operations.html" >pkgcore.operations</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.format</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

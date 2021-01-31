@@ -1,0 +1,867 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.atom &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.atom</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.atom</h1><div class="highlight"><pre>
+<span></span><span class="c1"># &quot;More than one statement on a single line&quot;</span>
+<span class="c1"># pylint: disable-msg=C0321</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">gentoo ebuild atom, should be generalized into an agnostic base</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;atom&quot;</span><span class="p">,</span> <span class="s2">&quot;transitive_use_atom&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">string</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">cmp</span>
+<span class="kn">from</span> <span class="nn">snakeoil.demandload</span> <span class="kn">import</span> <span class="n">demand_compile_regexp</span>
+
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">boolean</span><span class="p">,</span> <span class="n">packages</span><span class="p">,</span> <span class="n">restriction</span><span class="p">,</span> <span class="n">values</span>
+<span class="kn">from</span> <span class="nn">..restrictions.packages</span> <span class="kn">import</span> <span class="n">AndRestriction</span> <span class="k">as</span> <span class="n">PkgAndRestriction</span>
+<span class="kn">from</span> <span class="nn">..restrictions.packages</span> <span class="kn">import</span> <span class="n">Conditional</span>
+<span class="kn">from</span> <span class="nn">..restrictions.values</span> <span class="kn">import</span> <span class="n">ContainmentMatch2</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">cpv</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">restricts</span>
+
+<span class="c1"># namespace compatibility...</span>
+<span class="n">MalformedAtom</span> <span class="o">=</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span>
+
+<span class="n">alphanum</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">)</span>
+<span class="n">alphanum</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_letters</span><span class="p">)</span>
+
+<span class="n">valid_repo_chars</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">alphanum</span><span class="p">)</span>
+<span class="n">valid_repo_chars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;_-&quot;</span><span class="p">)</span>
+<span class="n">valid_slot_chars</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">alphanum</span><span class="p">)</span>
+<span class="n">valid_slot_chars</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="s2">&quot;.+_-&quot;</span><span class="p">)</span>
+<span class="n">alphanum</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">alphanum</span><span class="p">)</span>
+<span class="n">valid_repo_chars</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">valid_repo_chars</span><span class="p">)</span>
+<span class="n">valid_slot_chars</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">valid_slot_chars</span><span class="p">)</span>
+<span class="n">valid_ops</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;=&#39;</span><span class="p">,</span> <span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;=&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">])</span>
+
+<span class="n">demand_compile_regexp</span><span class="p">(</span><span class="s1">&#39;valid_use_flag&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s1">&#39;^[A-Za-z0-9][A-Za-z0-9+_@-]*$&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="atom"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.atom">[docs]</a><span class="k">class</span> <span class="nc">atom</span><span class="p">(</span><span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Currently implements gentoo ebuild atom parsing.</span>
+
+<span class="sd">    Should be converted into an agnostic dependency base.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># note we don&#39;t need _hash</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;blocks&quot;</span><span class="p">,</span> <span class="s2">&quot;blocks_strongly&quot;</span><span class="p">,</span> <span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="s2">&quot;cpvstr&quot;</span><span class="p">,</span> <span class="s2">&quot;negate_vers&quot;</span><span class="p">,</span> <span class="s2">&quot;use&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;slot_operator&quot;</span><span class="p">,</span> <span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="s2">&quot;subslot&quot;</span><span class="p">,</span> <span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="s2">&quot;_hash&quot;</span><span class="p">,</span> <span class="s2">&quot;_cpv&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;_restrictions&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">restriction</span><span class="o">.</span><span class="n">package_type</span>
+
+    <span class="n">negate</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">_evaluate_collapse</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;cpvstr&quot;</span><span class="p">,</span> <span class="s2">&quot;op&quot;</span><span class="p">,</span> <span class="s2">&quot;blocks&quot;</span><span class="p">,</span> <span class="s2">&quot;negate_vers&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;use&quot;</span><span class="p">,</span> <span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="s2">&quot;subslot&quot;</span><span class="p">,</span> <span class="s2">&quot;slot_operator&quot;</span><span class="p">,</span> <span class="s2">&quot;repo_id&quot;</span><span class="p">)</span>
+
+    <span class="n">klass</span><span class="o">.</span><span class="n">inject_richcmp_methods_from_cmp</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
+    <span class="c1"># hack; combine these 2 metaclasses at some point...</span>
+    <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;__eq__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;__ne__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># overrided in child class if it&#39;s supported</span>
+    <span class="n">evaluate_depset</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">negate_vers</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eapi</span><span class="o">=</span><span class="s1">&#39;-1&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param atom: string, see gentoo ebuild atom syntax</span>
+<span class="sd">        :keyword negate_vers: boolean controlling whether the version should be</span>
+<span class="sd">            inverted for restriction matching</span>
+<span class="sd">        :keyword eapi: string/int controlling what eapi to enforce for this atom</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+
+        <span class="n">orig_atom</span> <span class="o">=</span> <span class="n">atom</span>
+
+        <span class="n">override_kls</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">use_start</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">)</span>
+        <span class="n">slot_start</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_start</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># use dep</span>
+            <span class="n">use_end</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;]&quot;</span><span class="p">,</span> <span class="n">use_start</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">use_end</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                    <span class="n">orig_atom</span><span class="p">,</span> <span class="s2">&quot;use restriction isn&#39;t completed&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">use_end</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                    <span class="n">orig_atom</span><span class="p">,</span> <span class="s2">&quot;trailing garbage after use dep&quot;</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;use&quot;</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">atom</span><span class="p">[</span><span class="n">use_start</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span><span class="n">use_end</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))))</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+                <span class="c1"># stripped purely for validation reasons</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;=?&quot;</span><span class="p">:</span>
+                        <span class="n">override_kls</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;!&#39;</span><span class="p">:</span>
+                            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                        <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                                <span class="n">orig_atom</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;malformed use flag: </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+                    <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;)&#39;</span> <span class="ow">and</span> <span class="n">eapi</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">):</span>
+                        <span class="c1"># use defaults.</span>
+                        <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;(+)&quot;</span><span class="p">,</span> <span class="s2">&quot;(-)&quot;</span><span class="p">):</span>
+                            <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span><span class="n">orig_atom</span><span class="p">,</span> <span class="s1">&#39;empty use dep detected&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">valid_use_flag</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span><span class="n">orig_atom</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;invalid USE flag: </span><span class="si">{</span><span class="n">x</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                        <span class="n">orig_atom</span><span class="p">,</span> <span class="s1">&#39;empty use dep detected&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">override_kls</span><span class="p">:</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;__class__&#39;</span><span class="p">,</span> <span class="n">transitive_use_atom</span><span class="p">)</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">use_start</span><span class="p">]</span><span class="o">+</span><span class="n">atom</span><span class="p">[</span><span class="n">use_end</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;use&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">slot_start</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">i2</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;::&quot;</span><span class="p">,</span> <span class="n">slot_start</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i2</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">repo_id</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="n">i2</span> <span class="o">+</span> <span class="mi">2</span><span class="p">:]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">repo_id</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                        <span class="n">orig_atom</span><span class="p">,</span> <span class="s2">&quot;repo_id must not be empty&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">repo_id</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                        <span class="n">orig_atom</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;invalid first char of repo_id &#39;</span><span class="si">{</span><span class="n">repo_id</span><span class="si">}</span><span class="s2">&#39; (must not begin with a hyphen)&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">valid_repo_chars</span><span class="o">.</span><span class="n">issuperset</span><span class="p">(</span><span class="n">repo_id</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                        <span class="n">orig_atom</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;repo_id may contain only [a-Z0-9_-/], found </span><span class="si">{</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[:</span><span class="n">i2</span><span class="p">]</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="c1"># slot dep.</span>
+            <span class="n">slot</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="n">slot_start</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="n">slot_operator</span> <span class="o">=</span> <span class="n">subslot</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">slot</span><span class="p">:</span>
+                <span class="c1"># if the slot char came in only due to repo_id, force slots to None</span>
+                <span class="k">if</span> <span class="n">i2</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                        <span class="n">orig_atom</span><span class="p">,</span> <span class="s2">&quot;Empty slot targets aren&#39;t allowed&quot;</span><span class="p">)</span>
+                <span class="n">slot</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">slots</span> <span class="o">=</span> <span class="p">(</span><span class="n">slot</span><span class="p">,)</span>
+                <span class="k">if</span> <span class="n">eapi</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">,</span> <span class="s1">&#39;3&#39;</span><span class="p">,</span> <span class="s1">&#39;4&#39;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">slot</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">slot</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                                <span class="n">orig_atom</span><span class="p">,</span>
+                                <span class="s2">&quot;Slot operators &#39;*&#39; and &#39;=&#39; do not take slot targets&quot;</span><span class="p">)</span>
+                        <span class="n">slot_operator</span> <span class="o">=</span> <span class="n">slot</span>
+                        <span class="n">slot</span><span class="p">,</span> <span class="n">slots</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="p">()</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">slot</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">):</span>
+                            <span class="n">slot_operator</span> <span class="o">=</span> <span class="s1">&#39;=&#39;</span>
+                            <span class="n">slot</span> <span class="o">=</span> <span class="n">slot</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="n">slots</span> <span class="o">=</span> <span class="n">slot</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">eapi</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                        <span class="n">orig_atom</span><span class="p">,</span>
+                        <span class="s2">&quot;slot dependencies aren&#39;t allowed in EAPI 0&quot;</span><span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">chunk</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                            <span class="n">orig_atom</span><span class="p">,</span>
+                            <span class="s2">&quot;Empty slot targets aren&#39;t allowed&quot;</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">chunk</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;-.&#39;</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                            <span class="n">orig_atom</span><span class="p">,</span>
+                            <span class="s2">&quot;Slot targets must not start with a hypen or dot: </span><span class="si">{chunk!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="ow">not</span> <span class="n">valid_slot_chars</span><span class="o">.</span><span class="n">issuperset</span><span class="p">(</span><span class="n">chunk</span><span class="p">):</span>
+                        <span class="n">invalid_chars</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">valid_slot_chars</span><span class="p">))))</span>
+                        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                            <span class="n">orig_atom</span><span class="p">,</span>
+                            <span class="sa">f</span><span class="s2">&quot;Invalid character(s) in slot target: </span><span class="si">{</span><span class="n">invalid_chars</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">slots</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="n">slot</span><span class="p">,</span> <span class="n">subslot</span> <span class="o">=</span> <span class="n">slots</span>
+
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;slot_operator&quot;</span><span class="p">,</span> <span class="n">slot_operator</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="n">slot</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;subslot&quot;</span><span class="p">,</span> <span class="n">subslot</span><span class="p">)</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[:</span><span class="n">slot_start</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;slot_operator&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;subslot&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;blocks&quot;</span><span class="p">,</span> <span class="n">atom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;!&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="c1"># hackish/slow, but lstrip doesn&#39;t take a &#39;prune this many&#39; arg</span>
+            <span class="c1"># open to alternatives</span>
+            <span class="k">if</span> <span class="n">eapi</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">,</span> <span class="s1">&#39;1&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">atom</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;!&quot;</span><span class="p">):</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;blocks_strongly&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;blocks_strongly&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;blocks_strongly&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">:</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">elif</span> <span class="n">atom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="s1">&#39;=*&#39;</span><span class="p">)</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="s1">&#39;=&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">atom</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;~&#39;</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="s1">&#39;~&#39;</span><span class="p">)</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;op&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;cpvstr&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">eapi</span> <span class="o">==</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="s1">&#39;slot&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                        <span class="n">orig_atom</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2"> atoms aren&#39;t supported for EAPI 0&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">eapi</span> <span class="o">==</span> <span class="s1">&#39;1&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                    <span class="n">orig_atom</span><span class="p">,</span>
+                    <span class="s2">&quot;use atoms aren&#39;t supported for EAPI &lt; 2&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eapi</span> <span class="o">!=</span> <span class="s1">&#39;-1&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                    <span class="n">orig_atom</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;repo_id atoms aren&#39;t supported for EAPI </span><span class="si">{</span><span class="n">eapi</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">use_start</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">slot_start</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">use_start</span> <span class="o">&lt;</span> <span class="n">slot_start</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                <span class="n">orig_atom</span><span class="p">,</span>
+                <span class="s2">&quot;slot restriction must proceed use&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_cpv&quot;</span><span class="p">,</span> <span class="n">cpv</span><span class="o">.</span><span class="n">CPV</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">,</span> <span class="n">versioned</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">)))</span>
+        <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidCPV</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span><span class="n">orig_atom</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                    <span class="n">orig_atom</span><span class="p">,</span> <span class="s2">&quot;operator requires a version&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;~&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">revision</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                    <span class="n">orig_atom</span><span class="p">,</span>
+                    <span class="s2">&quot;~ revision operater cannot be combined with a revision&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span><span class="p">(</span>
+                <span class="n">orig_atom</span><span class="p">,</span> <span class="s1">&#39;versioned atom requires an operator&#39;</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_hash&quot;</span><span class="p">,</span> <span class="nb">hash</span><span class="p">(</span><span class="n">orig_atom</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate_vers&quot;</span><span class="p">,</span> <span class="n">negate_vers</span><span class="p">)</span>
+
+    <span class="fm">__getattr__</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">GetAttrProxy</span><span class="p">(</span><span class="s2">&quot;_cpv&quot;</span><span class="p">)</span>
+    <span class="fm">__dir__</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">DirProxy</span><span class="p">(</span><span class="s2">&quot;_cpv&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">blocks_temp_ignorable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks_strongly</span>
+
+    <span class="n">weak_blocker</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;blocks_temp_ignorable&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s2">*&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="s1">&#39;!&#39;</span> <span class="o">+</span> <span class="n">atom</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks_strongly</span><span class="p">:</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="s1">&#39;!!&#39;</span> <span class="o">+</span> <span class="n">atom</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">atom</span> <span class="o">=</span> <span class="s1">&#39;!&#39;</span> <span class="o">+</span> <span class="n">atom</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="p">[</span><span class="n">atom</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;use=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;slot=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subslot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;subslot=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subslot</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;repo_id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%s</span><span class="s1"> @#</span><span class="si">%x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">attrs</span><span class="p">),</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__reduce__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate_vers</span><span class="p">))</span>
+
+<div class="viewcode-block" id="atom.iter_dnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.atom.iter_dnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">iter_dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">full_solution_expansion</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="o">.</span><span class="n">iter_dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">([[</span><span class="bp">self</span><span class="p">]])</span></div>
+
+<div class="viewcode-block" id="atom.iter_cnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.atom.iter_cnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">iter_cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">full_solution_expansion</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="o">.</span><span class="n">iter_cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">([[</span><span class="bp">self</span><span class="p">]])</span></div>
+
+<div class="viewcode-block" id="atom.cnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.atom.cnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">full_solution_expansion</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="o">.</span><span class="n">cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[[</span><span class="bp">self</span><span class="p">]]</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_simple</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># ordering here matters; against 24702 ebuilds for</span>
+        <span class="c1"># a non matchable atom with package as the first restriction</span>
+        <span class="c1"># 10 loops, best of 3: 206 msec per loop</span>
+        <span class="c1"># with category as the first(the obvious ordering)</span>
+        <span class="c1"># 10 loops, best of 3: 209 msec per loop</span>
+        <span class="c1"># why?  because category is more likely to collide;</span>
+        <span class="c1"># at the time of this profiling, there were 151 categories.</span>
+        <span class="c1"># over 11k packages however.</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="p">[</span><span class="n">restricts</span><span class="o">.</span><span class="n">PackageDep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">package</span><span class="p">),</span> <span class="n">restricts</span><span class="o">.</span><span class="n">CategoryDep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">restricts</span><span class="o">.</span><span class="n">RepositoryDep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+                <span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+                    <span class="s2">&quot;fullver&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">StrGlobMatch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullver</span><span class="p">)))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">revision</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">negate_vers</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">SlotDep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="p">))</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subslot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">r</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">SubSlotDep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subslot</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">r</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">_parse_nontransitive_use</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s2">*&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks_strongly</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;!!&#39;</span> <span class="o">+</span> <span class="n">s</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;!&#39;</span> <span class="o">+</span> <span class="n">s</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subslot</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">subslot</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slot_operator</span> <span class="o">==</span> <span class="s2">&quot;=&quot;</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">slot_operator</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">slot_operator</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slot_operator</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;::</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+            <span class="n">use</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">use</span><span class="si">}</span><span class="s2">]&quot;</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">reflective_hash</span><span class="p">(</span><span class="s1">&#39;_hash&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__cmp__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;other isn&#39;t of </span><span class="si">{</span><span class="n">atom</span><span class="si">!r}</span><span class="s2"> type, is </span><span class="si">{</span><span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">package</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">package</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cpv</span><span class="o">.</span><span class="n">ver_cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">revision</span><span class="p">,</span>
+                        <span class="n">other</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">blocks</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="c1"># invert it; cmp(True, False) == 1</span>
+            <span class="c1"># want non blockers then blockers.</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">c</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">blocks_strongly</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">blocks_strongly</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="c1"># want !! prior to !</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">negate_vers</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">negate_vers</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span> <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">v</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="p">),</span> <span class="n">f</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">slot</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+
+        <span class="k">return</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">repo_id</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">no_usedeps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return atom object stripped of USE dependencies.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s1">*&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;!&#39;</span> <span class="o">+</span> <span class="n">s</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">blocks_temp_ignorable</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;!&#39;</span> <span class="o">+</span> <span class="n">s</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">atom</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+<div class="viewcode-block" id="atom.intersects"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.atom.intersects">[docs]</a>    <span class="k">def</span> <span class="nf">intersects</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check if a passed in atom &quot;intersects&quot; this restriction&#39;s atom.</span>
+
+<span class="sd">        Two atoms &quot;intersect&quot; if a package can be constructed that</span>
+<span class="sd">        matches both:</span>
+
+<span class="sd">        - if you query for just &quot;dev-lang/python&quot; it &quot;intersects&quot; both</span>
+<span class="sd">          &quot;dev-lang/python&quot; and &quot;&gt;=dev-lang/python-2.4&quot;</span>
+<span class="sd">        - if you query for &quot;=dev-lang/python-2.4&quot; it &quot;intersects&quot;</span>
+<span class="sd">          &quot;&gt;=dev-lang/python-2.4&quot; and &quot;dev-lang/python&quot; but not</span>
+<span class="sd">          &quot;&lt;dev-lang/python-2.3&quot;</span>
+
+<span class="sd">        USE and slot deps are also taken into account.</span>
+
+<span class="sd">        The block/nonblock state of the atom is ignored.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Our &quot;key&quot; (cat/pkg) must match exactly:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Slot dep only matters if we both have one. If we do they</span>
+        <span class="c1"># must be identical:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">slot</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">slot</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Subslot dep only matters if we both have one. If we do they</span>
+        <span class="c1"># must be identical:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subslot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">subslot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">subslot</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">subslot</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">repo_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">repo_id</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Use deps are similar: if one of us forces a flag on and the</span>
+        <span class="c1"># other forces it off we do not intersect. If only one of us</span>
+        <span class="c1"># cares about a flag it is irrelevant.</span>
+
+        <span class="c1"># Skip the (very common) case of one of us not having use deps:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+            <span class="c1"># Set of flags we do not have in common:</span>
+            <span class="n">flags</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">)</span> <span class="o">^</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">flags</span><span class="p">:</span>
+                <span class="c1"># If this is unset and we also have the set version we fail:</span>
+                <span class="k">if</span> <span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span> <span class="ow">and</span> <span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="ow">in</span> <span class="n">flags</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Remaining thing to check is version restrictions. Get the</span>
+        <span class="c1"># ones we can check without actual version comparisons out of</span>
+        <span class="c1"># the way first.</span>
+
+        <span class="c1"># If one of us is unversioned we intersect:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># If we are both &quot;unbounded&quot; in the same direction we intersect:</span>
+        <span class="k">if</span> <span class="p">((</span><span class="s1">&#39;&lt;&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="ow">and</span> <span class="s1">&#39;&lt;&#39;</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="p">(</span><span class="s1">&#39;&gt;&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="ow">and</span> <span class="s1">&#39;&gt;&#39;</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># Trick used here: just use the atoms as sufficiently</span>
+        <span class="c1"># package-like object to pass to these functions (all that is</span>
+        <span class="c1"># needed is a version and revision attr).</span>
+
+        <span class="c1"># If one of us is an exact match we intersect if the other matches it:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">fullver</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullver</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+        <span class="c1"># If we are both ~ matches we match if we are identical:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;~&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">version</span> <span class="ow">and</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">revision</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span>
+
+        <span class="c1"># If we are both glob matches we match if one of us matches the other.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">fullver</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="n">other</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullver</span><span class="p">))</span>
+
+        <span class="c1"># If one of us is a glob match and the other a ~ we match if the glob</span>
+        <span class="c1"># matches the ~ (ignoring a revision on the glob):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;~&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">other</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;~&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+
+        <span class="c1"># If we get here at least one of us is a &lt;, &lt;=, &gt; or &gt;=:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;&lt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&lt;=&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;=&#39;</span><span class="p">):</span>
+            <span class="n">ranged</span><span class="p">,</span> <span class="n">other</span> <span class="o">=</span> <span class="bp">self</span><span class="p">,</span> <span class="n">other</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ranged</span><span class="p">,</span> <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="p">,</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="s1">&#39;&lt;&#39;</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="ow">or</span> <span class="s1">&#39;&gt;&#39;</span> <span class="ow">in</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">:</span>
+            <span class="c1"># We are both ranged, and in the opposite &quot;direction&quot; (or</span>
+            <span class="c1"># we would have matched above). We intersect if we both</span>
+            <span class="c1"># match the other&#39;s endpoint (just checking one endpoint</span>
+            <span class="c1"># is not enough, it would give a false positive on &lt;=2 vs &gt;2)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                    <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">ranged</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                    <span class="n">ranged</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">ranged</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">ranged</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;~&#39;</span><span class="p">:</span>
+            <span class="c1"># Other definitely matches its own version. If ranged also</span>
+            <span class="c1"># does we&#39;re done:</span>
+            <span class="k">if</span> <span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                    <span class="n">ranged</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">ranged</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">ranged</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="c1"># The only other case where we intersect is if ranged is a</span>
+            <span class="c1"># &gt; or &gt;= on other&#39;s version and a nonzero revision. In</span>
+            <span class="c1"># that case other will match ranged. Be careful not to</span>
+            <span class="c1"># give a false positive for ~2 vs &lt;2 here:</span>
+            <span class="k">return</span> <span class="n">ranged</span><span class="o">.</span><span class="n">op</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">,</span> <span class="s1">&#39;&gt;=&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                <span class="n">other</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">ranged</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">op</span> <span class="o">==</span> <span class="s1">&#39;=*&#39;</span><span class="p">:</span>
+            <span class="c1"># The fun one, since glob matches do not correspond to a</span>
+            <span class="c1"># single contiguous region of versions.</span>
+
+            <span class="c1"># a glob match definitely matches its own version, so if</span>
+            <span class="c1"># ranged does too we&#39;re done:</span>
+            <span class="k">if</span> <span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span>
+                    <span class="n">ranged</span><span class="o">.</span><span class="n">op</span><span class="p">,</span> <span class="n">ranged</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">ranged</span><span class="o">.</span><span class="n">revision</span><span class="p">)</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="s1">&#39;&lt;&#39;</span> <span class="ow">in</span> <span class="n">ranged</span><span class="o">.</span><span class="n">op</span><span class="p">:</span>
+                <span class="c1"># Remaining cases where this intersects: there is a</span>
+                <span class="c1"># package smaller than ranged.fullver and</span>
+                <span class="c1"># other.fullver that they both match.</span>
+
+                <span class="c1"># If other.revision is not None or 0 then other does not match</span>
+                <span class="c1"># anything smaller than its own fullver:</span>
+                <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">revision</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+                <span class="c1"># If other.revision is None or 0 then we can always</span>
+                <span class="c1"># construct a package smaller than other.fullver by</span>
+                <span class="c1"># tagging e.g. an _alpha1 on, since</span>
+                <span class="c1"># cat/pkg_beta2_alpha1_alpha1 is a valid version.</span>
+                <span class="c1"># (Yes, really. Try it if you don&#39;t believe me.)</span>
+                <span class="c1"># If and only if other also matches ranged then</span>
+                <span class="c1"># ranged will also match one of those smaller packages.</span>
+                <span class="c1"># XXX (I think, need to try harder to verify this.)</span>
+                <span class="k">return</span> <span class="n">ranged</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Remaining cases where this intersects: there is a</span>
+                <span class="c1"># package greater than ranged.fullver and</span>
+                <span class="c1"># other.fullver that they both match.</span>
+
+                <span class="c1"># We can always construct a package greater than</span>
+                <span class="c1"># other.fullver by adding a digit to it.</span>
+                <span class="c1"># If and only if other also matches ranged then</span>
+                <span class="c1"># ranged will match such a larger package</span>
+                <span class="c1"># XXX (I think, need to try harder to verify this.)</span>
+                <span class="k">return</span> <span class="n">ranged</span><span class="o">.</span><span class="n">fullver</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+
+        <span class="c1"># Handled all possible ops.</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s1">&#39;Someone added an op to atom without adding it to intersects&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="atom.evaluate_conditionals"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.atom.evaluate_conditionals">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_conditionals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_cls</span><span class="p">,</span> <span class="n">parent_seq</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">tristate</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">parent_seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="transitive_use_atom"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.transitive_use_atom">[docs]</a><span class="k">class</span> <span class="nc">transitive_use_atom</span><span class="p">(</span><span class="n">atom</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_nontransitive_use_atom</span> <span class="o">=</span> <span class="n">atom</span>
+
+    <span class="n">is_simple</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_stripped_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;[&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_mk_conditional</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">payload</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Conditional</span><span class="p">(</span><span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="n">ContainmentMatch2</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">),</span> <span class="n">payload</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_recurse_transitive_use_conds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom_str</span><span class="p">,</span> <span class="n">forced_use</span><span class="p">,</span> <span class="n">varied</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">varied</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">forced_use</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">s</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">]&#39;</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nontransitive_use_atom</span><span class="p">(</span><span class="n">atom_str</span> <span class="o">+</span> <span class="n">s</span><span class="p">),</span> <span class="p">)</span>
+
+        <span class="n">flag</span> <span class="o">=</span> <span class="n">varied</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">use</span> <span class="o">=</span> <span class="n">flag</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;!&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;?=&#39;</span><span class="p">)</span>
+        <span class="n">varied</span> <span class="o">=</span> <span class="n">varied</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">if</span> <span class="n">flag</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;?&#39;</span><span class="p">:</span>
+            <span class="c1"># a[x?] == x? ( a[x] ) !x? ( a )</span>
+            <span class="c1"># a[!x?] == x? ( a ) !x? ( a[-x] )</span>
+            <span class="k">if</span> <span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;!&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mk_conditional</span><span class="p">(</span><span class="n">use</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_recurse_transitive_use_conds</span><span class="p">(</span>
+                            <span class="n">atom_str</span><span class="p">,</span> <span class="n">forced_use</span> <span class="o">+</span> <span class="p">[</span><span class="n">use</span><span class="p">],</span> <span class="n">varied</span><span class="p">)),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_mk_conditional</span><span class="p">(</span>
+                            <span class="n">use</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recurse_transitive_use_conds</span><span class="p">(</span>
+                                <span class="n">atom_str</span><span class="p">,</span> <span class="n">forced_use</span><span class="p">,</span> <span class="n">varied</span><span class="p">),</span> <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mk_conditional</span><span class="p">(</span>
+                    <span class="n">use</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recurse_transitive_use_conds</span><span class="p">(</span>
+                        <span class="n">atom_str</span><span class="p">,</span> <span class="n">forced_use</span><span class="p">,</span> <span class="n">varied</span><span class="p">)),</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_mk_conditional</span><span class="p">(</span>
+                        <span class="n">use</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recurse_transitive_use_conds</span><span class="p">(</span>
+                            <span class="n">atom_str</span><span class="p">,</span> <span class="n">forced_use</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">use</span><span class="p">],</span> <span class="n">varied</span><span class="p">),</span> <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+        <span class="c1"># a[x=] == x? ( a[x] ) !x? ( a[-x] )</span>
+        <span class="c1"># a[!x=] == x? ( a[-x] ) !x? ( a[x] )</span>
+        <span class="k">if</span> <span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;!&#39;</span><span class="p">:</span>
+            <span class="n">use_states</span> <span class="o">=</span> <span class="p">[[</span><span class="n">use</span><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">use</span><span class="p">]]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">use_states</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">use</span><span class="p">],</span> <span class="p">[</span><span class="n">use</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mk_conditional</span><span class="p">(</span>
+                <span class="n">use</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recurse_transitive_use_conds</span><span class="p">(</span>
+                    <span class="n">atom_str</span><span class="p">,</span> <span class="n">forced_use</span> <span class="o">+</span> <span class="n">use_states</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">varied</span><span class="p">)),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mk_conditional</span><span class="p">(</span>
+                    <span class="n">use</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recurse_transitive_use_conds</span><span class="p">(</span>
+                        <span class="n">atom_str</span><span class="p">,</span> <span class="n">forced_use</span> <span class="o">+</span> <span class="n">use_states</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">varied</span><span class="p">),</span> <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert_to_conditionals</span><span class="p">()</span>
+
+<div class="viewcode-block" id="transitive_use_atom.convert_to_conditionals"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.transitive_use_atom.convert_to_conditionals">[docs]</a>    <span class="k">def</span> <span class="nf">convert_to_conditionals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">static_use</span> <span class="o">=</span> <span class="p">[</span><span class="n">use</span> <span class="k">for</span> <span class="n">use</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span> <span class="k">if</span> <span class="n">use</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s1">&#39;?=&#39;</span><span class="p">]</span>
+        <span class="n">variable</span> <span class="o">=</span> <span class="p">[</span><span class="n">use</span> <span class="k">for</span> <span class="n">use</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span> <span class="k">if</span> <span class="n">use</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;?=&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">PkgAndRestriction</span><span class="p">(</span>
+            <span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_recurse_transitive_use_conds</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_stripped_use</span><span class="p">(),</span> <span class="n">static_use</span><span class="p">,</span> <span class="n">variable</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_evaluate_depset_qa_in_place</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">variable_flags</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">tristate</span><span class="p">):</span>
+        <span class="c1"># note this mutates flags</span>
+        <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">variable_flags</span><span class="p">:</span>
+            <span class="n">conditional</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">negated</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;!&#39;</span>
+            <span class="k">if</span> <span class="n">negated</span><span class="p">:</span>
+                <span class="n">flag</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">flag</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">real_flag</span> <span class="o">=</span> <span class="n">flag</span>
+            <span class="k">if</span> <span class="n">flag</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
+                <span class="n">flag</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">conditional</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">:</span>
+                <span class="c1"># if it&#39;s locked to a state, take that state; else use whatever</span>
+                <span class="c1"># the default state was.</span>
+                <span class="k">if</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">tristate</span><span class="p">:</span>
+                    <span class="c1"># it&#39;s locked; take the allowed state, and force it, take that bool</span>
+                    <span class="c1"># and use it to decide if the target dep gets a disabled assertion.</span>
+                    <span class="c1"># roughly if locked to enabled: x= == x, !x= == -x</span>
+                    <span class="c1"># if locked to disabled: x= == -x , !x= == x</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">flag</span> <span class="ow">in</span> <span class="n">enabled</span><span class="p">)</span> <span class="o">==</span> <span class="n">negated</span><span class="p">:</span>
+                        <span class="n">real_flag</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">real_flag</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">tristate</span><span class="p">:</span>
+                    <span class="c1"># if the flag was on, but it was !x?, then skip it.</span>
+                    <span class="c1"># if the flag was off, but it was x?, then skip it.</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">flag</span> <span class="ow">in</span> <span class="n">enabled</span><span class="p">)</span> <span class="o">==</span> <span class="n">negated</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="c1"># enforce the allowed state.</span>
+                    <span class="k">if</span> <span class="n">flag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">enabled</span><span class="p">:</span>
+                        <span class="n">real_flag</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">real_flag</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># enforce the state that gets us a flag to test on the target.</span>
+                    <span class="c1"># thus if !x?, we want -x, or +x; take the negation basically.</span>
+                    <span class="k">if</span> <span class="n">negated</span><span class="p">:</span>
+                        <span class="n">real_flag</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">real_flag</span>
+            <span class="n">flags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">real_flag</span><span class="p">)</span>
+
+<div class="viewcode-block" id="transitive_use_atom.evaluate_conditionals"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.transitive_use_atom.evaluate_conditionals">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_conditionals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_cls</span><span class="p">,</span> <span class="n">parent_seq</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">tristate_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">new_flags</span> <span class="o">=</span> <span class="p">[</span><span class="n">use</span> <span class="k">for</span> <span class="n">use</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span> <span class="k">if</span> <span class="n">use</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s1">&#39;?=&#39;</span><span class="p">]</span>
+        <span class="n">variable_flags</span> <span class="o">=</span> <span class="p">[</span><span class="n">use</span> <span class="k">for</span> <span class="n">use</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span> <span class="k">if</span> <span class="n">use</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;?=&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">tristate_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># note this updates the flags in place.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_depset_qa_in_place</span><span class="p">(</span>
+                <span class="n">new_flags</span><span class="p">,</span> <span class="n">variable_flags</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">tristate_filter</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">variable_flags</span><span class="p">:</span>
+                <span class="n">conditional</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">negated</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;!&#39;</span>
+                <span class="k">if</span> <span class="n">negated</span><span class="p">:</span>
+                    <span class="n">flag</span> <span class="o">=</span> <span class="n">raw_flag</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">flag</span> <span class="o">=</span> <span class="n">raw_flag</span> <span class="o">=</span> <span class="n">flag</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">raw_flag</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
+                    <span class="c1"># use default... strip &quot;(+)&quot;</span>
+                    <span class="n">raw_flag</span> <span class="o">=</span> <span class="n">raw_flag</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+
+                <span class="k">if</span> <span class="n">conditional</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">:</span>
+                    <span class="c1"># given &#39;!x=&#39;, if x is off, force x on for the target,</span>
+                    <span class="c1"># and vice versa.  render out a non relative - or &#39;&#39;.</span>
+                    <span class="n">negated</span> <span class="o">=</span> <span class="p">((</span><span class="n">raw_flag</span> <span class="ow">in</span> <span class="n">enabled</span><span class="p">)</span> <span class="o">==</span> <span class="n">negated</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">negated</span><span class="p">:</span>
+                        <span class="n">flag</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">flag</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># enforce the flag only if our state matches.  !x? and x is on, means no dep.</span>
+                    <span class="c1"># for !x? with -x, the assertion becomes !x; conditionally transitive basically.</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">raw_flag</span> <span class="ow">in</span> <span class="n">enabled</span><span class="p">)</span> <span class="o">==</span> <span class="n">negated</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">flag</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">negated</span> <span class="ow">and</span> <span class="s2">&quot;-&quot;</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">flag</span><span class="p">)</span>
+                <span class="n">new_flags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">new_flags</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nontransitive_use_atom</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stripped_use</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nontransitive_use_atom</span><span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">[</span><span class="si">%s</span><span class="s2">]&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stripped_use</span><span class="p">(),</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">new_flags</span><span class="p">)))</span>
+        <span class="n">parent_seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">a</span><span class="p">)</span></div>
+
+    <span class="n">iter_dnf_solutions</span> <span class="o">=</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="o">.</span><span class="n">iter_dnf_solutions</span>
+    <span class="n">cnf_solutions</span> <span class="o">=</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="o">.</span><span class="n">cnf_solutions</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.atom</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

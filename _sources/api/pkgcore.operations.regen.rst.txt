@@ -1,0 +1,7 @@
+pkgcore.operations.regen module
+===============================
+
+.. automodule:: pkgcore.operations.regen
+   :members:
+   :undoc-members:
+   :show-inheritance:

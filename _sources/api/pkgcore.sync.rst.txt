@@ -1,0 +1,29 @@
+pkgcore.sync package
+====================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.sync.base
+   pkgcore.sync.bzr
+   pkgcore.sync.cvs
+   pkgcore.sync.darcs
+   pkgcore.sync.git
+   pkgcore.sync.git_svn
+   pkgcore.sync.hg
+   pkgcore.sync.http
+   pkgcore.sync.rsync
+   pkgcore.sync.sqfs
+   pkgcore.sync.svn
+   pkgcore.sync.tar
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.sync
+   :members:
+   :undoc-members:
+   :show-inheritance:

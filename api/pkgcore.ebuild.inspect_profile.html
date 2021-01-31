@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.inspect_profile module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.inspect_profile module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.inspect_profile">
+<span id="pkgcore-ebuild-inspect-profile-module"></span><h1>pkgcore.ebuild.inspect_profile module<a class="headerlink" href="#module-pkgcore.ebuild.inspect_profile" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.accept_keywords">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">accept_keywords</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#accept_keywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.accept_keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>inspect package.accept_keywords</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.arch">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">arch</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#arch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.arch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>output the arch defined for this profile</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.bashrcs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">bashrcs</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#bashrcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.bashrcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>inspect bashrcs</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.inspect_profile.bind_parser">
+<code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">bind_parser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em>, <em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#bind_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.bind_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.defaults">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">defaults</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#defaults"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.defaults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>inspect defined configuration for this profile</p>
+<p>This is data parsed from make.defaults, containing things like
+ACCEPT_KEYWORDS.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.deprecated">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">deprecated</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#deprecated"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.deprecated" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>dump deprecation notices, if any</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.eapi">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">eapi</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#eapi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.eapi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>output EAPI support required for reading this profile</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.forced_use">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">forced_use</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#forced_use"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.forced_use" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._use</span></code></p>
+<p>inspect forced use flags</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.iuse_effective">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">iuse_effective</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#iuse_effective"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.iuse_effective" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>output the IUSE_EFFECTIVE value for this profile</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.keywords">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">keywords</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#keywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>inspect package.keywords</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.masked_use">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">masked_use</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#masked_use"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.masked_use" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._use</span></code></p>
+<p>inspect masked use flags</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.masks">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">masks</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#masks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.masks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>inspect package masks</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.parent">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">parent</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#parent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.parent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>output the linearized tree of inherited parents</p>
+<p>later lines override earlier lines</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.provided">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">provided</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#provided"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.provided" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>list all package.provided packages</p>
+<p>Note that these are exact versions- if a dep requires a higher version,
+it’s not considered satisfied.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.stable_forced_use">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">stable_forced_use</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#stable_forced_use"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.stable_forced_use" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._use</span></code></p>
+<p>inspect stable forced use flags</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.stable_masked_use">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">stable_masked_use</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#stable_masked_use"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.stable_masked_use" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._use</span></code></p>
+<p>inspect stable masked use flags</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.status">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">status</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#status"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>output profile status</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.system">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">system</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#system"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.system" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>output the system package set</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.unmasks">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">unmasks</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#unmasks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.unmasks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>inspect package unmasks</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.use">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">use</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#use"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.use" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._use</span></code></p>
+<p>inspect enabled USE flags</p>
+<p>Including USE, USE_EXPAND, and package.use settings.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.inspect_profile.use_expand">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.inspect_profile.</code><code class="sig-name descname">use_expand</code><a class="reference internal" href="../_modules/pkgcore/ebuild/inspect_profile.html#use_expand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.inspect_profile.use_expand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.inspect_profile._base</span></code></p>
+<p>output the USE_EXPAND configuration for this profile</p>
+<p>Outputs two fields of interest; USE_EXPAND (pseudo use groups), and
+USE_EXPAND_HIDDEN which is immutable by user configuration and use deps
+(primarily used for things like setting the kernel or OS type).</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.inspect_profile module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

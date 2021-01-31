@@ -1,0 +1,7 @@
+pinspect digests - identify what packages are missing digest info
+-----------------------------------------------------------------
+
+.. include:: digests/_synopsis.rst
+.. include:: digests/_description.rst
+.. include:: digests/_options.rst
+.. include:: digests/_subcommands.rst

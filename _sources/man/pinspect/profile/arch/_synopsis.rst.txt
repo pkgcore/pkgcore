@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile arch [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint eclass [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--dir OUTPUT_DIR] [-f {rst,man,html}] [-r REPO] [eclasses [eclasses ...]]

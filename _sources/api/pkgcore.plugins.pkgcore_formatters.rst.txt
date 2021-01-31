@@ -1,0 +1,7 @@
+pkgcore.plugins.pkgcore\_formatters module
+==========================================
+
+.. automodule:: pkgcore.plugins.pkgcore_formatters
+   :members:
+   :undoc-members:
+   :show-inheritance:

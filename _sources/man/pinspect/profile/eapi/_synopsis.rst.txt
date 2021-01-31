@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile eapi [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

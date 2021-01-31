@@ -1,0 +1,7 @@
+pkgcore.plugins.pkgcore\_syncers module
+=======================================
+
+.. automodule:: pkgcore.plugins.pkgcore_syncers
+   :members:
+   :undoc-members:
+   :show-inheritance:

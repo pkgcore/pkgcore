@@ -1,0 +1,336 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fs.livefs &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.livefs</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fs.livefs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">interaction with the livefs: generating fs objects to represent the livefs.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">stat</span> <span class="kn">import</span> <span class="n">S_IMODE</span><span class="p">,</span> <span class="n">S_ISDIR</span><span class="p">,</span> <span class="n">S_ISFIFO</span><span class="p">,</span> <span class="n">S_ISLNK</span><span class="p">,</span> <span class="n">S_ISREG</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">get_handlers</span>
+<span class="kn">from</span> <span class="nn">snakeoil.data_source</span> <span class="kn">import</span> <span class="n">local_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">LazyValDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">normpath</span><span class="p">,</span> <span class="n">pjoin</span>
+
+<span class="kn">from</span> <span class="nn">.contents</span> <span class="kn">import</span> <span class="n">contentsSet</span>
+<span class="kn">from</span> <span class="nn">.fs</span> <span class="kn">import</span> <span class="p">(</span><span class="n">fsBase</span><span class="p">,</span> <span class="n">fsDev</span><span class="p">,</span> <span class="n">fsDir</span><span class="p">,</span> <span class="n">fsFifo</span><span class="p">,</span> <span class="n">fsFile</span><span class="p">,</span> <span class="n">fsSymlink</span><span class="p">,</span>
+                 <span class="n">get_major_minor</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;gen_obj&quot;</span><span class="p">,</span> <span class="s2">&quot;scan&quot;</span><span class="p">,</span> <span class="s2">&quot;iter_scan&quot;</span><span class="p">,</span> <span class="s2">&quot;sorted_scan&quot;</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">gen_chksums</span><span class="p">(</span><span class="n">handlers</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">handlers</span><span class="p">[</span><span class="n">key</span><span class="p">](</span><span class="n">location</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">LazyValDict</span><span class="p">(</span><span class="n">handlers</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="gen_obj"><a class="viewcode-back" href="../../../api/pkgcore.fs.livefs.html#pkgcore.fs.livefs.gen_obj">[docs]</a><span class="k">def</span> <span class="nf">gen_obj</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">stat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chksum_handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">real_location</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">stat_func</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">,</span> <span class="o">**</span><span class="n">overrides</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    given a fs path, and an optional stat, create an appropriate fs obj.</span>
+
+<span class="sd">    :param stat: stat object to reuse if available</span>
+<span class="sd">    :param real_location: real path to the object if path is the desired</span>
+<span class="sd">        location, rather then existent location.</span>
+<span class="sd">    :raise KeyError: if no obj type matches the stat checks</span>
+<span class="sd">    :return: :obj:`pkgcore.fs.fs.fsBase` derivative</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">real_location</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">real_location</span> <span class="o">=</span> <span class="n">path</span>
+    <span class="k">if</span> <span class="n">stat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">stat</span> <span class="o">=</span> <span class="n">stat_func</span><span class="p">(</span><span class="n">real_location</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">stat_func</span> <span class="o">==</span> <span class="n">os</span><span class="o">.</span><span class="n">lstat</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="n">stat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">(</span><span class="n">real_location</span><span class="p">)</span>
+
+    <span class="n">mode</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_mode</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mtime&quot;</span><span class="p">:</span><span class="n">stat</span><span class="o">.</span><span class="n">st_mtime</span><span class="p">,</span> <span class="s2">&quot;mode&quot;</span><span class="p">:</span><span class="n">S_IMODE</span><span class="p">(</span><span class="n">mode</span><span class="p">),</span>
+         <span class="s2">&quot;uid&quot;</span><span class="p">:</span><span class="n">stat</span><span class="o">.</span><span class="n">st_uid</span><span class="p">,</span> <span class="s2">&quot;gid&quot;</span><span class="p">:</span><span class="n">stat</span><span class="o">.</span><span class="n">st_gid</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">S_ISREG</span><span class="p">(</span><span class="n">mode</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_size</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_source</span><span class="p">(</span><span class="n">real_location</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;dev&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_dev</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;inode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stat</span><span class="o">.</span><span class="n">st_ino</span>
+        <span class="k">if</span> <span class="n">chksum_handlers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;chf_types&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chksum_handlers</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fsFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+
+    <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">overrides</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">S_ISDIR</span><span class="p">(</span><span class="n">mode</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fsDir</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">S_ISLNK</span><span class="p">(</span><span class="n">mode</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">readlink</span><span class="p">(</span><span class="n">real_location</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fsSymlink</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">S_ISFIFO</span><span class="p">(</span><span class="n">mode</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fsFifo</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">major</span><span class="p">,</span> <span class="n">minor</span> <span class="o">=</span> <span class="n">get_major_minor</span><span class="p">(</span><span class="n">stat</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;minor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">minor</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;major&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">major</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="k">return</span> <span class="n">fsDev</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<span class="c1"># hmm. this code is roughly 25x slower then find.</span>
+<span class="c1"># make it less slow somehow. the obj instantiation is a bit of a</span>
+<span class="c1"># killer I&#39;m afraid; without obj, looking at 2.3ms roughly best of 3</span>
+<span class="c1"># 100 iterations, obj instantiation, 58ms.</span>
+<span class="c1"># also, os.path.join is rather slow.</span>
+<span class="c1"># in this case, we know it&#39;s always pegging one more dir on, so it&#39;s</span>
+<span class="c1"># fine doing it this way (specially since we&#39;re relying on</span>
+<span class="c1"># os.path.sep, not &#39;/&#39; :P)</span>
+
+<span class="k">def</span> <span class="nf">_internal_iter_scan</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">chksum_handlers</span><span class="p">,</span> <span class="n">stat_func</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">,</span>
+                        <span class="n">hidden</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">dirs</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">([</span><span class="n">normpath</span><span class="p">(</span><span class="n">path</span><span class="p">)])</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">gen_obj</span><span class="p">(</span><span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">chksum_handlers</span><span class="o">=</span><span class="n">chksum_handlers</span><span class="p">,</span>
+        <span class="n">stat_func</span><span class="o">=</span><span class="n">stat_func</span><span class="p">)</span>
+    <span class="k">yield</span> <span class="n">obj</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">while</span> <span class="n">dirs</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">dirs</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">hidden</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">backup</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">gen_obj</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">chksum_handlers</span><span class="o">=</span><span class="n">chksum_handlers</span><span class="p">,</span>
+                        <span class="n">real_location</span><span class="o">=</span><span class="n">path</span><span class="p">,</span> <span class="n">stat_func</span><span class="o">=</span><span class="n">stat_func</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">obj</span>
+            <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+                <span class="n">dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_internal_offset_iter_scan</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">chksum_handlers</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">stat_func</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">,</span>
+                               <span class="n">hidden</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">offset</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span><span class="n">offset</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">dirs</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">deque</span><span class="p">([</span><span class="n">path</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">offset</span><span class="p">):]])</span>
+    <span class="k">if</span> <span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="k">yield</span> <span class="n">gen_obj</span><span class="p">(</span><span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">chksum_handlers</span><span class="o">=</span><span class="n">chksum_handlers</span><span class="p">,</span>
+            <span class="n">stat_func</span><span class="o">=</span><span class="n">stat_func</span><span class="p">)</span>
+
+    <span class="n">sep</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span>
+    <span class="k">while</span> <span class="n">dirs</span><span class="p">:</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">dirs</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+        <span class="n">real_base</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">sep</span><span class="p">))</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">sep</span><span class="p">)</span> <span class="o">+</span> <span class="n">sep</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">real_base</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">hidden</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">backup</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">gen_obj</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">chksum_handlers</span><span class="o">=</span><span class="n">chksum_handlers</span><span class="p">,</span>
+                        <span class="n">real_location</span><span class="o">=</span><span class="n">pjoin</span><span class="p">(</span><span class="n">real_base</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span>
+                        <span class="n">stat_func</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">obj</span>
+            <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+                <span class="n">dirs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="iter_scan"><a class="viewcode-back" href="../../../api/pkgcore.fs.livefs.html#pkgcore.fs.livefs.iter_scan">[docs]</a><span class="k">def</span> <span class="nf">iter_scan</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">follow_symlinks</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">chksum_types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">hidden</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recursively scan a path.</span>
+
+<span class="sd">    Does not follow symlinks pointing at dirs, just merely yields an</span>
+<span class="sd">    obj representing said symlink</span>
+
+<span class="sd">    :return: an iterator of :obj:`pkgcore.fs.fs.fsBase` objects.</span>
+
+<span class="sd">    :param path: str path of what directory to scan in the livefs</span>
+<span class="sd">    :type path: str</span>
+<span class="sd">    :param offset: if not None, prefix to strip from each objects location.</span>
+<span class="sd">        if offset is /tmp, /tmp/blah becomes /blah</span>
+<span class="sd">    :type nonexistent: str or None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">chksum_handlers</span> <span class="o">=</span> <span class="n">get_handlers</span><span class="p">(</span><span class="n">chksum_types</span><span class="p">)</span>
+
+    <span class="n">stat_func</span> <span class="o">=</span> <span class="n">follow_symlinks</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">lstat</span>
+    <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">_internal_iter_scan</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span> <span class="n">chksum_handlers</span><span class="p">,</span> <span class="n">stat_func</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="n">hidden</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="n">backup</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_internal_offset_iter_scan</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span> <span class="n">chksum_handlers</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">stat_func</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="n">hidden</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="n">backup</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="sorted_scan"><a class="viewcode-back" href="../../../api/pkgcore.fs.livefs.html#pkgcore.fs.livefs.sorted_scan">[docs]</a><span class="k">def</span> <span class="nf">sorted_scan</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">nonexistent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Recursively scan a path for regular, nonhidden files.</span>
+
+<span class="sd">    :param path: path to directory to scan in the livefs</span>
+<span class="sd">    :type path: str</span>
+<span class="sd">    :param nonexistent: return nonexistent given path if True, else return</span>
+<span class="sd">        an empty list</span>
+<span class="sd">    :type nonexistent: bool</span>
+
+<span class="sd">    :return: an alphabetically sorted list of regular, nonhidden file locations</span>
+<span class="sd">        accessible under the given path</span>
+
+<span class="sd">    :raise EnvironmentError: on permission errors</span>
+
+<span class="sd">    See :py:func:`iter_scan` for other valid args.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span> <span class="k">if</span> <span class="n">nonexistent</span> <span class="k">else</span> <span class="p">[]</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iter_scan</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">is_reg</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+            <span class="k">raise</span>
+
+    <span class="k">return</span> <span class="n">files</span></div>
+
+
+<div class="viewcode-block" id="scan"><a class="viewcode-back" href="../../../api/pkgcore.fs.livefs.html#pkgcore.fs.livefs.scan">[docs]</a><span class="k">def</span> <span class="nf">scan</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Alias for list(iter_scan(*a, **kw))</span>
+
+<span class="sd">    Look at :py:func:`iter_scan` for valid args.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mutable</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;mutable&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">contentsSet</span><span class="p">(</span><span class="n">iter_scan</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">),</span> <span class="n">mutable</span><span class="o">=</span><span class="n">mutable</span><span class="p">)</span></div>
+
+<span class="k">class</span> <span class="nc">_realpath_dir</span><span class="p">:</span>
+
+    <span class="n">_realpath_func</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+        <span class="n">dname</span><span class="p">,</span> <span class="n">fname</span> <span class="o">=</span> <span class="n">location</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dname</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">location</span>
+        <span class="n">dname2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">dname</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dname2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dname2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">[</span><span class="n">dname</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_realpath_func</span><span class="p">(</span><span class="n">dname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">dname2</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">intersect</span><span class="p">(</span><span class="n">cset</span><span class="p">,</span> <span class="n">realpath</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate the intersect of a cset and the livefs.&quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">gen_obj</span>
+    <span class="k">if</span> <span class="n">realpath</span><span class="p">:</span>
+        <span class="n">f2</span> <span class="o">=</span> <span class="n">_realpath_dir</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f2</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">cset</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">f</span><span class="p">(</span><span class="n">f2</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">oe</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">oe</span><span class="o">.</span><span class="n">errno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">):</span>
+                <span class="k">raise</span>
+            <span class="k">del</span> <span class="n">oe</span>
+
+
+<span class="k">def</span> <span class="nf">recursively_fill_syms</span><span class="p">(</span><span class="n">cset</span><span class="p">,</span> <span class="n">limiter</span><span class="o">=</span><span class="n">fsBase</span><span class="p">):</span>
+    <span class="n">sym_src</span> <span class="o">=</span> <span class="p">[</span><span class="n">cset</span><span class="o">.</span><span class="n">links</span><span class="p">()]</span>
+    <span class="k">while</span> <span class="n">sym_src</span><span class="p">:</span>
+        <span class="n">syms</span> <span class="o">=</span> <span class="n">sym_src</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">new_syms</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">sym</span> <span class="ow">in</span> <span class="n">syms</span><span class="p">:</span>
+            <span class="n">new_loc</span> <span class="o">=</span> <span class="n">sym</span><span class="o">.</span><span class="n">resolved_target</span>
+            <span class="k">if</span> <span class="n">new_loc</span> <span class="ow">in</span> <span class="n">cset</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">gen_obj</span><span class="p">(</span><span class="n">new_loc</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                    <span class="k">raise</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_sym</span><span class="p">:</span>
+                <span class="n">cset</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+                <span class="n">new_syms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">limiter</span><span class="p">):</span>
+                <span class="n">cset</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">new_syms</span><span class="p">:</span>
+            <span class="n">sym_src</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_syms</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.livefs</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

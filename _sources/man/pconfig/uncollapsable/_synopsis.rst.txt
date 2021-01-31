@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig uncollapsable [-h] [--debug] [-q] [-v] [--color BOOLEAN]

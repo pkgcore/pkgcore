@@ -1,0 +1,7 @@
+pkgcore.util.commandline module
+===============================
+
+.. automodule:: pkgcore.util.commandline
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pinspect query get_repo_path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: get_repo_path/_synopsis.rst
+.. include:: get_repo_path/_description.rst
+.. include:: get_repo_path/_options.rst
+.. include:: get_repo_path/_subcommands.rst

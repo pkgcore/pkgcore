@@ -1,0 +1,140 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fetch.errors module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.errors module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.fetch.errors">
+<span id="pkgcore-fetch-errors-module"></span><h1>pkgcore.fetch.errors module<a class="headerlink" href="#module-pkgcore.fetch.errors" title="Permalink to this headline">¶</a></h1>
+<p>errors fetch subsystem may throw</p>
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.ChksumError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">ChksumError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#ChksumError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.ChksumError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.FetchError" title="pkgcore.fetch.errors.FetchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.FetchError</span></code></a></p>
+<p>Generic checksum failure.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.ChksumFailure">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">ChksumFailure</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">chksum</span></em>, <em class="sig-param"><span class="n">expected</span></em>, <em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#ChksumFailure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.ChksumFailure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.FetchFailed" title="pkgcore.fetch.errors.FetchFailed"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.FetchFailed</span></code></a>, <a class="reference internal" href="#pkgcore.fetch.errors.ChksumError" title="pkgcore.fetch.errors.ChksumError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.ChksumError</span></code></a></p>
+<p>Checksum verification failed.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.DistdirPerms">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">DistdirPerms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distdir</span></em>, <em class="sig-param"><span class="n">required</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#DistdirPerms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.DistdirPerms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.FetchError" title="pkgcore.fetch.errors.FetchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.FetchError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.FetchError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">FetchError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#FetchError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.FetchError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreUserException" title="pkgcore.exceptions.PkgcoreUserException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreUserException</span></code></a></p>
+<p>Generic fetch exception.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.FetchFailed">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">FetchFailed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">message</span></em>, <em class="sig-param"><span class="n">resumable</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#FetchFailed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.FetchFailed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.FetchError" title="pkgcore.fetch.errors.FetchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.FetchError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.MissingChksumHandler">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">MissingChksumHandler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#MissingChksumHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.MissingChksumHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.ChksumError" title="pkgcore.fetch.errors.ChksumError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.ChksumError</span></code></a></p>
+<p>An unknown checksum type tried to be hashed.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.MissingDistfile">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">MissingDistfile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#MissingDistfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.MissingDistfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.FetchFailed" title="pkgcore.fetch.errors.FetchFailed"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.FetchFailed</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.RequiredChksumDataMissing">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">RequiredChksumDataMissing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fetchable</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">chksum</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#RequiredChksumDataMissing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.RequiredChksumDataMissing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.ChksumError" title="pkgcore.fetch.errors.ChksumError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.ChksumError</span></code></a></p>
+<p>A required checksum for the target is missing.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.fetch.errors.UnmodifiableFile">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.errors.</code><code class="sig-name descname">UnmodifiableFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">extra</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/errors.html#UnmodifiableFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.errors.UnmodifiableFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.fetch.errors.FetchError" title="pkgcore.fetch.errors.FetchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.FetchError</span></code></a></p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.errors module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

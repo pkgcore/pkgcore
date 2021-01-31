@@ -1,0 +1,249 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.config.basics module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.basics module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.config.basics">
+<span id="pkgcore-config-basics-module"></span><h1>pkgcore.config.basics module<a class="headerlink" href="#module-pkgcore.config.basics" title="Permalink to this headline">¶</a></h1>
+<p>configuration subsystem primitives</p>
+<p>all callables can/may throw a <a class="reference internal" href="pkgcore.config.errors.html#pkgcore.config.errors.ConfigurationError" title="pkgcore.config.errors.ConfigurationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.config.errors.ConfigurationError</span></code></a></p>
+<dl class="py class">
+<dt id="pkgcore.config.basics.ConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">ConfigSection</code><a class="reference internal" href="../_modules/pkgcore/config/basics.html#ConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.ConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Single Config section, returning typed values from a key.</p>
+<p>Not much of an object this, if we were using zope.interface it’d
+be an Interface.</p>
+<dl class="py method">
+<dt id="pkgcore.config.basics.ConfigSection.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#ConfigSection.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.ConfigSection.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of keys.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.basics.ConfigSection.render_value">
+<code class="sig-name descname">render_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">arg_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#ConfigSection.render_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.ConfigSection.render_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a setting, converted to the requested type.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.config.basics.ConfigType">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">ConfigType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func_obj</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#ConfigType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.ConfigType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>A configurable type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dolib_a.name" title="pkgcore.ebuild.ebd_ipc.Dolib_a.name"><strong>name</strong></a> – string specifying the protocol the instantiated object
+conforms to.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.9)"><strong>callable</strong></a> – callable used to instantiate this type.</p></li>
+<li><p><a class="reference internal" href="pkgcore.config.central.html#pkgcore.config.central.ConfigManager.types" title="pkgcore.config.central.ConfigManager.types"><strong>types</strong></a> – dict mapping key names to type strings.</p></li>
+<li><p><a class="reference internal" href="pkgcore.config.hint.html#pkgcore.config.hint.ConfigHint.positional" title="pkgcore.config.hint.ConfigHint.positional"><strong>positional</strong></a> – container holding positional arguments.</p></li>
+<li><p><a class="reference internal" href="pkgcore.config.hint.html#pkgcore.config.hint.ConfigHint.required" title="pkgcore.config.hint.ConfigHint.required"><strong>required</strong></a> – container holding required arguments.</p></li>
+<li><p><a class="reference internal" href="pkgcore.config.hint.html#pkgcore.config.hint.ConfigHint.allow_unknowns" title="pkgcore.config.hint.ConfigHint.allow_unknowns"><strong>allow_unknowns</strong></a> – controls whether unknown settings should error.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.config.basics.DictConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">DictConfigSection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conversion_func</span></em>, <em class="sig-param"><span class="n">source_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#DictConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.DictConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.config.basics.ConfigSection" title="pkgcore.config.basics.ConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.config.basics.ConfigSection</span></code></a></p>
+<p>Turns a dict and a conversion function into a ConfigSection.</p>
+<dl class="py method">
+<dt id="pkgcore.config.basics.DictConfigSection.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#DictConfigSection.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.DictConfigSection.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of keys.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.basics.DictConfigSection.render_value">
+<code class="sig-name descname">render_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">arg_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#DictConfigSection.render_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.DictConfigSection.render_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a setting, converted to the requested type.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.config.basics.FakeIncrementalDictConfigSection">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">FakeIncrementalDictConfigSection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">conversion_func</span></em>, <em class="sig-param"><span class="n">source_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#FakeIncrementalDictConfigSection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.FakeIncrementalDictConfigSection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.config.basics.ConfigSection" title="pkgcore.config.basics.ConfigSection"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.config.basics.ConfigSection</span></code></a></p>
+<p>Turns a dict and a conversion function into a ConfigSection.</p>
+<dl class="py method">
+<dt id="pkgcore.config.basics.FakeIncrementalDictConfigSection.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#FakeIncrementalDictConfigSection.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.FakeIncrementalDictConfigSection.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a list of keys.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.basics.FakeIncrementalDictConfigSection.render_value">
+<code class="sig-name descname">render_value</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">arg_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#FakeIncrementalDictConfigSection.render_value"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.FakeIncrementalDictConfigSection.render_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a setting, converted to the requested type.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.config.basics.LazyNamedSectionRef">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">LazyNamedSectionRef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">typename</span></em>, <em class="sig-param"><span class="n">name</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#LazyNamedSectionRef"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.LazyNamedSectionRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.config.basics.LazySectionRef" title="pkgcore.config.basics.LazySectionRef"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.config.basics.LazySectionRef</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.config.basics.LazySectionRef">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">LazySectionRef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">typename</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#LazySectionRef"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.LazySectionRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Abstract base class for lazy-loaded section references.</p>
+<dl class="py method">
+<dt id="pkgcore.config.basics.LazySectionRef.collapse">
+<code class="sig-name descname">collapse</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#LazySectionRef.collapse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.LazySectionRef.collapse" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><a class="reference internal" href="pkgcore.config.central.html#pkgcore.config.central.CollapsedConfig" title="pkgcore.config.central.CollapsedConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.config.central.CollapsedConfig</span></code></a>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.basics.LazySectionRef.instantiate">
+<code class="sig-name descname">instantiate</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#LazySectionRef.instantiate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.LazySectionRef.instantiate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience method returning the instantiated section.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.convert_asis">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">convert_asis</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">arg_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#convert_asis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.convert_asis" title="Permalink to this definition">¶</a></dt>
+<dd><p>“Conversion” func assuming the types are already correct.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.convert_hybrid">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">convert_hybrid</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">arg_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#convert_hybrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.convert_hybrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Automagically switch between <a class="reference internal" href="#pkgcore.config.basics.convert_string" title="pkgcore.config.basics.convert_string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_string</span></code></a> and <a class="reference internal" href="#pkgcore.config.basics.convert_asis" title="pkgcore.config.basics.convert_asis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_asis</span></code></a>.</p>
+<p><a class="reference internal" href="#pkgcore.config.basics.convert_asis" title="pkgcore.config.basics.convert_asis"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_asis</span></code></a> is used for arg_type str and if value is not a string.
+<a class="reference internal" href="#pkgcore.config.basics.convert_string" title="pkgcore.config.basics.convert_string"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_string</span></code></a> is used for the rest.</p>
+<p>Be careful about handing in escaped strings: they are not
+unescaped (for arg_type str).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.convert_string">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">convert_string</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">central</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">arg_type</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#convert_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.convert_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>Conversion func for a string-based DictConfigSection.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.parse_config_file">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">parse_config_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#parse_config_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.parse_config_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.section_alias">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">section_alias</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target</span></em>, <em class="sig-param"><span class="n">typename</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#section_alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.section_alias" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build a ConfigSection that instantiates a named reference.</p>
+<p>Because of central’s caching our instantiated value will be
+identical to our target’s.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.str_to_bool">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">str_to_bool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#str_to_bool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.str_to_bool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a string to a boolean.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.str_to_int">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">str_to_int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#str_to_int"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.str_to_int" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a string to a integer.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.str_to_list">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">str_to_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#str_to_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.str_to_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split on whitespace honoring quoting for new tokens.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.basics.str_to_str">
+<code class="sig-prename descclassname">pkgcore.config.basics.</code><code class="sig-name descname">str_to_str</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/basics.html#str_to_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.basics.str_to_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yank leading/trailing whitespace and quotation, along with newlines.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.basics module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

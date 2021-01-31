@@ -1,0 +1,7 @@
+pkgcore.ebuild.cpv module
+=========================
+
+.. automodule:: pkgcore.ebuild.cpv
+   :members:
+   :undoc-members:
+   :show-inheritance:

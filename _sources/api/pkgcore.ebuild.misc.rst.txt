@@ -1,0 +1,7 @@
+pkgcore.ebuild.misc module
+==========================
+
+.. automodule:: pkgcore.ebuild.misc
+   :members:
+   :undoc-members:
+   :show-inheritance:

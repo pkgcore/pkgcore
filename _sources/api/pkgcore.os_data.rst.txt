@@ -1,0 +1,7 @@
+pkgcore.os\_data module
+=======================
+
+.. automodule:: pkgcore.os_data
+   :members:
+   :undoc-members:
+   :show-inheritance:

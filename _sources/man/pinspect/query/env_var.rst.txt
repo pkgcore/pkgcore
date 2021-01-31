@@ -1,0 +1,7 @@
+pinspect query env_var - return configuration defined variables.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: env_var/_synopsis.rst
+.. include:: env_var/_description.rst
+.. include:: env_var/_options.rst
+.. include:: env_var/_subcommands.rst

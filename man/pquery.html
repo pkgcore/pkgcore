@@ -1,0 +1,478 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pquery &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pshowkw - display package keywords" href="pshowkw.html" />
+    <link rel="prev" title="pplugincache - plugin cache update utility" href="pplugincache.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pshowkw.html" title="pshowkw - display package keywords"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pplugincache.html" title="pplugincache - plugin cache update utility"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" accesskey="U">Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pquery</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pquery">
+<h1>pquery<a class="headerlink" href="#pquery" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="synopsis">
+<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h2>
+<p>pquery [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] [--domain DOMAIN] [--raw] [--unfiltered] [--virtuals {only,disable}] [-r REPO | -E | -B | -I | -A] [--all] [--has-use has_use] [--license license] [--revdep REVDEP] [--revdep-pkgs REVDEP_PKGS] [--restrict-revdep restrict_revdep] [--restrict-revdep-pkgs restrict_revdep_pkgs] [-S description] [--eapi eapi] [--owns owns] [--owns-re owns_re] [--maintainer maintainer] [--maintainer-name maintainer_name] [--maintainer-email maintainer_email] [--environment environment] [--pkgset pkgset] [-u] [-1] [-a] [--cpv] [-R] [--slot] [-n | --min | --max] [--blame] [--size] [--contents] [--highlight-dep HIGHLIGHT_DEP] [--print-revdep PRINT_REVDEP] [--attr attribute] [--force-attr attribute] [--one-attr attribute | --force-one-attr attribute] [TARGET [TARGET ...]]</p>
+</div>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>pquery is used to extract various kinds of information about either installed
+or uninstalled packages. From an overall usage standpoint it is similar to
+equery, but it can do things equery cannot do and is a bit more flexible.</p>
+<p>What pquery does is select packages from one or more repos that match
+a boolean combination of restrictions, then print selected information about
+those packages. It is important to understand that the information printing and
+repo selection options are almost completely separate from the
+restriction options. The only exception to that is that restrictions on
+contents automatically select the vdb (installed packages) repo, since
+running them on source repos makes no sense.</p>
+</div>
+<div class="section" id="base-options">
+<h2>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--version</span></kbd></dt>
+<dd><p>Show this program's version information and exit.</p>
+<p>When running from within a git repo or a version
+installed from git the latest commit hash and date will
+be shown.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="config-options">
+<h2>Config Options<a class="headerlink" href="#config-options" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>--add-config SECTION KEY VALUE</dt><dd><p>modify existing pkgcore config section</p>
+</dd>
+<dt>--new-config SECTION KEY VALUE</dt><dd><p>add new pkgcore config section</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--empty-config</span></kbd></dt>
+<dd><p>skip loading user/system pkgcore config</p>
+</dd>
+<dt><kbd><span class="option">--config <var>PATH</var></span></kbd></dt>
+<dd><p>use custom pkgcore config file</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="repository-matching-options">
+<h2>Repository Matching Options<a class="headerlink" href="#repository-matching-options" title="Permalink to this headline">¶</a></h2>
+<p>options controlling which repos to inspect</p>
+<dl class="option-list">
+<dt><kbd><span class="option">--raw</span></kbd></dt>
+<dd><p>Disable configuration filtering that forces raw dependencies to be
+used, rather than the dependencies rendered via your USE configuration.
+Primarily useful for people who need to look under the hood- ebuild
+devs, PM tool authors, etc. Note this option ignores --domain if is
+specified.</p>
+</dd>
+<dt><kbd><span class="option">--unfiltered</span></kbd></dt>
+<dd><p>Disable all package filtering mechanisms such as ACCEPT_KEYWORDS,
+ACCEPT_LICENSE, and package.mask.</p>
+</dd>
+</dl>
+<dl>
+<dt>--virtuals {only,disable}</dt><dd><p>This option requires one of two arguments, either 'only' or 'disable',
+which causes only virtuals to be matched or disables virtuals matching
+entirely, respectively.</p>
+<p>By default, virtuals are included during matching.</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">-r <var>REPO</var></span>, <span class="option">--repo <var>REPO</var></span></kbd></dt>
+<dd><p>Select the repo to search in for matches. This includes all the
+configured repos in repos.conf as well as the special keywords binpkg,
+provided, and vdb that search the configured binary package repo,
+package.provided, and installed packages, respectively.</p>
+<p>By default, all configured repos except the vdb will be searched when
+this option isn't specified.</p>
+</dd>
+<dt><kbd><span class="option">-E</span>, <span class="option">--ebuild-repos</span></kbd></dt>
+<dd><p>Search within all ebuild repos, all non-ebuild repos are skipped.</p>
+</dd>
+<dt><kbd><span class="option">-B</span>, <span class="option">--binary-repos</span></kbd></dt>
+<dd><p>Search within all binary repos, all non-binary repos are skipped.</p>
+</dd>
+<dt><kbd><span class="option">-I</span>, <span class="option">--installed</span></kbd></dt>
+<dd><p>Search within installed packages (alias for '--repo vdb').</p>
+</dd>
+<dt><kbd><span class="option">-A</span>, <span class="option">--all-repos</span></kbd></dt>
+<dd><p>Search all available repos including the vdb.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="package-matching-options">
+<h2>Package Matching Options<a class="headerlink" href="#package-matching-options" title="Permalink to this headline">¶</a></h2>
+<p>Each option specifies a restriction packages must match. Specifying
+the same option twice means &quot;or&quot; unless stated otherwise. Specifying
+multiple types of restrictions means &quot;and&quot; unless stated otherwise.</p>
+<dl class="simple">
+<dt>TARGET</dt><dd><p>extended atom matching of pkgs</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--all</span></kbd></dt>
+<dd><p>Match all packages which is equivalent to &quot;pquery <a href="#id1"><span class="problematic" id="id2">*</span></a>&quot;. Note that if no
+query options are specified, this option is enabled.</p>
+</dd>
+<dt><kbd><span class="option">--has-use <var>has_use</var></span></kbd></dt>
+<dd><p>exact string match on a USE flag</p>
+</dd>
+<dt><kbd><span class="option">--license <var>license</var></span></kbd></dt>
+<dd><p>exact match on a license</p>
+</dd>
+<dt><kbd><span class="option">--revdep <var>REVDEP</var></span></kbd></dt>
+<dd><p>An alias for '--restrict-revdep atom --print-revdep atom', but note
+that --print-revdep is slow so use --restrict-revdep if you just need a
+list.</p>
+</dd>
+<dt><kbd><span class="option">--revdep-pkgs <var>REVDEP_PKGS</var></span></kbd></dt>
+<dd><p>An alias for '--restrict-revdep-pkgs atom --print-revdep atom', but
+note that --print-revdep is slow so use --restrict-revdep if you just
+need a list.</p>
+</dd>
+<dt><kbd><span class="option">--restrict-revdep <var>restrict_revdep</var></span></kbd></dt>
+<dd><p>dependency on an atom</p>
+</dd>
+<dt><kbd><span class="option">--restrict-revdep-pkgs <var>restrict_revdep_pkgs</var></span></kbd></dt>
+<dd><p>dependency on pkgs that match a specific atom</p>
+</dd>
+<dt><kbd><span class="option">-S <var>description</var></span>, <span class="option">--description <var>description</var></span></kbd></dt>
+<dd><p>regexp search on description and longdescription</p>
+</dd>
+<dt><kbd><span class="option">--eapi <var>eapi</var></span></kbd></dt>
+<dd><p>match packages using a given EAPI</p>
+</dd>
+<dt><kbd><span class="option">--owns <var>owns</var></span></kbd></dt>
+<dd><p>exact match on an owned file/dir</p>
+</dd>
+<dt><kbd><span class="option">--owns-re <var>owns_re</var></span></kbd></dt>
+<dd><p>like &quot;owns&quot; but using a regexp for matching</p>
+</dd>
+<dt><kbd><span class="option">--maintainer <var>maintainer</var></span></kbd></dt>
+<dd><p>comma-separated list of regexes to search for maintainers</p>
+</dd>
+<dt><kbd><span class="option">--maintainer-name <var>maintainer_name</var></span></kbd></dt>
+<dd><p>comma-separated list of maintainer name regexes to search for</p>
+</dd>
+<dt><kbd><span class="option">--maintainer-email <var>maintainer_email</var></span></kbd></dt>
+<dd><p>comma-separated list of maintainer email regexes to search for</p>
+</dd>
+<dt><kbd><span class="option">--environment <var>environment</var></span></kbd></dt>
+<dd><p>regexp search in environment.bz2</p>
+</dd>
+<dt><kbd><span class="option">--pkgset <var>pkgset</var></span></kbd></dt>
+<dd><p>find packages that match the given package set (world for example)</p>
+</dd>
+<dt><kbd><span class="option">-u</span>, <span class="option">--upgrade</span></kbd></dt>
+<dd><p>match installed packages without best slotted version</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="output-options">
+<h2>Output Options<a class="headerlink" href="#output-options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-1</span>, <span class="option">--first</span></kbd></dt>
+<dd><p>stop when first match is found</p>
+</dd>
+<dt><kbd><span class="option">-a</span>, <span class="option">--atom</span></kbd></dt>
+<dd><p>Output valid package atoms, e.g. =cat/pkg-3 instead of cat/pkg-3.</p>
+<p>Note that this option implies --cpv and has no effect if used with
+--no-version.</p>
+</dd>
+<dt><kbd><span class="option">--cpv</span></kbd></dt>
+<dd><p>Display output in the format of 'category/package-version' which is
+done by default, this option forces the output format if another output
+option (such as --contents) alters it.</p>
+</dd>
+<dt><kbd><span class="option">-R</span></kbd></dt>
+<dd><p>print the repo of the package</p>
+</dd>
+<dt><kbd><span class="option">--slot</span></kbd></dt>
+<dd><p>print the slot of the package</p>
+</dd>
+<dt><kbd><span class="option">-n</span>, <span class="option">--no-version</span></kbd></dt>
+<dd><p>collapse multiple matching versions together</p>
+</dd>
+<dt><kbd><span class="option">--min</span></kbd></dt>
+<dd><p>show only the lowest version for each package</p>
+</dd>
+<dt><kbd><span class="option">--max</span></kbd></dt>
+<dd><p>show only the highest version for each package</p>
+</dd>
+<dt><kbd><span class="option">--blame</span></kbd></dt>
+<dd><p>shorthand for --attr maintainers</p>
+</dd>
+<dt><kbd><span class="option">--size</span></kbd></dt>
+<dd><p>display size of all files owned by the package</p>
+</dd>
+<dt><kbd><span class="option">--contents</span></kbd></dt>
+<dd><p>list files owned by the package</p>
+</dd>
+<dt><kbd><span class="option">--highlight-dep <var>HIGHLIGHT_DEP</var></span></kbd></dt>
+<dd><p>highlight dependencies matching this atom</p>
+</dd>
+<dt><kbd><span class="option">--print-revdep <var>PRINT_REVDEP</var></span></kbd></dt>
+<dd><p>print what condition(s) trigger a dep</p>
+</dd>
+<dt><kbd><span class="option">--attr <var>attribute</var></span></kbd></dt>
+<dd><p>Print the given attribute's value. This option can be specified
+multiple times.</p>
+<p>Valid attributes: all, alldepends, allmetadata, bdepend, category, cbuild, chost, ctarget, defined_phases, depend, description, distfiles, eapi, environment, fetchables, files, fullver, homepage, inherited, iuse, keywords, license, longdescription, maintainers, package, path, pdepend, properties, raw_alldepends, raw_bdepend, raw_depend, raw_pdepend, raw_rdepend, rdepend, repo, required_use, restrict, revision, slot, source_repository, subslot, uris, use, version</p>
+</dd>
+<dt><kbd><span class="option">--force-attr <var>attribute</var></span></kbd></dt>
+<dd><p>like --attr but accepts any string as attribute name instead of only explicitly supported names</p>
+</dd>
+<dt><kbd><span class="option">--one-attr <var>attribute</var></span></kbd></dt>
+<dd><p>print one attribute, suppresses other output</p>
+</dd>
+<dt><kbd><span class="option">--force-one-attr <var>attribute</var></span></kbd></dt>
+<dd><p>like --one-attr but accepts any string as attribute name instead of only explicitly supported names</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>Another switch that could do with some extra explanation is <code class="docutils literal notranslate"><span class="pre">--raw</span></code>.
+Specifying <code class="docutils literal notranslate"><span class="pre">--raw</span></code> makes your configuration not affect the results. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pquery --attr alldepends sys-apps/dbus --max -v
+* sys-apps/dbus-0.62-r1
+    description: A message bus system, a simple way for applications to talk
+                 to each other
+    homepage: http://dbus.freedesktop.org/
+    depends: &gt;=dev-libs/glib-2.6 || ( ( x11-libs/libXt x11-libs/libX11 )
+                 virtual/x11 ) &gt;=x11-libs/gtk+-2.6 &gt;=dev-lang/python-2.4
+                 &gt;=dev-python/pyrex-0.9.3-r2 &gt;=dev-libs/expat-1.95.8
+                 dev-util/pkgconfig sys-devel/automake
+                 &gt;=sys-devel/autoconf-2.59 sys-devel/libtool
+    rdepends: &gt;=dev-libs/glib-2.6 || ( ( x11-libs/libXt x11-libs/libX11 )
+                 virtual/x11 ) &gt;=x11-libs/gtk+-2.6 &gt;=dev-lang/python-2.4
+                 &gt;=dev-python/pyrex-0.9.3-r2 &gt;=dev-libs/expat-1.95.8
+    post_rdepends:
+</pre></div>
+</div>
+<p>This is the highest unmasked package on the system. Also notice there are no
+references to USE flags or qt in the dependencies. That is because qt is not in
+USE for this configuration, so those dependencies do not apply.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ pquery --attr alldepends sys-apps/dbus --max -v --raw
+* sys-apps/dbus-0.91
+    description: Meta package for D-Bus
+    homepage: http://dbus.freedesktop.org/
+    depends:
+    rdepends: &gt;=sys-apps/dbus-core-0.91 python? (
+                 &gt;=dev-python/dbus-python-0.71 ) qt3? (
+                 &gt;=dev-libs/dbus-qt3-old-0.70 ) gtk? (
+                 &gt;=dev-libs/dbus-glib-0.71 ) !&lt;sys-apps/dbus-0.91
+    post_rdepends:
+</pre></div>
+</div>
+<p>This version is in <code class="docutils literal notranslate"><span class="pre">package.mask</span></code>, and we can see the use-conditional flags now.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">--verbose</span></code> or <code class="docutils literal notranslate"><span class="pre">-v</span></code> flag tries to print human-readable output (although
+some things like the formatting of depend strings need some improvement).
+Without <code class="docutils literal notranslate"><span class="pre">-v</span></code> the output is usually a single line per package in a hopefully
+machine-parseable format (usable in pipelines). There are some extras like
+<code class="docutils literal notranslate"><span class="pre">--atom</span></code> meant for shell pipeline use. If you have some useful shell pipeline
+in mind that pquery's output could be better formatted for please open an issue.</p>
+<p>Adding short options is planned but there are some features to add first (want
+most of the features in place to avoid name clashes).</p>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 29%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Other tool</p></th>
+<th class="head"><p>pquery</p></th>
+<th class="head"><p>Comments</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">belongs</span> <span class="pre">/bin/ls</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">--owns</span> <span class="pre">/bin/ls</span></code></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">check</span></code></p></td>
+<td><p>not implemented (yet?)</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">depends</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">-I</span> <span class="pre">--revdep</span> <span class="pre">dev-lang/python</span></code></p></td>
+<td><p>omitting <code class="docutils literal notranslate"><span class="pre">-I</span></code> makes it equivalent to <code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">depends</span> <span class="pre">-a</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">depgraph</span></code></p></td>
+<td><p>not implemented (yet?)</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">files</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">--contents</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">--contents</span></code> is an output option, can be combined with any restriction</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">hasuse</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">-I</span> <span class="pre">--has-use</span> <span class="pre">python</span></code></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">list</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">-I</span> <span class="pre">'*python*'</span></code></p></td>
+<td><p>this is in ExtendedAtomSyntax</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">size</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">--size</span> <span class="pre">python</span></code></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">equery</span> <span class="pre">uses</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">--attr</span> <span class="pre">use</span> <span class="pre">python</span></code></p></td>
+<td><p>less information, but is an output option so mixes with any restriction</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">emerge</span> <span class="pre">-s</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">-vn</span> <span class="pre">'*python*'</span></code></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">emerge</span> <span class="pre">-S</span> <span class="pre">python</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">-vnS</span> <span class="pre">python</span></code></p></td>
+<td><p>searches through longdescription (from metadata.xml) too</p></td>
+</tr>
+<tr class="row-odd"><td><p>no equivalent</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">--license</span> <span class="pre">GPL-2</span> <span class="pre">-I</span></code></p></td>
+<td><p>list all installed GPL-2 packages</p></td>
+</tr>
+<tr class="row-even"><td><p>no equivalent</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">pquery</span> <span class="pre">--maintainer</span> <span class="pre">radhermit</span></code></p></td>
+<td><p>list all packages that are maintained by radhermit</p></td>
+</tr>
+</tbody>
+</table>
+<p>It can also do some things equery/emerge do not let you do, like restricting
+based on maintainer or herd and printing various other package attributes. See
+<code class="docutils literal notranslate"><span class="pre">--help</span></code> for those. If you miss a query open an issue.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pquery</a><ul>
+<li><a class="reference internal" href="#synopsis">Synopsis</a></li>
+<li><a class="reference internal" href="#description">Description</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#config-options">Config Options</a></li>
+<li><a class="reference internal" href="#repository-matching-options">Repository Matching Options</a></li>
+<li><a class="reference internal" href="#package-matching-options">Package Matching Options</a></li>
+<li><a class="reference internal" href="#output-options">Output Options</a></li>
+<li><a class="reference internal" href="#usage">Usage</a></li>
+<li><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pplugincache.html"
+                        title="previous chapter">pplugincache - plugin cache update utility</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pshowkw.html"
+                        title="next chapter">pshowkw - display package keywords</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pshowkw.html" title="pshowkw - display package keywords"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pplugincache.html" title="pplugincache - plugin cache update utility"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" >Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pquery</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.cache.fs_template &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cache.html" accesskey="U">pkgcore.cache</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.cache.fs_template</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.cache.fs_template</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">template for fs based backends</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;FsBased&quot;</span><span class="p">,)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">ensure_dirs</span><span class="p">,</span> <span class="n">pjoin</span>
+
+<span class="kn">from</span> <span class="nn">..os_data</span> <span class="kn">import</span> <span class="n">portage_gid</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">base</span>
+
+
+<div class="viewcode-block" id="FsBased"><a class="viewcode-back" href="../../../api/pkgcore.cache.fs_template.html#pkgcore.cache.fs_template.FsBased">[docs]</a><span class="k">class</span> <span class="nc">FsBased</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Template wrapping fs needed options.</span>
+
+<span class="sd">    Provides _ensure_access as a way to attempt to ensure files have</span>
+<span class="sd">    the specified owners/perms.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        throws InitializationError if needs args aren&#39;t specified</span>
+
+<span class="sd">        :keyword gid: defaults to :obj:`pkgcore.os_data.portage_gid`,</span>
+<span class="sd">            gid to force all entries to</span>
+<span class="sd">        :keyword perms: defaults to 0665, mode to force all entries to&quot;&quot;&quot;</span>
+
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;gid&quot;</span><span class="p">,</span> <span class="n">portage_gid</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;perms&quot;</span><span class="p">,</span> <span class="mo">0o664</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
+                <span class="k">del</span> <span class="n">config</span><span class="p">[</span><span class="n">x</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">config</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">label</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">location</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">label</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mtime_used</span> <span class="o">=</span> <span class="s1">&#39;mtime&#39;</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">chf_type</span>
+
+    <span class="fm">__init__</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+        <span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="fm">__init__</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;@param&quot;</span><span class="p">,</span> <span class="s2">&quot;@keyword&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="fm">__init__</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;@param&quot;</span> <span class="ow">in</span> <span class="n">y</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_ensure_access</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">mtime</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Ensure access to a path.</span>
+
+<span class="sd">        :param mtime: if specified change mtime to this value.</span>
+<span class="sd">        :return: C{False} if unable to guarantee access, C{True} otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gid</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perms</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mtime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">mtime</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mtime</span><span class="p">)</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="p">(</span><span class="n">mtime</span><span class="p">,</span> <span class="n">mtime</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make sure a path relative to C{self.location} exists.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span>
+        <span class="k">return</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o775</span><span class="p">,</span> <span class="n">minimal</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../cache.html" >pkgcore.cache</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.cache.fs_template</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

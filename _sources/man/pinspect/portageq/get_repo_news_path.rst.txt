@@ -1,0 +1,7 @@
+pinspect portageq get_repo_news_path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: get_repo_news_path/_synopsis.rst
+.. include:: get_repo_news_path/_description.rst
+.. include:: get_repo_news_path/_options.rst
+.. include:: get_repo_news_path/_subcommands.rst

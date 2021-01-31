@@ -1,0 +1,227 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.resolver &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.resolver</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.resolver</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">resolver configuration to match portage behaviour (misbehaviour in a few spots)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;upgrade_resolver&quot;</span><span class="p">,</span> <span class="s2">&quot;min_install_resolver&quot;</span><span class="p">]</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+
+<span class="kn">from</span> <span class="nn">..repository</span> <span class="kn">import</span> <span class="n">misc</span><span class="p">,</span> <span class="n">multiplex</span>
+<span class="kn">from</span> <span class="nn">..resolver</span> <span class="kn">import</span> <span class="n">plan</span>
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">packages</span><span class="p">,</span> <span class="n">values</span>
+<span class="kn">from</span> <span class="nn">.atom</span> <span class="kn">import</span> <span class="n">atom</span>
+
+
+<div class="viewcode-block" id="upgrade_resolver"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.resolver.html#pkgcore.ebuild.resolver.upgrade_resolver">[docs]</a><span class="k">def</span> <span class="nf">upgrade_resolver</span><span class="p">(</span><span class="n">vdbs</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">verify_vdb</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nodeps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">force_replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">resolver_cls</span><span class="o">=</span><span class="n">plan</span><span class="o">.</span><span class="n">merge_plan</span><span class="p">,</span>
+                     <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    generate and configure a resolver for upgrading all processed nodes.</span>
+
+<span class="sd">    :param vdbs: list of :obj:`pkgcore.repository.prototype.tree` instances</span>
+<span class="sd">        that represents the livefs</span>
+<span class="sd">    :param dbs: list of :obj:`pkgcore.repository.prototype.tree` instances</span>
+<span class="sd">        representing sources of pkgs</span>
+<span class="sd">    :param verify_vdb: should we stop resolving once we hit the vdb,</span>
+<span class="sd">        or do full resolution?</span>
+<span class="sd">    :return: :obj:`pkgcore.resolver.plan.merge_plan` instance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="n">plan</span><span class="o">.</span><span class="n">merge_plan</span><span class="o">.</span><span class="n">prefer_highest_version_strategy</span>
+    <span class="c1"># hack.</span>
+    <span class="k">if</span> <span class="n">nodeps</span><span class="p">:</span>
+        <span class="n">vdbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">vdbs</span><span class="p">))</span>
+        <span class="n">dbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">dbs</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">verify_vdb</span><span class="p">:</span>
+        <span class="n">vdbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">vdbs</span><span class="p">))</span>
+        <span class="n">dbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dbs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">force_replace</span><span class="p">:</span>
+        <span class="n">resolver_cls</span> <span class="o">=</span> <span class="n">generate_replace_resolver_kls</span><span class="p">(</span><span class="n">resolver_cls</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolver_cls</span><span class="p">(</span><span class="n">dbs</span> <span class="o">+</span> <span class="n">vdbs</span><span class="p">,</span> <span class="n">plan</span><span class="o">.</span><span class="n">pkg_sort_highest</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">downgrade_resolver</span><span class="p">(</span>
+        <span class="n">vdbs</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">verify_vdb</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nodeps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force_replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">resolver_cls</span><span class="o">=</span><span class="n">plan</span><span class="o">.</span><span class="n">merge_plan</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    generate and configure a resolver for downgrading all processed nodes.</span>
+
+<span class="sd">    :param vdbs: list of :obj:`pkgcore.repository.prototype.tree` instances</span>
+<span class="sd">        that represents the livefs</span>
+<span class="sd">    :param dbs: list of :obj:`pkgcore.repository.prototype.tree` instances</span>
+<span class="sd">        representing sources of pkgs</span>
+<span class="sd">    :param verify_vdb: should we stop resolving once we hit the vdb,</span>
+<span class="sd">        or do full resolution?</span>
+<span class="sd">    :return: :obj:`pkgcore.resolver.plan.merge_plan` instance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">restrict</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">(</span>
+        <span class="o">*</span><span class="nb">list</span><span class="p">(</span><span class="n">atom</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&gt;=</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">vdbs</span><span class="p">)))</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">merge_plan</span><span class="o">.</span><span class="n">prefer_downgrade_version_strategy</span><span class="p">,</span> <span class="n">restrict</span><span class="p">)</span>
+    <span class="n">dbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">restrict_repo</span><span class="p">,</span> <span class="n">restrict</span><span class="p">),</span> <span class="n">dbs</span><span class="p">))</span>
+    <span class="c1"># hack.</span>
+    <span class="k">if</span> <span class="n">nodeps</span><span class="p">:</span>
+        <span class="n">vdbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">vdbs</span><span class="p">))</span>
+        <span class="n">dbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">dbs</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">verify_vdb</span><span class="p">:</span>
+        <span class="n">vdbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">vdbs</span><span class="p">))</span>
+        <span class="n">dbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dbs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">force_replace</span><span class="p">:</span>
+        <span class="n">resolver_cls</span> <span class="o">=</span> <span class="n">generate_replace_resolver_kls</span><span class="p">(</span><span class="n">resolver_cls</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolver_cls</span><span class="p">(</span><span class="n">dbs</span> <span class="o">+</span> <span class="n">vdbs</span><span class="p">,</span> <span class="n">plan</span><span class="o">.</span><span class="n">pkg_sort_highest</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="min_install_resolver"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.resolver.html#pkgcore.ebuild.resolver.min_install_resolver">[docs]</a><span class="k">def</span> <span class="nf">min_install_resolver</span><span class="p">(</span><span class="n">vdbs</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">verify_vdb</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nodeps</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                         <span class="n">force_replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">resolver_cls</span><span class="o">=</span><span class="n">plan</span><span class="o">.</span><span class="n">merge_plan</span><span class="p">,</span>
+                         <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Resolver that tries to minimize the number of changes while installing.</span>
+
+<span class="sd">    generate and configure a resolver that is focused on just</span>
+<span class="sd">    installing requests- installs highest version it can build a</span>
+<span class="sd">    solution for, but tries to avoid building anything not needed</span>
+
+<span class="sd">    :param vdbs: list of :obj:`pkgcore.repository.prototype.tree` instances</span>
+<span class="sd">        that represents the livefs</span>
+<span class="sd">    :param dbs: list of :obj:`pkgcore.repository.prototype.tree` instances</span>
+<span class="sd">        representing sources of pkgs</span>
+<span class="sd">    :param verify_vdb: should we stop resolving once we hit the vdb,</span>
+<span class="sd">        or do full resolution?</span>
+<span class="sd">    :return: :obj:`pkgcore.resolver.plan.merge_plan` instance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">nodeps</span><span class="p">:</span>
+        <span class="n">vdbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">vdbs</span><span class="p">))</span>
+        <span class="n">dbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">dbs</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">verify_vdb</span><span class="p">:</span>
+        <span class="n">vdbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">nodeps_repo</span><span class="p">,</span> <span class="n">vdbs</span><span class="p">))</span>
+        <span class="n">dbs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dbs</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">force_replace</span><span class="p">:</span>
+        <span class="n">resolver_cls</span> <span class="o">=</span> <span class="n">generate_replace_resolver_kls</span><span class="p">(</span><span class="n">resolver_cls</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">resolver_cls</span><span class="p">(</span><span class="n">vdbs</span> <span class="o">+</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">plan</span><span class="o">.</span><span class="n">pkg_sort_highest</span><span class="p">,</span>
+                        <span class="n">plan</span><span class="o">.</span><span class="n">merge_plan</span><span class="o">.</span><span class="n">prefer_reuse_strategy</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+<span class="n">_vdb_restrict</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">(</span>
+    <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;repo.livefs&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">EqualityMatch</span><span class="p">(</span><span class="kc">False</span><span class="p">)),</span>
+    <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span>
+        <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+            <span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">StrExactMatch</span><span class="p">(</span><span class="s2">&quot;virtual&quot;</span><span class="p">)),</span>
+        <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+            <span class="s2">&quot;package_is_real&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">EqualityMatch</span><span class="p">(</span><span class="kc">False</span><span class="p">)),</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">empty_tree_merge_plan</span><span class="p">(</span><span class="n">plan</span><span class="o">.</span><span class="n">merge_plan</span><span class="p">):</span>
+
+    <span class="n">_vdb_restriction</span> <span class="o">=</span> <span class="n">_vdb_restrict</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param args: see :obj:`pkgcore.resolver.plan.merge_plan.__init__`</span>
+<span class="sd">            for valid args</span>
+<span class="sd">        :param kwds: see :obj:`pkgcore.resolver.plan.merge_plan.__init__`</span>
+<span class="sd">            for valid args</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">dbs</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="c1"># XXX *cough*, hack.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_dbs</span> <span class="o">=</span> <span class="n">multiplex</span><span class="o">.</span><span class="n">tree</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_raw_dbs</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">livefs</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">generate_replace_resolver_kls</span><span class="p">(</span><span class="n">resolver_kls</span><span class="p">):</span>
+
+    <span class="k">class</span> <span class="nc">replace_resolver</span><span class="p">(</span><span class="n">resolver_kls</span><span class="p">):</span>
+        <span class="n">overriding_resolver_kls</span> <span class="o">=</span> <span class="n">resolver_kls</span>
+        <span class="n">_vdb_restriction</span> <span class="o">=</span> <span class="n">_vdb_restrict</span>
+
+        <span class="k">def</span> <span class="nf">add_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restricts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+            <span class="n">restricts</span> <span class="o">=</span> <span class="p">[</span><span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_vdb_restriction</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+                         <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">restricts</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">overriding_resolver_kls</span><span class="o">.</span><span class="n">add_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restricts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">replace_resolver</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.resolver</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

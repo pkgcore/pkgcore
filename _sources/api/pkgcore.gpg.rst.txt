@@ -1,0 +1,7 @@
+pkgcore.gpg module
+==================
+
+.. automodule:: pkgcore.gpg
+   :members:
+   :undoc-members:
+   :show-inheritance:

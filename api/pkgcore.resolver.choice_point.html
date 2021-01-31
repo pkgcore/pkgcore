@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.resolver.choice_point module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.choice_point module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.resolver.choice_point">
+<span id="pkgcore-resolver-choice-point-module"></span><h1>pkgcore.resolver.choice_point module<a class="headerlink" href="#module-pkgcore.resolver.choice_point" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.resolver.choice_point.choice_point">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.choice_point.</code><code class="sig-name descname">choice_point</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">a</span></em>, <em class="sig-param"><span class="n">matches</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/choice_point.html#choice_point"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.resolver.choice_point.choice_point.atom">
+<code class="sig-name descname">atom</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.bdepend">
+<em class="property">property </em><code class="sig-name descname">bdepend</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.bdepend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build time dependencies for CBUILD.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.current_pkg">
+<em class="property">property </em><code class="sig-name descname">current_pkg</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.current_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Current selected package.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.depend">
+<em class="property">property </em><code class="sig-name descname">depend</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.depend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build time dependencies for CHOST.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.force_next_pkg">
+<code class="sig-name descname">force_next_pkg</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/choice_point.html#choice_point.force_next_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.force_next_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Force next package to be selected from available matches.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.key">
+<em class="property">property </em><code class="sig-name descname">key</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.key" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to current_pkg.key</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.choice_point.choice_point.matches">
+<code class="sig-name descname">matches</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.matches" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.choice_point.choice_point.matches_cur">
+<code class="sig-name descname">matches_cur</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.matches_cur" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.pdepend">
+<em class="property">property </em><code class="sig-name descname">pdepend</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.pdepend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Post merge dependencies.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.rdepend">
+<em class="property">property </em><code class="sig-name descname">rdepend</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.rdepend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Runtime dependencies.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.reduce_atoms">
+<code class="sig-name descname">reduce_atoms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/choice_point.html#choice_point.reduce_atoms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.reduce_atoms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alter choice point atom set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>atom</strong> (set of <a class="reference internal" href="pkgcore.ebuild.atom.html#pkgcore.ebuild.atom.atom" title="pkgcore.ebuild.atom.atom"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.ebuild.atom.atom</span></code></a>) – set of package atoms</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if no more pkgs remain or atoms were removed,
+False if no atoms were removed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.slot">
+<em class="property">property </em><code class="sig-name descname">slot</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.slot" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to current_pkg.slot</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.choice_point.choice_point.solution_filters">
+<code class="sig-name descname">solution_filters</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.solution_filters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.choice_point.choice_point.state">
+<em class="property">property </em><code class="sig-name descname">state</code><a class="headerlink" href="#pkgcore.resolver.choice_point.choice_point.state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return choice point state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A tuple consisting of the number of possible choices,
+current matches’ repo, current package match, all possible
+matches, cbuild build deps, chost build deps, runtime deps,
+and post merge deps.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.choice_point module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

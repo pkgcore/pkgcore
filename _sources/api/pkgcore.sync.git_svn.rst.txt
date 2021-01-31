@@ -1,0 +1,7 @@
+pkgcore.sync.git\_svn module
+============================
+
+.. automodule:: pkgcore.sync.git_svn
+   :members:
+   :undoc-members:
+   :show-inheritance:

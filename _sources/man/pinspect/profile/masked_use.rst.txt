@@ -1,0 +1,7 @@
+pinspect profile masked_use - inspect masked use flags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: masked_use/_synopsis.rst
+.. include:: masked_use/_description.rst
+.. include:: masked_use/_options.rst
+.. include:: masked_use/_subcommands.rst

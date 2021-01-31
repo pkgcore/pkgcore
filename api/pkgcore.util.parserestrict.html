@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.util.parserestrict module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.util.parserestrict module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.util.parserestrict">
+<span id="pkgcore-util-parserestrict-module"></span><h1>pkgcore.util.parserestrict module<a class="headerlink" href="#module-pkgcore.util.parserestrict" title="Permalink to this headline">¶</a></h1>
+<p>Functions that turn a string into a restriction or raise ParseError.</p>
+<p>__all__ = (“parse_match”, “ParseError”,)</p>
+<p>&#64;var parse_funcs: dict of the functions that are available.</p>
+<dl class="py exception">
+<dt id="pkgcore.util.parserestrict.ParseError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">ParseError</code><a class="reference internal" href="../_modules/pkgcore/util/parserestrict.html#ParseError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.parserestrict.ParseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code></a></p>
+<p>Raised if parsing a restriction expression failed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.parserestrict.collect_ops">
+<code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">collect_ops</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/parserestrict.html#collect_ops"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.parserestrict.collect_ops" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.parserestrict.comma_separated_containment">
+<code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">comma_separated_containment</code><span class="sig-paren">(</span><em class="sig-param">attr</em>, <em class="sig-param">values_kls=&lt;class 'frozenset'&gt;</em>, <em class="sig-param">token_kls=&lt;class 'str'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/parserestrict.html#comma_separated_containment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.parserestrict.comma_separated_containment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper for parsing comma-separated strings to a ContainmentMatch2.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>attr</strong> – name of the attribute.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a parse function: takes a string of comma-separated values,
+returns a <code class="xref py py-obj docutils literal notranslate"><span class="pre">packages.PackageRestriction</span></code> matching packages that
+have any of those values in the attribute passed to this function.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.parserestrict.convert_glob">
+<code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">convert_glob</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">token</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/parserestrict.html#convert_glob"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.parserestrict.convert_glob" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.parserestrict.parse_globbed_version">
+<code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">parse_globbed_version</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em>, <em class="sig-param"><span class="n">orig_text</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/parserestrict.html#parse_globbed_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.parserestrict.parse_globbed_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Support parsing globbed targets with limited version restrictions.</p>
+<p>For example, ‘&gt;=*/alsa-<em>-1.1.7’ would match all packages named ‘alsa-</em>‘
+that are version 1.1.7 or greater.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.parserestrict.parse_match">
+<code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">parse_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/parserestrict.html#parse_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.parserestrict.parse_match" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate appropriate restriction for text</p>
+<p>Parsing basically breaks it down into chunks split by /, with each
+chunk allowing for prefix/postfix globbing- note that a postfixed
+glob on package token is treated as package attribute matching,
+not as necessarily a version match.</p>
+<p>If only one chunk is found, it’s treated as a package chunk.
+Finally, it supports a nonstandard variation of atom syntax where
+the category can be dropped.</p>
+<p>Examples:</p>
+<ul class="simple">
+<li><p><cite>*</cite>: match all</p></li>
+<li><p><cite>dev-*/*</cite>: category must start with ‘dev-‘</p></li>
+<li><p><cite>dev-*</cite>: package must start with ‘dev-‘</p></li>
+<li><p><cite>*-apps/portage*</cite>: category must end in ‘-apps’, package must start with
+‘portage’</p></li>
+<li><p><cite>&gt;=portage-2.1</cite>: atom syntax, package ‘portage’, version greater then or
+equal to ‘2.1’</p></li>
+<li><p>dev-qt/<a href="#id1"><span class="problematic" id="id2">*</span></a>:5: all Qt 5 libs</p></li>
+<li><p>boost:0/1.60: all packages named boost with a slot/subslot of 0/1.60.0</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>string</em>) – string to attempt to parse</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><a class="reference internal" href="pkgcore.restrictions.packages.html#module-pkgcore.restrictions.packages" title="pkgcore.restrictions.packages"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.restrictions.packages</span></code></a> derivative</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.parserestrict.parse_pv">
+<code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">parse_pv</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">text</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/parserestrict.html#parse_pv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.parserestrict.parse_pv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a CPV instance from either a cpv or a pv string.</p>
+<p>If a pv is passed it needs to match a single cpv in repo.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.parserestrict.valid_globbing">
+<code class="sig-prename descclassname">pkgcore.util.parserestrict.</code><code class="sig-name descname">valid_globbing</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">pos</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">endpos</span><span class="o">=</span><span class="default_value">9223372036854775807</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.util.parserestrict.valid_globbing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Matches zero or more characters at the beginning of the string.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.util.parserestrict module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

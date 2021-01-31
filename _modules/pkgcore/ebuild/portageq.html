@@ -1,0 +1,351 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.portageq &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.portageq</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.portageq</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">osutils</span>
+<span class="kn">from</span> <span class="nn">snakeoil.cli</span> <span class="kn">import</span> <span class="n">arghparse</span>
+
+<span class="kn">from</span> <span class="nn">..restrictions.boolean</span> <span class="kn">import</span> <span class="n">AndRestriction</span>
+<span class="kn">from</span> <span class="nn">..util</span> <span class="kn">import</span> <span class="n">commandline</span><span class="p">,</span> <span class="n">packages</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">atom</span><span class="p">,</span> <span class="n">conditionals</span>
+<span class="kn">from</span> <span class="nn">.eapi</span> <span class="kn">import</span> <span class="n">get_eapi</span>
+
+
+<div class="viewcode-block" id="str_pkg"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.str_pkg">[docs]</a><span class="k">def</span> <span class="nf">str_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+    <span class="n">pkg</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">get_raw_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+    <span class="c1"># special casing; old style virtuals come through as the original pkg.</span>
+    <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">package_is_real</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;actual_pkg&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">actual_pkg</span><span class="o">.</span><span class="n">cpvstr</span>
+    <span class="c1"># icky, but works.</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">rdepend</span><span class="p">)</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_atom_kls"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.get_atom_kls">[docs]</a><span class="k">def</span> <span class="nf">get_atom_kls</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="n">eapi</span> <span class="o">=</span> <span class="n">get_eapi</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eapi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EAPI </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2"> isn&#39;t known/supported&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">eapi</span><span class="o">.</span><span class="n">atom_kls</span></div>
+
+<div class="viewcode-block" id="default_portageq_args"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.default_portageq_args">[docs]</a><span class="k">def</span> <span class="nf">default_portageq_args</span><span class="p">(</span><span class="n">parser</span><span class="p">):</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--eapi&quot;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;atom_kls&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">get_atom_kls</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;limit all operations to just what the given EAPI supports.&quot;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">&quot;--use&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;override the use flags used for transititive USE deps- &quot;</span>
+       <span class="s2">&quot;dev-lang/python[threads=] for example&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="make_atom"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.make_atom">[docs]</a><span class="k">def</span> <span class="nf">make_atom</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">arghparse</span><span class="o">.</span><span class="n">DelayedValue</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_render_atom</span><span class="p">,</span> <span class="n">value</span><span class="p">),</span> <span class="mi">100</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">_render_atom</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">namespace</span><span class="o">.</span><span class="n">atom_kls</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">transitive_use_atom</span><span class="p">):</span>
+        <span class="n">a</span><span class="o">.</span><span class="n">restrictions</span>
+        <span class="c1"># XXX bit of a hack.</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">conditionals</span><span class="o">.</span><span class="n">DepSet</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">evaluate_depset</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">AndRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">a</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="BaseCommand"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.BaseCommand">[docs]</a><span class="k">class</span> <span class="nc">BaseCommand</span><span class="p">(</span><span class="n">arghparse</span><span class="o">.</span><span class="n">ArgparseCommand</span><span class="p">):</span>
+
+    <span class="n">required_arg_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">has_optional_args</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">arg_spec</span> <span class="o">=</span> <span class="p">()</span>
+
+<div class="viewcode-block" id="BaseCommand.bind_to_parser"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.BaseCommand.bind_to_parser">[docs]</a>    <span class="k">def</span> <span class="nf">bind_to_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">compat</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">arghparse</span><span class="o">.</span><span class="n">ArgparseCommand</span><span class="o">.</span><span class="n">bind_to_parser</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
+        <span class="n">default_portageq_args</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">requires_root</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">compat</span><span class="p">:</span>
+                <span class="n">kwds</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compat_root_default</span><span class="p">:</span>
+                    <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;nargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;?&quot;</span>
+                    <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;default&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compat_root_default</span>
+                <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                    <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;domain&quot;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s2">&quot;root&quot;</span><span class="p">,</span>
+                    <span class="n">action</span><span class="o">=</span><span class="n">commandline</span><span class="o">.</span><span class="n">DomainFromPath</span><span class="p">,</span>
+                    <span class="n">help</span><span class="o">=</span><span class="s2">&quot;the domain that lives at root will be used&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mux</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
+                <span class="n">commandline</span><span class="o">.</span><span class="n">_mk_domain</span><span class="p">(</span><span class="n">mux</span><span class="p">)</span>
+                <span class="n">mux</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                    <span class="s1">&#39;--domain-at-root&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="n">commandline</span><span class="o">.</span><span class="n">DomainFromPath</span><span class="p">,</span>
+                    <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;domain&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;specify the domain to use via its root path&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_spec</span><span class="p">:</span>
+            <span class="n">kwds</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">token</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;+?*&#39;</span><span class="p">:</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;nargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">token</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">token</span> <span class="o">=</span> <span class="n">token</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">token</span> <span class="o">==</span> <span class="s1">&#39;atom&#39;</span><span class="p">:</span>
+                <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                    <span class="s1">&#39;atom&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;atom to inspect&quot;</span><span class="p">,</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="n">make_atom</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+                    <span class="n">token</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2"> to inspect&quot;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseCommand.make_command"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.BaseCommand.make_command">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">make_command</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">arg_spec</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">requires_root</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                     <span class="n">root_default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">kwds</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">arg_spec</span><span class="o">=</span><span class="nb">tuple</span><span class="p">(</span><span class="n">arg_spec</span><span class="o">.</span><span class="n">split</span><span class="p">()),</span> <span class="n">requires_root</span><span class="o">=</span><span class="n">requires_root</span><span class="p">,</span>
+            <span class="n">_compat_root_default</span><span class="o">=</span><span class="n">root_default</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">internal_function</span><span class="p">(</span><span class="n">functor</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">class</span> <span class="nc">mycommand</span><span class="p">(</span><span class="n">BaseCommand</span><span class="p">):</span>
+                <span class="n">function</span> <span class="o">=</span> <span class="fm">__call__</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">functor</span><span class="p">)</span>
+                <span class="vm">__doc__</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">functor</span><span class="p">,</span> <span class="s1">&#39;__doc__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwds</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">functor</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="n">mycommand</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">name</span>
+
+            <span class="k">if</span> <span class="n">bind</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bind</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mycommand</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">mycommand</span>
+
+        <span class="k">return</span> <span class="n">internal_function</span></div></div>
+
+
+<span class="n">common_commands</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">query_commands</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">portageq_commands</span> <span class="o">=</span> <span class="p">[]</span>
+
+<div class="viewcode-block" id="env_var"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.env_var">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;variable+&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">query_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">env_var</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    return configuration defined variables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">default_get</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">,</span><span class="n">k</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+    <span class="n">distdir_get</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">d</span><span class="p">,</span><span class="n">k</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s2">&quot;fetcher&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">distdir</span>
+    <span class="n">envvar_getter</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">:</span><span class="n">distdir_get</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">variable</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">envvar_getter</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">default_get</span><span class="p">)(</span><span class="n">options</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="portageq_envvar"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.portageq_envvar">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;variable+&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">portageq_commands</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;envvar&#39;</span><span class="p">,</span>
+    <span class="n">root_default</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">portageq_envvar</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    return configuration defined variables.  Use envvar2 instead, this will be removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">env_var</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="portageq_envvar2"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.portageq_envvar2">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;variable+&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">portageq_commands</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;envvar2&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">portageq_envvar2</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    return configuration defined variables.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">env_var</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="has_version"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.has_version">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;atom&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">common_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">has_version</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return 0 if an atom is merged, 1 if not.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">atom</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">all_installed_repos</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="mi">1</span></div>
+
+
+<span class="k">def</span> <span class="nf">_best_version</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">all_installed_repos</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="c1"># empty sequence.</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">return</span> <span class="n">str_pkg</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+<div class="viewcode-block" id="mass_best_version"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.mass_best_version">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;atom+&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">common_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">mass_best_version</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    multiple best_version calls.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">atom</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+            <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">_best_version</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">()))</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="best_version"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.best_version">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;atom&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">common_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">best_version</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return the maximum visible version for a given atom.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">_best_version</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">atom</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="match"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.match">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;atom&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">portageq_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;shorthand for `pquery --installed`&quot;&quot;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">all_installed_repos</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">sorter</span><span class="o">=</span><span class="nb">sorted</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">str_pkg</span><span class="p">(</span><span class="n">pkg</span><span class="p">))</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="get_repos"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.get_repos">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="n">bind</span><span class="o">=</span><span class="n">common_commands</span><span class="p">,</span> <span class="n">root_default</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_repos</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">ebuild_repos_raw</span><span class="p">:</span>
+        <span class="n">repo_id</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;repo_id&#39;</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">repo_id</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">l</span><span class="p">)):</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="find_profile_paths_by_repo_id"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.find_profile_paths_by_repo_id">[docs]</a><span class="k">def</span> <span class="nf">find_profile_paths_by_repo_id</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">,</span> <span class="n">fullpath</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">repo</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">repo_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">repo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">arch_profiles</span>
+        <span class="k">for</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">profiles</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">stability</span> <span class="ow">in</span> <span class="n">profiles</span><span class="p">[</span><span class="n">arch</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">fullpath</span><span class="p">:</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="s1">&#39;profiles&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">path</span></div>
+
+
+<div class="viewcode-block" id="get_profiles"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.get_profiles">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">query_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_profiles</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">options</span><span class="o">.</span><span class="n">repo_id</span> <span class="o">==</span> <span class="s1">&#39;all&#39;</span><span class="p">:</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">profile</span> <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">ebuild_repos_raw</span>
+            <span class="k">for</span> <span class="n">profile</span> <span class="ow">in</span> <span class="n">find_profile_paths_by_repo_id</span><span class="p">(</span>
+                <span class="n">options</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="p">,</span> <span class="n">fullpath</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">profiles</span> <span class="o">=</span> <span class="n">find_profile_paths_by_repo_id</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">config</span><span class="p">,</span> <span class="n">options</span><span class="o">.</span><span class="n">repo_id</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">profiles</span><span class="p">)):</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="get_repo_path"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.get_repo_path">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">portageq_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_repo_path</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="n">repo</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">repo_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">repo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="mi">1</span></div>
+
+<span class="n">get_repo_path</span> <span class="o">=</span> <span class="n">BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span>
+    <span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">query_commands</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;get_repo_path&#39;</span><span class="p">)(</span><span class="n">get_repo_path</span><span class="o">.</span><span class="n">function</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_repo_news_path"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.get_repo_news_path">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">portageq_commands</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_repo_news_path</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="n">repo</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">repo_id</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">repo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">osutils</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">osutils</span><span class="o">.</span><span class="n">pjoin</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;news&#39;</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="portageq_get_repo_news_path"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.portageq_get_repo_news_path">[docs]</a><span class="nd">@BaseCommand</span><span class="o">.</span><span class="n">make_command</span><span class="p">(</span><span class="s2">&quot;root? repo_id&quot;</span><span class="p">,</span> <span class="n">bind</span><span class="o">=</span><span class="n">portageq_commands</span><span class="p">,</span>
+    <span class="n">requires_root</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;get_repo_news_path&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">portageq_get_repo_news_path</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">get_repo_news_path</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="bind_parser"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portageq.html#pkgcore.ebuild.portageq.bind_parser">[docs]</a><span class="k">def</span> <span class="nf">bind_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">compat</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;portageq&#39;</span><span class="p">):</span>
+    <span class="n">subparsers</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> commands&quot;</span><span class="p">)</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="n">common_commands</span><span class="p">[:]</span>
+    <span class="k">if</span> <span class="n">compat</span><span class="p">:</span>
+        <span class="n">l</span> <span class="o">+=</span> <span class="n">portageq_commands</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">l</span> <span class="o">+=</span> <span class="n">query_commands</span>
+
+    <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span><span class="n">x</span><span class="o">.</span><span class="vm">__name__</span><span class="p">):</span>
+        <span class="n">subparser</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+            <span class="n">command</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="n">command</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">command</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
+        <span class="n">command</span><span class="p">()</span><span class="o">.</span><span class="n">bind_to_parser</span><span class="p">(</span><span class="n">subparser</span><span class="p">,</span> <span class="n">compat</span><span class="o">=</span><span class="n">compat</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.portageq</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

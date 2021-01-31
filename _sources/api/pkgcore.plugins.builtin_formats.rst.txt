@@ -1,0 +1,7 @@
+pkgcore.plugins.builtin\_formats module
+=======================================
+
+.. automodule:: pkgcore.plugins.builtin_formats
+   :members:
+   :undoc-members:
+   :show-inheritance:

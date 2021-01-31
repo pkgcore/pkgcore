@@ -1,0 +1,7 @@
+pinspect portageq envvar2 - return configuration defined variables.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: envvar2/_synopsis.rst
+.. include:: envvar2/_description.rst
+.. include:: envvar2/_options.rst
+.. include:: envvar2/_subcommands.rst

@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.cpv module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.cpv module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.cpv">
+<span id="pkgcore-ebuild-cpv-module"></span><h1>pkgcore.ebuild.cpv module<a class="headerlink" href="#module-pkgcore.ebuild.cpv" title="Permalink to this headline">¶</a></h1>
+<p>gentoo ebuild specific base package class</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.cpv.CPV">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.cpv.</code><code class="sig-name descname">CPV</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">versioned</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#CPV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.package.base.html#pkgcore.package.base.base" title="pkgcore.package.base.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.base.base</span></code></a></p>
+<p>base ebuild package class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="#pkgcore.ebuild.cpv.CPV.category" title="pkgcore.ebuild.cpv.CPV.category"><strong>category</strong></a> – str category</p></li>
+<li><p><a class="reference internal" href="#pkgcore.ebuild.cpv.CPV.package" title="pkgcore.ebuild.cpv.CPV.package"><strong>package</strong></a> – str package</p></li>
+<li><p><a class="reference internal" href="#pkgcore.ebuild.cpv.CPV.key" title="pkgcore.ebuild.cpv.CPV.key"><strong>key</strong></a> – strkey (cat/pkg)</p></li>
+<li><p><a class="reference internal" href="#pkgcore.ebuild.cpv.CPV.version" title="pkgcore.ebuild.cpv.CPV.version"><strong>version</strong></a> – str version</p></li>
+<li><p><a class="reference internal" href="#pkgcore.ebuild.cpv.CPV.revision" title="pkgcore.ebuild.cpv.CPV.revision"><strong>revision</strong></a> – str revision</p></li>
+<li><p><a class="reference internal" href="#pkgcore.ebuild.cpv.CPV.versioned_atom" title="pkgcore.ebuild.cpv.CPV.versioned_atom"><strong>versioned_atom</strong></a> – atom matching this exact version</p></li>
+<li><p><a class="reference internal" href="#pkgcore.ebuild.cpv.CPV.unversioned_atom" title="pkgcore.ebuild.cpv.CPV.unversioned_atom"><strong>unversioned_atom</strong></a> – atom matching all versions of this package</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.cpv.CPV.category">
+<code class="sig-name descname">category</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.category" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.cpv.CPV.cpvstr">
+<code class="sig-name descname">cpvstr</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.cpvstr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.cpv.CPV.fullver">
+<code class="sig-name descname">fullver</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.fullver" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.cpv.CPV.key">
+<code class="sig-name descname">key</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.cpv.CPV.package">
+<code class="sig-name descname">package</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.package" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.cpv.CPV.revision">
+<code class="sig-name descname">revision</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.revision" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.cpv.CPV.unversioned">
+<em class="property">classmethod </em><code class="sig-name descname">unversioned</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#CPV.unversioned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.unversioned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.cpv.CPV.unversioned_atom">
+<em class="property">property </em><code class="sig-name descname">unversioned_atom</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.unversioned_atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.cpv.CPV.version">
+<code class="sig-name descname">version</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.cpv.CPV.versioned">
+<em class="property">classmethod </em><code class="sig-name descname">versioned</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#CPV.versioned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.versioned" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.cpv.CPV.versioned_atom">
+<em class="property">property </em><code class="sig-name descname">versioned_atom</code><a class="headerlink" href="#pkgcore.ebuild.cpv.CPV.versioned_atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.cpv.Revision">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.cpv.</code><code class="sig-name descname">Revision</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#Revision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.Revision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.UserString" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.UserString</span></code></a></p>
+<p>Internal revision class storing revisions as strings and comparing as integers.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.cpv.UnversionedCPV">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.cpv.</code><code class="sig-name descname">UnversionedCPV</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#UnversionedCPV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.UnversionedCPV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.cpv.CPV" title="pkgcore.ebuild.cpv.CPV"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.cpv.CPV</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.cpv.VersionedCPV">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.cpv.</code><code class="sig-name descname">VersionedCPV</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#VersionedCPV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.VersionedCPV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.cpv.CPV" title="pkgcore.ebuild.cpv.CPV"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.cpv.CPV</span></code></a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.cpv.isvalid_pkg_name">
+<code class="sig-prename descclassname">pkgcore.ebuild.cpv.</code><code class="sig-name descname">isvalid_pkg_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chunks</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#isvalid_pkg_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.isvalid_pkg_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.cpv.isvalid_rev">
+<code class="sig-prename descclassname">pkgcore.ebuild.cpv.</code><code class="sig-name descname">isvalid_rev</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#isvalid_rev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.isvalid_rev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.cpv.ver_cmp">
+<code class="sig-prename descclassname">pkgcore.ebuild.cpv.</code><code class="sig-name descname">ver_cmp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ver1</span></em>, <em class="sig-param"><span class="n">rev1</span></em>, <em class="sig-param"><span class="n">ver2</span></em>, <em class="sig-param"><span class="n">rev2</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/cpv.html#ver_cmp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.cpv.ver_cmp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.cpv module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

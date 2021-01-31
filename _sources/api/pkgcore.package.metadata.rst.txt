@@ -1,0 +1,7 @@
+pkgcore.package.metadata module
+===============================
+
+.. automodule:: pkgcore.package.metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:

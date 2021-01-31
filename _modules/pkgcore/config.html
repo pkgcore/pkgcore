@@ -1,0 +1,127 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.config &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.config</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;configuration subsystem&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;load_config&#39;</span><span class="p">,)</span>
+
+<span class="c1"># keep these imports as minimal as possible; access to</span>
+<span class="c1"># pkgcore.config isn&#39;t uncommon, thus don&#39;t trigger till</span>
+<span class="c1"># actually needed</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">const</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">central</span><span class="p">,</span> <span class="n">cparser</span>
+
+
+<div class="viewcode-block" id="load_config"><a class="viewcode-back" href="../../api/pkgcore.config.html#pkgcore.config.load_config">[docs]</a><span class="k">def</span> <span class="nf">load_config</span><span class="p">(</span><span class="n">user_conf_file</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">USER_CONF_FILE</span><span class="p">,</span>
+                <span class="n">system_conf_file</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">SYSTEM_CONF_FILE</span><span class="p">,</span>
+                <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prepend_sources</span><span class="o">=</span><span class="p">(),</span> <span class="n">append_sources</span><span class="o">=</span><span class="p">(),</span>
+                <span class="n">skip_config_files</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">profile_override</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The main entry point for any code looking to use pkgcore.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        user_conf_file (optional[str]): pkgcore user config file path</span>
+<span class="sd">        system_conf_file (optional[str]): system pkgcore config file path</span>
+<span class="sd">        profile_override (optional[str]): targeted profile instead of system setting</span>
+<span class="sd">        location (optional[str]): path to pkgcore config file or portage config directory</span>
+<span class="sd">        skip_config_files (optional[str]): don&#39;t attempt to load any config files</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        :obj:`pkgcore.config.central.ConfigManager` instance: system config</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">configs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">prepend_sources</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_config_files</span><span class="p">:</span>
+        <span class="c1"># load a pkgcore config file if one exists</span>
+        <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">user_conf_file</span><span class="p">,</span> <span class="n">system_conf_file</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">config</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cparser</span><span class="o">.</span><span class="n">config_from_file</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+                <span class="k">break</span>
+        <span class="c1"># otherwise load the portage config</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># delay importing to avoid circular imports</span>
+            <span class="kn">from</span> <span class="nn">pkgcore.ebuild.portage_conf</span> <span class="kn">import</span> <span class="n">PortageConfig</span>
+            <span class="n">configs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">PortageConfig</span><span class="p">(</span>
+                <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">,</span> <span class="n">profile_override</span><span class="o">=</span><span class="n">profile_override</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span>
+    <span class="n">configs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">append_sources</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">central</span><span class="o">.</span><span class="n">CompatConfigManager</span><span class="p">(</span><span class="n">central</span><span class="o">.</span><span class="n">ConfigManager</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">debug</span><span class="p">))</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

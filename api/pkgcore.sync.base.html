@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.sync.base module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.base module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.sync.base">
+<span id="pkgcore-sync-base-module"></span><h1>pkgcore.sync.base module<a class="headerlink" href="#module-pkgcore.sync.base" title="Permalink to this headline">¶</a></h1>
+<dl class="py function">
+<dt id="pkgcore.sync.base.AutodetectSyncer">
+<code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">AutodetectSyncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">basedir</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#AutodetectSyncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.AutodetectSyncer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.sync.base.DisabledSyncer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">DisabledSyncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">uri</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#DisabledSyncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.DisabledSyncer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.sync.base.Syncer" title="pkgcore.sync.base.Syncer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.base.Syncer</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.DisabledSyncer.disabled">
+<code class="sig-name descname">disabled</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.sync.base.DisabledSyncer.disabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.sync.base.ExternalSyncer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">ExternalSyncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#ExternalSyncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.ExternalSyncer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.sync.base.Syncer" title="pkgcore.sync.base.Syncer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.base.Syncer</span></code></a></p>
+<p>Base class for syncers that spawn a binary to do the the actual work.</p>
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.ExternalSyncer.binary">
+<code class="sig-name descname">binary</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.sync.base.ExternalSyncer.binary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.ExternalSyncer.env_whitelist">
+<code class="sig-name descname">env_whitelist</code><em class="property"> = ('SSH_AUTH_SOCK',)</em><a class="headerlink" href="#pkgcore.sync.base.ExternalSyncer.env_whitelist" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.sync.base.ExternalSyncer.require_binary">
+<em class="property">static </em><code class="sig-name descname">require_binary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bin_name</span></em>, <em class="sig-param"><span class="n">fatal</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#ExternalSyncer.require_binary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.ExternalSyncer.require_binary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.sync.base.GenericSyncer">
+<code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">GenericSyncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">basedir</span></em>, <em class="sig-param"><span class="n">uri</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#GenericSyncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.GenericSyncer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Syncer using the plugin system to find a syncer based on uri.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.sync.base.MissingBinary">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">MissingBinary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">binary</span></em>, <em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#MissingBinary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.MissingBinary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.sync.base.SyncError" title="pkgcore.sync.base.SyncError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.base.SyncError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.sync.base.MissingLocalUser">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">MissingLocalUser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uri</span></em>, <em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#MissingLocalUser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.MissingLocalUser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.sync.base.SyncError" title="pkgcore.sync.base.SyncError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.base.SyncError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.sync.base.SyncError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">SyncError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#SyncError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.SyncError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreUserException" title="pkgcore.exceptions.PkgcoreUserException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreUserException</span></code></a></p>
+<p>Generic syncing error.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.sync.base.Syncer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">Syncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">uri</span></em>, <em class="sig-param"><span class="n">default_verbosity</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">usersync</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">opts</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#Syncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.Syncer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.Syncer.disabled">
+<code class="sig-name descname">disabled</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.sync.base.Syncer.disabled" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.Syncer.forcable">
+<code class="sig-name descname">forcable</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.sync.base.Syncer.forcable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.sync.base.Syncer.is_usable_on_filepath">
+<em class="property">classmethod </em><code class="sig-name descname">is_usable_on_filepath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#Syncer.is_usable_on_filepath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.Syncer.is_usable_on_filepath" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.sync.base.Syncer.parse_uri">
+<em class="property">static </em><code class="sig-name descname">parse_uri</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uri</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#Syncer.parse_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.Syncer.parse_uri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the real URI with any protocol prefix stripped.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.Syncer.pkgcore_config_type">
+<code class="sig-name descname">pkgcore_config_type</code><em class="property"> = &lt;pkgcore.config.hint.ConfigHint object&gt;</em><a class="headerlink" href="#pkgcore.sync.base.Syncer.pkgcore_config_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.sync.base.Syncer.split_users">
+<code class="sig-name descname">split_users</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raw_uri</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#Syncer.split_users"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.Syncer.split_users" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>raw_uri</strong> – string uri to split users from; harring::ferringb:pass
+for example is local user ‘harring’, remote ‘ferringb’,
+password ‘pass’</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>(local user, remote user, remote pass), defaults to the
+current process’s uid if no local user specified</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.Syncer.supported_exts">
+<code class="sig-name descname">supported_exts</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.sync.base.Syncer.supported_exts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.Syncer.supported_protocols">
+<code class="sig-name descname">supported_protocols</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.sync.base.Syncer.supported_protocols" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.base.Syncer.supported_uris">
+<code class="sig-name descname">supported_uris</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.sync.base.Syncer.supported_uris" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.sync.base.Syncer.supports_uri">
+<em class="property">classmethod </em><code class="sig-name descname">supports_uri</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uri</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#Syncer.supports_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.Syncer.supports_uri" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.sync.base.Syncer.sync">
+<code class="sig-name descname">sync</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#Syncer.sync"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.Syncer.sync" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.sync.base.UriError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">UriError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uri</span></em>, <em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#UriError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.UriError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.sync.base.SyncError" title="pkgcore.sync.base.SyncError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.base.SyncError</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.sync.base.VcsSyncer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.sync.base.</code><code class="sig-name descname">VcsSyncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/base.html#VcsSyncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.base.VcsSyncer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.sync.base.ExternalSyncer" title="pkgcore.sync.base.ExternalSyncer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.base.ExternalSyncer</span></code></a></p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.base module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

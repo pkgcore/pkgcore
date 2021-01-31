@@ -1,0 +1,377 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.resolver.state module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.state module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.resolver.state">
+<span id="pkgcore-resolver-state-module"></span><h1>pkgcore.resolver.state module<a class="headerlink" href="#module-pkgcore.resolver.state" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.resolver.state.add_backref_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">add_backref_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_backref_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_backref_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.resolver.state.base_op_state" title="pkgcore.resolver.state.base_op_state"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.state.base_op_state</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.add_backref_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_backref_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_backref_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_backref_op.desc">
+<code class="sig-name descname">desc</code><em class="property"> = 'backref'</em><a class="headerlink" href="#pkgcore.resolver.state.add_backref_op.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_backref_op.internal">
+<code class="sig-name descname">internal</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.resolver.state.add_backref_op.internal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.add_backref_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_backref_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_backref_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.add_hardref_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">add_hardref_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restriction</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_hardref_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.resolver.state.base_op_state" title="pkgcore.resolver.state.base_op_state"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.state.base_op_state</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.add_hardref_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_hardref_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_hardref_op.choices">
+<code class="sig-name descname">choices</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.choices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_hardref_op.desc">
+<code class="sig-name descname">desc</code><em class="property"> = 'hardref'</em><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_hardref_op.force">
+<code class="sig-name descname">force</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.force" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_hardref_op.internal">
+<code class="sig-name descname">internal</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.internal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_hardref_op.pkg">
+<code class="sig-name descname">pkg</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_hardref_op.restriction">
+<code class="sig-name descname">restriction</code><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.restriction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.add_hardref_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_hardref_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_hardref_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.add_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">add_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.resolver.state.base_op_state" title="pkgcore.resolver.state.base_op_state"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.state.base_op_state</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.add_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.add_op.desc">
+<code class="sig-name descname">desc</code><em class="property"> = 'add'</em><a class="headerlink" href="#pkgcore.resolver.state.add_op.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.add_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#add_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.add_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.base_op_state">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">base_op_state</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#base_op_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.base_op_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.base_op_state.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#base_op_state.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.base_op_state.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.base_op_state.choices">
+<code class="sig-name descname">choices</code><a class="headerlink" href="#pkgcore.resolver.state.base_op_state.choices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.base_op_state.force">
+<code class="sig-name descname">force</code><a class="headerlink" href="#pkgcore.resolver.state.base_op_state.force" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.base_op_state.internal">
+<code class="sig-name descname">internal</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.resolver.state.base_op_state.internal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.base_op_state.pkg">
+<code class="sig-name descname">pkg</code><a class="headerlink" href="#pkgcore.resolver.state.base_op_state.pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.base_op_state.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#base_op_state.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.base_op_state.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.blocker_base_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">blocker_base_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">blocker</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#blocker_base_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.blocker_base_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#blocker_base_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.blocker_base_op.blocker">
+<code class="sig-name descname">blocker</code><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op.blocker" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.blocker_base_op.choices">
+<code class="sig-name descname">choices</code><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op.choices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.blocker_base_op.desc">
+<code class="sig-name descname">desc</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.blocker_base_op.internal">
+<code class="sig-name descname">internal</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op.internal" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.blocker_base_op.key">
+<code class="sig-name descname">key</code><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op.key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.blocker_base_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#blocker_base_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.blocker_base_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.decref_forward_block_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">decref_forward_block_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">blocker</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#decref_forward_block_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.decref_forward_block_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.resolver.state.blocker_base_op" title="pkgcore.resolver.state.blocker_base_op"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.state.blocker_base_op</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.decref_forward_block_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#decref_forward_block_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.decref_forward_block_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.decref_forward_block_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#decref_forward_block_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.decref_forward_block_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.incref_forward_block_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">incref_forward_block_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">blocker</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#incref_forward_block_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.incref_forward_block_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.resolver.state.blocker_base_op" title="pkgcore.resolver.state.blocker_base_op"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.state.blocker_base_op</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.incref_forward_block_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#incref_forward_block_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.incref_forward_block_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.incref_forward_block_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#incref_forward_block_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.incref_forward_block_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.plan_state">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">plan_state</code><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#plan_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.plan_state" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.plan_state.add_blocker">
+<code class="sig-name descname">add_blocker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">blocker</span></em>, <em class="sig-param"><span class="n">key</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#plan_state.add_blocker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.plan_state.add_blocker" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adds blocker, returning any packages blocked.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>choices</strong> (<a class="reference internal" href="pkgcore.resolver.choice_point.html#pkgcore.resolver.choice_point.choice_point" title="pkgcore.resolver.choice_point.choice_point"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.resolver.choice_point.choice_point</span></code></a>) – package choices</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.plan_state.backtrack">
+<code class="sig-name descname">backtrack</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">state_pos</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#plan_state.backtrack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.plan_state.backtrack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backtrack over a plan.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.plan_state.current_state">
+<em class="property">property </em><code class="sig-name descname">current_state</code><a class="headerlink" href="#pkgcore.resolver.state.plan_state.current_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.plan_state.iter_ops">
+<code class="sig-name descname">iter_ops</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">return_livefs</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#plan_state.iter_ops"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.plan_state.iter_ops" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.plan_state.ops">
+<code class="sig-name descname">ops</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">livefs</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">only_real</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#plan_state.ops"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.plan_state.ops" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.remove_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">remove_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#remove_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.remove_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.resolver.state.base_op_state" title="pkgcore.resolver.state.base_op_state"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.state.base_op_state</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.remove_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#remove_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.remove_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.remove_op.desc">
+<code class="sig-name descname">desc</code><em class="property"> = 'remove'</em><a class="headerlink" href="#pkgcore.resolver.state.remove_op.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.remove_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#remove_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.remove_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.state.replace_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.state.</code><code class="sig-name descname">replace_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#replace_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.replace_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.resolver.state.base_op_state" title="pkgcore.resolver.state.base_op_state"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.state.base_op_state</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.state.replace_op.apply">
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#replace_op.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.replace_op.apply" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.replace_op.desc">
+<code class="sig-name descname">desc</code><em class="property"> = 'replace'</em><a class="headerlink" href="#pkgcore.resolver.state.replace_op.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.replace_op.force_old">
+<code class="sig-name descname">force_old</code><a class="headerlink" href="#pkgcore.resolver.state.replace_op.force_old" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.replace_op.old_choices">
+<code class="sig-name descname">old_choices</code><a class="headerlink" href="#pkgcore.resolver.state.replace_op.old_choices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.state.replace_op.old_pkg">
+<code class="sig-name descname">old_pkg</code><a class="headerlink" href="#pkgcore.resolver.state.replace_op.old_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.state.replace_op.revert">
+<code class="sig-name descname">revert</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">plan</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/state.html#replace_op.revert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.state.replace_op.revert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.state module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

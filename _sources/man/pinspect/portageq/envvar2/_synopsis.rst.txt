@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect portageq envvar2 [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root variable [variable ...]

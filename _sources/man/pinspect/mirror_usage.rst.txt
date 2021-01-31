@@ -1,0 +1,7 @@
+pinspect mirror_usage - report of SRC_URI mirror usage for targeted repos
+-------------------------------------------------------------------------
+
+.. include:: mirror_usage/_synopsis.rst
+.. include:: mirror_usage/_description.rst
+.. include:: mirror_usage/_options.rst
+.. include:: mirror_usage/_subcommands.rst

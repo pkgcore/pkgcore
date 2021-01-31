@@ -1,0 +1,4 @@
+Synopsis
+========
+
+pinspect [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] {pkgsets,eapi_usage,license_usage,eclass_usage,mirror_usage,distfiles_usage,query,portageq,profile,digests} ...

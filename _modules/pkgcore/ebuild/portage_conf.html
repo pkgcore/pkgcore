@@ -1,0 +1,736 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.portage_conf &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.portage_conf</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.portage_conf</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;make.conf translator.</span>
+
+<span class="sd">Converts portage config files into :obj:`pkgcore.config` form.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;PortageConfig&#39;</span><span class="p">,</span> <span class="s1">&#39;SecurityUpgradesViaProfile&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">configparser</span>
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.bash</span> <span class="kn">import</span> <span class="n">read_bash_dict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">IGNORED_EXCEPTIONS</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">DictMixin</span><span class="p">,</span> <span class="n">ImmutableDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">access</span><span class="p">,</span> <span class="n">listdir_files</span><span class="p">,</span> <span class="n">pjoin</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">const</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">base_errors</span>
+<span class="kn">from</span> <span class="nn">..config</span> <span class="kn">import</span> <span class="n">basics</span>
+<span class="kn">from</span> <span class="nn">..config</span> <span class="kn">import</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">config_errors</span>
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">configurable</span>
+<span class="kn">from</span> <span class="nn">..fs.livefs</span> <span class="kn">import</span> <span class="n">sorted_scan</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..pkgsets.glsa</span> <span class="kn">import</span> <span class="n">SecurityUpgrades</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">const</span> <span class="k">as</span> <span class="n">econst</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">profiles</span><span class="p">,</span> <span class="n">repo_objs</span>
+<span class="kn">from</span> <span class="nn">.misc</span> <span class="kn">import</span> <span class="n">optimize_incrementals</span>
+<span class="kn">from</span> <span class="nn">.repository</span> <span class="kn">import</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">repo_errors</span>
+
+
+<span class="k">def</span> <span class="nf">my_convert_hybrid</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">arg_type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Modified convert_hybrid using a sequence of strings for section_refs.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">arg_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;refs:&#39;</span><span class="p">):</span>
+        <span class="n">subtype</span> <span class="o">=</span> <span class="s1">&#39;ref:&#39;</span> <span class="o">+</span> <span class="n">arg_type</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">basics</span><span class="o">.</span><span class="n">LazyNamedSectionRef</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">subtype</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">val</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">basics</span><span class="o">.</span><span class="n">convert_hybrid</span><span class="p">(</span><span class="n">manager</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">arg_type</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SecurityUpgradesViaProfile"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portage_conf.html#pkgcore.ebuild.portage_conf.SecurityUpgradesViaProfile">[docs]</a><span class="nd">@configurable</span><span class="p">({</span><span class="s1">&#39;ebuild_repo&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:repo&#39;</span><span class="p">,</span> <span class="s1">&#39;vdb&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:repo&#39;</span><span class="p">,</span>
+               <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:profile&#39;</span><span class="p">},</span> <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;pkgset&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">SecurityUpgradesViaProfile</span><span class="p">(</span><span class="n">ebuild_repo</span><span class="p">,</span> <span class="n">vdb</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;generate a GLSA vuln. pkgset limited by profile</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ebuild_repo (:obj:`pkgcore.ebuild.repository.UnconfiguredTree`): target repo</span>
+<span class="sd">        vdb (:obj:`pkgcore.repository.prototype.tree`): livefs</span>
+<span class="sd">        profile (:obj:`pkgcore.ebuild.profiles`): target profile</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pkgset of relevant security upgrades</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arch</span> <span class="o">=</span> <span class="n">profile</span><span class="o">.</span><span class="n">arch</span>
+    <span class="k">if</span> <span class="n">arch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">ComplexInstantiationError</span><span class="p">(</span><span class="s2">&quot;arch wasn&#39;t set in profiles&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">SecurityUpgrades</span><span class="p">(</span><span class="n">ebuild_repo</span><span class="p">,</span> <span class="n">vdb</span><span class="p">,</span> <span class="n">arch</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">ParseConfig</span><span class="p">(</span><span class="n">configparser</span><span class="o">.</span><span class="n">ConfigParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Custom ConfigParser class to support returning dict objects.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">parse_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse config data from a given file handle.</span>
+
+<span class="sd">        By default the underlying config data is reset on each call if it</span>
+<span class="sd">        exists. This allows multiple files to be easily parsed by a single instance</span>
+<span class="sd">        without combining all the data in one instance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            f: iterable yielding unicode strings (opened file handle)</span>
+<span class="sd">            reset (boolean): reset config data if it exists before parsing</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: default settings</span>
+<span class="sd">            dict: regular section settings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defaults</span> <span class="ow">and</span> <span class="n">reset</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_defaults</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sections</span> <span class="ow">and</span> <span class="n">reset</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sections</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">()</span>
+        <span class="c1"># currently we don&#39;t reset section proxies as they should affect</span>
+        <span class="c1"># this direct data dumping</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_defaults</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sections</span>
+
+
+<div class="viewcode-block" id="PortageConfig"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portage_conf.html#pkgcore.ebuild.portage_conf.PortageConfig">[docs]</a><span class="k">class</span> <span class="nc">PortageConfig</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Support for portage&#39;s config file layout.&quot;&quot;&quot;</span>
+
+    <span class="n">_supported_repo_types</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">profile_override</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            location (optional[str]): path to the portage config directory,</span>
+<span class="sd">                (defaults to /etc/portage)</span>
+<span class="sd">            profile_override (optional[str]): profile to use instead of the current system</span>
+<span class="sd">                profile, i.e. the target of the /etc/portage/make.profile symlink</span>
+<span class="sd">            configroot (optional[str]): location for various portage config files (defaults to /)</span>
+<span class="sd">            root (optional[str]): target root filesystem (defaults to /)</span>
+<span class="sd">            buildpkg (optional[bool]): forcibly disable/enable building binpkgs, otherwise</span>
+<span class="sd">                FEATURES=buildpkg from make.conf is used</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: config settings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">if</span> <span class="n">location</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">location</span> <span class="o">=</span> <span class="s1">&#39;/etc/portage&#39;</span>
+            <span class="c1"># fallback to stub config and profile on non-Gentoo systems</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">location</span><span class="p">):</span>
+                <span class="n">location</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="s1">&#39;stubconfig&#39;</span><span class="p">)</span>
+                <span class="n">profile_override</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="s1">&#39;stubrepo/profiles/default&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">location</span> <span class="o">==</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="s1">&#39;stubconfig&#39;</span><span class="p">):</span>
+            <span class="c1"># override profile when using stub config</span>
+            <span class="n">profile_override</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="s1">&#39;stubrepo/profiles/default&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PORTAGE_CONFIGROOT&#39;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;configroot&#39;</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">)),</span>
+            <span class="n">location</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span>
+
+        <span class="c1"># this actually differs from portage parsing- we allow</span>
+        <span class="c1"># make.globals to provide vars used in make.conf, portage keeps</span>
+        <span class="c1"># them separate (kind of annoying)</span>
+        <span class="c1">#</span>
+        <span class="c1"># this isn&#39;t preserving incremental behaviour for features/use unfortunately</span>
+
+        <span class="n">make_conf</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">load_make_conf</span><span class="p">(</span><span class="n">make_conf</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">CONFIG_PATH</span><span class="p">,</span> <span class="s1">&#39;make.globals&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">IGNORED_EXCEPTIONS</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">ParsingError</span><span class="p">(</span><span class="s2">&quot;failed to load make.globals&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_make_conf</span><span class="p">(</span>
+            <span class="n">make_conf</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span> <span class="s1">&#39;make.conf&#39;</span><span class="p">),</span> <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">allow_sourcing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">incrementals</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ROOT&quot;</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="n">make_conf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ROOT&quot;</span><span class="p">,</span> <span class="s2">&quot;/&quot;</span><span class="p">)))</span>
+        <span class="n">gentoo_mirrors</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/distfiles&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">make_conf</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;GENTOO_MIRRORS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+            <span class="n">optimize_incrementals</span><span class="p">(</span><span class="n">make_conf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;FEATURES&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_sets</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_profile</span><span class="p">(</span><span class="n">profile_override</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;vdb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.vdb.ondisk.tree&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s1">&#39;var&#39;</span><span class="p">,</span> <span class="s1">&#39;db&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;cache_location&#39;</span><span class="p">:</span> <span class="s1">&#39;/var/cache/edb/dep/var/db/pkg&#39;</span><span class="p">,</span>
+        <span class="p">})</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">repos_conf_defaults</span><span class="p">,</span> <span class="n">repos_conf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_repos_conf</span><span class="p">(</span>
+                <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span> <span class="s1">&#39;repos.conf&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">ParsingError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="s1">&#39;exc&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="s1">&#39;errno&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># fallback to defaults provided by pkgcore</span>
+                <span class="n">repos_conf_defaults</span><span class="p">,</span> <span class="n">repos_conf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_repos_conf</span><span class="p">(</span>
+                    <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">CONFIG_PATH</span><span class="p">,</span> <span class="s1">&#39;repos.conf&#39;</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">IGNORED_EXCEPTIONS</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">ParsingError</span><span class="p">(</span><span class="s1">&#39;failed to find a usable repos.conf&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;ebuild-repo-common&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.ebuild.repository.tree&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default_mirrors&#39;</span><span class="p">:</span> <span class="n">gentoo_mirrors</span><span class="p">,</span>
+            <span class="s1">&#39;inherit-only&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="p">})</span>
+
+        <span class="n">repo_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">repo_name</span><span class="p">,</span> <span class="n">repo_opts</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">repos_conf</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">repo_cls</span> <span class="o">=</span> <span class="n">repo_opts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;repo-type&#39;</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">repo</span> <span class="o">=</span> <span class="n">repo_cls</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="p">,</span> <span class="n">repo_name</span><span class="o">=</span><span class="n">repo_name</span><span class="p">,</span> <span class="n">repo_opts</span><span class="o">=</span><span class="n">repo_opts</span><span class="p">,</span>
+                    <span class="n">repo_map</span><span class="o">=</span><span class="n">repo_map</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="n">repos_conf_defaults</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">repo_errors</span><span class="o">.</span><span class="n">UnsupportedRepo</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;skipping </span><span class="si">{</span><span class="n">repo_name</span><span class="si">!r}</span><span class="s1"> repo: unsupported EAPI </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">eapi</span><span class="p">)</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">del</span> <span class="n">repos_conf</span><span class="p">[</span><span class="n">repo_name</span><span class="p">]</span>
+                <span class="k">continue</span>
+
+            <span class="bp">self</span><span class="p">[</span><span class="n">repo_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+
+        <span class="c1"># XXX: Hack for portage-2 profile format support. We need to figure out how</span>
+        <span class="c1"># to dynamically create this from the config at runtime on attr access.</span>
+        <span class="n">profiles</span><span class="o">.</span><span class="n">ProfileNode</span><span class="o">.</span><span class="n">_repo_map</span> <span class="o">=</span> <span class="n">ImmutableDict</span><span class="p">(</span><span class="n">repo_map</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_make_repo_syncers</span><span class="p">(</span><span class="n">repos_conf</span><span class="p">,</span> <span class="n">make_conf</span><span class="p">)</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">repos_conf</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+        <span class="k">if</span> <span class="n">repos</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;repo-stack&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">FakeIncrementalDictConfigSection</span><span class="p">(</span>
+                <span class="n">my_convert_hybrid</span><span class="p">,</span> <span class="p">{</span>
+                    <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.repository.multiplex.config_tree&#39;</span><span class="p">,</span>
+                    <span class="s1">&#39;repos&#39;</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">repos</span><span class="p">)})</span>
+
+            <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;vuln&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+                <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">SecurityUpgradesViaProfile</span><span class="p">,</span>
+                <span class="s1">&#39;ebuild_repo&#39;</span><span class="p">:</span> <span class="s1">&#39;repo-stack&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;vdb&#39;</span><span class="p">:</span> <span class="s1">&#39;vdb&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="s1">&#39;profile&#39;</span><span class="p">,</span>
+            <span class="p">})</span>
+
+        <span class="c1"># check if package building was forced on by the user</span>
+        <span class="n">forced_buildpkg</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;buildpkg&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">forced_buildpkg</span><span class="p">:</span>
+            <span class="n">make_conf</span><span class="p">[</span><span class="s1">&#39;FEATURES&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="s1">&#39; buildpkg&#39;</span>
+
+        <span class="c1"># now add the fetcher- we delay it till here to clean out the environ</span>
+        <span class="c1"># it passes to the command.</span>
+        <span class="c1"># *everything* in make_conf must be str values also.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_fetcher</span><span class="p">(</span><span class="n">make_conf</span><span class="p">)</span>
+
+        <span class="c1"># finally... domain.</span>
+        <span class="n">make_conf</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.ebuild.domain.domain&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;repos&#39;</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">repos</span><span class="p">),</span>
+            <span class="s1">&#39;fetcher&#39;</span><span class="p">:</span> <span class="s1">&#39;fetcher&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;default&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s1">&#39;vdb&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;vdb&#39;</span><span class="p">,),</span>
+            <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="s1">&#39;profile&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;livefs&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;root&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span>
+            <span class="s1">&#39;config_dir&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span>
+        <span class="p">})</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;livefs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">FakeIncrementalDictConfigSection</span><span class="p">(</span>
+            <span class="n">my_convert_hybrid</span><span class="p">,</span> <span class="n">make_conf</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+<div class="viewcode-block" id="PortageConfig.keys"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portage_conf.html#pkgcore.ebuild.portage_conf.PortageConfig.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_config</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="PortageConfig.load_make_conf"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portage_conf.html#pkgcore.ebuild.portage_conf.PortageConfig.load_make_conf">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_make_conf</span><span class="p">(</span><span class="n">vars_dict</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">allow_sourcing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">incrementals</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;parse make.conf files</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vars_dict (dict): dictionary to add parsed variables to</span>
+<span class="sd">            path (str): path to the make.conf which can be a regular file or</span>
+<span class="sd">                directory, if a directory is passed all the non-hidden files within</span>
+<span class="sd">                that directory are parsed in alphabetical order.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sourcing_command</span> <span class="o">=</span> <span class="s1">&#39;source&#39;</span> <span class="k">if</span> <span class="n">allow_sourcing</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">allow_recurse</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="n">sorted_scan</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">follow_symlinks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nonexistent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">hidden</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="p">(</span><span class="n">path</span><span class="p">,)</span>
+
+        <span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">new_vars</span> <span class="o">=</span> <span class="n">read_bash_dict</span><span class="p">(</span>
+                    <span class="n">fp</span><span class="p">,</span> <span class="n">vars_dict</span><span class="o">=</span><span class="n">vars_dict</span><span class="p">,</span> <span class="n">sourcing_command</span><span class="o">=</span><span class="n">sourcing_command</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">PermissionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">base_errors</span><span class="o">.</span><span class="n">PermissionDenied</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span> <span class="ow">or</span> <span class="n">required</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">ParsingError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;parsing </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+                <span class="k">return</span>
+
+            <span class="k">if</span> <span class="n">incrementals</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">econst</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">vars_dict</span> <span class="ow">and</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">new_vars</span><span class="p">:</span>
+                        <span class="n">new_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">vars_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">new_vars</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="c1"># quirk of read_bash_dict; it returns only what was mutated.</span>
+            <span class="n">vars_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_vars</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PortageConfig.load_repos_conf"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.portage_conf.html#pkgcore.ebuild.portage_conf.PortageConfig.load_repos_conf">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">load_repos_conf</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;parse repos.conf files</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path (str): path to the repos.conf which can be a regular file or</span>
+<span class="sd">                directory, if a directory is passed all the non-hidden files within</span>
+<span class="sd">                that directory are parsed in alphabetical order.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            dict: global repo settings</span>
+<span class="sd">            dict: repo settings</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">main_defaults</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">ParseConfig</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="n">sorted_scan</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">follow_symlinks</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">nonexistent</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">hidden</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">defaults</span><span class="p">,</span> <span class="n">repo_confs</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_file</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">PermissionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">base_errors</span><span class="o">.</span><span class="n">PermissionDenied</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">ParsingError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;parsing </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="k">except</span> <span class="n">configparser</span><span class="o">.</span><span class="n">Error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">ParsingError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;repos.conf: </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+            <span class="k">if</span> <span class="n">defaults</span> <span class="ow">and</span> <span class="n">main_defaults</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;repos.conf: parsing </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">: overriding DEFAULT section&quot;</span><span class="p">)</span>
+            <span class="n">main_defaults</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">repo_conf</span> <span class="ow">in</span> <span class="n">repo_confs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">repos</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;repos.conf: parsing </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">: overriding </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> repo&quot;</span><span class="p">)</span>
+
+                <span class="c1"># ignore repo if location is unset</span>
+                <span class="n">location</span> <span class="o">=</span> <span class="n">repo_conf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">location</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;repos.conf: parsing </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">: &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> repo missing location setting, ignoring repo&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">location</span><span class="p">):</span>
+                    <span class="n">repo_conf</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">location</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># support relative paths based on where repos.conf is located</span>
+                    <span class="n">repo_conf</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span>
+                        <span class="n">pjoin</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">),</span> <span class="n">location</span><span class="p">))</span>
+
+                <span class="c1"># repo type defaults to ebuild for compat with portage</span>
+                <span class="n">repo_type</span> <span class="o">=</span> <span class="n">repo_conf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;repo-type&#39;</span><span class="p">,</span> <span class="s1">&#39;ebuild-v1&#39;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">repo_conf</span><span class="p">[</span><span class="s1">&#39;repo-type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_supported_repo_types</span><span class="p">[</span><span class="n">repo_type</span><span class="p">]</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;repos.conf: parsing </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">: &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> repo has unsupported repo-type </span><span class="si">{</span><span class="n">repo_type</span><span class="si">!r}</span><span class="s2">, &quot;</span>
+                        <span class="s2">&quot;ignoring repo&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Priority defaults to zero if unset or invalid for ebuild repos</span>
+                <span class="c1"># while binpkg repos have the lowest priority by default.</span>
+                <span class="n">priority</span> <span class="o">=</span> <span class="n">repo_conf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">priority</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">repo_type</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;binpkg&#39;</span><span class="p">):</span>
+                        <span class="n">priority</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10000</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">priority</span> <span class="o">=</span> <span class="mi">0</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">priority</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">priority</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;repos.conf: parsing </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> repo has invalid priority &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;setting: </span><span class="si">{</span><span class="n">priority</span><span class="si">!r}</span><span class="s2"> (defaulting to 0)&quot;</span><span class="p">)</span>
+                    <span class="n">priority</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="n">repo_conf</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">priority</span>
+
+                <span class="c1"># register repo</span>
+                <span class="n">repos</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">repo_conf</span>
+
+        <span class="k">if</span> <span class="n">repos</span><span class="p">:</span>
+            <span class="c1"># the default repo is gentoo if unset and gentoo exists</span>
+            <span class="n">default_repo</span> <span class="o">=</span> <span class="n">main_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;main-repo&#39;</span><span class="p">,</span> <span class="s1">&#39;gentoo&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">default_repo</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">repos</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">UserConfigError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;repos.conf: default repo </span><span class="si">{</span><span class="n">default_repo</span><span class="si">!r}</span><span class="s2"> is undefined or invalid&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="s1">&#39;main-repo&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">main_defaults</span><span class="p">:</span>
+                <span class="n">main_defaults</span><span class="p">[</span><span class="s1">&#39;main-repo&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_repo</span>
+
+            <span class="c1"># the default repo has a low priority if unset or zero</span>
+            <span class="k">if</span> <span class="n">repos</span><span class="p">[</span><span class="n">default_repo</span><span class="p">][</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">repos</span><span class="p">[</span><span class="n">default_repo</span><span class="p">][</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1000</span>
+
+        <span class="c1"># sort repos via priority, in this case high values map to high priorities</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="n">repos</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;priority&#39;</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">main_defaults</span><span class="p">,</span> <span class="n">repos</span></div>
+
+    <span class="k">def</span> <span class="nf">_make_repo_syncers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repos_conf</span><span class="p">,</span> <span class="n">make_conf</span><span class="p">,</span> <span class="n">allow_timestamps</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generate syncing configs for known repos&quot;&quot;&quot;</span>
+        <span class="n">rsync_opts</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">usersync</span> <span class="o">=</span> <span class="s1">&#39;usersync&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span>
+
+        <span class="k">for</span> <span class="n">repo_name</span><span class="p">,</span> <span class="n">repo_opts</span> <span class="ow">in</span> <span class="n">repos_conf</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;basedir&#39;</span><span class="p">:</span> <span class="n">repo_opts</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">],</span> <span class="s1">&#39;usersync&#39;</span><span class="p">:</span> <span class="n">usersync</span><span class="p">}</span>
+
+            <span class="n">sync_type</span> <span class="o">=</span> <span class="n">repo_opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync-type&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">sync_uri</span> <span class="o">=</span> <span class="n">repo_opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync-uri&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">sync_uri</span><span class="p">:</span>
+                <span class="c1"># prefix non-native protocols</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">sync_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">sync_uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">sync_type</span><span class="p">)):</span>
+                    <span class="n">sync_uri</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">sync_type</span><span class="si">}</span><span class="s1">+</span><span class="si">{</span><span class="n">sync_uri</span><span class="si">}</span><span class="s1">&#39;</span>
+
+                <span class="n">d</span><span class="p">[</span><span class="s1">&#39;uri&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sync_uri</span>
+                <span class="n">d</span><span class="p">[</span><span class="s1">&#39;opts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">repo_opts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;sync-opts&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">sync_type</span> <span class="o">==</span> <span class="s1">&#39;rsync&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">rsync_opts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="c1"># various make.conf options used by rsync-based syncers</span>
+                        <span class="n">rsync_opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_isolate_rsync_opts</span><span class="p">(</span><span class="n">make_conf</span><span class="p">)</span>
+                    <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">rsync_opts</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">allow_timestamps</span><span class="p">:</span>
+                        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pkgcore.sync.rsync.rsync_timestamp_syncer&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">d</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pkgcore.sync.rsync.rsync_syncer&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">d</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pkgcore.sync.base.GenericSyncer&#39;</span>
+            <span class="k">elif</span> <span class="n">sync_uri</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># try to autodetect syncing mechanism if sync-uri is missing</span>
+                <span class="n">d</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pkgcore.sync.base.AutodetectSyncer&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># disable syncing if sync-uri is explicitly unset</span>
+                <span class="n">d</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;pkgcore.sync.base.DisabledSyncer&#39;</span>
+
+            <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;sync:&#39;</span> <span class="o">+</span> <span class="n">repo_name</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_sets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;world&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.pkgsets.filelist.WorldFile&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">econst</span><span class="o">.</span><span class="n">WORLD_FILE</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))})</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;system&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.pkgsets.system.SystemSet&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="s2">&quot;profile&quot;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;installed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.pkgsets.installed.Installed&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;vdb&quot;</span><span class="p">:</span> <span class="s2">&quot;vdb&quot;</span><span class="p">})</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;versioned-installed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.pkgsets.installed.VersionedInstalled&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;vdb&quot;</span><span class="p">:</span> <span class="s2">&quot;vdb&quot;</span><span class="p">})</span>
+
+        <span class="n">set_fp</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span> <span class="s2">&quot;sets&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">setname</span> <span class="ow">in</span> <span class="n">listdir_files</span><span class="p">(</span><span class="n">set_fp</span><span class="p">):</span>
+                <span class="c1"># Potential for name clashes here, those will just make</span>
+                <span class="c1"># the set not show up in config.</span>
+                <span class="k">if</span> <span class="n">setname</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;world&quot;</span><span class="p">):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="s2">&quot;user defined set </span><span class="si">%r</span><span class="s2"> is disallowed; ignoring&quot;</span><span class="p">,</span>
+                        <span class="n">pjoin</span><span class="p">(</span><span class="n">set_fp</span><span class="p">,</span> <span class="n">setname</span><span class="p">))</span>
+                    <span class="k">continue</span>
+                <span class="bp">self</span><span class="p">[</span><span class="n">setname</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+                    <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.pkgsets.filelist.FileList&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;location&quot;</span><span class="p">:</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">set_fp</span><span class="p">,</span> <span class="n">setname</span><span class="p">)})</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_find_profile_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile_override</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">profile_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">make_profile</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span> <span class="s1">&#39;make.profile&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="n">make_profile</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">UserConfigError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;invalid symlink: </span><span class="si">{</span><span class="n">make_profile</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">make_profile</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">profile_override</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">profile_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">UserConfigError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;broken symlink: </span><span class="si">{</span><span class="n">make_profile</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">UserConfigError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;nonexistent profile: </span><span class="si">{</span><span class="n">profile_override</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">path</span>
+
+    <span class="k">def</span> <span class="nf">_add_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile_override</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_profile_path</span><span class="p">(</span><span class="n">profile_override</span><span class="p">)</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="n">profiles</span><span class="o">.</span><span class="n">OnDiskProfile</span><span class="o">.</span><span class="n">split_abspath</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">paths</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">UserConfigError</span><span class="p">(</span>
+                <span class="s1">&#39;</span><span class="si">%r</span><span class="s1"> expands to </span><span class="si">%r</span><span class="s1">, but no profile detected&#39;</span> <span class="o">%</span>
+                <span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span> <span class="s1">&#39;make.profile&#39;</span><span class="p">),</span> <span class="n">profile</span><span class="p">))</span>
+
+        <span class="n">user_profile_path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">,</span> <span class="s1">&#39;profile&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">user_profile_path</span><span class="p">):</span>
+            <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;profile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+                <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.ebuild.profiles.UserProfile&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;parent_path&quot;</span><span class="p">:</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="s2">&quot;parent_profile&quot;</span><span class="p">:</span> <span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                <span class="s2">&quot;user_path&quot;</span><span class="p">:</span> <span class="n">user_profile_path</span><span class="p">,</span>
+            <span class="p">})</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;profile&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+                <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.ebuild.profiles.OnDiskProfile&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;basepath&quot;</span><span class="p">:</span> <span class="n">paths</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="s2">&quot;profile&quot;</span><span class="p">:</span> <span class="n">paths</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">_add_fetcher</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">make_conf</span><span class="p">):</span>
+        <span class="n">fetchcommand</span> <span class="o">=</span> <span class="n">make_conf</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;FETCHCOMMAND&quot;</span><span class="p">)</span>
+        <span class="n">resumecommand</span> <span class="o">=</span> <span class="n">make_conf</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;RESUMECOMMAND&quot;</span><span class="p">,</span> <span class="n">fetchcommand</span><span class="p">)</span>
+
+        <span class="n">fetcher_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="s2">&quot;pkgcore.fetch.custom.fetcher&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;distdir&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">,</span> <span class="n">make_conf</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">))),</span>
+            <span class="s2">&quot;command&quot;</span><span class="p">:</span> <span class="n">fetchcommand</span><span class="p">,</span>
+            <span class="s2">&quot;resume_command&quot;</span><span class="p">:</span> <span class="n">resumecommand</span><span class="p">,</span>
+            <span class="s2">&quot;attempts&quot;</span><span class="p">:</span> <span class="n">make_conf</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;FETCH_ATTEMPTS&quot;</span><span class="p">,</span> <span class="s1">&#39;10&#39;</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="p">[</span><span class="s2">&quot;fetcher&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">(</span><span class="n">fetcher_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_isolate_rsync_opts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        pop the misc RSYNC related options littered in make.conf, returning</span>
+<span class="sd">        a base rsync dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">opts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">extra_opts</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">opts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;PORTAGE_RSYNC_OPTS&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="n">extra_opts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;PORTAGE_RSYNC_EXTRA_OPTS&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+        <span class="n">timeout</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;PORTAGE_RSYNC_INITIAL_TIMEOUT&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base</span><span class="p">[</span><span class="s1">&#39;connection_timeout&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">timeout</span>
+
+        <span class="n">retries</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;PORTAGE_RSYNC_RETRIES&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">retries</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">retries</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">retries</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">retries</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">retries</span> <span class="o">=</span> <span class="mi">10000</span>
+                <span class="n">base</span><span class="p">[</span><span class="s1">&#39;retries&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">retries</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="n">proxy</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;RSYNC_PROXY&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">proxy</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">base</span><span class="p">[</span><span class="s1">&#39;proxy&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">proxy</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">opts</span><span class="p">:</span>
+            <span class="n">base</span><span class="p">[</span><span class="s1">&#39;opts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">extra_opts</span><span class="p">:</span>
+            <span class="n">base</span><span class="p">[</span><span class="s1">&#39;extra_opts&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">extra_opts</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">base</span>
+
+    <span class="k">def</span> <span class="nf">_make_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_format</span><span class="p">,</span> <span class="n">repo_path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Configure repo cache.&quot;&quot;&quot;</span>
+        <span class="c1"># Use md5 cache if it exists or the option is selected, otherwise default</span>
+        <span class="c1"># to the old flat hash format in /var/cache/edb/dep/*.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;md5-cache&#39;</span><span class="p">))</span> <span class="ow">or</span>
+                <span class="n">cache_format</span> <span class="o">==</span> <span class="s1">&#39;md5-dict&#39;</span><span class="p">):</span>
+            <span class="n">kls</span> <span class="o">=</span> <span class="s1">&#39;pkgcore.cache.flat_hash.md5_cache&#39;</span>
+            <span class="n">cache_parent_dir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;md5-cache&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kls</span> <span class="o">=</span> <span class="s1">&#39;pkgcore.cache.flat_hash.database&#39;</span>
+            <span class="n">repo_path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="s1">&#39;/var/cache/edb/dep&#39;</span><span class="p">,</span> <span class="n">repo_path</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span>
+            <span class="n">cache_parent_dir</span> <span class="o">=</span> <span class="n">repo_path</span>
+
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cache_parent_dir</span><span class="p">):</span>
+            <span class="n">cache_parent_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cache_parent_dir</span><span class="p">)</span>
+        <span class="n">readonly</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">access</span><span class="p">(</span><span class="n">cache_parent_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">W_OK</span> <span class="o">|</span> <span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">({</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">kls</span><span class="p">,</span>
+            <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="n">repo_path</span><span class="p">,</span>
+            <span class="s1">&#39;readonly&#39;</span><span class="p">:</span> <span class="n">readonly</span>
+        <span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">_register_repo_type</span><span class="p">(</span><span class="n">supported_repo_types</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Decorator to register supported repo types.&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">_wrap_func</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="p">[</span><span class="mi">6</span><span class="p">:]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">)</span>
+            <span class="n">supported_repo_types</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span>
+            <span class="k">return</span> <span class="n">wrapped</span>
+        <span class="k">return</span> <span class="n">_wrap_func</span>
+
+    <span class="nd">@_register_repo_type</span><span class="p">(</span><span class="n">_supported_repo_types</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_repo_ebuild_v1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_name</span><span class="p">,</span> <span class="n">repo_opts</span><span class="p">,</span> <span class="n">repo_map</span><span class="p">,</span>
+                        <span class="n">defaults</span><span class="p">,</span> <span class="n">repo_obj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">repo_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create ebuild repo v1 configuration.&quot;&quot;&quot;</span>
+        <span class="n">repo_path</span> <span class="o">=</span> <span class="n">repo_opts</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+
+        <span class="c1"># XXX: Hack for portage-2 profile format support.</span>
+        <span class="k">if</span> <span class="n">repo_obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">repo_obj</span> <span class="o">=</span> <span class="n">repo_objs</span><span class="o">.</span><span class="n">RepoConfig</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="n">repo_name</span><span class="p">)</span>
+        <span class="n">repo_map</span><span class="p">[</span><span class="n">repo_obj</span><span class="o">.</span><span class="n">repo_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">repo_path</span>
+
+        <span class="c1"># repo configs</span>
+        <span class="n">repo_conf</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.ebuild.repo_objs.RepoConfig&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;config_name&#39;</span><span class="p">:</span> <span class="n">repo_name</span><span class="p">,</span>
+            <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="n">repo_path</span><span class="p">,</span>
+            <span class="s1">&#39;syncer&#39;</span><span class="p">:</span> <span class="s1">&#39;sync:&#39;</span> <span class="o">+</span> <span class="n">repo_name</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="n">repo_dict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">repo_conf</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo_dict</span><span class="p">)</span>
+
+        <span class="c1"># repo trees</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;inherit&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;ebuild-repo-common&#39;</span><span class="p">,),</span>
+            <span class="s1">&#39;repo_config&#39;</span><span class="p">:</span> <span class="s1">&#39;conf:&#39;</span> <span class="o">+</span> <span class="n">repo_name</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># metadata cache</span>
+        <span class="k">if</span> <span class="n">repo_obj</span><span class="o">.</span><span class="n">cache_format</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cache_name</span> <span class="o">=</span> <span class="s1">&#39;cache:&#39;</span> <span class="o">+</span> <span class="n">repo_name</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">cache_name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_cache</span><span class="p">(</span><span class="n">repo_obj</span><span class="o">.</span><span class="n">cache_format</span><span class="p">,</span> <span class="n">repo_path</span><span class="p">)</span>
+            <span class="n">repo</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cache_name</span>
+
+        <span class="k">if</span> <span class="n">repo_name</span> <span class="o">==</span> <span class="n">defaults</span><span class="p">[</span><span class="s1">&#39;main-repo&#39;</span><span class="p">]:</span>
+            <span class="n">repo_conf</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">repo</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="p">[</span><span class="s1">&#39;conf:&#39;</span> <span class="o">+</span> <span class="n">repo_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">AutoConfigSection</span><span class="p">(</span><span class="n">repo_conf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">repo</span>
+
+    <span class="nd">@_register_repo_type</span><span class="p">(</span><span class="n">_supported_repo_types</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_repo_sqfs_v1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create ebuild squashfs repo v1 configuration.&quot;&quot;&quot;</span>
+        <span class="n">repo_name</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;repo_name&#39;</span><span class="p">]</span>
+        <span class="n">repo_opts</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;repo_opts&#39;</span><span class="p">]</span>
+
+        <span class="n">repo_path</span> <span class="o">=</span> <span class="n">repo_opts</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+        <span class="n">sqfs_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">repo_opts</span><span class="p">[</span><span class="s1">&#39;sync-uri&#39;</span><span class="p">])</span>
+        <span class="c1"># XXX: Hack for portage-2 profile format support.</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;repo_obj&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">repo_objs</span><span class="o">.</span><span class="n">SquashfsRepoConfig</span><span class="p">(</span><span class="n">sqfs_file</span><span class="p">,</span> <span class="n">repo_path</span><span class="p">,</span> <span class="n">repo_name</span><span class="p">)</span>
+
+        <span class="n">repo_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.ebuild.repo_objs.SquashfsRepoConfig&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;sqfs_file&#39;</span><span class="p">:</span> <span class="n">sqfs_file</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;repo_dict&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">repo_dict</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repo_ebuild_v1</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="nd">@_register_repo_type</span><span class="p">(</span><span class="n">_supported_repo_types</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_repo_binpkg_v1</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_name</span><span class="p">,</span> <span class="n">repo_opts</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create binpkg repo v1 configuration.&quot;&quot;&quot;</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.binpkg.repository.tree&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;repo_id&#39;</span><span class="p">:</span> <span class="n">repo_name</span><span class="p">,</span>
+            <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="n">repo_opts</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">repo</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.portage_conf</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

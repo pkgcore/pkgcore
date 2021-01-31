@@ -1,0 +1,7 @@
+pkgcore.binpkg.xpak module
+==========================
+
+.. automodule:: pkgcore.binpkg.xpak
+   :members:
+   :undoc-members:
+   :show-inheritance:

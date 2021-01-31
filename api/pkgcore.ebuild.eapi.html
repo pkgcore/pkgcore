@@ -1,0 +1,196 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.eapi module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eapi module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.eapi">
+<span id="pkgcore-ebuild-eapi-module"></span><h1>pkgcore.ebuild.eapi module<a class="headerlink" href="#module-pkgcore.ebuild.eapi" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.ebuild.eapi.EAPI">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eapi.</code><code class="sig-name descname">EAPI</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">magic</span></em>, <em class="sig-param"><span class="n">parent</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">phases</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">default_phases</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">mandatory_keys</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">dep_keys</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">metadata_keys</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">eclass_keys</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">tracked_attributes</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">archive_exts</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">optionals</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">ebd_env_options</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eapi.html#EAPI"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.archive_exts_regex">
+<code class="sig-name descname">archive_exts_regex</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.archive_exts_regex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regex matching strings ending with supported archive extensions.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.archive_exts_regex_pattern">
+<code class="sig-name descname">archive_exts_regex_pattern</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.archive_exts_regex_pattern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regex pattern for supported archive extensions.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.atom_kls">
+<code class="sig-name descname">atom_kls</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.atom_kls" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.bash_cmds_banned">
+<code class="sig-name descname">bash_cmds_banned</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.bash_cmds_banned" title="Permalink to this definition">¶</a></dt>
+<dd><p>EAPI specific commands banned for this EAPI.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.bash_cmds_deprecated">
+<code class="sig-name descname">bash_cmds_deprecated</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.bash_cmds_deprecated" title="Permalink to this definition">¶</a></dt>
+<dd><p>EAPI specific commands deprecated for this EAPI.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.bash_cmds_internal">
+<code class="sig-name descname">bash_cmds_internal</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.bash_cmds_internal" title="Permalink to this definition">¶</a></dt>
+<dd><p>EAPI specific commands for this EAPI.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.bash_funcs">
+<code class="sig-name descname">bash_funcs</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.bash_funcs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internally implemented EAPI specific functions to skip when exporting.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.bash_funcs_global">
+<code class="sig-name descname">bash_funcs_global</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.bash_funcs_global" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internally implemented global EAPI specific functions to skip when exporting.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eapi.EAPI.bash_libs">
+<code class="sig-name descname">bash_libs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eapi.html#EAPI.bash_libs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.bash_libs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate internally implemented EAPI specific bash libs required by the ebd.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.ebd_env">
+<code class="sig-name descname">ebd_env</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.ebd_env" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dictionary of EAPI options passed to the ebd environment.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.helpers">
+<code class="sig-name descname">helpers</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.helpers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Phase to directory mapping for EAPI specific helpers to add to $PATH.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eapi.EAPI.inherits">
+<em class="property">property </em><code class="sig-name descname">inherits</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.inherits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield an EAPI’s inheritance tree.</p>
+<p>Note that this assumes a simple, linear inheritance tree.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eapi.EAPI.interpret_cache_defined_phases">
+<code class="sig-name descname">interpret_cache_defined_phases</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sequence</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eapi.html#EAPI.interpret_cache_defined_phases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.interpret_cache_defined_phases" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.is_supported">
+<code class="sig-name descname">is_supported</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.is_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check if an EAPI is supported.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.known_eapis">
+<code class="sig-name descname">known_eapis</code><em class="property"> = &lt;WeakValueDictionary&gt;</em><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.known_eapis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eapi.EAPI.register">
+<em class="property">classmethod </em><code class="sig-name descname">register</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eapi.html#EAPI.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.register" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.unknown_eapis">
+<code class="sig-name descname">unknown_eapis</code><em class="property"> = &lt;WeakValueDictionary&gt;</em><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.unknown_eapis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eapi.EAPI.valid_slot_regex">
+<code class="sig-name descname">valid_slot_regex</code><a class="headerlink" href="#pkgcore.ebuild.eapi.EAPI.valid_slot_regex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regex matching valid SLOT values.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.eapi.get_eapi">
+<code class="sig-prename descclassname">pkgcore.ebuild.eapi.</code><code class="sig-name descname">get_eapi</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">magic</span></em>, <em class="sig-param"><span class="n">suppress_unsupported</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eapi.html#get_eapi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eapi.get_eapi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return EAPI object for a given identifier.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eapi module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

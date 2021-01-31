@@ -1,0 +1,7 @@
+pinspect query - auxiliary access to ebuild/repo info via portageq akin api
+---------------------------------------------------------------------------
+
+.. include:: query/_synopsis.rst
+.. include:: query/_description.rst
+.. include:: query/_options.rst
+.. include:: query/_subcommands.rst

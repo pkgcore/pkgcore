@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.cache.errors module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.cache.errors module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.cache.errors">
+<span id="pkgcore-cache-errors-module"></span><h1>pkgcore.cache.errors module<a class="headerlink" href="#module-pkgcore.cache.errors" title="Permalink to this headline">¶</a></h1>
+<p>cache subsystem exceptions</p>
+<dl class="py exception">
+<dt id="pkgcore.cache.errors.CacheCorruption">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.cache.errors.</code><code class="sig-name descname">CacheCorruption</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">ex</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/cache/errors.html#CacheCorruption"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.cache.errors.CacheCorruption" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.cache.errors.CacheError" title="pkgcore.cache.errors.CacheError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.cache.errors.CacheError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.cache.errors.CacheError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.cache.errors.</code><code class="sig-name descname">CacheError</code><a class="reference internal" href="../_modules/pkgcore/cache/errors.html#CacheError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.cache.errors.CacheError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreException" title="pkgcore.exceptions.PkgcoreException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreException</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.cache.errors.GeneralCacheCorruption">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.cache.errors.</code><code class="sig-name descname">GeneralCacheCorruption</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ex</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/cache/errors.html#GeneralCacheCorruption"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.cache.errors.GeneralCacheCorruption" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.cache.errors.CacheError" title="pkgcore.cache.errors.CacheError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.cache.errors.CacheError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.cache.errors.InitializationError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.cache.errors.</code><code class="sig-name descname">InitializationError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">class_name</span></em>, <em class="sig-param"><span class="n">error</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/cache/errors.html#InitializationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.cache.errors.InitializationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.cache.errors.CacheError" title="pkgcore.cache.errors.CacheError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.cache.errors.CacheError</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.cache.errors.ReadOnly">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.cache.errors.</code><code class="sig-name descname">ReadOnly</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">info</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/cache/errors.html#ReadOnly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.cache.errors.ReadOnly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.cache.errors.CacheError" title="pkgcore.cache.errors.CacheError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.cache.errors.CacheError</span></code></a></p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.cache.errors module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,670 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.restrictions.values &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.values</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.restrictions.values</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;value restrictions</span>
+
+<span class="sd">Works hand in hand with :obj:`pkgcore.restrictions.packages`, these</span>
+<span class="sd">classes match against a value handed in, package restrictions pull the</span>
+<span class="sd">attr from a package instance and hand it to their wrapped restriction</span>
+<span class="sd">(which is a value restriction).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">generic_equality</span><span class="p">,</span> <span class="n">reflective_hash</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">boolean</span><span class="p">,</span> <span class="n">packages</span><span class="p">,</span> <span class="n">restriction</span>
+
+
+<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.base">[docs]</a><span class="k">class</span> <span class="nc">base</span><span class="p">(</span><span class="n">restriction</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base restriction matching object for values.</span>
+
+<span class="sd">    Beware: do not check for instances of this to detect value</span>
+<span class="sd">    restrictions! Use the C{type} attribute instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">restriction</span><span class="o">.</span><span class="n">value_type</span>
+
+<div class="viewcode-block" id="base.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.base.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="base.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.base.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="hashed_base"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.hashed_base">[docs]</a><span class="k">def</span> <span class="nf">hashed_base</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">scope</span><span class="p">):</span>
+    <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;__hash__&quot;</span><span class="p">,</span> <span class="n">reflective_hash</span><span class="p">(</span><span class="s1">&#39;_hash&#39;</span><span class="p">))</span>
+    <span class="n">slots</span> <span class="o">=</span> <span class="n">scope</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;__slots__&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">slots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;_hash&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">:</span>
+            <span class="n">slots</span> <span class="o">=</span> <span class="n">scope</span><span class="p">[</span><span class="s2">&quot;__slots__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slots</span> <span class="o">+</span> <span class="p">(</span><span class="s2">&quot;_hash&quot;</span><span class="p">,)</span>
+        <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;__attr_comparison__&quot;</span><span class="p">,</span> <span class="n">slots</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">generic_equality</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">scope</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GetAttrRestriction"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.GetAttrRestriction">[docs]</a><span class="k">class</span> <span class="nc">GetAttrRestriction</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Restriction pulling an attribute and applying a child restriction.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="nb">type</span> <span class="o">=</span> <span class="n">restriction</span><span class="o">.</span><span class="n">value_type</span>
+
+    <span class="c1"># XXX this needs further thought.</span>
+    <span class="c1">#</span>
+    <span class="c1"># The api for force_{True,False} is a ValueRestriction gets called</span>
+    <span class="c1"># with a package instance, the attribute name (string), and the</span>
+    <span class="c1"># current attribute value. We cannot really provide a child</span>
+    <span class="c1"># restriction with a sensible pkg and a sensible attribute name,</span>
+    <span class="c1"># so we just punt and return True/False depending on the current</span>
+    <span class="c1"># state without &quot;forcing&quot; anything (default implementation in</span>
+    <span class="c1"># &quot;base&quot;).</span>
+
+<div class="viewcode-block" id="GetAttrRestriction.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.GetAttrRestriction.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GetAttrRestriction.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.GetAttrRestriction.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="VersionRestriction"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.VersionRestriction">[docs]</a><span class="k">class</span> <span class="nc">VersionRestriction</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;use this as base for version restrictions.</span>
+
+<span class="sd">    Gives a clue to what the restriction does.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="StrRegex"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrRegex">[docs]</a><span class="k">class</span> <span class="nc">StrRegex</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">hashed_base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;regex based matching&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_hash&#39;</span><span class="p">,</span> <span class="s1">&#39;flags&#39;</span><span class="p">,</span> <span class="s1">&#39;regex&#39;</span><span class="p">,</span> <span class="s1">&#39;_matchfunc&#39;</span><span class="p">,</span> <span class="s1">&#39;ismatch&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">)</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">regex</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param regex: regex pattern to match</span>
+<span class="sd">        :param case_sensitive: should the match be case sensitive?</span>
+<span class="sd">        :param match: should C{re.match} be used instead of C{re.search}?</span>
+<span class="sd">        :param negate: should the match results be negated?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;regex&quot;</span><span class="p">,</span> <span class="n">regex</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ismatch&quot;</span><span class="p">,</span> <span class="n">match</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">case_sensitive</span><span class="p">:</span>
+            <span class="n">flags</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;flags&quot;</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">compiled_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid regex: </span><span class="si">%r</span><span class="s2">, </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_matchfunc&quot;</span><span class="p">,</span> <span class="n">compiled_re</span><span class="o">.</span><span class="n">match</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_matchfunc&quot;</span><span class="p">,</span> <span class="n">compiled_re</span><span class="o">.</span><span class="n">search</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_hash&quot;</span><span class="p">,</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ismatch</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="StrRegex.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrRegex.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="c1"># Be too clever for our own good --marienz</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_matchfunc</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">regex</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;negated&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ismatch</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;match&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;search&#39;</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;@</span><span class="si">%#8x</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">),))</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;&lt;</span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s1">&gt;&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ismatch</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;match &#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s1">&#39;search &#39;</span>
+        <span class="n">result</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">regex</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;not </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="StrExactMatch"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrExactMatch">[docs]</a><span class="k">class</span> <span class="nc">StrExactMatch</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;exact string comparison match&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_hash&#39;</span><span class="p">,</span> <span class="s1">&#39;exact&#39;</span><span class="p">,</span> <span class="s1">&#39;case_sensitive&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">)</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exact</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param exact: exact string to match</span>
+<span class="sd">        :param case_sensitive: should the match be case sensitive?</span>
+<span class="sd">        :param negate: should the match results be negated?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;case_sensitive&quot;</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">case_sensitive</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;exact&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exact</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;exact&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">exact</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_hash&quot;</span><span class="p">,</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">exact</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_sensitive</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="StrExactMatch.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrExactMatch.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_sensitive</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exact</span> <span class="o">==</span> <span class="n">value</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exact</span> <span class="o">==</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+<div class="viewcode-block" id="StrExactMatch.intersect"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrExactMatch.intersect">[docs]</a>    <span class="k">def</span> <span class="nf">intersect</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exact</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">exact</span>
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">case_sensitive</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_sensitive</span><span class="p">:</span>
+            <span class="n">s1</span> <span class="o">=</span> <span class="n">s1</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">case_sensitive</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">case_sensitive</span><span class="p">:</span>
+            <span class="n">s2</span> <span class="o">=</span> <span class="n">s2</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">s1</span> <span class="o">==</span> <span class="n">s2</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">case_sensitive</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">other</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1"> negated @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span>
+        <span class="k">return</span> <span class="n">string</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exact</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;!= </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exact</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;== </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exact</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">reflective_hash</span><span class="p">(</span><span class="s1">&#39;_hash&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StrGlobMatch"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrGlobMatch">[docs]</a><span class="k">class</span> <span class="nc">StrGlobMatch</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">hashed_base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;globbing matches; essentially startswith and endswith matches&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_hash&#39;</span><span class="p">,</span> <span class="s1">&#39;glob&#39;</span><span class="p">,</span> <span class="s1">&#39;prefix&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">,</span> <span class="s1">&#39;flags&#39;</span><span class="p">)</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">glob</span><span class="p">,</span> <span class="n">case_sensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param glob: string chunk that must be matched</span>
+<span class="sd">        :param case_sensitive: should the match be case sensitive?</span>
+<span class="sd">        :param prefix: should the glob be a prefix check for matching,</span>
+<span class="sd">            or postfix matching</span>
+<span class="sd">        :param negate: should the match results be negated?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">case_sensitive</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;flags&quot;</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;glob&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">glob</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;flags&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;glob&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">glob</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;prefix&quot;</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_hash&quot;</span><span class="p">,</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">glob</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="StrGlobMatch.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrGlobMatch.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">==</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">startswith</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">endswith</span>
+        <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">glob</span><span class="p">)</span> <span class="o">^</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1"> case_sensitive=</span><span class="si">%r</span><span class="s1"> negated @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1"> case_sensitive=</span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">glob</span><span class="si">}</span><span class="s1">.*&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;.*</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">glob</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">string</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">==</span> <span class="n">re</span><span class="o">.</span><span class="n">I</span> <span class="ow">and</span> <span class="kc">True</span> <span class="ow">or</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;not &#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">s</span><span class="si">}{</span><span class="bp">self</span><span class="o">.</span><span class="n">glob</span><span class="si">}</span><span class="s1">*&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">{s}</span><span class="s1">*</span><span class="si">{self.glob}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EqualityMatch"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.EqualityMatch">[docs]</a><span class="k">class</span> <span class="nc">EqualityMatch</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;negate&#39;</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">)</span>
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="vm">__slots__</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param data: data to base comparison against</span>
+<span class="sd">        :param negate: should the results be negated?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+
+<div class="viewcode-block" id="EqualityMatch.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.EqualityMatch.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">actual_val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="n">actual_val</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1"> negate=</span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;EqualityMatch: !=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;EqualityMatch: =</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="ContainmentMatch2"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.ContainmentMatch2">[docs]</a><span class="k">class</span> <span class="nc">ContainmentMatch2</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">hashed_base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used for an &#39;in&#39; style operation.</span>
+
+<span class="sd">    For example, &#39;x86&#39; in [&#39;x86&#39;, &#39;~x86&#39;]. Note that negation of this *does*</span>
+<span class="sd">    not result in a true NAND when all is on.</span>
+
+<span class="sd">    Note that ContainmentMatch will be removed in favor of this class. When</span>
+<span class="sd">    that occurs an alias will be left in place for compatibility.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_hash&#39;</span><span class="p">,</span> <span class="s1">&#39;vals&#39;</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">)</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">match_all</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param vals: what values to look for during match</span>
+<span class="sd">        :keyword all: must all vals be present, or just one for a match</span>
+<span class="sd">            to succeed?</span>
+<span class="sd">        :keyword negate: should the match results be negated?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">match_all</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;vals&quot;</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">((</span><span class="n">vals</span><span class="p">,)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">vals</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="nb">bool</span><span class="p">(</span><span class="n">negate</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_hash&quot;</span><span class="p">,</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="ContainmentMatch2.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.ContainmentMatch2.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">_values_override</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">_values_override</span>
+        <span class="k">if</span> <span class="n">_values_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">fval</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">fval</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+
+        <span class="c1"># this can, and should be optimized to do len checks- iterate</span>
+        <span class="c1"># over the smaller of the two see above about special casing</span>
+        <span class="c1"># bits. need the same protection here, on the offchance (as</span>
+        <span class="c1"># contents sets do), the __getitem__ is non standard.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">vals</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+            <span class="c1"># if something intersects, then we return the inverse of negate-</span>
+            <span class="c1"># if negate=False, something is found, result is True</span>
+            <span class="k">return</span> <span class="n">vals</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="c1"># isn&#39;t iterable, try the other way around.  rely on contains.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+                <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+<div class="viewcode-block" id="ContainmentMatch2.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.ContainmentMatch2.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">_values_override</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="c1"># &quot;More than one statement on a single line&quot;</span>
+        <span class="c1"># pylint: disable-msg=C0321</span>
+
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">_values_override</span>
+        <span class="k">if</span> <span class="n">_values_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span>
+
+        <span class="c1"># XXX pretty much positive this isn&#39;t working.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;configurable&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="c1"># unchangable</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+                <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">False</span> <span class="ow">in</span> <span class="n">truths</span>
+                <span class="k">def</span> <span class="nf">true</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_enable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+                <span class="k">def</span> <span class="nf">false</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_disable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+
+                <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="ow">in</span> <span class="n">val</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span>
+
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">boolean</span><span class="o">.</span><span class="n">iterative_quad_toggling</span><span class="p">(</span>
+                        <span class="n">pkg</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="n">truths</span><span class="p">,</span>
+                        <span class="nb">filter</span><span class="p">,</span> <span class="n">desired_false</span><span class="o">=</span><span class="n">false</span><span class="p">,</span> <span class="n">desired_true</span><span class="o">=</span><span class="n">true</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_disable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_disable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span> <span class="k">return</span> <span class="n">truths</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">l</span>
+        <span class="k">def</span> <span class="nf">true</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span> <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_enable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">false</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span> <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_disable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+        <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="ow">in</span> <span class="n">val</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">boolean</span><span class="o">.</span><span class="n">iterative_quad_toggling</span><span class="p">(</span>
+                <span class="n">pkg</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">truths</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span>
+                <span class="n">desired_false</span><span class="o">=</span><span class="n">false</span><span class="p">,</span> <span class="n">desired_true</span><span class="o">=</span><span class="n">true</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="ContainmentMatch2.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.ContainmentMatch2.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">_values_override</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+        <span class="c1"># &quot;More than one statement on a single line&quot;</span>
+        <span class="c1"># pylint: disable-msg=C0321</span>
+
+        <span class="c1"># XXX pretty much positive this isn&#39;t working.</span>
+
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">_values_override</span>
+        <span class="k">if</span> <span class="n">_values_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;configurable&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="c1"># unchangable</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+                <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span> <span class="ow">in</span> <span class="n">truths</span>
+                <span class="k">def</span> <span class="nf">true</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_enable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+                <span class="k">def</span> <span class="nf">false</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_disable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+
+                <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="ow">in</span> <span class="n">val</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span>
+
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">boolean</span><span class="o">.</span><span class="n">iterative_quad_toggling</span><span class="p">(</span>
+                        <span class="n">pkg</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="n">truths</span><span class="p">,</span>
+                        <span class="nb">filter</span><span class="p">,</span> <span class="n">desired_false</span><span class="o">=</span><span class="n">false</span><span class="p">,</span> <span class="n">desired_true</span><span class="o">=</span><span class="n">true</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_enable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># negation</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_disable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">def</span> <span class="nf">filter</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span> <span class="k">return</span> <span class="kc">True</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">truths</span>
+            <span class="k">def</span> <span class="nf">true</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span> <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_enable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+            <span class="k">def</span> <span class="nf">false</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span> <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">request_disable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+            <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="ow">in</span> <span class="n">val</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">boolean</span><span class="o">.</span><span class="n">iterative_quad_toggling</span><span class="p">(</span>
+                    <span class="n">pkg</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">),</span> <span class="n">truths</span><span class="p">,</span> <span class="nb">filter</span><span class="p">,</span>
+                    <span class="n">desired_false</span><span class="o">=</span><span class="n">false</span><span class="p">,</span> <span class="n">desired_true</span><span class="o">=</span><span class="n">true</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1"> all=</span><span class="si">%s</span><span class="s1"> negated @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">string</span> <span class="o">=</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> </span><span class="si">%r</span><span class="s1"> all=</span><span class="si">%s</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span>
+        <span class="k">return</span> <span class="n">string</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">all</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">restricts_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vals</span><span class="p">))</span>
+        <span class="n">negate</span> <span class="o">=</span> <span class="s1">&#39;!&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">negate</span><span class="si">}{</span><span class="n">restricts_str</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="ContainmentMatch"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.ContainmentMatch">[docs]</a><span class="k">class</span> <span class="nc">ContainmentMatch</span><span class="p">(</span><span class="n">ContainmentMatch2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Used for an &#39;in&#39; style operation.</span>
+
+<span class="sd">    For example, &#39;x86&#39; in [&#39;x86&#39;, &#39;~x86&#39;]. Note that negation of this *does*</span>
+<span class="sd">    not result in a true NAND when all is on.</span>
+
+<span class="sd">    Deprecated in favor of ContainmentMatch2.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># note that we&#39;re discarding any specialized __getitem__ on vals here.</span>
+        <span class="c1"># this isn&#39;t optimal, and should be special cased for known</span>
+        <span class="c1"># types (lists/tuples fex)</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">match_all</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">ContainmentMatch2</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">match_all</span><span class="o">=</span><span class="n">match_all</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="FlatteningRestriction"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.FlatteningRestriction">[docs]</a><span class="k">class</span> <span class="nc">FlatteningRestriction</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Flatten the values passed in and apply the nested restriction.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;dont_iter&#39;</span><span class="p">,</span> <span class="s1">&#39;restriction&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">)</span>
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dont_iter</span><span class="p">,</span> <span class="n">childrestriction</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :type dont_iter: type or tuple of types</span>
+<span class="sd">        :param dont_iter: type(s) not to flatten.</span>
+<span class="sd">                          Passed to :obj:`snakeoil.sequences.iflatten_instance`.</span>
+<span class="sd">        :type childrestriction: restriction</span>
+<span class="sd">        :param childrestriction: restriction applied to the flattened list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;dont_iter&quot;</span><span class="p">,</span> <span class="n">dont_iter</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;restriction&quot;</span><span class="p">,</span> <span class="n">childrestriction</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FlatteningRestriction.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.FlatteningRestriction.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="n">iflatten_instance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dont_iter</span><span class="p">))</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s1">&#39;flattening_restriction: &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;dont_iter = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dont_iter</span><span class="si">}</span><span class="s1">, restriction = </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">restriction</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> restriction=</span><span class="si">%r</span><span class="s1"> dont_iter=</span><span class="si">%r</span><span class="s1"> negate=</span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restriction</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dont_iter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span>
+            <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="FunctionRestriction"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.FunctionRestriction">[docs]</a><span class="k">class</span> <span class="nc">FunctionRestriction</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convenience class for creating special restrictions.&quot;&quot;&quot;</span>
+
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">)</span>
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        C{func} is used as match function.</span>
+
+<span class="sd">        It will usually be impossible for the backend to optimize this</span>
+<span class="sd">        restriction. So even though you can implement an arbitrary</span>
+<span class="sd">        restriction using this class you should only use it if it is</span>
+<span class="sd">        very unlikely backend-specific optimizations will be possible.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;func&#39;</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FunctionRestriction.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.FunctionRestriction.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> func=</span><span class="si">%r</span><span class="s1"> negate=</span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="StrConversion"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrConversion">[docs]</a><span class="k">class</span> <span class="nc">StrConversion</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;convert passed in data to a str object&quot;&quot;&quot;</span>
+
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span>
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;restrict&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;restrict&quot;</span><span class="p">,</span> <span class="n">restrict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StrConversion.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.StrConversion.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="UnicodeConversion"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.UnicodeConversion">[docs]</a><span class="k">class</span> <span class="nc">UnicodeConversion</span><span class="p">(</span><span class="n">StrConversion</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;convert passed in data to a unicode obj&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+<div class="viewcode-block" id="UnicodeConversion.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.UnicodeConversion.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="AnyMatch"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.AnyMatch">[docs]</a><span class="k">class</span> <span class="nc">AnyMatch</span><span class="p">(</span><span class="n">restriction</span><span class="o">.</span><span class="n">AnyMatch</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__hash__</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">childrestriction</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># Hack: skip calling base.__init__. Doing this would make</span>
+        <span class="c1"># restriction.base.__init__ run twice.</span>
+        <span class="n">restriction</span><span class="o">.</span><span class="n">AnyMatch</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">childrestriction</span><span class="p">,</span> <span class="n">restriction</span><span class="o">.</span><span class="n">value_type</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AnyMatch.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.AnyMatch.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AnyMatch.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.values.html#pkgcore.restrictions.values.AnyMatch.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div></div>
+
+
+<span class="c1"># &quot;Invalid name&quot; (pylint uses the module const regexp, not the class regexp)</span>
+<span class="c1"># pylint: disable-msg=C0103</span>
+
+<span class="n">AndRestriction</span> <span class="o">=</span> <span class="n">restriction</span><span class="o">.</span><span class="n">curry_node_type</span><span class="p">(</span><span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">,</span>
+                                             <span class="n">restriction</span><span class="o">.</span><span class="n">value_type</span><span class="p">)</span>
+<span class="n">OrRestriction</span> <span class="o">=</span> <span class="n">restriction</span><span class="o">.</span><span class="n">curry_node_type</span><span class="p">(</span><span class="n">boolean</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">,</span>
+                                            <span class="n">restriction</span><span class="o">.</span><span class="n">value_type</span><span class="p">)</span>
+
+<span class="n">AlwaysBool</span> <span class="o">=</span> <span class="n">restriction</span><span class="o">.</span><span class="n">curry_node_type</span><span class="p">(</span><span class="n">restriction</span><span class="o">.</span><span class="n">AlwaysBool</span><span class="p">,</span>
+                                         <span class="n">restriction</span><span class="o">.</span><span class="n">value_type</span><span class="p">)</span>
+
+<span class="n">AlwaysTrue</span> <span class="o">=</span> <span class="n">AlwaysBool</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">AlwaysFalse</span> <span class="o">=</span> <span class="n">AlwaysBool</span><span class="p">(</span><span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.values</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

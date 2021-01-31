@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig package [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] query [query ...]

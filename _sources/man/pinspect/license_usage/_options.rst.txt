@@ -1,0 +1,41 @@
+Positional Arguments
+--------------------
+
+:repo:  
+      repo(s) to inspect
+
+Optional Arguments
+------------------
+
+--no-final-summary  
+                    disable outputting a summary of data across all repos
+
+--sort-by-name      
+                    sort output by name, rather then by frequency
+
+--first FIRST       
+                    show only the first N detail items
+
+--last LAST         
+                    show only the last N detail items
+
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.

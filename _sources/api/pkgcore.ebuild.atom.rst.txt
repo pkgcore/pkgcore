@@ -1,0 +1,7 @@
+pkgcore.ebuild.atom module
+==========================
+
+.. automodule:: pkgcore.ebuild.atom
+   :members:
+   :undoc-members:
+   :show-inheritance:

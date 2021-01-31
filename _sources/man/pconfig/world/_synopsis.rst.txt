@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig world [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-l] [-r REMOVE] [-a ADD]

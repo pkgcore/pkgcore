@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig dump [-h] [--debug] [-q] [-v] [--color BOOLEAN] [typename]

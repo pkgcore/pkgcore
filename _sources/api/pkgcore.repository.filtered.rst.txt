@@ -1,0 +1,7 @@
+pkgcore.repository.filtered module
+==================================
+
+.. automodule:: pkgcore.repository.filtered
+   :members:
+   :undoc-members:
+   :show-inheritance:

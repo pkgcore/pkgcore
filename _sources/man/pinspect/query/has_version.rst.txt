@@ -1,0 +1,7 @@
+pinspect query has_version - Return 0 if an atom is merged, 1 if not.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: has_version/_synopsis.rst
+.. include:: has_version/_description.rst
+.. include:: has_version/_options.rst
+.. include:: has_version/_subcommands.rst

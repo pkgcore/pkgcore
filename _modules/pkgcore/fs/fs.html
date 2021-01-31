@@ -1,0 +1,418 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fs.fs &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.fs</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fs.fs</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">filesystem entry abstractions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">fnmatch</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">realpath</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">sep</span> <span class="k">as</span> <span class="n">path_seperator</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">get_chksums</span><span class="p">,</span> <span class="n">get_handlers</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">cmp</span>
+<span class="kn">from</span> <span class="nn">snakeoil.currying</span> <span class="kn">import</span> <span class="n">post_curry</span><span class="p">,</span> <span class="n">pretty_docs</span>
+<span class="kn">from</span> <span class="nn">snakeoil.data_source</span> <span class="kn">import</span> <span class="n">local_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">LazyFullValLoadDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">normpath</span><span class="p">,</span> <span class="n">pjoin</span>
+
+<span class="c1"># goofy set of classes representating the fs objects pkgcore knows of.</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;fsFile&quot;</span><span class="p">,</span> <span class="s2">&quot;fsDir&quot;</span><span class="p">,</span> <span class="s2">&quot;fsSymlink&quot;</span><span class="p">,</span> <span class="s2">&quot;fsDev&quot;</span><span class="p">,</span> <span class="s2">&quot;fsFifo&quot;</span><span class="p">]</span>
+<span class="n">__all__</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+    <span class="sa">f</span><span class="s2">&quot;is</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;dir&quot;</span><span class="p">,</span> <span class="s2">&quot;reg&quot;</span><span class="p">,</span> <span class="s2">&quot;sym&quot;</span><span class="p">,</span> <span class="s2">&quot;fifo&quot;</span><span class="p">,</span> <span class="s2">&quot;dev&quot;</span><span class="p">,</span> <span class="s2">&quot;fs_obj&quot;</span><span class="p">))</span>
+
+<span class="c1"># following are used to generate appropriate __init__, wiped from the</span>
+<span class="c1"># namespace at the end of the module</span>
+
+<span class="n">_fs_doc</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;mode&quot;</span><span class="p">:</span><span class="s2">&quot;&quot;&quot;:keyword mode: int, the mode of this entry.  &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;required if strict is set&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mtime&quot;</span><span class="p">:</span><span class="s2">&quot;&quot;&quot;:keyword mtime: long, the mtime of this entry.  &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;required if strict is set&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;uid&quot;</span><span class="p">:</span><span class="s2">&quot;&quot;&quot;:keyword uid: int, the uid of this entry.  &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;required if strict is set&quot;&quot;&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gid&quot;</span><span class="p">:</span><span class="s2">&quot;&quot;&quot;:keyword gid: int, the gid of this entry.  &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot;required if strict is set&quot;&quot;&quot;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="k">def</span> <span class="nf">gen_doc_additions</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="n">slots</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">init</span><span class="o">.</span><span class="vm">__doc__</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> \
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">:param location: location (real or intended) for this entry</span>
+<span class="sd">:param strict: is this fully representative of the entry, or only partially</span>
+<span class="sd">:raise KeyError: if strict is enabled, and not all args are passed in</span>
+<span class="sd">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">init</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">init</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="p">)</span> <span class="o">+</span> \
+        <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">_fs_doc</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_fs_doc</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">slots</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">fsBase</span><span class="p">:</span>
+
+    <span class="sd">&quot;&quot;&quot;base class, all extensions must derive from this class&quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="s2">&quot;mtime&quot;</span><span class="p">,</span> <span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="s2">&quot;uid&quot;</span><span class="p">,</span> <span class="s2">&quot;gid&quot;</span><span class="p">)</span>
+    <span class="n">__attrs__</span> <span class="o">=</span> <span class="vm">__slots__</span>
+    <span class="n">__default_attrs__</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">x</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;is&quot;</span><span class="p">,</span> <span class="s2">&quot;is_&quot;</span><span class="p">),</span> <span class="kc">False</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+        <span class="n">__all__</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;is&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">islower</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;fs_obj&quot;</span><span class="p">))</span>
+
+    <span class="n">klass</span><span class="o">.</span><span class="n">inject_richcmp_methods_from_cmp</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
+    <span class="n">klass</span><span class="o">.</span><span class="n">inject_immutable_instance</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">):</span>
+
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;location&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__attrs__</span><span class="p">:</span>
+                <span class="n">s</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">s</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">gen_doc_additions</span><span class="p">(</span><span class="fm">__init__</span><span class="p">,</span> <span class="n">__attrs__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">change_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__attrs__</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)}</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="c1"># split location out</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">location</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">path_seperator</span><span class="p">):</span>
+            <span class="n">location</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;strict&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="c1"># we would only get called if it doesn&#39;t exist.</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__attrs__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__default_attrs__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">obj</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">location</span>
+
+    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span> <span class="o">==</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="nf">realpath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;calculate the abspath/canonicalized path for this entry, returning</span>
+<span class="sd">        a new instance if the path differs.</span>
+
+<span class="sd">        :keyword cache: Either None (no cache), or a data object of path-&gt;</span>
+<span class="sd">          resolved.  Currently unused, but left in for forwards compatibility</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_path</span> <span class="o">=</span> <span class="n">realpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new_path</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">change_attributes</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">new_path</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">basename</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">basename</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dirname</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">fnmatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pattern</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__cmp__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span>
+
+
+<span class="k">class</span> <span class="nc">_LazyChksums</span><span class="p">(</span><span class="n">LazyFullValLoadDict</span><span class="p">):</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+
+<div class="viewcode-block" id="fsFile"><a class="viewcode-back" href="../../../api/pkgcore.fs.fs.html#pkgcore.fs.fs.fsFile">[docs]</a><span class="k">class</span> <span class="nc">fsFile</span><span class="p">(</span><span class="n">fsBase</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;file class&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;chksums&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;dev&quot;</span><span class="p">,</span> <span class="s2">&quot;inode&quot;</span><span class="p">)</span>
+    <span class="n">__attrs__</span> <span class="o">=</span> <span class="n">fsBase</span><span class="o">.</span><span class="n">__attrs__</span> <span class="o">+</span> <span class="vm">__slots__</span>
+    <span class="n">__default_attrs__</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mtime&quot;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;dev&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;inode&#39;</span><span class="p">:</span><span class="kc">None</span><span class="p">}</span>
+
+    <span class="n">is_reg</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">chksums</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param chksums: dict of checksums, key chksum_type: val hash val.</span>
+<span class="sd">            See :obj:`snakeoil.chksum`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="s1">&#39;data_source&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwds</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">local_source</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+        <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+        <span class="k">if</span> <span class="n">chksums</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># this can be problematic offhand if the file is modified</span>
+            <span class="c1"># but chksum not triggered</span>
+            <span class="n">chf_types</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;chf_types&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">chf_types</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">chf_types</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">get_handlers</span><span class="p">())</span>
+            <span class="n">chksums</span> <span class="o">=</span> <span class="n">_LazyChksums</span><span class="p">(</span><span class="n">chf_types</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chksum_callback</span><span class="p">)</span>
+        <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;chksums&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">chksums</span>
+        <span class="n">fsBase</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+    <span class="n">gen_doc_additions</span><span class="p">(</span><span class="fm">__init__</span><span class="p">,</span> <span class="vm">__slots__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;file:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="n">data_source</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_chksum_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chfs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">chfs</span><span class="p">,</span> <span class="n">get_chksums</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">chfs</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="fsFile.change_attributes"><a class="viewcode-back" href="../../../api/pkgcore.fs.fs.html#pkgcore.fs.fs.fsFile.change_attributes">[docs]</a>    <span class="k">def</span> <span class="nf">change_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;data&#39;</span> <span class="ow">in</span> <span class="n">kwds</span> <span class="ow">and</span> <span class="p">(</span><span class="s1">&#39;chksums&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwds</span> <span class="ow">and</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chksums</span><span class="p">,</span> <span class="n">_LazyChksums</span><span class="p">)):</span>
+            <span class="n">kwds</span><span class="p">[</span><span class="s1">&#39;chksums&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">fsBase</span><span class="o">.</span><span class="n">change_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_can_be_hardlinked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">other</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dev</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;dev&#39;</span><span class="p">,</span> <span class="s1">&#39;inode&#39;</span><span class="p">,</span> <span class="s1">&#39;uid&#39;</span><span class="p">,</span> <span class="s1">&#39;gid&#39;</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">,</span> <span class="s1">&#39;mtime&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="fsDir"><a class="viewcode-back" href="../../../api/pkgcore.fs.fs.html#pkgcore.fs.fs.fsDir">[docs]</a><span class="k">class</span> <span class="nc">fsDir</span><span class="p">(</span><span class="n">fsBase</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;dir class&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">is_dir</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;dir:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">fsLink</span><span class="p">(</span><span class="n">fsBase</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;symlink class&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">,)</span>
+    <span class="n">__attrs__</span> <span class="o">=</span> <span class="n">fsBase</span><span class="o">.</span><span class="n">__attrs__</span> <span class="o">+</span> <span class="vm">__slots__</span>
+    <span class="n">is_sym</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param target: string, filepath of the symlinks target</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">target</span>
+        <span class="n">fsBase</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">gen_doc_additions</span><span class="p">(</span><span class="fm">__init__</span><span class="p">,</span> <span class="vm">__slots__</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">change_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+             <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__attrs__</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)}</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="c1"># split location out</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">location</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">path_seperator</span><span class="p">):</span>
+            <span class="n">location</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;target&quot;</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;strict&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">resolved_target</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span>
+        <span class="k">return</span> <span class="n">normpath</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="s1">&#39;../&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__cmp__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">target</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;symlink:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2">-&gt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span>
+
+
+<span class="n">fsSymlink</span> <span class="o">=</span> <span class="n">fsLink</span>
+
+
+<div class="viewcode-block" id="fsDev"><a class="viewcode-back" href="../../../api/pkgcore.fs.fs.html#pkgcore.fs.fs.fsDev">[docs]</a><span class="k">class</span> <span class="nc">fsDev</span><span class="p">(</span><span class="n">fsBase</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;dev class (char/block objects)&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;major&quot;</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">)</span>
+    <span class="n">__attrs__</span> <span class="o">=</span> <span class="n">fsBase</span><span class="o">.</span><span class="n">__attrs__</span> <span class="o">+</span> <span class="vm">__slots__</span>
+    <span class="n">__default_attrs__</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;major&quot;</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">}</span>
+    <span class="n">is_dev</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">major</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">minor</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">kwds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;strict&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">major</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">minor</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                   <span class="s2">&quot;major/minor must be specified and positive ints&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IFMT</span><span class="p">(</span><span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">]):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;mode </span><span class="si">%o</span><span class="s2">: must specify the device type (got </span><span class="si">%o</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">],</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IFMT</span><span class="p">(</span><span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">])))</span>
+            <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;major&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">major</span>
+            <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;minor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">minor</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">major</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">major</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">major</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">major</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                       <span class="s2">&quot;major/minor must be specified and positive ints&quot;</span><span class="p">)</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;major&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">major</span>
+
+            <span class="k">if</span> <span class="n">minor</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">minor</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">minor</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">minor</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                       <span class="s2">&quot;major/minor must be specified and positive ints&quot;</span><span class="p">)</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;minor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">minor</span>
+
+        <span class="n">fsBase</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;device:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<span class="k">def</span> <span class="nf">get_major_minor</span><span class="p">(</span><span class="n">stat_inst</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;get major/minor from a stat instance</span>
+<span class="sd">    :return: major,minor tuple of ints</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span> <span class="n">stat_inst</span><span class="o">.</span><span class="n">st_rdev</span> <span class="o">&gt;&gt;</span> <span class="mi">8</span> <span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">,</span> <span class="n">stat_inst</span><span class="o">.</span><span class="n">st_rdev</span> <span class="o">&amp;</span> <span class="mh">0xff</span>
+
+
+<div class="viewcode-block" id="fsFifo"><a class="viewcode-back" href="../../../api/pkgcore.fs.fs.html#pkgcore.fs.fs.fsFifo">[docs]</a><span class="k">class</span> <span class="nc">fsFifo</span><span class="p">(</span><span class="n">fsBase</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;fifo class (socket objects)&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">is_fifo</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;fifo:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+<span class="k">def</span> <span class="nf">mk_check</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">pretty_docs</span><span class="p">(</span><span class="n">post_curry</span><span class="p">(</span><span class="nb">getattr</span><span class="p">,</span> <span class="s1">&#39;is_&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+        <span class="n">extradocs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;return True if obj is an instance of :obj:`</span><span class="si">%s</span><span class="s2">`, else False&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">),</span>
+        <span class="n">name</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;is&quot;</span> <span class="o">+</span><span class="n">name</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<span class="n">isdir</span>    <span class="o">=</span> <span class="n">mk_check</span><span class="p">(</span><span class="s1">&#39;dir&#39;</span><span class="p">)</span>
+<span class="n">isreg</span>    <span class="o">=</span> <span class="n">mk_check</span><span class="p">(</span><span class="s1">&#39;reg&#39;</span><span class="p">)</span>
+<span class="n">issym</span>    <span class="o">=</span> <span class="n">mk_check</span><span class="p">(</span><span class="s1">&#39;sym&#39;</span><span class="p">)</span>
+<span class="n">isfifo</span>   <span class="o">=</span> <span class="n">mk_check</span><span class="p">(</span><span class="s1">&#39;fifo&#39;</span><span class="p">)</span>
+<span class="n">isdev</span>    <span class="o">=</span> <span class="n">mk_check</span><span class="p">(</span><span class="s1">&#39;dev&#39;</span><span class="p">)</span>
+<span class="n">isfs_obj</span> <span class="o">=</span> <span class="n">pretty_docs</span><span class="p">(</span><span class="n">post_curry</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">,</span> <span class="n">fsBase</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;isfs_obj&#39;</span><span class="p">,</span>
+    <span class="n">extradocs</span><span class="o">=</span><span class="s1">&#39;return True if obj is an fsBase derived object&#39;</span><span class="p">)</span>
+
+<span class="k">del</span> <span class="n">gen_doc_additions</span><span class="p">,</span> <span class="n">mk_check</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.fs</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

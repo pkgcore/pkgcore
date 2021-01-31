@@ -1,0 +1,7 @@
+pkgcore.binpkg.remote module
+============================
+
+.. automodule:: pkgcore.binpkg.remote
+   :members:
+   :undoc-members:
+   :show-inheritance:

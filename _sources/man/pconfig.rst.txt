@@ -1,0 +1,8 @@
+========================================
+pconfig - configuration querying utility
+========================================
+
+.. include:: pconfig/_synopsis.rst
+.. include:: pconfig/_description.rst
+.. include:: pconfig/_options.rst
+.. include:: pconfig/_subcommands.rst

@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Developer Notes &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Rough TODO" href="dev-notes/TODO.html" />
+    <link rel="prev" title="pshowkw - display package keywords" href="man/pshowkw.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dev-notes/TODO.html" title="Rough TODO"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="man/pshowkw.html" title="pshowkw - display package keywords"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer Notes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="developer-notes">
+<h1>Developer Notes<a class="headerlink" href="#developer-notes" title="Permalink to this headline">¶</a></h1>
+<p>These are the original docs written for pkgcore, detailing some of it’s
+architecture, intentions, and reasons behind certain designs.</p>
+<p>Currently, the docs aren’t accurate- this will be corrected moving forward.</p>
+<p>Right now they’re primarily useful from a background-info standpoint.</p>
+<div class="section" id="content">
+<h2>Content<a class="headerlink" href="#content" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/TODO.html">Rough TODO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/commandline.html">Commandline framework</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/commandline.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/commandline.html#writing-a-script">Writing a script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/commandline.html#subcommands">Subcommands</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/commandline.html#wrapper-script">Wrapper script</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/commandline.html#tests">Tests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/config.html">Config use and implementation notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/config.html#using-the-manager">Using the manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/config.html#adding-a-configurable">Adding a configurable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/config.html#adding-a-config-source">Adding a config source</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/config.html#implementation-notes">Implementation notes</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/developing.html">Checking the source out</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/developing.html#installing-pkgcore">Installing pkgcore</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/developing.html#set-pythonpath">Set PYTHONPATH</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/developing.html#registering-plugins">Registering plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/developing.html#test-pkgcore">Test pkgcore</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/developing.html#build-extensions">Build extensions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/eapi.html">Ebuild EAPI</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/eapi.html#version-0-or-undefined-eapi-portage-2-0-52">Version 0 (or undefined eapi, &lt;=portage-2.0.52*)]</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/eapi.html#version-1">Version 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/eapi.html#id1">Version 1+</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/feature-breakdown.html">Feature (FEATURES) categories</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/feature-breakdown.html#relevant-list-of-features">relevant list of features</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/fs-ops.html">Filesystem Operations</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/fs-ops.html#file-deletion-removal">- File Deletion ( Removal )</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/fs-ops.html#file-addition-installation">- File Addition ( Installation )</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/fs-ops.html#file-replacement-overwriting">- File Replacement ( Overwriting )</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/hacking.html">Python Code Guidelines</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#follow-pep8-with-following-exemptions">Follow pep8, with following exemptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#throw-self-with-a-notimplementederror">Throw self with a NotImplementedError</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#be-aware-of-what-the-interpreter-is-actually-doing">Be aware of what the interpreter is actually doing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#don-t-explicitly-use-has-key-rely-on-the-in-operator">Don't explicitly use has_key. Rely on the 'in' operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#do-not-use-or-as-default-args-in-function-method-definitions">Do not use [] or {} as default args in function/method definitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#visible-curried-functions-should-have-documentation">Visible curried functions should have documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#unit-testing">Unit testing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#if-it-s-fs-related-code-it-s-usually-cheaper-to-try-then-to-ask-then-try">If it's FS related code, it's _usually_ cheaper to try then to ask then try</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#catching-exceptions-in-python-code-rather-then-cpython-isn-t-cheap">Catching Exceptions in python code (rather then cpython) isn't cheap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#cpython-leaks-vars-into-local-namespace-for-certain-constructs">cpython 'leaks' vars into local namespace for certain constructs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#unless-you-need-to-generate-and-save-a-range-result-use-xrange">Unless you need to generate (and save) a range result, use xrange</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#removals-from-a-list-aren-t-cheap-especially-left-most">Removals from a list aren't cheap, especially left most</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#if-you-re-testing-for-none-specifically-be-aware-of-the-is-operator">If you're testing for None specifically, be aware of the 'is' operator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#deprecated-crappy-modules">Deprecated/crappy modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#know-the-exceptions-that-are-thrown-and-catch-just-those-you-re-interested-in">Know the exceptions that are thrown, and catch just those you're interested in</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#tuples-versus-lists">tuples versus lists.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#don-t-try-to-copy-immutable-instances-e-g-tuples-strings">Don't try to copy immutable instances (e.g. tuples/strings)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#del-methods-mess-with-garbage-collection">__del__ methods mess with garbage collection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#a-general-point-python-isn-t-slow-your-algorithm-is">A general point: python isn't slow, your algorithm is</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#what-s-up-with-hash-and-dicts">What's up with __hash__ and dicts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#eq-and-ne">__eq__ and __ne__</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#eq-hash-and-subclassing">__eq__/__hash__ and subclassing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#exception-subclassing">Exception subclassing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/hacking.html#memory-debugging">Memory debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/harring-notes.html">resolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/harring-notes.html#resolver-redesign">resolver redesign</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/harring-notes.html#config-use-issues">config/use issues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/heapy.html">How to use guppy/heapy for tracking down memory usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/heapy.html#tutorial-of-sorts">Tutorial of sorts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/heapy.html#extra-stuff-for-c-extension-developers">Extra stuff for c extension developers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/plugins.html">Plugins system</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/plugins.html#goals">Goals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/plugins.html#using-plugins">Using plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/plugins.html#adding-plugins">Adding plugins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/plugins.html#adding-a-plugin-package">Adding a plugin package</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/portage-differences.html">Pkgcore/Portage differences</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/portage-differences.html#disclaimer">Disclaimer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/tackling-domain.html">Tackling domain</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/tests.html">Testing</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/tests.html#testing-for-negative-assertions">Testing for negative assertions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/tests.html#using-coverage">Using --coverage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/formats/cpan.html">perl CPAN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/formats/dpkg.html">dpkg</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/framework/intro.html">WARNING</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dev-notes/framework/intro.html#introduction">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/framework/intro.html#terminology">Terminology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/framework/intro.html#general-design-idea-approach-requirements">General design/idea/approach/requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/framework/intro.html#config-design">Config design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/framework/intro.html#config-s-actions-operation">config's actions/operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dev-notes/framework/intro.html#objects-subsystems-stuff">Objects/subsystems/stuff</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Developer Notes</a><ul>
+<li><a class="reference internal" href="#content">Content</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="man/pshowkw.html"
+                        title="previous chapter">pshowkw - display package keywords</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dev-notes/TODO.html"
+                        title="next chapter">Rough TODO</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dev-notes/TODO.html" title="Rough TODO"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="man/pshowkw.html" title="pshowkw - display package keywords"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Developer Notes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

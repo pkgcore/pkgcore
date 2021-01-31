@@ -1,0 +1,7 @@
+pkgcore.ebuild.triggers module
+==============================
+
+.. automodule:: pkgcore.ebuild.triggers
+   :members:
+   :undoc-members:
+   :show-inheritance:

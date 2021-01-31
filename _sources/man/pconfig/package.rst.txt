@@ -1,0 +1,7 @@
+pconfig package - invoke a packages custom configuration scripts
+----------------------------------------------------------------
+
+.. include:: package/_synopsis.rst
+.. include:: package/_description.rst
+.. include:: package/_options.rst
+.. include:: package/_subcommands.rst

@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Filesystem Operations &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Python Code Guidelines" href="hacking.html" />
+    <link rel="prev" title="Feature (FEATURES) categories" href="feature-breakdown.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="hacking.html" title="Python Code Guidelines"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="feature-breakdown.html" title="Feature (FEATURES) categories"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Filesystem Operations</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="filesystem-operations">
+<h1>Filesystem Operations<a class="headerlink" href="#filesystem-operations" title="Permalink to this headline">¶</a></h1>
+<p>Here we define types of operations that pkgcore will support, as well as the
+stages where these operations occur.</p>
+<div class="section" id="file-deletion-removal">
+<h2>- File Deletion ( Removal )<a class="headerlink" href="#file-deletion-removal" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>prerm</p></li>
+<li><p>unmerge files</p></li>
+<li><p>postrm</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="file-addition-installation">
+<h2>- File Addition ( Installation )<a class="headerlink" href="#file-addition-installation" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>preinst</p></li>
+<li><p>merge files</p></li>
+<li><p>postinst</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="file-replacement-overwriting">
+<h2>- File Replacement ( Overwriting )<a class="headerlink" href="#file-replacement-overwriting" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li><p>preinst</p></li>
+<li><p>merge</p></li>
+<li><p>postinst</p></li>
+<li><p>prerm</p></li>
+<li><p>unmerge</p></li>
+<li><p>postrm</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Filesystem Operations</a><ul>
+<li><a class="reference internal" href="#file-deletion-removal">- File Deletion ( Removal )</a></li>
+<li><a class="reference internal" href="#file-addition-installation">- File Addition ( Installation )</a></li>
+<li><a class="reference internal" href="#file-replacement-overwriting">- File Replacement ( Overwriting )</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="feature-breakdown.html"
+                        title="previous chapter">Feature (FEATURES) categories</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="hacking.html"
+                        title="next chapter">Python Code Guidelines</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="hacking.html" title="Python Code Guidelines"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="feature-breakdown.html" title="Feature (FEATURES) categories"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Filesystem Operations</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

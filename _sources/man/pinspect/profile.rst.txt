@@ -1,0 +1,7 @@
+pinspect profile - profile related querying
+-------------------------------------------
+
+.. include:: profile/_synopsis.rst
+.. include:: profile/_description.rst
+.. include:: profile/_options.rst
+.. include:: profile/_subcommands.rst

@@ -1,0 +1,7 @@
+pkgcore.resolver.plan module
+============================
+
+.. automodule:: pkgcore.resolver.plan
+   :members:
+   :undoc-members:
+   :show-inheritance:

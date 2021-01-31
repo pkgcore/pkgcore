@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fetch.errors &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../fetch.html" accesskey="U">pkgcore.fetch</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.errors</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fetch.errors</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">errors fetch subsystem may throw</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">..exceptions</span> <span class="kn">import</span> <span class="n">PkgcoreUserException</span>
+
+
+<div class="viewcode-block" id="FetchError"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.FetchError">[docs]</a><span class="k">class</span> <span class="nc">FetchError</span><span class="p">(</span><span class="n">PkgcoreUserException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic fetch exception.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="DistdirPerms"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.DistdirPerms">[docs]</a><span class="k">class</span> <span class="nc">DistdirPerms</span><span class="p">(</span><span class="n">FetchError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distdir</span><span class="p">,</span> <span class="n">required</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;distdir </span><span class="si">{</span><span class="n">distdir</span><span class="si">}</span><span class="s2"> required fs attributes &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;weren&#39;t enforcable: </span><span class="si">{</span><span class="n">required</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="n">distdir</span><span class="p">,</span> <span class="n">required</span></div>
+
+
+<div class="viewcode-block" id="UnmodifiableFile"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.UnmodifiableFile">[docs]</a><span class="k">class</span> <span class="nc">UnmodifiableFile</span><span class="p">(</span><span class="n">FetchError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">extra</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;unable to update file </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1">, unmodifiable </span><span class="si">{</span><span class="n">extra</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span></div>
+
+
+<div class="viewcode-block" id="FetchFailed"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.FetchFailed">[docs]</a><span class="k">class</span> <span class="nc">FetchFailed</span><span class="p">(</span><span class="n">FetchError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">resumable</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resumable</span> <span class="o">=</span> <span class="n">resumable</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;failed fetching: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="MissingDistfile"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.MissingDistfile">[docs]</a><span class="k">class</span> <span class="nc">MissingDistfile</span><span class="p">(</span><span class="n">FetchFailed</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;doesn&#39;t exist&quot;</span><span class="p">,</span> <span class="n">resumable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ChksumError"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.ChksumError">[docs]</a><span class="k">class</span> <span class="nc">ChksumError</span><span class="p">(</span><span class="n">FetchError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic checksum failure.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ChksumFailure"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.ChksumFailure">[docs]</a><span class="k">class</span> <span class="nc">ChksumFailure</span><span class="p">(</span><span class="n">FetchFailed</span><span class="p">,</span> <span class="n">ChksumError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checksum verification failed.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">chksum</span><span class="p">,</span> <span class="n">expected</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chksum</span> <span class="o">=</span> <span class="n">chksum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expected</span> <span class="o">=</span> <span class="n">expected</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;checksum verification failed&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RequiredChksumDataMissing"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.RequiredChksumDataMissing">[docs]</a><span class="k">class</span> <span class="nc">RequiredChksumDataMissing</span><span class="p">(</span><span class="n">ChksumError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A required checksum for the target is missing.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchable</span><span class="p">,</span> <span class="o">*</span><span class="n">chksum</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;chksum(s) </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chksum</span><span class="p">)</span><span class="si">}</span><span class="s2"> were configured as required, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;but the data is missing: </span><span class="si">{</span><span class="n">fetchable</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetchable</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">missing_chksum</span> <span class="o">=</span> <span class="n">fetchable</span><span class="p">,</span> <span class="n">chksum</span></div>
+
+
+<div class="viewcode-block" id="MissingChksumHandler"><a class="viewcode-back" href="../../../api/pkgcore.fetch.errors.html#pkgcore.fetch.errors.MissingChksumHandler">[docs]</a><span class="k">class</span> <span class="nc">MissingChksumHandler</span><span class="p">(</span><span class="n">ChksumError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An unknown checksum type tried to be hashed.&quot;&quot;&quot;</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../fetch.html" >pkgcore.fetch</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.errors</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

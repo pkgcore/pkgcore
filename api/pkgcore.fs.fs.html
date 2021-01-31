@@ -1,0 +1,212 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fs.fs module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.fs module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.fs.fs">
+<span id="pkgcore-fs-fs-module"></span><h1>pkgcore.fs.fs module<a class="headerlink" href="#module-pkgcore.fs.fs" title="Permalink to this headline">¶</a></h1>
+<p>filesystem entry abstractions</p>
+<dl class="py class">
+<dt id="pkgcore.fs.fs.fsDev">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">fsDev</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">major</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">minor</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/fs.html#fsDev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.fs.fsDev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsBase</span></code></p>
+<p>dev class (char/block objects)</p>
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsDev.is_dev">
+<code class="sig-name descname">is_dev</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.fs.fs.fsDev.is_dev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsDev.major">
+<code class="sig-name descname">major</code><a class="headerlink" href="#pkgcore.fs.fs.fsDev.major" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsDev.minor">
+<code class="sig-name descname">minor</code><a class="headerlink" href="#pkgcore.fs.fs.fsDev.minor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.fs.fs.fsDir">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">fsDir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">d</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/fs.html#fsDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.fs.fsDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsBase</span></code></p>
+<p>dir class</p>
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsDir.is_dir">
+<code class="sig-name descname">is_dir</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.fs.fs.fsDir.is_dir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.fs.fs.fsFifo">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">fsFifo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="n">strict</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">d</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/fs.html#fsFifo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.fs.fsFifo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsBase</span></code></p>
+<p>fifo class (socket objects)</p>
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsFifo.is_fifo">
+<code class="sig-name descname">is_fifo</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.fs.fs.fsFifo.is_fifo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.fs.fs.fsFile">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">fsFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="n">chksums</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/fs.html#fsFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.fs.fsFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsBase</span></code></p>
+<p>file class</p>
+<dl class="py method">
+<dt id="pkgcore.fs.fs.fsFile.change_attributes">
+<code class="sig-name descname">change_attributes</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/fs.html#fsFile.change_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.fs.fsFile.change_attributes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsFile.chksums">
+<code class="sig-name descname">chksums</code><a class="headerlink" href="#pkgcore.fs.fs.fsFile.chksums" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsFile.data">
+<code class="sig-name descname">data</code><a class="headerlink" href="#pkgcore.fs.fs.fsFile.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.fs.fs.fsFile.data_source">
+<em class="property">property </em><code class="sig-name descname">data_source</code><a class="headerlink" href="#pkgcore.fs.fs.fsFile.data_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to data</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsFile.dev">
+<code class="sig-name descname">dev</code><a class="headerlink" href="#pkgcore.fs.fs.fsFile.dev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsFile.inode">
+<code class="sig-name descname">inode</code><a class="headerlink" href="#pkgcore.fs.fs.fsFile.inode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsFile.is_reg">
+<code class="sig-name descname">is_reg</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.fs.fs.fsFile.is_reg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fs.fs.fsSymlink">
+<code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">fsSymlink</code><a class="headerlink" href="#pkgcore.fs.fs.fsSymlink" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsLink</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.fs.isdev">
+<code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">isdev</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">moreargs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.fs.fs.isdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if obj is an instance of <code class="xref py py-obj docutils literal notranslate"><span class="pre">dev</span></code>, else False</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.fs.isdir">
+<code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">isdir</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">moreargs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.fs.fs.isdir" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if obj is an instance of <a class="reference external" href="https://docs.python.org/3/library/functions.html#dir" title="(in Python v3.9)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dir</span></code></a>, else False</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.fs.isfifo">
+<code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">isfifo</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">moreargs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.fs.fs.isfifo" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if obj is an instance of <code class="xref py py-obj docutils literal notranslate"><span class="pre">fifo</span></code>, else False</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.fs.isfs_obj">
+<code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">isfs_obj</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">moreargs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.fs.fs.isfs_obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if obj is an fsBase derived object</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.fs.isreg">
+<code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">isreg</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">moreargs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.fs.fs.isreg" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if obj is an instance of <code class="xref py py-obj docutils literal notranslate"><span class="pre">reg</span></code>, else False</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.fs.issym">
+<code class="sig-prename descclassname">pkgcore.fs.fs.</code><code class="sig-name descname">issym</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">moreargs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.fs.fs.issym" title="Permalink to this definition">¶</a></dt>
+<dd><p>return True if obj is an instance of <code class="xref py py-obj docutils literal notranslate"><span class="pre">sym</span></code>, else False</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.fs module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,228 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.vdb.contents &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.contents</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.vdb.contents</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;LookupFsDev&quot;</span><span class="p">,</span> <span class="s2">&quot;ContentsFile&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">data_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">get_handler</span>
+<span class="kn">from</span> <span class="nn">snakeoil.fileutils</span> <span class="kn">import</span> <span class="n">AtomicWriteFile</span><span class="p">,</span> <span class="n">readlines_utf8</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">os_data</span>
+<span class="kn">from</span> <span class="nn">..fs</span> <span class="kn">import</span> <span class="n">fs</span>
+<span class="kn">from</span> <span class="nn">..fs.contents</span> <span class="kn">import</span> <span class="n">contentsSet</span>
+
+
+<div class="viewcode-block" id="LookupFsDev"><a class="viewcode-back" href="../../../api/pkgcore.vdb.contents.html#pkgcore.vdb.contents.LookupFsDev">[docs]</a><span class="k">class</span> <span class="nc">LookupFsDev</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">fsDev</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwds</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;major&quot;</span><span class="p">,</span> <span class="s2">&quot;minor&quot;</span><span class="p">,</span> <span class="s2">&quot;mode&quot;</span><span class="p">)):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">st</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+                <span class="n">st</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">st</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mode</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span>
+                <span class="p">(</span><span class="n">stat</span><span class="o">.</span><span class="n">S_ISREG</span><span class="p">,</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISDIR</span><span class="p">,</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISFIFO</span><span class="p">)):</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;strict&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">major</span><span class="p">,</span> <span class="n">minor</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">get_major_minor</span><span class="p">(</span><span class="n">st</span><span class="p">)</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;major&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">major</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;minor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">minor</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">st_mode</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ContentsFile"><a class="viewcode-back" href="../../../api/pkgcore.vdb.contents.html#pkgcore.vdb.contents.ContentsFile">[docs]</a><span class="k">class</span> <span class="nc">ContentsFile</span><span class="p">(</span><span class="n">contentsSet</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;class wrapping a contents file&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="p">(</span><span class="n">data_source</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;source must be either data_source, or a filepath&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">mutable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_source</span> <span class="o">=</span> <span class="n">source</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">create</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_iter_contents</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mutable</span> <span class="o">=</span> <span class="n">mutable</span>
+
+<div class="viewcode-block" id="ContentsFile.clone"><a class="viewcode-back" href="../../../api/pkgcore.vdb.contents.html#pkgcore.vdb.contents.ContentsFile.clone">[docs]</a>    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">empty</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># create is used to block it from reading.</span>
+        <span class="n">cset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="p">,</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">create</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">empty</span><span class="p">:</span>
+            <span class="n">cset</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cset</span></div>
+
+<div class="viewcode-block" id="ContentsFile.add"><a class="viewcode-back" href="../../../api/pkgcore.vdb.contents.html#pkgcore.vdb.contents.ContentsFile.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+            <span class="c1"># strict checks</span>
+            <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">chksums</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="s2">&quot;md5&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">chksums</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;fsFile objects need to be strict&quot;</span><span class="p">)</span>
+
+        <span class="n">contentsSet</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_fd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">write</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">AtomicWriteFile</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="p">,</span> <span class="n">uid</span><span class="o">=</span><span class="n">os_data</span><span class="o">.</span><span class="n">root_uid</span><span class="p">,</span>
+                    <span class="n">gid</span><span class="o">=</span><span class="n">os_data</span><span class="o">.</span><span class="n">root_gid</span><span class="p">,</span> <span class="n">perms</span><span class="o">=</span><span class="mo">0o644</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">readlines_utf8</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">fobj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="o">.</span><span class="n">text_fileobj</span><span class="p">(</span><span class="n">writable</span><span class="o">=</span><span class="n">write</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">write</span><span class="p">:</span>
+            <span class="n">fobj</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">fobj</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fobj</span>
+
+<div class="viewcode-block" id="ContentsFile.flush"><a class="viewcode-back" href="../../../api/pkgcore.vdb.contents.html#pkgcore.vdb.contents.ContentsFile.flush">[docs]</a>    <span class="k">def</span> <span class="nf">flush</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_iter_contents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fd</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;dir&quot;</span><span class="p">,</span> <span class="s2">&quot;dev&quot;</span><span class="p">,</span> <span class="s2">&quot;fif&quot;</span><span class="p">):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+                <span class="k">if</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;dir&#39;</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">fsDir</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;dev&#39;</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="n">LookupFsDev</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">fsFifo</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;obj&quot;</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">fsFile</span><span class="p">(</span>
+                    <span class="n">path</span><span class="p">,</span> <span class="n">chksums</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;md5&quot;</span><span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="mi">16</span><span class="p">)},</span>
+                        <span class="n">mtime</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;sym&quot;</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">p</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;-&gt;&quot;</span><span class="p">)</span>
+                    <span class="n">obj</span> <span class="o">=</span> <span class="n">fs</span><span class="o">.</span><span class="n">fsLink</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="n">p</span><span class="p">]),</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span>
+                        <span class="n">mtime</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="c1"># XXX throw a corruption error</span>
+                    <span class="k">raise</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown entry type </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="k">yield</span> <span class="n">obj</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">md5_handler</span> <span class="o">=</span> <span class="n">get_handler</span><span class="p">(</span><span class="s1">&#39;md5&#39;</span><span class="p">)</span>
+        <span class="n">outfile</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">outfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_fd</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+                <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s2">&quot;obj&quot;</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span><span class="p">,</span>
+                        <span class="n">md5_handler</span><span class="o">.</span><span class="n">long2str</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="s2">&quot;md5&quot;</span><span class="p">]),</span>
+                        <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">mtime</span><span class="p">))))</span>
+
+                <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_sym</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="s2">&quot;sym&quot;</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="s2">&quot;-&gt;&quot;</span><span class="p">,</span>
+                                   <span class="n">obj</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">mtime</span><span class="p">))))</span>
+
+                <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;dir &quot;</span> <span class="o">+</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span>
+
+                <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_dev</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;dev &quot;</span> <span class="o">+</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span>
+
+                <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_fifo</span><span class="p">:</span>
+                    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;fif &quot;</span> <span class="o">+</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">obj</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">outfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="c1"># if atomic, it forces the update to be wiped.</span>
+            <span class="k">del</span> <span class="n">outfile</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.contents</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

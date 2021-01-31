@@ -1,0 +1,7 @@
+pinspect portageq best_version - Return the maximum visible version for a given atom.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: best_version/_synopsis.rst
+.. include:: best_version/_description.rst
+.. include:: best_version/_options.rst
+.. include:: best_version/_subcommands.rst

@@ -1,0 +1,7 @@
+pkgcore.config.basics module
+============================
+
+.. automodule:: pkgcore.config.basics
+   :members:
+   :undoc-members:
+   :show-inheritance:

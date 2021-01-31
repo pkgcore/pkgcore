@@ -1,0 +1,7 @@
+pkgcore.util.thread\_pool module
+================================
+
+.. automodule:: pkgcore.util.thread_pool
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.formatter &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.formatter</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.formatter</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;pmerge formatting module&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;Formatter&quot;</span><span class="p">,</span> <span class="s2">&quot;use_expand_filter&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BasicFormatter&quot;</span><span class="p">,</span> <span class="s2">&quot;PkgcoreFormatter&quot;</span><span class="p">,</span> <span class="s2">&quot;CountingFormatter&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PortageFormatter&quot;</span><span class="p">,</span> <span class="s2">&quot;PortageVerboseFormatter&quot;</span><span class="p">,</span> <span class="s2">&quot;PaludisFormatter&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.cli.input</span> <span class="kn">import</span> <span class="n">userquery</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">defaultdictkey</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span><span class="p">,</span> <span class="n">sizeof_fmt</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="use_expand_filter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.use_expand_filter">[docs]</a><span class="k">class</span> <span class="nc">use_expand_filter</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_expand</span><span class="p">,</span> <span class="n">use_expand_hidden</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :type use_expand: iterable of strings</span>
+<span class="sd">        :param use_expand: names of use-expanded variables.</span>
+<span class="sd">        :type use_expand_hidden: set of strings</span>
+<span class="sd">        :param use_expand_hidden: names of use-expanded vars that should not</span>
+<span class="sd">            be added to the dict.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expand_filters</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="p">(</span><span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">use_expand_hidden</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+                               <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">use_expand</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_expand</span> <span class="o">=</span> <span class="n">use_expand</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_expand_hidden</span> <span class="o">=</span> <span class="n">use_expand_hidden</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">known_flags</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Split USE flags up into &quot;normal&quot; flags and use-expanded ones.</span>
+<span class="sd">        :type use: iterable of strings</span>
+<span class="sd">        :param use: flags that are set.</span>
+<span class="sd">        :rtype: sequence of strings, dict mapping a string to a list of strings</span>
+<span class="sd">        :return: set of normal flags and a mapping from use_expand name to</span>
+<span class="sd">            value (with the use-expanded bit stripped off, so</span>
+<span class="sd">            C{&quot;video_cards_alsa&quot;} becomes C{&quot;{&#39;video_cards&#39;: [&#39;alsa&#39;]}&quot;}).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># XXX: note this is fairly slow- actually takes up more time then</span>
+        <span class="c1"># chunks of the resolver</span>
+        <span class="n">ue_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">usel</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ef</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expand_filters</span>
+        <span class="n">kf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_flags</span>
+
+        <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">use</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">kf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">split_flag</span> <span class="o">=</span> <span class="n">flag</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">split_flag</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">split_flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">ef</span><span class="p">:</span>
+                        <span class="n">split_flag</span> <span class="o">=</span> <span class="n">split_flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                        <span class="k">continue</span>
+                    <span class="n">expand_state</span> <span class="o">=</span> <span class="n">ef</span><span class="p">[</span><span class="n">split_flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+                    <span class="k">if</span> <span class="n">expand_state</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                        <span class="c1"># not hidden</span>
+                        <span class="n">kf</span><span class="p">[</span><span class="n">flag</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">expand_state</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">flag</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">split_flag</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">kf</span><span class="p">[</span><span class="n">flag</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">kf</span><span class="p">[</span><span class="n">flag</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="c1"># straight use flag.</span>
+                <span class="n">usel</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">data</span><span class="p">:</span>
+                <span class="c1"># non hidden flag.</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">ue_dict</span><span class="p">:</span>
+                    <span class="n">ue_dict</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ue_dict</span><span class="p">[</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">usel</span><span class="p">),</span> <span class="n">ue_dict</span></div>
+
+
+<div class="viewcode-block" id="Formatter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.Formatter">[docs]</a><span class="k">class</span> <span class="nc">Formatter</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Base Formatter class: All formatters should be subclasses of this.&quot;&quot;&quot;</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span><span class="n">typename</span><span class="o">=</span><span class="s1">&#39;pmerge_formatter&#39;</span><span class="p">,</span> <span class="n">raw_class</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Formatter.format"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.Formatter.format">[docs]</a>    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Formats an op. Subclasses must define this method&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Formatter.ask"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.Formatter.ask">[docs]</a>    <span class="k">def</span> <span class="nf">ask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">question</span><span class="p">,</span> <span class="n">responses</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default_answer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">userquery</span><span class="p">(</span>
+            <span class="n">question</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err</span><span class="p">,</span> <span class="n">responses</span><span class="p">,</span> <span class="n">default_answer</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Formatter.end"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.Formatter.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Called at the end, normally for summary information&quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="BasicFormatter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.BasicFormatter">[docs]</a><span class="k">class</span> <span class="nc">BasicFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A basic formatter, intended for scripts&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BasicFormatter.format"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.BasicFormatter.format">[docs]</a>    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">VerboseFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Formatter with output forced into verbose mode.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;verbosity&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="PkgcoreFormatter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PkgcoreFormatter">[docs]</a><span class="k">class</span> <span class="nc">PkgcoreFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The original pkgcore output&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PkgcoreFormatter.format"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PkgcoreFormatter.format">[docs]</a>    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;repo_id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">repo</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s2">::</span><span class="si">{</span><span class="n">repo</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s2">&quot;replace&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;replace </span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">desc</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="CountingFormatter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.CountingFormatter">[docs]</a><span class="k">class</span> <span class="nc">CountingFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Subclass for formatters that count packages&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;verbosity&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">package_data</span> <span class="o">=</span> <span class="n">defaultdictkey</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="c1"># total download size for all pkgs to be merged</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">download_size</span> <span class="o">=</span> <span class="mi">0</span>
+
+<div class="viewcode-block" id="CountingFormatter.visit_op"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.CountingFormatter.visit_op">[docs]</a>    <span class="k">def</span> <span class="nf">visit_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Track the number of package operations of each type.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">package_data</span><span class="p">[</span><span class="n">op_type</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="CountingFormatter.end"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.CountingFormatter.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Output total package, operation, and download size counts.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">total</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">package_data</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Total: </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2"> package</span><span class="si">{</span><span class="n">pluralism</span><span class="p">(</span><span class="n">total</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">autoline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">package_data</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="n">op_types</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="s1">&#39;add&#39;</span><span class="p">,</span> <span class="s1">&#39;new&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;upgrade&#39;</span><span class="p">,</span> <span class="s1">&#39;upgrade&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;downgrade&#39;</span><span class="p">,</span> <span class="s1">&#39;downgrade&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;slotted_add&#39;</span><span class="p">,</span> <span class="s1">&#39;in new slot&#39;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s1">&#39;replace&#39;</span><span class="p">,</span> <span class="s1">&#39;reinstall&#39;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">op_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">op_type</span><span class="p">,</span> <span class="n">op_str</span> <span class="ow">in</span> <span class="n">op_types</span><span class="p">:</span>
+                <span class="n">num_ops</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">op_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">num_ops</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">op_str</span> <span class="o">==</span> <span class="s1">&#39;new&#39;</span><span class="p">:</span>
+                        <span class="n">op_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num_ops</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">op_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">op_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num_ops</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">op_str</span><span class="si">}{</span><span class="n">pluralism</span><span class="p">(</span><span class="n">num_ops</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">d</span><span class="p">:</span>
+                <span class="n">op_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="si">}</span><span class="s2"> other op</span><span class="si">{</span><span class="n">pluralism</span><span class="p">(</span><span class="n">d</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">op_list</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">op_list</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">autoline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">download_size</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                    <span class="s1">&#39;, Size of downloads: &#39;</span><span class="p">,</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">download_size</span><span class="p">),</span> <span class="n">autoline</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="PortageFormatter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PortageFormatter">[docs]</a><span class="k">class</span> <span class="nc">PortageFormatter</span><span class="p">(</span><span class="n">CountingFormatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Formatter designed to resemble portage output.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;use_expand&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;use_expand_hidden&quot;</span><span class="p">,</span> <span class="nb">set</span><span class="p">())</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_splitter</span> <span class="o">=</span> <span class="n">use_expand_filter</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_expand</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_expand_hidden</span><span class="p">)</span>
+        <span class="c1"># Map repo location to an index.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repos</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># set of files to be downloaded</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">downloads</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+<div class="viewcode-block" id="PortageFormatter.format"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PortageFormatter.format">[docs]</a>    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="c1"># &lt;type&gt;       - ebuild, block or nomerge (for --tree)</span>
+        <span class="c1">#       N      - new package</span>
+        <span class="c1">#        R     - rebuild package</span>
+        <span class="c1">#         F    - fetch restricted</span>
+        <span class="c1">#         f    - fetch restricted already downloaded</span>
+        <span class="c1">#          D   - downgrade</span>
+        <span class="c1">#           U  - updating to another version</span>
+        <span class="c1">#            # - masked</span>
+        <span class="c1">#            * - missing keyword</span>
+        <span class="c1">#            ~ - unstable keyword</span>
+        <span class="c1"># Caveats:</span>
+        <span class="c1"># - U and D are both displayed to show a downgrade - this is kept</span>
+        <span class="c1"># in order to be consistent with existing portage behaviour</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span>
+        <span class="n">origautoline</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">autoline</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">autoline</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg_disabled_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_forced_use</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;pkg_get_use&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pkg_forced_use</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_disabled_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_get_use</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="c1"># This is for the summary at the end</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quiet_repo_display</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repos</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">pkg_is_bold</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;world_list&#39;</span><span class="p">,</span> <span class="p">()))</span>
+
+        <span class="c1"># We don&#39;t do blockers or --tree stuff yet</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;[&#39;</span><span class="p">]</span>
+        <span class="n">pkg_coloring</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">pkg_is_bold</span><span class="p">:</span>
+            <span class="n">pkg_coloring</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s1">&#39;remove&#39;</span><span class="p">:</span>
+            <span class="n">pkg_coloring</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">+=</span> <span class="n">pkg_coloring</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;uninstall&#39;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;built&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">pkg_coloring</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;magenta&#39;</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">+=</span> <span class="n">pkg_coloring</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;binary&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pkg_coloring</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">+=</span> <span class="n">pkg_coloring</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;ebuild&#39;</span><span class="p">]</span>
+
+        <span class="n">data</span> <span class="o">+=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">]</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="o">*</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="c1"># Order is important here - look at the above diagram</span>
+        <span class="n">op_type</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span>
+        <span class="n">op_chars</span> <span class="o">=</span> <span class="p">[[</span><span class="s1">&#39; &#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="s1">&#39;fetch&#39;</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">restrict</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+                   <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">distfiles</span><span class="p">):</span>
+                <span class="n">fetched</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fetched</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;F&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+            <span class="n">op_chars</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">fetched</span>
+
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s2">&quot;add&quot;</span><span class="p">:</span>
+            <span class="n">op_chars</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;N&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span> <span class="o">!=</span> <span class="s1">&#39;0&#39;</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">installed_repos</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">):</span>
+                <span class="n">op_chars</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+                <span class="n">op_type</span> <span class="o">=</span> <span class="s1">&#39;slotted_add&#39;</span>
+        <span class="k">elif</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s2">&quot;replace&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span> <span class="o">==</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">:</span>
+                <span class="n">op_chars</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;yellow&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;R&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">op_chars</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;cyan&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;U&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span> <span class="o">&gt;</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">:</span>
+                    <span class="n">op_type</span> <span class="o">=</span> <span class="s1">&#39;upgrade&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">op_chars</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;blue&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;D&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+                    <span class="n">op_type</span> <span class="o">=</span> <span class="s1">&#39;downgrade&#39;</span>
+        <span class="k">elif</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s1">&#39;remove&#39;</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;unformattable op type: desc(</span><span class="si">%r</span><span class="s2">), </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unstable_arch</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span> <span class="ow">and</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">unstable_arch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">domain_settings</span><span class="p">[</span><span class="s1">&#39;ACCEPT_KEYWORDS&#39;</span><span class="p">]):</span>
+                <span class="n">op_chars</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;yellow&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
+                <span class="n">op_chars</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">masked</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">):</span>
+                    <span class="n">op_chars</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;#&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]</span>
+
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">op_chars</span><span class="p">)))</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;] &#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">visit_op</span><span class="p">(</span><span class="n">op_type</span><span class="p">)</span>
+
+        <span class="n">pkg</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">subslot</span> <span class="o">!=</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">:</span>
+                <span class="n">pkg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">subslot</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span> <span class="o">!=</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+                <span class="n">pkg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">quiet_repo_display</span> <span class="ow">and</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">source_repository</span><span class="p">:</span>
+                <span class="n">pkg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;::</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">source_repository</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">pkg_coloring</span> <span class="o">+</span> <span class="n">pkg</span> <span class="o">+</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">]))</span>
+
+        <span class="n">installed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s1">&#39;replace&#39;</span><span class="p">:</span>
+            <span class="n">old_pkg</span> <span class="o">=</span> <span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">fullver</span><span class="p">]</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">subslot</span> <span class="o">!=</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">:</span>
+                    <span class="n">old_pkg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">subslot</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">slot</span> <span class="o">!=</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+                    <span class="n">old_pkg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">quiet_repo_display</span> <span class="ow">and</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">source_repository</span><span class="p">:</span>
+                    <span class="n">old_pkg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;::</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">source_repository</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">op_type</span> <span class="o">!=</span> <span class="s1">&#39;replace&#39;</span> <span class="ow">or</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">source_repository</span> <span class="o">!=</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">source_repository</span><span class="p">:</span>
+                <span class="n">installed</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">old_pkg</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s1">&#39;slotted_add&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">pkgs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">fullver</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">installed_repos</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pkgs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="n">x</span><span class="o">.</span><span class="n">fullver</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">installed_repos</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">))</span>
+            <span class="n">installed</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+
+        <span class="c1"># output currently installed versions</span>
+        <span class="k">if</span> <span class="n">installed</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;blue&#39;</span><span class="p">),</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;[</span><span class="si">{</span><span class="n">installed</span><span class="si">}</span><span class="s1">]&#39;</span><span class="p">,</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">)</span>
+
+        <span class="c1"># Build a list of (useflags, use_expand_dicts) tuples.</span>
+        <span class="c1"># HACK: if we are in &quot;replace&quot; mode we build a list of length</span>
+        <span class="c1"># 4, else this is a list of length 2. We then pass this to</span>
+        <span class="c1"># format_use which can take either 2 or 4 arguments.</span>
+        <span class="n">uses</span> <span class="o">=</span> <span class="p">((),</span> <span class="p">())</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s1">&#39;replace&#39;</span><span class="p">:</span>
+            <span class="n">uses</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">,</span>
+                <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s1">&#39;add&#39;</span><span class="p">:</span>
+            <span class="n">uses</span> <span class="o">=</span> <span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+        <span class="n">stuff</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_splitter</span><span class="p">,</span> <span class="n">uses</span><span class="p">))</span>
+
+        <span class="c1"># Convert the list of tuples to a list of lists and a list of</span>
+        <span class="c1"># dicts (both length 2 or 4).</span>
+        <span class="n">uselists</span><span class="p">,</span> <span class="n">usedicts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">stuff</span><span class="p">))</span>
+
+        <span class="c1"># output USE flags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_use</span><span class="p">(</span><span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">uselists</span><span class="p">)</span>
+
+        <span class="c1"># output USE_EXPAND flags</span>
+        <span class="k">for</span> <span class="n">expand</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_expand</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_expand_hidden</span><span class="p">):</span>
+            <span class="n">flaglists</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">expand</span><span class="p">,</span> <span class="p">())</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">usedicts</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">format_use</span><span class="p">(</span><span class="n">expand</span><span class="p">,</span> <span class="o">*</span><span class="n">flaglists</span><span class="p">)</span>
+
+        <span class="c1"># output download size</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">built</span><span class="p">:</span>
+                <span class="n">downloads</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">distfiles</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="n">f</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">downloads</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">downloads</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">downloads</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">downloads</span><span class="p">)</span>
+                    <span class="n">size</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+                        <span class="n">v</span><span class="p">[</span><span class="s1">&#39;size&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">dist</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
+                        <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">distfiles</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">dist</span> <span class="ow">in</span> <span class="n">downloads</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">size</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">download_size</span> <span class="o">+=</span> <span class="n">size</span>
+                        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">sizeof_fmt</span><span class="p">(</span><span class="n">size</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quiet_repo_display</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;cyan&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot; [</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repos</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="p">]</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">autoline</span> <span class="o">=</span> <span class="n">origautoline</span></div>
+
+<div class="viewcode-block" id="PortageFormatter.format_use"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PortageFormatter.format_use">[docs]</a>    <span class="k">def</span> <span class="nf">format_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">pkg_iuse</span><span class="p">,</span> <span class="n">pkg_use</span><span class="p">,</span> <span class="n">old_pkg_iuse</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">old_pkg_use</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write the current selection from a set of flags to a formatter.</span>
+
+<span class="sd">        :type attr: string</span>
+<span class="sd">        :param attr: name of the setting</span>
+<span class="sd">        :type pkg_iuse: set of strings</span>
+<span class="sd">        :param pkg_iuse: all available use flags for the package</span>
+<span class="sd">        :type pkg_use: set of strings</span>
+<span class="sd">        :param pkg_use: enabled use flags for the package</span>
+<span class="sd">        :type old_pkg_iuse: set of strings</span>
+<span class="sd">        :param old_pkg_iuse: all available use flags in the previous version</span>
+<span class="sd">        :type old_pkg_use: set of strings</span>
+<span class="sd">        :param old_pkg_use: enabled use flags in the previous version</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span>
+        <span class="n">red</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+        <span class="n">green</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+        <span class="n">blue</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;blue&#39;</span><span class="p">)</span>
+        <span class="n">yellow</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;yellow&#39;</span><span class="p">)</span>
+        <span class="n">bold</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">bold</span>
+        <span class="n">reset</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">reset</span>
+
+        <span class="n">flags</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">enabled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkg_iuse</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkg_use</span><span class="p">)</span>
+        <span class="n">disabled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkg_iuse</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkg_use</span><span class="p">)</span>
+
+        <span class="c1"># updating or rebuilding pkg</span>
+        <span class="k">if</span> <span class="n">old_pkg_iuse</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">old_pkg_use</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+
+            <span class="n">old_enabled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_pkg_iuse</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_pkg_use</span><span class="p">)</span>
+            <span class="n">old_disabled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_pkg_iuse</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_pkg_use</span><span class="p">)</span>
+            <span class="n">removed</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">old_pkg_iuse</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkg_iuse</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">enabled</span><span class="p">):</span>
+                <span class="n">expanded_flag</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">attr</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">flag</span><span class="p">))</span> <span class="k">if</span> <span class="n">attr</span> <span class="o">!=</span> <span class="s1">&#39;use&#39;</span> <span class="k">else</span> <span class="n">flag</span>
+                <span class="k">if</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">old_enabled</span><span class="p">:</span>
+                    <span class="c1"># unchanged</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_forced_use</span><span class="p">:</span>
+                            <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">red</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">red</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">old_disabled</span><span class="p">:</span>
+                    <span class="c1"># toggled</span>
+                    <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_forced_use</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">green</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;*)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">green</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># new</span>
+                    <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_forced_use</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">yellow</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;%*)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">yellow</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;%*&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">disabled</span><span class="p">):</span>
+                <span class="n">expanded_flag</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">attr</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">flag</span><span class="p">))</span> <span class="k">if</span> <span class="n">attr</span> <span class="o">!=</span> <span class="s1">&#39;use&#39;</span> <span class="k">else</span> <span class="n">flag</span>
+                <span class="k">if</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">old_disabled</span><span class="p">:</span>
+                    <span class="c1"># unchanged</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_disabled_use</span><span class="p">:</span>
+                            <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">blue</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">blue</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">old_enabled</span><span class="p">:</span>
+                    <span class="c1"># toggled</span>
+                    <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_disabled_use</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">green</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;*)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">green</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># new</span>
+                    <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_disabled_use</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">yellow</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;%)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">yellow</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;%&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">removed</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">old_enabled</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">yellow</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;%*)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">yellow</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;%)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+
+        <span class="c1"># new pkg install</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">enabled</span><span class="p">):</span>
+                <span class="n">expanded_flag</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">attr</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">flag</span><span class="p">))</span> <span class="k">if</span> <span class="n">attr</span> <span class="o">!=</span> <span class="s1">&#39;use&#39;</span> <span class="k">else</span> <span class="n">flag</span>
+                <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_forced_use</span><span class="p">:</span>
+                    <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">red</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">red</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">disabled</span><span class="p">):</span>
+                <span class="n">expanded_flag</span> <span class="o">=</span> <span class="s1">&#39;_&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">((</span><span class="n">attr</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">flag</span><span class="p">))</span> <span class="k">if</span> <span class="n">attr</span> <span class="o">!=</span> <span class="s1">&#39;use&#39;</span> <span class="k">else</span> <span class="n">flag</span>
+                <span class="k">if</span> <span class="n">expanded_flag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_disabled_use</span><span class="p">:</span>
+                    <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="s1">&#39;(&#39;</span><span class="p">,</span> <span class="n">blue</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">blue</span><span class="p">,</span> <span class="n">bold</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">reset</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+
+        <span class="c1"># Only write this if we have something to write</span>
+        <span class="k">if</span> <span class="n">flags</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">attr</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="s1">&#39;=&quot;&#39;</span><span class="p">)</span>
+            <span class="c1"># Omit the final space.</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="o">*</span><span class="n">flags</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PortageFormatter.end"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PortageFormatter.end">[docs]</a>    <span class="k">def</span> <span class="nf">end</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Output package repository list.&quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">end</span><span class="p">()</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">quiet_repo_display</span><span class="p">:</span>
+                <span class="n">repos</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repos</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+                <span class="n">repos</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">repos</span><span class="p">:</span>
+                    <span class="n">reponame</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">&#39;repo_id&#39;</span><span class="p">,</span> <span class="s1">&#39;unknown repo id&#39;</span><span class="p">)</span>
+                    <span class="n">location</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;unspecified location&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">reponame</span> <span class="o">!=</span> <span class="n">location</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                            <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;cyan&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">reponame</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">location</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                            <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;cyan&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">,</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">location</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PortageVerboseFormatter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PortageVerboseFormatter">[docs]</a><span class="k">class</span> <span class="nc">PortageVerboseFormatter</span><span class="p">(</span><span class="n">VerboseFormatter</span><span class="p">,</span> <span class="n">PortageFormatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Formatter designed to resemble portage output in verbose mode.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PaludisFormatter"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PaludisFormatter">[docs]</a><span class="k">class</span> <span class="nc">PaludisFormatter</span><span class="p">(</span><span class="n">CountingFormatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Formatter designed to resemble paludis output.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PaludisFormatter.format"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.formatter.html#pkgcore.ebuild.formatter.PaludisFormatter.format">[docs]</a>    <span class="k">def</span> <span class="nf">format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span>
+        <span class="n">origautoline</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">autoline</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">autoline</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;* &#39;</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;blue&#39;</span><span class="p">),</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;-</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">fullver</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;::</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="si">}</span><span class="s2"> &quot;</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;blue&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">{{</span><span class="s2">:</span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="se">}}</span><span class="s2"> &quot;</span><span class="p">)</span>
+        <span class="n">op_type</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s1">&#39;add&#39;</span><span class="p">:</span>
+            <span class="n">suffix</span> <span class="o">=</span> <span class="s1">&#39;N&#39;</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span> <span class="o">!=</span> <span class="s1">&#39;0&#39;</span><span class="p">:</span>
+                <span class="n">op_type</span> <span class="o">=</span> <span class="s1">&#39;slotted_add&#39;</span>
+                <span class="n">suffix</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;yellow&#39;</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">suffix</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span> <span class="o">==</span> <span class="s1">&#39;replace&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span> <span class="o">!=</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span> <span class="o">&gt;</span> <span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">:</span>
+                    <span class="n">op_type</span> <span class="o">=</span> <span class="s1">&#39;upgrade&#39;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">op_type</span> <span class="o">=</span> <span class="s1">&#39;downgrade&#39;</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                    <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;yellow&#39;</span><span class="p">),</span>
+                    <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">op_type</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">op</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">fullver</span><span class="si">}</span><span class="s2">]&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;yellow&#39;</span><span class="p">),</span> <span class="s2">&quot;[R]&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># shouldn&#39;t reach here</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;unknown op type encountered: desc(</span><span class="si">%r</span><span class="s2">), </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">op</span><span class="o">.</span><span class="n">desc</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visit_op</span><span class="p">(</span><span class="n">op_type</span><span class="p">)</span>
+
+        <span class="n">red</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;red&#39;</span><span class="p">)</span>
+        <span class="n">green</span> <span class="o">=</span> <span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;green&#39;</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">use</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">use</span><span class="p">:</span>
+                <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">green</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">flags</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span><span class="n">red</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">flags</span><span class="p">:</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+            <span class="c1"># Throw away the final space.</span>
+            <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="o">*</span><span class="n">flags</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">autoline</span> <span class="o">=</span> <span class="n">origautoline</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.formatter</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+Positional Arguments
+--------------------
+
+:repo:  
+      repo(s) to sync
+
+Optional Arguments
+------------------
+
+-f, --force  
+             force syncing to occur regardless of staleness checks
+
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.

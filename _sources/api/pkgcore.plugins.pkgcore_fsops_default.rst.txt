@@ -1,0 +1,7 @@
+pkgcore.plugins.pkgcore\_fsops\_default module
+==============================================
+
+.. automodule:: pkgcore.plugins.pkgcore_fsops_default
+   :members:
+   :undoc-members:
+   :show-inheritance:

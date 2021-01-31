@@ -1,0 +1,7 @@
+pkgcore.util.parserestrict module
+=================================
+
+.. automodule:: pkgcore.util.parserestrict
+   :members:
+   :undoc-members:
+   :show-inheritance:

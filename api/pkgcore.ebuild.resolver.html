@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.resolver module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.resolver module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.resolver">
+<span id="pkgcore-ebuild-resolver-module"></span><h1>pkgcore.ebuild.resolver module<a class="headerlink" href="#module-pkgcore.ebuild.resolver" title="Permalink to this headline">¶</a></h1>
+<p>resolver configuration to match portage behaviour (misbehaviour in a few spots)</p>
+<dl class="py function">
+<dt id="pkgcore.ebuild.resolver.min_install_resolver">
+<code class="sig-prename descclassname">pkgcore.ebuild.resolver.</code><code class="sig-name descname">min_install_resolver</code><span class="sig-paren">(</span><em class="sig-param">vdbs</em>, <em class="sig-param">dbs</em>, <em class="sig-param">verify_vdb=True</em>, <em class="sig-param">nodeps=False</em>, <em class="sig-param">force_replace=False</em>, <em class="sig-param">resolver_cls=&lt;class 'pkgcore.resolver.plan.merge_plan'&gt;</em>, <em class="sig-param">**kwds</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/resolver.html#min_install_resolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.resolver.min_install_resolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resolver that tries to minimize the number of changes while installing.</p>
+<p>generate and configure a resolver that is focused on just
+installing requests- installs highest version it can build a
+solution for, but tries to avoid building anything not needed</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vdbs</strong> – list of <a class="reference internal" href="pkgcore.repository.prototype.html#pkgcore.repository.prototype.tree" title="pkgcore.repository.prototype.tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.tree</span></code></a> instances
+that represents the livefs</p></li>
+<li><p><strong>dbs</strong> – list of <a class="reference internal" href="pkgcore.repository.prototype.html#pkgcore.repository.prototype.tree" title="pkgcore.repository.prototype.tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.tree</span></code></a> instances
+representing sources of pkgs</p></li>
+<li><p><strong>verify_vdb</strong> – should we stop resolving once we hit the vdb,
+or do full resolution?</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><a class="reference internal" href="pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan" title="pkgcore.resolver.plan.merge_plan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.resolver.plan.merge_plan</span></code></a> instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.resolver.upgrade_resolver">
+<code class="sig-prename descclassname">pkgcore.ebuild.resolver.</code><code class="sig-name descname">upgrade_resolver</code><span class="sig-paren">(</span><em class="sig-param">vdbs</em>, <em class="sig-param">dbs</em>, <em class="sig-param">verify_vdb=True</em>, <em class="sig-param">nodeps=False</em>, <em class="sig-param">force_replace=False</em>, <em class="sig-param">resolver_cls=&lt;class 'pkgcore.resolver.plan.merge_plan'&gt;</em>, <em class="sig-param">**kwds</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/resolver.html#upgrade_resolver"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.resolver.upgrade_resolver" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate and configure a resolver for upgrading all processed nodes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vdbs</strong> – list of <a class="reference internal" href="pkgcore.repository.prototype.html#pkgcore.repository.prototype.tree" title="pkgcore.repository.prototype.tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.tree</span></code></a> instances
+that represents the livefs</p></li>
+<li><p><strong>dbs</strong> – list of <a class="reference internal" href="pkgcore.repository.prototype.html#pkgcore.repository.prototype.tree" title="pkgcore.repository.prototype.tree"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.tree</span></code></a> instances
+representing sources of pkgs</p></li>
+<li><p><strong>verify_vdb</strong> – should we stop resolving once we hit the vdb,
+or do full resolution?</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><a class="reference internal" href="pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan" title="pkgcore.resolver.plan.merge_plan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.resolver.plan.merge_plan</span></code></a> instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.resolver module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

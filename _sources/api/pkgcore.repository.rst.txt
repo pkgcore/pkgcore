@@ -1,0 +1,27 @@
+pkgcore.repository package
+==========================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.repository.configured
+   pkgcore.repository.errors
+   pkgcore.repository.filtered
+   pkgcore.repository.misc
+   pkgcore.repository.multiplex
+   pkgcore.repository.prototype
+   pkgcore.repository.syncable
+   pkgcore.repository.util
+   pkgcore.repository.virtual
+   pkgcore.repository.wrapper
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.repository
+   :members:
+   :undoc-members:
+   :show-inheritance:

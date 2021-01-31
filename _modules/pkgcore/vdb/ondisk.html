@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.vdb.ondisk &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.ondisk</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.vdb.ondisk</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;tree&quot;</span><span class="p">,</span> <span class="s2">&quot;ConfiguredTree&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">data_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.fileutils</span> <span class="kn">import</span> <span class="n">readfile</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">IndeterminantDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">listdir_dirs</span><span class="p">,</span> <span class="n">pjoin</span>
+
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+<span class="kn">from</span> <span class="nn">..ebuild</span> <span class="kn">import</span> <span class="n">ebuild_built</span>
+<span class="kn">from</span> <span class="nn">..ebuild.cpv</span> <span class="kn">import</span> <span class="n">VersionedCPV</span>
+<span class="kn">from</span> <span class="nn">..ebuild.errors</span> <span class="kn">import</span> <span class="n">InvalidCPV</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..package</span> <span class="kn">import</span> <span class="n">base</span> <span class="k">as</span> <span class="n">pkg_base</span>
+<span class="kn">from</span> <span class="nn">..repository</span> <span class="kn">import</span> <span class="n">errors</span><span class="p">,</span> <span class="n">prototype</span><span class="p">,</span> <span class="n">wrapper</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">repo_ops</span>
+<span class="kn">from</span> <span class="nn">.contents</span> <span class="kn">import</span> <span class="n">ContentsFile</span>
+
+
+<div class="viewcode-block" id="tree"><a class="viewcode-back" href="../../../api/pkgcore.vdb.ondisk.html#pkgcore.vdb.ondisk.tree">[docs]</a><span class="k">class</span> <span class="nc">tree</span><span class="p">(</span><span class="n">prototype</span><span class="o">.</span><span class="n">tree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Repository for packages installed on the filesystem.&quot;&quot;&quot;</span>
+
+    <span class="n">livefs</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">configured</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">configurables</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;domain&quot;</span><span class="p">,</span> <span class="s2">&quot;settings&quot;</span><span class="p">)</span>
+    <span class="n">configure</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">package_factory</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">ebuild_built</span><span class="o">.</span><span class="n">generate_new_factory</span><span class="p">)</span>
+    <span class="n">operations_kls</span> <span class="o">=</span> <span class="n">repo_ops</span><span class="o">.</span><span class="n">operations</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span>
+        <span class="p">{</span><span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;cache_location&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;repo_id&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;disable_cache&#39;</span><span class="p">:</span> <span class="s1">&#39;bool&#39;</span><span class="p">},</span>
+        <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;repo&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">,</span> <span class="n">cache_location</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">repo_id</span><span class="o">=</span><span class="s1">&#39;vdb&#39;</span><span class="p">,</span>
+                 <span class="n">disable_cache</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
+        <span class="k">if</span> <span class="n">disable_cache</span><span class="p">:</span>
+            <span class="n">cache_location</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="n">cache_location</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">cache_location</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="s2">&quot;/var/cache/edb/dep&quot;</span><span class="p">,</span> <span class="n">location</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache_location</span> <span class="o">=</span> <span class="n">cache_location</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_versions_tmp_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISDIR</span><span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mode</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InitializationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;base not a dir: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">st</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">X_OK</span><span class="o">|</span><span class="n">os</span><span class="o">.</span><span class="n">R_OK</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InitializationError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;base lacks read/executable: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InitializationError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;lstat failed on base: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">package_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">optional_category</span><span class="p">):</span>
+        <span class="c1"># return if optional_category is passed... cause it&#39;s not yet supported</span>
+        <span class="k">if</span> <span class="n">optional_category</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">listdir_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span>
+                             <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed fetching categories: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_get_packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+        <span class="n">cpath</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">category</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">listdir_dirs</span><span class="p">(</span><span class="n">cpath</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.tmp.&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.lockfile&quot;</span><span class="p">)</span> \
+                        <span class="ow">or</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-MERGING-&quot;</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">pkg</span> <span class="o">=</span> <span class="n">VersionedCPV</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">InvalidCPV</span><span class="p">:</span>
+                    <span class="n">bad</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="n">bad</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">pkg</span><span class="o">.</span><span class="n">fullver</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;-scm&#39;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                        <span class="n">bad</span> <span class="o">=</span> <span class="s1">&#39;scm&#39;</span>
+                    <span class="k">elif</span> <span class="s1">&#39;-try&#39;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                        <span class="n">bad</span> <span class="o">=</span> <span class="s1">&#39;try&#39;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">InvalidCPV</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="s1">&#39;no version component&#39;</span><span class="p">)</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;merged -</span><span class="si">{</span><span class="n">bad</span><span class="si">}</span><span class="s1"> pkg detected: </span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">. &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;throwing exception due to -</span><span class="si">{</span><span class="n">bad</span><span class="si">}</span><span class="s1"> not being a valid&#39;</span>
+                        <span class="s1">&#39; version component.  Silently ignoring that &#39;</span>
+                        <span class="s1">&#39;specific version is not viable either since it &#39;</span>
+                        <span class="s1">&#39;would result in pkgcore stomping whatever it was &#39;</span>
+                        <span class="sa">f</span><span class="s1">&#39;that -</span><span class="si">{</span><span class="n">bad</span><span class="si">}</span><span class="s1"> version merged.  &#39;</span>
+                        <span class="s1">&#39;Use the offending pkg manager that merged it to &#39;</span>
+                        <span class="s1">&#39;unmerge it.&#39;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">InvalidCPV</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">bad</span><span class="si">}</span><span class="s1"> version component is not standard.&#39;</span><span class="p">)</span>
+                <span class="n">l</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="p">)</span>
+                <span class="n">d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">category</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">fullver</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">category</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">category</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;failed fetching packages for category </span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_versions_tmp_cache</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">catpkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_versions_tmp_cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">catpkg</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_get_ebuild_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">fullver</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">s</span> <span class="o">+</span> <span class="s2">&quot;.ebuild&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">fullver</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+
+    <span class="n">_metadata_rewrites</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;bdepend&quot;</span><span class="p">:</span> <span class="s2">&quot;BDEPEND&quot;</span><span class="p">,</span> <span class="s2">&quot;depend&quot;</span><span class="p">:</span> <span class="s2">&quot;DEPEND&quot;</span><span class="p">,</span> <span class="s2">&quot;rdepend&quot;</span><span class="p">:</span> <span class="s2">&quot;RDEPEND&quot;</span><span class="p">,</span> <span class="s2">&quot;pdepend&quot;</span><span class="p">:</span> <span class="s2">&quot;PDEPEND&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;use&quot;</span><span class="p">:</span> <span class="s2">&quot;USE&quot;</span><span class="p">,</span> <span class="s2">&quot;eapi&quot;</span><span class="p">:</span> <span class="s2">&quot;EAPI&quot;</span><span class="p">,</span> <span class="s2">&quot;CONTENTS&quot;</span><span class="p">:</span> <span class="s2">&quot;contents&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;source_repository&quot;</span><span class="p">:</span> <span class="s2">&quot;repository&quot;</span><span class="p">,</span> <span class="s2">&quot;fullslot&quot;</span><span class="p">:</span> <span class="s2">&quot;SLOT&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">IndeterminantDict</span><span class="p">(</span>
+            <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_internal_load_key</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">fullver</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">_internal_load_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_rewrites</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;contents&quot;</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">ContentsFile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;CONTENTS&quot;</span><span class="p">),</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;environment&quot;</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fp</span><span class="si">}</span><span class="s1">.bz2&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fp</span><span class="p">):</span>
+                    <span class="c1"># icky.</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;environment: no environment file found&quot;</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data_source</span><span class="o">.</span><span class="n">local_source</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data_source</span><span class="o">.</span><span class="n">bz2_source</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">fp</span><span class="si">}</span><span class="s1">.bz2&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;ebuild&#39;</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span> <span class="o">+</span> <span class="s1">&#39;.ebuild&#39;</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data_source</span><span class="o">.</span><span class="n">local_source</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;repo&#39;</span><span class="p">:</span>
+            <span class="c1"># try both, for portage/paludis compatibility.</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">readfile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;repository&#39;</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">readfile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;REPOSITORY&#39;</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">readfile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">((</span><span class="n">path</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+<div class="viewcode-block" id="tree.notify_remove_package"><a class="viewcode-back" href="../../../api/pkgcore.vdb.ondisk.html#pkgcore.vdb.ondisk.tree.notify_remove_package">[docs]</a>    <span class="k">def</span> <span class="nf">notify_remove_package</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="n">remove_it</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">packages</span><span class="p">[</span><span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">prototype</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">notify_remove_package</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">remove_it</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">oe</span><span class="p">:</span>
+                <span class="c1"># POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir</span>
+                <span class="c1"># in particular, Solaris uses EEXIST in that case.</span>
+                <span class="c1"># https://github.com/pkgcore/pkgcore/pull/181</span>
+                <span class="k">if</span> <span class="n">oe</span><span class="o">.</span><span class="n">errno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">ENOTEMPTY</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">EEXIST</span><span class="p">):</span>
+                    <span class="k">raise</span>
+                <span class="c1"># silently swallow it;</span>
+                <span class="k">del</span> <span class="n">oe</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span><span class="si">}</span><span class="s2">: location </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_WrappedInstalledPkg</span><span class="p">(</span><span class="n">pkg_base</span><span class="o">.</span><span class="n">wrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Installed package with configuration data bound to it.&quot;&quot;&quot;</span>
+
+    <span class="n">built</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;installed pkg: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s1">::</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="si">}</span><span class="s1">, &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;source repo </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">source_repository</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="ConfiguredTree"><a class="viewcode-back" href="../../../api/pkgcore.vdb.ondisk.html#pkgcore.vdb.ondisk.ConfiguredTree">[docs]</a><span class="k">class</span> <span class="nc">ConfiguredTree</span><span class="p">(</span><span class="n">wrapper</span><span class="o">.</span><span class="n">tree</span><span class="p">,</span> <span class="n">tree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Configured repository for packages installed on the filesystem.&quot;&quot;&quot;</span>
+
+    <span class="n">configured</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">frozen_settable</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vdb</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">domain_settings</span><span class="p">):</span>
+        <span class="n">_WrappedInstalledPkg</span><span class="o">.</span><span class="n">_operations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_operations</span>
+        <span class="n">_WrappedInstalledPkg</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">wrapper</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vdb</span><span class="p">,</span> <span class="n">package_class</span><span class="o">=</span><span class="n">_WrappedInstalledPkg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain_settings</span> <span class="o">=</span> <span class="n">domain_settings</span>
+
+    <span class="k">def</span> <span class="nf">_generate_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">_raw_pkg</span>
+        <span class="k">return</span> <span class="n">ebd</span><span class="o">.</span><span class="n">built_operations</span><span class="p">(</span>
+            <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">initial_env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">domain_settings</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<span class="n">tree</span><span class="o">.</span><span class="n">configure</span> <span class="o">=</span> <span class="n">ConfiguredTree</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.ondisk</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

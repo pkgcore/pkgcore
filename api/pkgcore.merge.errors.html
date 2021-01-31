@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.merge.errors module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.errors module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.merge.errors">
+<span id="pkgcore-merge-errors-module"></span><h1>pkgcore.merge.errors module<a class="headerlink" href="#module-pkgcore.merge.errors" title="Permalink to this headline">¶</a></h1>
+<p>exceptions thrown by the MergeEngine</p>
+<dl class="py exception">
+<dt id="pkgcore.merge.errors.BlockModification">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.merge.errors.</code><code class="sig-name descname">BlockModification</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trigger</span></em>, <em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/errors.html#BlockModification"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.errors.BlockModification" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.errors.ModificationError" title="pkgcore.merge.errors.ModificationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.errors.ModificationError</span></code></a></p>
+<p>Merging cannot proceed</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.merge.errors.ModificationError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.merge.errors.</code><code class="sig-name descname">ModificationError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trigger</span></em>, <em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/errors.html#ModificationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.errors.ModificationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreException" title="pkgcore.exceptions.PkgcoreException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreException</span></code></a></p>
+<p>Base Exception class for modification errors</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.merge.errors.TriggerUnknownCset">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.merge.errors.</code><code class="sig-name descname">TriggerUnknownCset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trigger</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/errors.html#TriggerUnknownCset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.errors.TriggerUnknownCset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.errors.ModificationError" title="pkgcore.merge.errors.ModificationError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.errors.ModificationError</span></code></a></p>
+<p>Trigger’s required content set isn’t known</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.errors module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

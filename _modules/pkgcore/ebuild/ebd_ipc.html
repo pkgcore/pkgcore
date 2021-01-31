@@ -1,0 +1,1203 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.ebd_ipc &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebd_ipc</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.ebd_ipc</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">grp</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">locale</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pwd</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.cli</span> <span class="kn">import</span> <span class="n">arghparse</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compression</span> <span class="kn">import</span> <span class="n">ArComp</span><span class="p">,</span> <span class="n">ArCompError</span>
+<span class="kn">from</span> <span class="nn">snakeoil.contexts</span> <span class="kn">import</span> <span class="n">chdir</span>
+<span class="kn">from</span> <span class="nn">snakeoil.decorators</span> <span class="kn">import</span> <span class="n">coroutine</span>
+<span class="kn">from</span> <span class="nn">snakeoil.iterables</span> <span class="kn">import</span> <span class="n">partition</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.process</span> <span class="kn">import</span> <span class="n">spawn</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">os_data</span>
+<span class="kn">from</span> <span class="nn">..exceptions</span> <span class="kn">import</span> <span class="n">PkgcoreException</span><span class="p">,</span> <span class="n">PkgcoreUserException</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">atom</span> <span class="k">as</span> <span class="n">atom_mod</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">filter_env</span><span class="p">,</span> <span class="n">portageq</span>
+
+
+<div class="viewcode-block" id="IpcError"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcError">[docs]</a><span class="k">class</span> <span class="nc">IpcError</span><span class="p">(</span><span class="n">PkgcoreException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic IPC errors.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ret</span> <span class="o">=</span> <span class="n">IpcCommand</span><span class="o">.</span><span class="n">_encode_ret</span><span class="p">((</span><span class="n">code</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div>
+
+
+<div class="viewcode-block" id="IpcInternalError"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcInternalError">[docs]</a><span class="k">class</span> <span class="nc">IpcInternalError</span><span class="p">(</span><span class="n">IpcError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;IPC errors related to internal bugs.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="IpcCommandError"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcCommandError">[docs]</a><span class="k">class</span> <span class="nc">IpcCommandError</span><span class="p">(</span><span class="n">IpcError</span><span class="p">,</span> <span class="n">PkgcoreUserException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;IPC errors related to parsing arguments or running the command.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="UnknownOptions"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.UnknownOptions">[docs]</a><span class="k">class</span> <span class="nc">UnknownOptions</span><span class="p">(</span><span class="n">IpcCommandError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unknown options passed to IPC command.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown options: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="n">options</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnknownArguments"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.UnknownArguments">[docs]</a><span class="k">class</span> <span class="nc">UnknownArguments</span><span class="p">(</span><span class="n">IpcCommandError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unknown arguments passed to IPC command.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;unknown arguments: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="n">args</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="IpcArgumentParser"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcArgumentParser">[docs]</a><span class="k">class</span> <span class="nc">IpcArgumentParser</span><span class="p">(</span><span class="n">arghparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raise IPC exception for argparse errors.</span>
+
+<span class="sd">    Otherwise standard argparse prints the parser usage then outputs the error</span>
+<span class="sd">    message to stderr.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">suppress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">add_help</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IpcArgumentParser.error"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcArgumentParser.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="IpcCommand"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcCommand">[docs]</a><span class="k">class</span> <span class="nc">IpcCommand</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Commands sent from the bash side of the ebuild daemon to run.&quot;&quot;&quot;</span>
+
+    <span class="c1"># argument parser for internal options</span>
+    <span class="n">parser</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># argument parser for command options/arguments</span>
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># override IPC name for error messages</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">op</span> <span class="o">=</span> <span class="n">op</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">observer</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ebd</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span> <span class="o">=</span> <span class="n">arghparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ebd</span> <span class="o">=</span> <span class="n">ebd</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># read info from bash side</span>
+        <span class="n">nonfatal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;true&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cwd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="p">[]</span>
+
+        <span class="c1"># parse args and run command</span>
+        <span class="k">with</span> <span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cwd</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+                <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">IpcCommandError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">nonfatal</span><span class="p">:</span>
+                    <span class="n">ret</span> <span class="o">=</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">msg</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="n">msg</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">msg</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcInternalError</span><span class="p">(</span><span class="s1">&#39;internal failure&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="c1"># return completion status to the bash side</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_encode_ret</span><span class="p">(</span><span class="n">ret</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_encode_ret</span><span class="p">(</span><span class="n">ret</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Encode exit status and any returned value to be sent back to the bash side.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">code</span><span class="p">,</span> <span class="n">response</span> <span class="o">=</span> <span class="n">ret</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="se">\x07</span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ret</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;0</span><span class="se">\x07</span><span class="si">{</span><span class="n">ret</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unsupported return status type: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="IpcCommand.parse_args"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcCommand.parse_args">[docs]</a>    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse internal args passed from the bash side.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">unknown</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnknownOptions</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_parser</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># pull user options off the start of the argument list</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_parser</span><span class="o">.</span><span class="n">parse_known_optionals</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">)</span>
+            <span class="c1"># parse remaining command arguments</span>
+            <span class="n">args</span><span class="p">,</span> <span class="n">unknown</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">arg_parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">UnknownArguments</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">args</span></div>
+
+<div class="viewcode-block" id="IpcCommand.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcCommand.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the requested IPC command.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="IpcCommand.read"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcCommand.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read a line from the ebuild daemon.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ebd</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="IpcCommand.write"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcCommand.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write data to the ebuild daemon.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: data to be sent to the bash side</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ebd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="IpcCommand.warn"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.IpcCommand.warn">[docs]</a>    <span class="k">def</span> <span class="nf">warn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Output warning message.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            msg: message to be output</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_parse_group</span><span class="p">(</span><span class="n">group</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">grp</span><span class="o">.</span><span class="n">getgrnam</span><span class="p">(</span><span class="n">group</span><span class="p">)</span><span class="o">.</span><span class="n">gr_gid</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">group</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_user</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pwd</span><span class="o">.</span><span class="n">getpwnam</span><span class="p">(</span><span class="n">user</span><span class="p">)</span><span class="o">.</span><span class="n">pw_uid</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_mode</span><span class="p">(</span><span class="n">mode</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="command_options"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.command_options">[docs]</a><span class="k">def</span> <span class="nf">command_options</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Split string of command line options into list.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">s</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="existing_path"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.existing_path">[docs]</a><span class="k">def</span> <span class="nf">existing_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if a given path exists (allows broken symlinks).&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">lexists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentTypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;nonexistent path: </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">path</span></div>
+
+
+<span class="k">class</span> <span class="nc">_InstallWrapper</span><span class="p">(</span><span class="n">IpcCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for commands using `install`.&quot;&quot;&quot;</span>
+
+    <span class="n">parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--dest&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--insoptions&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">command_options</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--diroptions&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">command_options</span><span class="p">)</span>
+
+    <span class="c1"># defaults options for file and dir install actions</span>
+    <span class="n">insoptions_default</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">diroptions_default</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="c1"># supported install command options</span>
+    <span class="n">install_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">install_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-g&#39;</span><span class="p">,</span> <span class="s1">&#39;--group&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">_parse_group</span><span class="p">)</span>
+    <span class="n">install_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="s1">&#39;--owner&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">_parse_user</span><span class="p">)</span>
+    <span class="n">install_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="s1">&#39;--mode&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mo">0o755</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">_parse_mode</span><span class="p">)</span>
+    <span class="n">install_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-p&#39;</span><span class="p">,</span> <span class="s1">&#39;--preserve-timestamps&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;targets&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">existing_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span>
+            <span class="n">insoptions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">insoptions_default</span><span class="p">,</span>
+            <span class="n">diroptions</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">diroptions_default</span><span class="p">)</span>
+
+        <span class="c1"># initialize file/dir creation coroutines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_install</span><span class="p">()</span><span class="o">.</span><span class="n">send</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_install_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">send</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_symlinks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_install_symlinks</span><span class="p">()</span><span class="o">.</span><span class="n">send</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_from_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_install_from_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">send</span>
+
+    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_install_options</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">args</span>
+
+    <span class="k">def</span> <span class="nf">parse_install_options</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse install command options.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">insoptions</span> <span class="o">=</span> <span class="n">arghparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diroptions</span> <span class="o">=</span> <span class="n">arghparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insoptions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_install_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insoptions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">insoptions</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">install</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_install_cmd</span><span class="p">()</span><span class="o">.</span><span class="n">send</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">diroptions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_install_options</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">diroptions</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">diroptions</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">install_dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_install_dirs_cmd</span><span class="p">()</span><span class="o">.</span><span class="n">send</span>
+
+    <span class="k">def</span> <span class="nf">_parse_install_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">namespace</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Internal install command option parser.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            options: list of options to parse</span>
+<span class="sd">            namespace: argparse namespace to populate</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            True when all options are handled,</span>
+<span class="sd">            otherwise False if unknown/unhandled options exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">opts</span><span class="p">,</span> <span class="n">unknown</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">install_parser</span><span class="o">.</span><span class="n">parse_known_args</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="n">namespace</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown</span> <span class="ow">or</span> <span class="n">opts</span><span class="o">.</span><span class="n">mode</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;falling back to &#39;install&#39;&quot;</span>
+            <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;: unhandled options: </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="n">unknown</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dest_dir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">ED</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">dest</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;failed creating dir: </span><span class="si">{</span><span class="n">dest_dir</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_install_targets</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_prefix_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Prepend targets being installed with the destination path.&quot;&quot;&quot;</span>
+        <span class="n">dest_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">dest</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">ED</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)))</span>
+                <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">ED</span><span class="p">,</span> <span class="n">dest_dir</span><span class="p">,</span> <span class="n">d</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_install_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Install targets.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            targets: files/symlinks/dirs/etc to install</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">)</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_install_from_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Install all targets under given directories.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iterable of directories to install from</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">dirs</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+                <span class="n">base_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">dirpath</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+                    <span class="n">dest_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">relpath</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">d</span><span class="p">)))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">install_dirs</span><span class="p">([</span><span class="n">dest_dir</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">dirname</span> <span class="ow">in</span> <span class="n">dirnames</span><span class="p">:</span>
+                        <span class="n">source</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">dirname</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="n">source</span><span class="p">):</span>
+                            <span class="n">dest</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">dirname</span><span class="p">)</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">install_symlinks</span><span class="p">([(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">)])</span>
+                    <span class="k">if</span> <span class="n">filenames</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">dest_dir</span><span class="p">,</span> <span class="n">f</span><span class="p">))</span>
+                            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">filenames</span>
+                        <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_set_attributes</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set file attributes on a given path.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            path: file/directory path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">owner</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">opts</span><span class="o">.</span><span class="n">group</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">lchown</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">opts</span><span class="o">.</span><span class="n">owner</span><span class="p">,</span> <span class="n">opts</span><span class="o">.</span><span class="n">group</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">opts</span><span class="o">.</span><span class="n">mode</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">opts</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;failed setting file attributes: </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_set_timestamps</span><span class="p">(</span><span class="n">source_stat</span><span class="p">,</span> <span class="n">dest</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply timestamps from source_stat to dest.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_stat: stat result for the source file</span>
+<span class="sd">            dest: path to the dest file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">dest</span><span class="p">,</span> <span class="n">ns</span><span class="o">=</span><span class="p">(</span><span class="n">source_stat</span><span class="o">.</span><span class="n">st_atime_ns</span><span class="p">,</span> <span class="n">source_stat</span><span class="o">.</span><span class="n">st_mtime_ns</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_is_install_allowed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">source_stat</span><span class="p">,</span> <span class="n">dest</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine if installing source into dest should work.</span>
+
+<span class="sd">        This aims to aid compatibility with the `install` command.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source: path to the source file</span>
+<span class="sd">            source_stat: stat result for the source file, using stat()</span>
+<span class="sd">                rather than lstat(), in order to match the `install`</span>
+<span class="sd">                command</span>
+<span class="sd">            dest: path to the dest file</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            IpcCommandError on failure</span>
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the install should succeed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># matching `install` command, use stat() for source and lstat() for dest</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">dest_lstat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="c1"># installing file to a new path</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cannot stat </span><span class="si">{</span><span class="n">dest</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="c1"># installing symlink</span>
+        <span class="k">if</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISLNK</span><span class="p">(</span><span class="n">dest_lstat</span><span class="o">.</span><span class="n">st_mode</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># source file and dest file are different</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">samestat</span><span class="p">(</span><span class="n">source_stat</span><span class="p">,</span> <span class="n">dest_lstat</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># installing hardlink if source and dest are different</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">dest_lstat</span><span class="o">.</span><span class="n">st_nlink</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">source</span><span class="p">)</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="n">dest</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">source</span><span class="si">!r}</span><span class="s1"> and </span><span class="si">{</span><span class="n">dest</span><span class="si">!r}</span><span class="s1"> are identical&#39;</span><span class="p">)</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_install</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Install files.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iterable of (source, dest) tuples of files to install</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            IpcCommandError on failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="c1"># TODO: skip/warn installing empty files</span>
+            <span class="k">for</span> <span class="n">source</span><span class="p">,</span> <span class="n">dest</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefix_targets</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">sstat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cannot stat </span><span class="si">{</span><span class="n">source</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_is_install_allowed</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">sstat</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+
+                <span class="c1"># matching `install` command, remove dest before file install</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;failed removing file: </span><span class="si">{</span><span class="n">dest</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">dest</span><span class="p">,</span> <span class="n">follow_symlinks</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">insoptions</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_set_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">insoptions</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">insoptions</span><span class="o">.</span><span class="n">preserve_timestamps</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_set_timestamps</span><span class="p">(</span><span class="n">sstat</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;failed copying file: </span><span class="si">{</span><span class="n">source</span><span class="si">!r}</span><span class="s1"> to </span><span class="si">{</span><span class="n">dest</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_install_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Install files using `install` command.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iterable of (source, dest) tuples of files to install</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            IpcCommandError on failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+
+            <span class="c1"># `install` forcibly resolves symlinks so split them out</span>
+            <span class="n">files</span><span class="p">,</span> <span class="n">symlinks</span> <span class="o">=</span> <span class="n">partition</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">install_symlinks</span><span class="p">(</span><span class="n">symlinks</span><span class="p">)</span>
+
+            <span class="c1"># group and install sets of files by destination to decrease `install` calls</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefix_targets</span><span class="p">(</span><span class="n">files</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">dest</span><span class="p">,</span> <span class="n">files_group</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
+                <span class="n">sources</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">path</span> <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">files_group</span><span class="p">)</span>
+                <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;install&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insoptions</span> <span class="o">+</span> <span class="n">sources</span> <span class="o">+</span> <span class="p">[</span><span class="n">dest</span><span class="p">]</span>
+                <span class="n">ret</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="n">spawn</span><span class="o">.</span><span class="n">spawn_get_output</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">collect_fds</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ret</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="n">code</span><span class="o">=</span><span class="n">ret</span><span class="p">)</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_install_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create directories.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iterable of paths where directories should be created</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            IpcCommandError on failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">dirs</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefix_targets</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">diroptions</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_set_attributes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diroptions</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;failed creating dir: </span><span class="si">{</span><span class="n">d</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_install_dirs_cmd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create directories using `install` command.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iterable of paths where directories should be created</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            IpcCommandError on failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">dirs</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="n">dirs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefix_targets</span><span class="p">(</span><span class="n">dirs</span><span class="p">,</span> <span class="n">files</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;install&#39;</span><span class="p">,</span> <span class="s1">&#39;-d&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">diroptions</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+            <span class="n">ret</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="n">spawn</span><span class="o">.</span><span class="n">spawn_get_output</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">collect_fds</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ret</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">output</span><span class="p">),</span> <span class="n">code</span><span class="o">=</span><span class="n">ret</span><span class="p">)</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_install_symlinks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Install iterable of symlinks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            iterable of (path, target dir) tuples of symlinks to install</span>
+<span class="sd">        Raises:</span>
+<span class="sd">            IpcCommandError on failure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">symlinks</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">symlink</span><span class="p">,</span> <span class="n">dest</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefix_targets</span><span class="p">(</span><span class="n">symlinks</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">readlink</span><span class="p">(</span><span class="n">symlink</span><span class="p">),</span> <span class="n">dest</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;failed creating symlink: </span><span class="si">{</span><span class="n">symlink</span><span class="si">!r}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="n">dest</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Doins"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Doins">[docs]</a><span class="k">class</span> <span class="nc">Doins</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for doins.&quot;&quot;&quot;</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">_InstallWrapper</span><span class="o">.</span><span class="n">arg_parser</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;recursive&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_install_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="n">files</span><span class="p">,</span> <span class="n">dirs</span> <span class="o">=</span> <span class="n">partition</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">recursive</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">install_from_dirs</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Dodoc"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dodoc">[docs]</a><span class="k">class</span> <span class="nc">Dodoc</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dodoc.&quot;&quot;&quot;</span>
+
+    <span class="n">insoptions_default</span> <span class="o">=</span> <span class="s1">&#39;-m0644&#39;</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">_InstallWrapper</span><span class="o">.</span><span class="n">arg_parser</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;recursive&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allow_recursive</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">dodoc_allow_recursive</span>
+
+    <span class="k">def</span> <span class="nf">_install_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="n">files</span><span class="p">,</span> <span class="n">dirs</span> <span class="o">=</span> <span class="n">partition</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">)</span>
+        <span class="c1"># TODO: add peekable class for iterables to avoid list conversion</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dirs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">recursive</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recursive</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">install_from_dirs</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">missing_option</span> <span class="o">=</span> <span class="s1">&#39;, missing -r option?&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_recursive</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s1"> is a directory</span><span class="si">{</span><span class="n">missing_option</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Doinfo"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Doinfo">[docs]</a><span class="k">class</span> <span class="nc">Doinfo</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for doinfo.&quot;&quot;&quot;</span>
+
+    <span class="n">insoptions_default</span> <span class="o">=</span> <span class="s1">&#39;-m0644&#39;</span></div>
+
+
+<div class="viewcode-block" id="Dodir"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dodir">[docs]</a><span class="k">class</span> <span class="nc">Dodir</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dodir.&quot;&quot;&quot;</span>
+
+    <span class="n">diroptions_default</span> <span class="o">=</span> <span class="s1">&#39;-m0755&#39;</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;targets&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dodir.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dodir.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_dirs</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Keepdir"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Keepdir">[docs]</a><span class="k">class</span> <span class="nc">Keepdir</span><span class="p">(</span><span class="n">Dodir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for keepdir.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Keepdir.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Keepdir.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c1"># create dirs</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+        <span class="c1"># create stub files</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;.keep_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">PN</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">ED</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">),</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="Doexe"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Doexe">[docs]</a><span class="k">class</span> <span class="nc">Doexe</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for doexe.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Dobin"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dobin">[docs]</a><span class="k">class</span> <span class="nc">Dobin</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dobin.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Dobin.parse_install_options"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dobin.parse_install_options">[docs]</a>    <span class="k">def</span> <span class="nf">parse_install_options</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># TODO: fix this to be prefix aware at some point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insoptions</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s1">&#39;-m0755&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;-g</span><span class="si">{</span><span class="n">os_data</span><span class="o">.</span><span class="n">root_gid</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;-o</span><span class="si">{</span><span class="n">os_data</span><span class="o">.</span><span class="n">root_uid</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_install_options</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Dosbin"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dosbin">[docs]</a><span class="k">class</span> <span class="nc">Dosbin</span><span class="p">(</span><span class="n">Dobin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dosbin.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Dolib"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dolib">[docs]</a><span class="k">class</span> <span class="nc">Dolib</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dolib.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="Dolib_so"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dolib_so">[docs]</a><span class="k">class</span> <span class="nc">Dolib_so</span><span class="p">(</span><span class="n">Dolib</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dolib.so.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;dolib.so&#39;</span></div>
+
+
+<div class="viewcode-block" id="Dolib_a"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dolib_a">[docs]</a><span class="k">class</span> <span class="nc">Dolib_a</span><span class="p">(</span><span class="n">Dolib</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dolib.a.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;dolib.a&#39;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_Symlink</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;source&#39;</span><span class="p">)</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;target&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">dest_dir</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">dest_dir</span> <span class="o">!=</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">install_dirs</span><span class="p">([</span><span class="n">dest_dir</span><span class="p">])</span>
+
+        <span class="n">target</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">ED</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+        <span class="k">with</span> <span class="n">chdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">ED</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_link</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+                    <span class="c1"># overwrite target if it exists</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_link</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;failed creating link: </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">source</span><span class="si">!r}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">target</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Dosym"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dosym">[docs]</a><span class="k">class</span> <span class="nc">Dosym</span><span class="p">(</span><span class="n">_Symlink</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dosym.&quot;&quot;&quot;</span>
+
+    <span class="n">_link</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">symlink</span>
+
+<div class="viewcode-block" id="Dosym.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dosym.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">target</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span> <span class="ow">or</span>
+                <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">target</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="n">target</span><span class="p">))):</span>
+            <span class="c1"># bug 379899</span>
+            <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;missing filename target: </span><span class="si">{</span><span class="n">target</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">args</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Dohard"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dohard">[docs]</a><span class="k">class</span> <span class="nc">Dohard</span><span class="p">(</span><span class="n">_Symlink</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dosym.&quot;&quot;&quot;</span>
+
+    <span class="n">_link</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">link</span></div>
+
+
+<div class="viewcode-block" id="Doman"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Doman">[docs]</a><span class="k">class</span> <span class="nc">Doman</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for doman.&quot;&quot;&quot;</span>
+
+    <span class="n">insoptions_default</span> <span class="o">=</span> <span class="s1">&#39;-m0644&#39;</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">_InstallWrapper</span><span class="o">.</span><span class="n">arg_parser</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-i18n&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="n">detect_lang_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(\w+)\.([a-z]</span><span class="si">{2}</span><span class="s1">([A-Z]</span><span class="si">{2}</span><span class="s1">)?)\.(\w+)$&#39;</span><span class="p">)</span>
+    <span class="n">valid_mandir_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;man[0-9n](f|p|pm)?$&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">language_detect</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">doman_language_detect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">language_override</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">doman_language_override</span>
+
+    <span class="k">def</span> <span class="nf">_install_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+            <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">basename</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">archive_exts_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">ext</span><span class="p">):</span>
+                <span class="c1"># TODO: uncompress/warn?</span>
+                <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">basename</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">1</span><span class="p">]</span>
+
+            <span class="n">name</span> <span class="o">=</span> <span class="n">basename</span>
+            <span class="n">mandir</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;man</span><span class="si">{</span><span class="n">ext</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span><span class="si">}</span><span class="s1">&#39;</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">language_override</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">i18n</span><span class="p">:</span>
+                <span class="n">mandir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">i18n</span><span class="p">,</span> <span class="n">mandir</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">language_detect</span><span class="p">:</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detect_lang_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">basename</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">match</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="n">mandir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="n">mandir</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_mandir_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">mandir</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">mandir</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">install_dirs</span><span class="p">([</span><span class="n">mandir</span><span class="p">])</span>
+                    <span class="n">dirs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">mandir</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">mandir</span><span class="p">,</span> <span class="n">name</span><span class="p">))])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;invalid man page: </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Domo"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Domo">[docs]</a><span class="k">class</span> <span class="nc">Domo</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for domo.&quot;&quot;&quot;</span>
+
+    <span class="n">insoptions_default</span> <span class="o">=</span> <span class="s1">&#39;-m0644&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_install_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">x</span><span class="p">))[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;LC_MESSAGES&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">install_dirs</span><span class="p">([</span><span class="n">d</span><span class="p">])</span>
+                <span class="n">dirs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">([(</span><span class="n">x</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">PN</span><span class="si">}</span><span class="s1">.mo&#39;</span><span class="p">))])</span></div>
+
+
+<div class="viewcode-block" id="Dohtml"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dohtml">[docs]</a><span class="k">class</span> <span class="nc">Dohtml</span><span class="p">(</span><span class="n">_InstallWrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dohtml.&quot;&quot;&quot;</span>
+
+    <span class="n">insoptions_default</span> <span class="o">=</span> <span class="s1">&#39;-m0644&#39;</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">_InstallWrapper</span><span class="o">.</span><span class="n">arg_parser</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;recursive&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-V&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;verbose&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-A&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;extra_allowed_file_exts&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-a&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;allowed_file_exts&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;allowed_files&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;excluded_dirs&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-p&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;doc_prefix&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="c1"># default allowed file extensions</span>
+    <span class="n">default_allowed_file_exts</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;css&#39;</span><span class="p">,</span> <span class="s1">&#39;gif&#39;</span><span class="p">,</span> <span class="s1">&#39;htm&#39;</span><span class="p">,</span> <span class="s1">&#39;html&#39;</span><span class="p">,</span> <span class="s1">&#39;jpeg&#39;</span><span class="p">,</span> <span class="s1">&#39;jpg&#39;</span><span class="p">,</span> <span class="s1">&#39;js&#39;</span><span class="p">,</span> <span class="s1">&#39;png&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Dohtml.parse_args"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dohtml.parse_args">[docs]</a>    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">dest</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">doc_prefix</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_allowed_file_exts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">extra_allowed_file_exts</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">excluded_dirs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">excluded_dirs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_files</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_files</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">verbose</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">autoline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">args</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;dohtml:&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;  Installing to: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">dest</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;  Allowed extensions: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">excluded_dirs</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;  Allowed extensions: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_files</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;  Allowed files: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_files</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">doc_prefix</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  Document prefix: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">doc_prefix</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_allowed_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine if a file is allowed to be installed.&quot;&quot;&quot;</span>
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">basename</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">ext</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_file_exts</span> <span class="ow">or</span> <span class="n">basename</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">allowed_files</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_install_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="n">files</span><span class="p">,</span> <span class="n">dirs</span> <span class="o">=</span> <span class="n">partition</span><span class="p">(</span><span class="n">targets</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">)</span>
+        <span class="c1"># TODO: add peekable class for iterables to avoid list conversion</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dirs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">recursive</span><span class="p">:</span>
+                <span class="n">dirs</span> <span class="o">=</span> <span class="p">(</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dirs</span> <span class="k">if</span> <span class="n">d</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">excluded_dirs</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">install_from_dirs</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">dirs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">!r}</span><span class="s1"> is a directory, missing -r option?&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install</span><span class="p">((</span><span class="n">f</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">f</span><span class="p">))</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_allowed_file</span><span class="p">(</span><span class="n">f</span><span class="p">))</span></div>
+
+
+<span class="k">class</span> <span class="nc">_AlterFiles</span><span class="p">(</span><span class="n">IpcCommand</span><span class="p">):</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-x&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;excludes&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;targets&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">)</span>
+
+    <span class="n">default_includes</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">default_excludes</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">includes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_includes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">excludes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_excludes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">excludes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">excludes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">includes</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Docompress"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Docompress">[docs]</a><span class="k">class</span> <span class="nc">Docompress</span><span class="p">(</span><span class="n">_AlterFiles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for docompress.&quot;&quot;&quot;</span>
+
+    <span class="n">default_includes</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;/usr/share/doc&#39;</span><span class="p">,</span> <span class="s1">&#39;/usr/share/info&#39;</span><span class="p">,</span> <span class="s1">&#39;/usr/share/man&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">excludes</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s1">&#39;/usr/share/doc/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">PF</span><span class="si">}</span><span class="s1">/html&#39;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Dostrip"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Dostrip">[docs]</a><span class="k">class</span> <span class="nc">Dostrip</span><span class="p">(</span><span class="n">_AlterFiles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for dostrip.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;strip&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">restrict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">includes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;/&#39;</span><span class="p">}</span></div>
+
+
+<span class="k">class</span> <span class="nc">_QueryCmd</span><span class="p">(</span><span class="n">IpcCommand</span><span class="p">):</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;atom&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">atom_mod</span><span class="o">.</span><span class="n">atom</span><span class="p">)</span>
+
+    <span class="c1"># &gt;= EAPI 5</span>
+    <span class="n">host_root_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">host_root_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--host-root&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+
+    <span class="c1"># &gt;= EAPI 7</span>
+    <span class="n">query_deps_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">dep_opts</span> <span class="o">=</span> <span class="n">query_deps_parser</span><span class="o">.</span><span class="n">add_mutually_exclusive_group</span><span class="p">()</span>
+    <span class="n">dep_opts</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-b&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;bdepend&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">dep_opts</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-d&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;depend&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+    <span class="n">dep_opts</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-r&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;rdepend&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c1"># parse EAPI specific optionals then remaining args</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">query_host_root</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">host_root_parser</span><span class="o">.</span><span class="n">parse_known_optionals</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">query_deps</span><span class="p">:</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">query_deps_parser</span><span class="o">.</span><span class="n">parse_known_optionals</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">namespace</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+        <span class="n">root</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">domain</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">query_host_root</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">host_root</span><span class="p">:</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">query_deps</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">bdepend</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">prefix_capable</span><span class="p">:</span>
+                    <span class="c1"># not using BROOT as that&#39;s only defined in src_* phases</span>
+                    <span class="n">root</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;EPREFIX&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">root</span> <span class="o">=</span> <span class="s1">&#39;/&#39;</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">depend</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">prefix_capable</span><span class="p">:</span>
+                    <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;ESYSROOT&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;SYSROOT&#39;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">prefix_capable</span><span class="p">:</span>
+                    <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;EROOT&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">root</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;ROOT&#39;</span><span class="p">]</span>
+
+        <span class="c1"># TODO: find domain from given path, pointless until full prefix support works</span>
+        <span class="k">if</span> <span class="n">root</span> <span class="ow">and</span> <span class="n">root</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">root</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="s1">&#39;prefix support not implemented yet&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">args</span>
+
+
+<div class="viewcode-block" id="Has_Version"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Has_Version">[docs]</a><span class="k">class</span> <span class="nc">Has_Version</span><span class="p">(</span><span class="n">_QueryCmd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for has_version.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Has_Version.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Has_Version.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">atom</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">all_installed_repos</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="mi">1</span></div></div>
+
+
+<div class="viewcode-block" id="Best_Version"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Best_Version">[docs]</a><span class="k">class</span> <span class="nc">Best_Version</span><span class="p">(</span><span class="n">_QueryCmd</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for best_version.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Best_Version.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Best_Version.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">portageq</span><span class="o">.</span><span class="n">_best_version</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">atom</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Eapply"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Eapply">[docs]</a><span class="k">class</span> <span class="nc">Eapply</span><span class="p">(</span><span class="n">IpcCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for eapply.&quot;&quot;&quot;</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;targets&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">existing_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patch_cmd</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;patch&#39;</span><span class="p">,</span> <span class="s1">&#39;-p1&#39;</span><span class="p">,</span> <span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="s1">&#39;-g0&#39;</span><span class="p">,</span> <span class="s1">&#39;--no-backup-if-mismatch&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">patch_opts</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_parse_patch_opts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">patch_opts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">arg</span> <span class="o">==</span> <span class="s1">&#39;--&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">files</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="s1">&#39;options must be specified before file arguments&#39;</span><span class="p">)</span>
+                <span class="n">files</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+                <span class="k">break</span>
+            <span class="k">elif</span> <span class="n">arg</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">files</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="s1">&#39;options must be specified before file arguments&#39;</span><span class="p">)</span>
+                <span class="n">patch_opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">files</span><span class="p">,</span> <span class="n">patch_opts</span>
+
+    <span class="k">def</span> <span class="nf">_find_patches</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                    <span class="n">patches</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">pjoin</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">locale</span><span class="o">.</span><span class="n">strxfrm</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">((</span><span class="s1">&#39;.diff&#39;</span><span class="p">,</span> <span class="s1">&#39;.patch&#39;</span><span class="p">))]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">patches</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;no patches in directory: </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">path</span><span class="p">,</span> <span class="n">patches</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Eapply.parse_args"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Eapply.parse_args">[docs]</a>    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">patch_opts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_patch_opts</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_patches</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Eapply.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Eapply.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">user</span><span class="p">:</span>
+            <span class="n">patch_type</span> <span class="o">=</span> <span class="s1">&#39;user patches&#39;</span>
+            <span class="n">output_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">warn</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">patch_type</span> <span class="o">=</span> <span class="s1">&#39;patches&#39;</span>
+            <span class="n">output_func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">info</span>
+
+        <span class="n">spawn_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;collect_fds&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">userpriv</span><span class="p">:</span>
+            <span class="n">spawn_kwargs</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_uid</span>
+            <span class="n">spawn_kwargs</span><span class="p">[</span><span class="s1">&#39;gid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_gid</span>
+
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">patches</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">output_func</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Applying </span><span class="si">{</span><span class="n">patch_type</span><span class="si">}</span><span class="s1"> from </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">:&#39;</span><span class="p">)</span>
+                <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;  &#39;</span>
+            <span class="k">for</span> <span class="n">patch</span> <span class="ow">in</span> <span class="n">patches</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">output_func</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s1">Applying </span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span><span class="si">}</span><span class="s1">...&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">output_func</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span><span class="si">}</span><span class="s1">...&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="n">ret</span><span class="p">,</span> <span class="n">output</span> <span class="o">=</span> <span class="n">spawn</span><span class="o">.</span><span class="n">spawn_get_output</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">patch_cmd</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">patch_opts</span><span class="p">,</span>
+                            <span class="n">fd_pipes</span><span class="o">=</span><span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">()},</span> <span class="o">**</span><span class="n">spawn_kwargs</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
+                        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">patch</span><span class="p">)</span>
+                        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;applying </span><span class="si">{</span><span class="n">filename</span><span class="si">!r}</span><span class="s1"> failed: </span><span class="si">{</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+                        <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="n">ret</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;failed reading patch file: </span><span class="si">{</span><span class="n">patch</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">strerror</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="Eapply_User"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Eapply_User">[docs]</a><span class="k">class</span> <span class="nc">Eapply_User</span><span class="p">(</span><span class="n">IpcCommand</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python wrapper for eapply_user.&quot;&quot;&quot;</span>
+
+    <span class="c1"># stub parser so any arguments are flagged as errors</span>
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Eapply_User.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Eapply_User.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">user_patches</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">_ipc_helpers</span><span class="p">[</span><span class="s1">&#39;eapply&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">user_patches</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># create marker to skip additionals calls</span>
+        <span class="n">patches</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+            <span class="n">files</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">user_patches</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">],</span> <span class="s1">&#39;.user_patches_applied&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">patches</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="Unpack"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Unpack">[docs]</a><span class="k">class</span> <span class="nc">Unpack</span><span class="p">(</span><span class="n">IpcCommand</span><span class="p">):</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;targets&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">)</span>
+
+    <span class="n">_file_mode</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">stat</span><span class="o">.</span><span class="n">S_IRUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IRGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IROTH</span>
+        <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IWUSR</span>
+        <span class="o">&amp;</span> <span class="o">~</span><span class="n">stat</span><span class="o">.</span><span class="n">S_IWGRP</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">stat</span><span class="o">.</span><span class="n">S_IWOTH</span>
+    <span class="p">)</span>
+    <span class="n">_dir_mode</span> <span class="o">=</span> <span class="n">_file_mode</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXUSR</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXGRP</span> <span class="o">|</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_IXOTH</span>
+
+<div class="viewcode-block" id="Unpack.parse_args"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Unpack.parse_args">[docs]</a>    <span class="k">def</span> <span class="nf">parse_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">distdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;DISTDIR&#39;</span><span class="p">]</span>
+        <span class="n">args</span><span class="o">.</span><span class="n">targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_targets</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">args</span></div>
+
+    <span class="k">def</span> <span class="nf">_filter_targets</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">targets</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">archive</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">archive</span><span class="p">:</span>
+                <span class="c1"># regular filename get prefixed with ${DISTDIR}</span>
+                <span class="n">srcdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">distdir</span>
+            <span class="k">elif</span> <span class="n">archive</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;./&#39;</span><span class="p">):</span>
+                <span class="c1"># relative paths get passed through</span>
+                <span class="n">srcdir</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">srcdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">distdir</span>
+
+                <span class="c1"># &gt;= EAPI 6 allows absolute paths</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">unpack_absolute_paths</span><span class="p">:</span>
+                    <span class="n">srcdir</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                    <span class="k">if</span> <span class="n">archive</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">distdir</span><span class="p">):</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s1">&#39;argument contains redundant $</span><span class="se">{{</span><span class="s1">DISTDIR</span><span class="se">}}</span><span class="s1">: </span><span class="si">{</span><span class="n">archive</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">archive</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">distdir</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;arguments must not begin with $</span><span class="se">{{</span><span class="s1">DISTDIR</span><span class="se">}}</span><span class="s1">: </span><span class="si">{</span><span class="n">archive</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">archive</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;arguments must not be absolute paths: </span><span class="si">{</span><span class="n">archive</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span>
+                        <span class="s1">&#39;relative paths must be prefixed with &#39;</span>
+                        <span class="sa">f</span><span class="s2">&quot;&#39;./&#39; in EAPI </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">srcdir</span><span class="p">,</span> <span class="n">archive</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;nonexistent file: </span><span class="si">{</span><span class="n">archive</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">st_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;empty file: </span><span class="si">{</span><span class="n">archive</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="n">match</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">archive_exts_regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">archive</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;skipping unrecognized file format: </span><span class="si">{</span><span class="n">archive</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+            <span class="k">yield</span> <span class="n">archive</span><span class="p">,</span> <span class="n">ext</span><span class="p">,</span> <span class="n">path</span>
+
+<div class="viewcode-block" id="Unpack.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.Unpack.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">spawn_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">op</span><span class="o">.</span><span class="n">userpriv</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;unpack&#39;</span><span class="p">:</span>
+            <span class="n">spawn_kwargs</span><span class="p">[</span><span class="s1">&#39;uid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_uid</span>
+            <span class="n">spawn_kwargs</span><span class="p">[</span><span class="s1">&#39;gid&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os_data</span><span class="o">.</span><span class="n">portage_gid</span>
+
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">ext</span><span class="p">,</span> <span class="n">source</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">targets</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;&gt;&gt;&gt; Unpacking </span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s1"> to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cwd</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">autoline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">dest</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cwd</span><span class="p">,</span> <span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">ext</span><span class="p">)])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">ArComp</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">ext</span><span class="o">=</span><span class="n">ext</span><span class="p">)</span>
+                <span class="n">target</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="n">dest</span><span class="o">=</span><span class="n">dest</span><span class="p">,</span> <span class="o">**</span><span class="n">spawn_kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ArCompError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">IpcCommandError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">code</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">dirpath</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cwd</span><span class="p">):</span>
+            <span class="n">dirs</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_dir_mode</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dirnames</span><span class="p">)</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_mode</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">filenames</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">mode</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">((</span><span class="n">dirs</span><span class="p">,</span> <span class="n">files</span><span class="p">)):</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">dirpath</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+                <span class="n">current_mode</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">st_mode</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISLNK</span><span class="p">(</span><span class="n">current_mode</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">current_mode</span> <span class="o">|</span> <span class="n">mode</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="FilterEnv"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.FilterEnv">[docs]</a><span class="k">class</span> <span class="nc">FilterEnv</span><span class="p">(</span><span class="n">IpcCommand</span><span class="p">):</span>
+
+    <span class="n">arg_parser</span> <span class="o">=</span> <span class="n">IpcArgumentParser</span><span class="p">()</span>
+    <span class="n">filtering</span> <span class="o">=</span> <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s2">&quot;Environment filtering options&quot;</span><span class="p">)</span>
+    <span class="n">filtering</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-V&#39;</span><span class="p">,</span> <span class="s1">&#39;--var-match&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;invert the filtering- instead of removing a var if it matches &quot;</span>
+        <span class="s2">&quot;remove all vars that do not match&quot;</span><span class="p">)</span>
+    <span class="n">filtering</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-F&#39;</span><span class="p">,</span> <span class="s1">&#39;--func-match&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;invert the filtering- instead of removing a function if it matches &quot;</span>
+        <span class="s2">&quot;remove all functions that do not match&quot;</span><span class="p">)</span>
+    <span class="n">filtering</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-f&#39;</span><span class="p">,</span> <span class="s1">&#39;--funcs&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;comma separated list of regexes to match function names against for filtering&quot;</span><span class="p">)</span>
+    <span class="n">filtering</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s1">&#39;-v&#39;</span><span class="p">,</span> <span class="s1">&#39;--vars&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;csv&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">&quot;comma separated list of regexes to match variable names against for filtering&quot;</span><span class="p">)</span>
+    <span class="n">arg_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;files&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FilterEnv.run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd_ipc.html#pkgcore.ebuild.ebd_ipc.FilterEnv.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="n">src_path</span><span class="p">,</span> <span class="n">dest_path</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">files</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">src_path</span><span class="p">)</span> <span class="k">as</span> <span class="n">src</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">dest_path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">dest</span><span class="p">:</span>
+            <span class="n">filter_env</span><span class="o">.</span><span class="n">main_run</span><span class="p">(</span>
+                <span class="n">dest</span><span class="p">,</span> <span class="n">src</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">args</span><span class="o">.</span><span class="n">vars</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">funcs</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">var_match</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">func_match</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebd_ipc</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

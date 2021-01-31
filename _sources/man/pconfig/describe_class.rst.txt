@@ -1,0 +1,7 @@
+pconfig describe_class - describe the arguments a class needs, how to use it in a config
+----------------------------------------------------------------------------------------
+
+.. include:: describe_class/_synopsis.rst
+.. include:: describe_class/_description.rst
+.. include:: describe_class/_options.rst
+.. include:: describe_class/_subcommands.rst

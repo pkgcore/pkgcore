@@ -1,0 +1,7 @@
+pkgcore.cache.fs\_template module
+=================================
+
+.. automodule:: pkgcore.cache.fs_template
+   :members:
+   :undoc-members:
+   :show-inheritance:

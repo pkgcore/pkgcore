@@ -1,0 +1,7 @@
+pkgcore.ebuild.eclass module
+============================
+
+.. automodule:: pkgcore.ebuild.eclass
+   :members:
+   :undoc-members:
+   :show-inheritance:

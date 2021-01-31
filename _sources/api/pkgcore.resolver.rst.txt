@@ -1,0 +1,22 @@
+pkgcore.resolver package
+========================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.resolver.choice_point
+   pkgcore.resolver.pigeonholes
+   pkgcore.resolver.plan
+   pkgcore.resolver.state
+   pkgcore.resolver.util
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.resolver
+   :members:
+   :undoc-members:
+   :show-inheritance:

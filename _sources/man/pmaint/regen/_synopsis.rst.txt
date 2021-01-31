@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint regen [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--disable-eclass-caching] [-t THREADS] [--force] [--dir CACHE_DIR] [--rsync] [--use-local-desc] [--pkg-desc-index] [repo [repo ...]]

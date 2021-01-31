@@ -1,0 +1,7 @@
+pinspect portageq get_repos
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: get_repos/_synopsis.rst
+.. include:: get_repos/_description.rst
+.. include:: get_repos/_options.rst
+.. include:: get_repos/_subcommands.rst

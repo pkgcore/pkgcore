@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snakeoil.currying &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">snakeoil.currying</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for snakeoil.currying</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Function currying, generating a functor with a set of args/defaults pre bound.</span>
+
+<span class="sd">:py:func:`pre_curry` and :py:func:`post_curry` return &quot;normal&quot; python functions</span>
+<span class="sd">The difference between :py:func:`pre_curry` and :py:func:`functools.partial`</span>
+<span class="sd">is this</span>
+
+<span class="sd">&gt;&gt;&gt; from functools import partial</span>
+<span class="sd">&gt;&gt;&gt; from snakeoil.currying import pre_curry</span>
+<span class="sd">&gt;&gt;&gt; def func(arg=None, self=None):</span>
+<span class="sd">...   return arg, self</span>
+<span class="sd">&gt;&gt;&gt; curry = pre_curry(func, True)</span>
+<span class="sd">&gt;&gt;&gt; part = partial(func, True)</span>
+<span class="sd">&gt;&gt;&gt; class Test:</span>
+<span class="sd">...   curry = pre_curry(func, True)</span>
+<span class="sd">...   part = partial(func, True)</span>
+<span class="sd">...   def __repr__(self):</span>
+<span class="sd">...      return &#39;&lt;Test object&gt;&#39;</span>
+<span class="sd">&gt;&gt;&gt; curry()</span>
+<span class="sd">(True, None)</span>
+<span class="sd">&gt;&gt;&gt; Test().curry()</span>
+<span class="sd">(True, &lt;Test object&gt;)</span>
+<span class="sd">&gt;&gt;&gt; part()</span>
+<span class="sd">(True, None)</span>
+<span class="sd">&gt;&gt;&gt; Test().part()</span>
+<span class="sd">(True, None)</span>
+
+<span class="sd">If your curried function is not used as a class attribute the results should be</span>
+<span class="sd">identical. Because :py:func:`functools.partial` has an implementation in C</span>
+<span class="sd">while :py:func:`pre_curry` is python you should use :py:func:`functools.partial`</span>
+<span class="sd">if possible.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">.compatibility</span> <span class="kn">import</span> <span class="n">IGNORED_EXCEPTIONS</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;pre_curry&quot;</span><span class="p">,</span> <span class="s2">&quot;post_curry&quot;</span><span class="p">,</span> <span class="s2">&quot;pretty_docs&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">pre_curry</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;passed in args are prefixed, with further args appended</span>
+
+<span class="sd">    Unlike partial, this is usable as an instancemethod.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">callit</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">args</span> <span class="o">+</span> <span class="n">moreargs</span><span class="p">),</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">callit</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">morekwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">callit</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">morekwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">args</span> <span class="o">+</span> <span class="n">moreargs</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="n">callit</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">callit</span>
+
+
+<span class="k">def</span> <span class="nf">post_curry</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;passed in args are appended to any further args supplied&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">callit</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">moreargs</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">callit</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="n">morekwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">callit</span><span class="p">(</span><span class="o">*</span><span class="n">moreargs</span><span class="p">,</span> <span class="o">**</span><span class="n">morekwargs</span><span class="p">):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="n">morekwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">moreargs</span> <span class="o">+</span> <span class="n">args</span><span class="p">),</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="n">callit</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+    <span class="k">return</span> <span class="n">callit</span>
+
+
+<span class="k">def</span> <span class="nf">pretty_docs</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">extradocs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Modify wrapped, so that it &#39;looks&#39; like what it&#39;s wrapping.</span>
+
+<span class="sd">    This is primarily useful for introspection reasons- doc generators, direct</span>
+<span class="sd">    user interaction with an object in the interpretter, etc.</span>
+
+<span class="sd">    :param wrapped: functor to modify</span>
+<span class="sd">    :param extradocs: ``__doc__`` override for wrapped; else it pulls from</span>
+<span class="sd">        wrapped&#39;s target functor</span>
+<span class="sd">    :param name: ``__name__`` override for wrapped; else it pulls from</span>
+<span class="sd">        wrapped&#39;s target functor for the name.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">wrapped</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">=</span> <span class="n">wrapped</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__module__</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">wrapped</span><span class="o">.</span><span class="n">func</span><span class="o">.</span><span class="vm">__doc__</span>
+    <span class="k">if</span> <span class="n">extradocs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wrapped</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">doc</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">wrapped</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">extradocs</span>
+    <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+        <span class="n">wrapped</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">name</span>
+    <span class="k">return</span> <span class="n">wrapped</span>
+
+
+<span class="k">def</span> <span class="nf">wrap_exception</span><span class="p">(</span><span class="n">recast_exception</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+    <span class="c1"># set this here so that 2to3 will rewrite it.</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">recast_exception</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;recast_exception must be an </span><span class="si">%s</span><span class="s2"> derivative: got </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="ne">Exception</span><span class="p">,</span> <span class="n">recast_exception</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;recast_exception must be an </span><span class="si">%s</span><span class="s2"> derivative; got </span><span class="si">%r</span><span class="s2">, failed </span><span class="si">%r</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="p">(</span><span class="ne">Exception</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">recast_exception</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+    <span class="n">ignores</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;ignores&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">recast_exception</span><span class="p">,))</span>
+    <span class="n">pass_error</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;pass_error&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">wrap_exception_complex</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_simple_throw</span><span class="p">,</span> <span class="n">recast_exception</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">,</span> <span class="n">pass_error</span><span class="p">),</span> <span class="n">ignores</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_simple_throw</span><span class="p">(</span><span class="n">recast_exception</span><span class="p">,</span> <span class="n">recast_args</span><span class="p">,</span> <span class="n">recast_kwds</span><span class="p">,</span> <span class="n">pass_error</span><span class="p">,</span>
+                  <span class="n">exception</span><span class="p">,</span> <span class="n">functor</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">pass_error</span><span class="p">:</span>
+        <span class="n">recast_kwds</span><span class="p">[</span><span class="n">pass_error</span><span class="p">]</span> <span class="o">=</span> <span class="n">exception</span>
+    <span class="k">return</span> <span class="n">recast_exception</span><span class="p">(</span><span class="o">*</span><span class="n">recast_args</span><span class="p">,</span> <span class="o">**</span><span class="n">recast_kwds</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">wrap_exception_complex</span><span class="p">(</span><span class="n">creation_func</span><span class="p">,</span> <span class="n">ignores</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ignores</span><span class="p">,</span> <span class="s1">&#39;__iter__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">ignores</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)</span> <span class="ow">or</span> <span class="n">ignores</span> <span class="ow">is</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">ignores</span> <span class="o">=</span> <span class="p">(</span><span class="n">ignores</span><span class="p">,)</span>
+        <span class="n">ignores</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ignores</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;ignores must be either a tuple of </span><span class="si">%s</span><span class="s2">, or a </span><span class="si">%s</span><span class="s2">: got </span><span class="si">%r</span><span class="s2">, error </span><span class="si">%r</span><span class="s2">&quot;</span>
+                        <span class="o">%</span> <span class="p">(</span><span class="ne">Exception</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="ne">Exception</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">ignores</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="ne">Exception</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ignores</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;ignores has a non </span><span class="si">%s</span><span class="s2"> derivative in it: </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="ne">Exception</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">ignores</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">_inner_wrap_exception</span><span class="p">,</span> <span class="n">creation_func</span><span class="p">,</span> <span class="n">ignores</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_inner_wrap_exception</span><span class="p">(</span><span class="n">exception_maker</span><span class="p">,</span> <span class="n">ignores</span><span class="p">,</span> <span class="n">functor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_wrap_exception</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">functor</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">IGNORED_EXCEPTIONS</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="n">ignores</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">exception_maker</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">functor</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+    <span class="n">_wrap_exception</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">functor</span>
+    <span class="k">return</span> <span class="n">pretty_docs</span><span class="p">(</span><span class="n">_wrap_exception</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">functor</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">snakeoil.currying</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pmaint copy - copy binpkgs between repos; primarily useful for quickpkging a livefs pkg
+---------------------------------------------------------------------------------------
+
+.. include:: copy/_synopsis.rst
+.. include:: copy/_description.rst
+.. include:: copy/_options.rst
+.. include:: copy/_subcommands.rst

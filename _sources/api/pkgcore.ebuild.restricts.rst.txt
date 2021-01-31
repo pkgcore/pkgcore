@@ -1,0 +1,7 @@
+pkgcore.ebuild.restricts module
+===============================
+
+.. automodule:: pkgcore.ebuild.restricts
+   :members:
+   :undoc-members:
+   :show-inheritance:

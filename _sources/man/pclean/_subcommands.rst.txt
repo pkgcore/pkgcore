@@ -1,0 +1,4 @@
+.. include:: config.rst
+.. include:: dist.rst
+.. include:: pkg.rst
+.. include:: tmp.rst

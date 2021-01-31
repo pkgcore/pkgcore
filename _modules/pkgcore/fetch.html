@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fetch &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fetch</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">functionality related to downloading files</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;fetchable&quot;</span><span class="p">,</span> <span class="s2">&quot;mirror&quot;</span><span class="p">,</span> <span class="s2">&quot;default_mirror&quot;</span><span class="p">,</span> <span class="s2">&quot;uri_list&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">zip_longest</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">generic_equality</span>
+
+
+<div class="viewcode-block" id="fetchable"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.fetchable">[docs]</a><span class="k">class</span> <span class="nc">fetchable</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;class representing uri sources for a file and chksum information.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;filename&quot;</span><span class="p">,</span> <span class="s2">&quot;uri&quot;</span><span class="p">,</span> <span class="s2">&quot;chksums&quot;</span><span class="p">)</span>
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="vm">__slots__</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chksums</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param filename: filename...</span>
+<span class="sd">        :param uri: either None (no uri),</span>
+<span class="sd">            or a sequence of uri where the file is available</span>
+<span class="sd">        :param chksums: either None (no chksum data),</span>
+<span class="sd">            or a dict of chksum_type -&gt; value for this file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">uri</span> <span class="k">if</span> <span class="n">uri</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chksums</span> <span class="o">=</span> <span class="n">chksums</span> <span class="k">if</span> <span class="n">chksums</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">chksums</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="si">!r}</span><span class="s1">, </span><span class="si">{</span><span class="n">chksums</span><span class="si">}</span><span class="s1">)&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">%s</span><span class="s2"> filename=</span><span class="si">%r</span><span class="s2"> uri=</span><span class="si">%r</span><span class="s2"> chksums=</span><span class="si">%r</span><span class="s2"> @</span><span class="si">%#8x</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chksums</span><span class="p">,</span>
+            <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">filename</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">upstream</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a new fetchable with all mirror URIs removed.&quot;&quot;&quot;</span>
+        <span class="n">uri_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">remove_mirrors</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="n">uri_list</span><span class="p">,</span> <span class="n">chksums</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="mirror"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.mirror">[docs]</a><span class="k">class</span> <span class="nc">mirror</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;uri source representing a mirror tier&quot;&quot;&quot;</span>
+
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;mirror_name&#39;</span><span class="p">,</span> <span class="s1">&#39;mirrors&#39;</span><span class="p">)</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;mirrors&quot;</span><span class="p">,</span> <span class="s2">&quot;mirror_name&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mirrors</span><span class="p">,</span> <span class="n">mirror_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param mirrors: list of hosts that comprise this mirror tier</span>
+<span class="sd">        :param mirror_name: name of the mirror tier</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mirrors</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">mirrors</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">mirrors</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span> <span class="o">=</span> <span class="n">mirrors</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mirror_name</span> <span class="o">=</span> <span class="n">mirror_name</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;mirror://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mirror_name</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&lt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2"> mirror tier=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">mirror_name</span><span class="si">!r}</span><span class="s2">&gt;&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">unknown_mirror</span><span class="p">(</span><span class="n">mirror</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unknown mirror tier.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mirror_name</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">mirrors</span><span class="o">=</span><span class="p">(),</span> <span class="n">mirror_name</span><span class="o">=</span><span class="n">mirror_name</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="default_mirror"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.default_mirror">[docs]</a><span class="k">class</span> <span class="nc">default_mirror</span><span class="p">(</span><span class="n">mirror</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="uri_list"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.uri_list">[docs]</a><span class="k">class</span> <span class="nc">uri_list</span><span class="p">:</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_uri_source&quot;</span><span class="p">,</span> <span class="s2">&quot;filename&quot;</span><span class="p">,</span> <span class="s2">&quot;__weakref__&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+
+<div class="viewcode-block" id="uri_list.add_mirror"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.uri_list.add_mirror">[docs]</a>    <span class="k">def</span> <span class="nf">add_mirror</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mirror_inst</span><span class="p">,</span> <span class="n">sub_uri</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mirror_inst</span><span class="p">,</span> <span class="n">mirror</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;mirror must be a pkgcore.fetch.mirror instance&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sub_uri</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mirror_inst</span><span class="p">,</span> <span class="n">sub_uri</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mirror_inst</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="uri_list.remove_mirrors"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.uri_list.remove_mirrors">[docs]</a>    <span class="k">def</span> <span class="nf">remove_mirrors</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a new URI source list after dropping all mirror-based URIs.&quot;&quot;&quot;</span>
+        <span class="n">uri_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">uri_list</span><span class="o">.</span><span class="n">_uri_source</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mirror</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">uri_list</span></div>
+
+<div class="viewcode-block" id="uri_list.add_uri"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.uri_list.add_uri">[docs]</a>    <span class="k">def</span> <span class="nf">add_uri</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uri</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="uri_list.finalize"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.uri_list.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fname</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="p">):</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">entry</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="c1"># TODO: rewrite mirror handling to do this more transparently</span>
+                <span class="c1"># collect all mirrors at the same priority</span>
+                <span class="n">mirrored</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="n">m</span><span class="p">,</span> <span class="n">sub_uri</span> <span class="o">=</span> <span class="n">entry</span>
+                    <span class="n">uris</span> <span class="o">=</span> <span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_uri</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">sub_uri</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">base_uri</span> <span class="ow">in</span> <span class="n">m</span><span class="p">)</span>
+                    <span class="n">mirrored</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">uris</span><span class="p">)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">entry</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+                    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                        <span class="k">break</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                        <span class="k">break</span>
+                    <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="c1"># iterate between different mirror groups</span>
+                <span class="k">for</span> <span class="n">mirrored_uris</span> <span class="ow">in</span> <span class="n">zip_longest</span><span class="p">(</span><span class="o">*</span><span class="n">mirrored</span><span class="p">):</span>
+                    <span class="k">yield from</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">mirrored_uris</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">base_uri</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">base_uri</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">fname</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">uris</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;file: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s2">, uri: </span><span class="si">{</span><span class="n">uris</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># implemented this way on the off chance an empty sublist is handed in</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># we do it this way since each item may be a sublist, and to reuse</span>
+        <span class="c1"># __iter__</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">count</span>
+
+<div class="viewcode-block" id="uri_list.visit_mirrors"><a class="viewcode-back" href="../../api/pkgcore.fetch.html#pkgcore.fetch.uri_list.visit_mirrors">[docs]</a>    <span class="k">def</span> <span class="nf">visit_mirrors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">treat_default_as_mirror</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">is_mirror</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">mirror</span><span class="p">)</span> <span class="ow">and</span> \
+                <span class="n">treat_default_as_mirror</span> <span class="o">==</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">default_mirror</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uri_source</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">invert</span> <span class="o">!=</span> <span class="n">is_mirror</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="k">yield</span> <span class="n">item</span>
+            <span class="k">elif</span> <span class="n">invert</span> <span class="o">!=</span> <span class="n">is_mirror</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">item</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

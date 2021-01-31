@@ -1,0 +1,28 @@
+Positional Arguments
+====================
+
+:packages:  
+          python namespace(s) to regenerate plugins for.  If none are specified, pkgcore.plugins is updated
+
+Base Options
+============
+
+-h, --help     
+               Show this help message and exit. To get more
+               information see the related man page.
+
+--version      
+               Show this program's version information and exit.
+               
+               When running from within a git repo or a version
+               installed from git the latest commit hash and date will
+               be shown.
+
+--debug        
+               Enable debug checks and show verbose debug output.
+
+-q, --quiet    
+               Suppress non-error, informational messages.
+
+-v, --verbose  
+               Increase the verbosity of various output.

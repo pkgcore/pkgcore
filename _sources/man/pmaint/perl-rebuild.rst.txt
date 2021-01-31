@@ -1,0 +1,7 @@
+pmaint perl-rebuild - EXPERIMENTAL: perl-rebuild support for use after upgrading perl
+-------------------------------------------------------------------------------------
+
+.. include:: perl-rebuild/_synopsis.rst
+.. include:: perl-rebuild/_description.rst
+.. include:: perl-rebuild/_options.rst
+.. include:: perl-rebuild/_subcommands.rst

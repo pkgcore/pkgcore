@@ -1,0 +1,7 @@
+pinspect portageq mass_best_version - multiple best_version calls.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: mass_best_version/_synopsis.rst
+.. include:: mass_best_version/_description.rst
+.. include:: mass_best_version/_options.rst
+.. include:: mass_best_version/_subcommands.rst

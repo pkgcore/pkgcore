@@ -1,0 +1,7 @@
+pkgcore.ebuild.filter\_env module
+=================================
+
+.. automodule:: pkgcore.ebuild.filter_env
+   :members:
+   :undoc-members:
+   :show-inheritance:

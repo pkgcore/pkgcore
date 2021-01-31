@@ -1,0 +1,8 @@
+================================
+pclean - system cleaning utility
+================================
+
+.. include:: pclean/_synopsis.rst
+.. include:: pclean/_description.rst
+.. include:: pclean/_options.rst
+.. include:: pclean/_subcommands.rst

@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pinspect eclass_usage [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--no-final-summary] [--sort-by-name] [--first FIRST | --last LAST] [repo [repo ...]]

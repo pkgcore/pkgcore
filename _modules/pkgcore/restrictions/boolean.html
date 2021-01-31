@@ -1,0 +1,662 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.restrictions.boolean &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.boolean</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.restrictions.boolean</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Boolean combinations of restrictions.</span>
+
+<span class="sd">This module provides classes that can be used to combine arbitrary</span>
+<span class="sd">collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR style</span>
+<span class="sd">operations.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;AndRestriction&quot;</span><span class="p">,</span> <span class="s2">&quot;OrRestriction&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">islice</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">cached_hash</span><span class="p">,</span> <span class="n">generic_equality</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">restriction</span>
+
+
+<span class="k">class</span> <span class="nc">base</span><span class="p">(</span><span class="n">restriction</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;base template for boolean restrictions&quot;&quot;&quot;</span>
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;negate&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;restrictions&#39;</span><span class="p">)</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;restrictions&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">,</span> <span class="s1">&#39;_hash&#39;</span><span class="p">)</span>
+
+    <span class="n">_evaluate_collapsible</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_evaluate_wipe_empty</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="nd">@cached_hash</span>
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">!r}</span><span class="s2"> isn&#39;t finalized&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__attr_comparison__</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">restrictions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :keyword node_type: type of restriction this accepts</span>
+<span class="sd">            (:obj:`pkgcore.restrictions.restriction.package_type` and</span>
+<span class="sd">            :obj:`pkgcore.restrictions.restriction.value_type` being</span>
+<span class="sd">            common types).  If set to C{None}, no instance limiting is done.</span>
+<span class="sd">        :type restrictions: node_type (if that is specified)</span>
+<span class="sd">        :param restrictions: initial restrictions to add</span>
+<span class="sd">        :keyword finalize: should this instance be made immutable immediately?</span>
+<span class="sd">            defaults to True</span>
+<span class="sd">        :keyword negate: should the logic be negated?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+
+        <span class="n">node_type</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;node_type&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">node_type</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">node_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">restrictions</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="n">node_type</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                            <span class="s2">&quot;instance &#39;</span><span class="si">%s</span><span class="s2">&#39; is restriction type &#39;</span><span class="si">%s</span><span class="s2">&#39;, &quot;</span>
+                            <span class="s2">&quot;must be &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="n">node_type</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;type &#39;</span><span class="si">%s</span><span class="s2">&#39; instance &#39;</span><span class="si">%s</span><span class="s2">&#39; has no restriction type, &quot;</span>
+                    <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; required&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="n">r</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">node_type</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;finalize&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restrictions</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;restrictions&quot;</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">restrictions</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;restrictions&quot;</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;restrictions&quot;</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">restrictions</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">kwds</span><span class="p">:</span>
+            <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;disable_inst_caching&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kwds</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;unknown keywords to </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">kwds</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">change_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">restrictions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return a new instance of self.__class__, using supplied restrictions&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">restriction</span><span class="o">.</span><span class="n">valid_types</span> <span class="ow">or</span> \
+                    <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+                <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;node_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span>
+        <span class="n">kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">*</span><span class="n">restrictions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">remove_restriction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restriction_types</span><span class="o">=</span><span class="p">(),</span> <span class="o">*</span><span class="n">restrictions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return a new instance of self.__class__, dropping supplied restrictions or types&quot;&quot;&quot;</span>
+        <span class="n">new_restrictions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span> <span class="k">if</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">restriction_types</span><span class="p">))</span>
+            <span class="ow">and</span> <span class="n">r</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">restrictions</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new_restrictions</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">change_restrictions</span><span class="p">(</span><span class="o">*</span><span class="n">new_restrictions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">add_restriction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">new_restrictions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;add more restriction(s)</span>
+
+<span class="sd">        :param new_restrictions: if node_type is enforced,</span>
+<span class="sd">            restrictions must be of that type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">new_restrictions</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;need at least one restriction handed in&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">new_restrictions</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">r</span><span class="o">.</span><span class="n">type</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                            <span class="s2">&quot;instance &#39;</span><span class="si">%s</span><span class="s2">&#39; is restriction type &#39;</span><span class="si">%s</span><span class="s2">&#39;, &quot;</span>
+                            <span class="s2">&quot;must be &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;type &#39;</span><span class="si">%s</span><span class="s2">&#39; instance &#39;</span><span class="si">%s</span><span class="s2">&#39; has no restriction type, &quot;</span>
+                    <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39; required&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                        <span class="n">r</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;unset&quot;</span><span class="p">)))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_restrictions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%r</span><span class="s2"> is finalized&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;finalize the restriction instance, disallowing adding restrictions.&quot;&quot;&quot;</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;restrictions&quot;</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> negate=</span><span class="si">%r</span><span class="s1"> type=</span><span class="si">%r</span><span class="s1"> finalized=</span><span class="si">%r</span><span class="s1"> restrictions=</span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span>
+            <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="n">force_False</span><span class="p">,</span> <span class="n">force_True</span> <span class="o">=</span> <span class="n">match</span><span class="p">,</span> <span class="n">match</span>
+
+    <span class="k">def</span> <span class="nf">dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="n">cnf_solutions</span> <span class="o">=</span> <span class="n">dnf_solutions</span>
+
+    <span class="k">def</span> <span class="nf">iter_cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;iterate over the cnf solution&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cnf_solutions</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">iter_dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;iterate over the dnf solution&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dnf_solutions</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">evaluate_conditionals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_cls</span><span class="p">,</span> <span class="n">parent_seq</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span>
+                              <span class="n">tristate_locked</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_collapse</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="s1">&#39;evaluate_conditionals&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restrict</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">tristate_locked</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_wipe_empty</span> <span class="ow">or</span> <span class="n">l</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">force_collapse</span> <span class="ow">or</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="nb">issubclass</span><span class="p">(</span><span class="n">parent_cls</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_evaluate_collapsible</span><span class="p">)</span> <span class="ow">or</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">parent_seq</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">parent_seq</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">*</span><span class="n">l</span><span class="p">))</span>
+
+
+<span class="c1"># this beast, handles N^2 permutations.  convert to stack based.</span>
+<span class="k">def</span> <span class="nf">iterative_quad_toggling</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">,</span> <span class="n">starting</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">truths</span><span class="p">,</span>
+                            <span class="n">filter_func</span><span class="p">,</span> <span class="n">desired_false</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">desired_true</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">kill_switch</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">desired_false</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">desired_false</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">r</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">force_False</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">desired_true</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">desired_true</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">r</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="n">r</span><span class="o">.</span><span class="n">force_True</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">)</span>
+
+    <span class="n">reset</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">if</span> <span class="n">starting</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">rest</span> <span class="ow">in</span> <span class="n">islice</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">restrictions</span><span class="p">),</span> <span class="n">starting</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">reset</span><span class="p">:</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">changes_count</span><span class="p">()</span>
+        <span class="n">reset</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">truths</span><span class="p">[</span><span class="n">index</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">desired_false</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span>
+                <span class="n">reset</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">truths</span><span class="p">[:]</span>
+                <span class="n">t</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="kc">True</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">iterative_quad_toggling</span><span class="p">(</span>
+                        <span class="n">pkg</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">filter_func</span><span class="p">,</span>
+                        <span class="n">desired_false</span><span class="o">=</span><span class="n">desired_false</span><span class="p">,</span> <span class="n">desired_true</span><span class="o">=</span><span class="n">desired_true</span><span class="p">,</span>
+                        <span class="n">kill_switch</span><span class="o">=</span><span class="n">kill_switch</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="kc">True</span>
+                <span class="n">reset</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">kill_switch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">kill_switch</span><span class="p">(</span><span class="n">truths</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+                    <span class="k">return</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">desired_true</span><span class="p">(</span><span class="n">rest</span><span class="p">,</span> <span class="n">pvals</span><span class="p">):</span>
+                <span class="n">reset</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">truths</span><span class="p">[:]</span>
+                <span class="n">t</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="kc">True</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterative_quad_toggling</span><span class="p">(</span>
+                        <span class="n">pkg</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">,</span> <span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">filter_func</span><span class="p">,</span>
+                        <span class="n">desired_false</span><span class="o">=</span><span class="n">desired_false</span><span class="p">,</span> <span class="n">desired_true</span><span class="o">=</span><span class="n">desired_true</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="kc">True</span>
+                <span class="n">reset</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">index</span> <span class="o">==</span> <span class="n">end</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">filter_func</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">kill_switch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">kill_switch</span><span class="p">(</span><span class="n">truths</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+                    <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">reset</span><span class="p">:</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AndRestriction"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction">[docs]</a><span class="k">class</span> <span class="nc">AndRestriction</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Boolean AND grouping of restrictions.  negation is a NAND&quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="n">_evaluate_collapsible</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="AndRestriction.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">rest</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">rest</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+<div class="viewcode-block" id="AndRestriction.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+        <span class="n">pvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">pkg</span><span class="p">]</span>
+        <span class="n">pvals</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="n">entry_point</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">changes_count</span><span class="p">()</span>
+        <span class="c1"># get the simple one out of the way first.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">force_True</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">):</span>
+                    <span class="n">pkg</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">entry_point</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># &lt;insert page long curse here&gt;, NAND logic,</span>
+        <span class="c1"># len(restrictions)**2 potential solutions.</span>
+        <span class="c1"># 0|0 == 0, 0|1 == 1|0 == 0|0 == 1.</span>
+        <span class="c1"># XXX this is quadratic. patches welcome to dodge the</span>
+        <span class="c1"># requirement to push through all potential truths.</span>
+        <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">filter_func</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span> <span class="ow">in</span> <span class="n">truths</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">iterative_quad_toggling</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                                         <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">),</span> <span class="n">truths</span><span class="p">,</span>
+                                         <span class="n">filter_func</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="AndRestriction.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+        <span class="n">pvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">pkg</span><span class="p">]</span>
+        <span class="n">pvals</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="n">entry_point</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">changes_count</span><span class="p">()</span>
+        <span class="c1"># get the simple one out of the way first.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">force_True</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">):</span>
+                    <span class="n">pkg</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">entry_point</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># &lt;insert page long curse here&gt;, NAND logic,</span>
+        <span class="c1"># (len(restrictions)^2)-1 potential solutions.</span>
+        <span class="c1"># 1|1 == 0, 0|1 == 1|0 == 0|0 == 1.</span>
+        <span class="c1"># XXX this is quadratic. patches welcome to dodge the</span>
+        <span class="c1"># requirement to push through all potential truths.</span>
+        <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">filter_func</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span> <span class="ow">in</span> <span class="n">truths</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">iterative_quad_toggling</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                                         <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">),</span> <span class="n">truths</span><span class="p">,</span>
+                                         <span class="n">filter_func</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="AndRestriction.iter_dnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction.iter_dnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">iter_dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generater yielding DNF (disjunctive normalized form) of this instance.</span>
+
+<span class="sd">        :param full_solution_expansion: controls whether to expand everything</span>
+<span class="sd">            (break apart atoms for example); this isn&#39;t likely what you want</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+<span class="c1">#           raise NotImplementedError(&quot;negation for dnf_solutions on &quot;</span>
+<span class="c1">#                 &quot;AndRestriction isn&#39;t implemented yet&quot;)</span>
+            <span class="c1"># hack- this is an experiment</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">OrRestriction</span><span class="p">(</span>
+                    <span class="n">node_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">restriction</span><span class="o">.</span><span class="n">Negate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">])</span><span class="o">.</span><span class="n">iter_dnf_solutions</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">r</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="p">[]</span>
+            <span class="k">return</span>
+        <span class="n">hardreqs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">optionals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;dnf_solutions&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">hardreqs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">s2</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="n">full_solution_expansion</span><span class="p">)</span>
+                <span class="k">assert</span> <span class="n">s2</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">hardreqs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">s2</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">optionals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="o">*</span><span class="n">others</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">others</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">others</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="n">node</span> <span class="o">+</span> <span class="n">node2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">node</span>
+
+        <span class="k">for</span> <span class="n">solution</span> <span class="ow">in</span> <span class="n">f</span><span class="p">([</span><span class="n">hardreqs</span><span class="p">],</span> <span class="o">*</span><span class="n">optionals</span><span class="p">):</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">solution</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="n">solution</span></div>
+
+<div class="viewcode-block" id="AndRestriction.dnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction.dnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;list form of :obj:`iter_dnf_solutions`, see iter_dnf_solutions for args&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter_dnf_solutions</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="AndRestriction.iter_cnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction.iter_cnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">iter_cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns solutions in CNF (conjunctive normalized form) of this instance</span>
+
+<span class="sd">        :param full_solution_expansion: controls whether to expand everything</span>
+<span class="sd">            (break apart atoms for example); this isn&#39;t likely what you want</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;negation for solutions on &quot;</span>
+                                      <span class="s2">&quot;AndRestriction isn&#39;t implemented yet&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;iter_cnf_solutions&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">method</span><span class="p">(</span><span class="n">full_solution_expansion</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">y</span></div>
+
+<div class="viewcode-block" id="AndRestriction.cnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.AndRestriction.cnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns solutions in CNF (conjunctive normalized form) of this instance</span>
+
+<span class="sd">        :param full_solution_expansion: controls whether to expand everything</span>
+<span class="sd">            (break apart atoms for example); this isn&#39;t likely what you want</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;negation for solutions on &quot;</span>
+                                      <span class="s2">&quot;AndRestriction isn&#39;t implemented yet&quot;</span><span class="p">)</span>
+        <span class="n">andreqs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;iter_cnf_solutions&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">andreqs</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">x</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">andreqs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">method</span><span class="p">(</span><span class="n">full_solution_expansion</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">andreqs</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">restricts_str</span> <span class="o">=</span> <span class="s2">&quot; &amp;&amp; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">))</span>
+        <span class="n">negate</span> <span class="o">=</span> <span class="s1">&#39;not &#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">negate</span><span class="si">}</span><span class="s1">( </span><span class="si">{</span><span class="n">restricts_str</span><span class="si">}</span><span class="s1"> )&#39;</span></div>
+
+
+<div class="viewcode-block" id="OrRestriction"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.OrRestriction">[docs]</a><span class="k">class</span> <span class="nc">OrRestriction</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Boolean OR grouping of restrictions.&quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="n">_evaluate_collapsible</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="OrRestriction.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.OrRestriction.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">rest</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">rest</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+                <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+<div class="viewcode-block" id="OrRestriction.cnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.OrRestriction.cnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">cnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list in CNF (conjunctive normalized form) of this instance.</span>
+
+<span class="sd">        :param full_solution_expansion: controls whether to expand everything</span>
+<span class="sd">            (break apart atoms for example); this isn&#39;t likely what you want</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;OrRestriction.solutions doesn&#39;t yet support self.negate&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">dcnf</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cnf</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;dnf_solutions&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">dcnf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">s2</span> <span class="o">=</span> <span class="n">method</span><span class="p">(</span><span class="n">full_solution_expansion</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">cnf</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">s2</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">dcnf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">cnf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># combinatorial explosion. if it&#39;s got cnf, we peel off one of</span>
+        <span class="c1"># each and smash append to the dcnf.</span>
+        <span class="n">dcnf</span> <span class="o">=</span> <span class="p">[</span><span class="n">dcnf</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">andreq</span> <span class="ow">in</span> <span class="n">cnf</span><span class="p">:</span>
+            <span class="n">dcnf</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">andreq</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">dcnf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">dcnf</span></div>
+
+<div class="viewcode-block" id="OrRestriction.iter_dnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.OrRestriction.iter_dnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">iter_dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">full_solution_expansion</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a list in DNF (disjunctive normalized form) of this instance.</span>
+
+<span class="sd">        :param full_solution_expansion: controls whether to expand everything</span>
+<span class="sd">            (break apart atoms for example); this isn&#39;t likely what you want</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="c1"># hack- this is an experiment</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">AndRestriction</span><span class="p">(</span>
+                <span class="n">node_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span>
+                <span class="o">*</span><span class="p">[</span><span class="n">restriction</span><span class="o">.</span><span class="n">Negate</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">])</span><span class="o">.</span><span class="n">iter_dnf_solutions</span><span class="p">():</span>
+                <span class="k">yield</span> <span class="n">x</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="p">[]</span>
+            <span class="k">return</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;iter_dnf_solutions&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">[</span><span class="n">x</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">method</span><span class="p">(</span><span class="n">full_solution_expansion</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">y</span></div>
+
+<div class="viewcode-block" id="OrRestriction.dnf_solutions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.OrRestriction.dnf_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">dnf_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;see dnf_solutions, iterates yielding DNF solutions&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iter_dnf_solutions</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="OrRestriction.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.OrRestriction.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+        <span class="n">pvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">pkg</span><span class="p">]</span>
+        <span class="n">pvals</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="n">entry_point</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">changes_count</span><span class="p">()</span>
+        <span class="c1"># get the simple one out of the way first.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">force_False</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">):</span>
+                    <span class="n">pkg</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">entry_point</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># &lt;insert page long curse here&gt;, OR logic,</span>
+        <span class="c1"># len(restrictions)**2-1 potential solutions.</span>
+        <span class="c1"># 0|0 == 0, 0|1 == 1|0 == 1|1 == 1.</span>
+        <span class="c1"># XXX this is quadratic. patches welcome to dodge the</span>
+        <span class="c1"># requirement to push through all potential truths.</span>
+        <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">filter_func</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span> <span class="ow">in</span> <span class="n">truths</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">iterative_quad_toggling</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                                         <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">),</span> <span class="n">truths</span><span class="p">,</span>
+                                         <span class="n">filter_func</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="OrRestriction.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.boolean.html#pkgcore.ebuild.atom.OrRestriction.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+        <span class="n">pvals</span> <span class="o">=</span> <span class="p">[</span><span class="n">pkg</span><span class="p">]</span>
+        <span class="n">pvals</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span>
+        <span class="n">entry_point</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">changes_count</span><span class="p">()</span>
+        <span class="c1"># get the simple one out of the way first.</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">force_False</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">):</span>
+                    <span class="n">pkg</span><span class="o">.</span><span class="n">rollback</span><span class="p">(</span><span class="n">entry_point</span><span class="p">)</span>
+                    <span class="k">return</span>
+            <span class="k">yield</span> <span class="kc">True</span>
+            <span class="k">return</span>
+
+        <span class="c1"># &lt;insert page long curse here&gt;, OR logic,</span>
+        <span class="c1"># (len(restrictions)**2)-1 potential solutions.</span>
+        <span class="c1"># 0|0 == 0, 0|1 == 1|0 == 1|1 == 1.</span>
+        <span class="c1"># XXX this is quadratic. patches welcome to dodge the</span>
+        <span class="c1"># requirement to push through all potential truths.</span>
+        <span class="n">truths</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">pvals</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">]</span>
+
+        <span class="k">def</span> <span class="nf">filter_func</span><span class="p">(</span><span class="n">truths</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span> <span class="ow">in</span> <span class="n">truths</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">iterative_quad_toggling</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">pvals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+                                         <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">),</span> <span class="n">truths</span><span class="p">,</span>
+                                         <span class="n">filter_func</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">restricts_str</span> <span class="o">=</span> <span class="s2">&quot; || &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">))</span>
+        <span class="n">negate</span> <span class="o">=</span> <span class="s1">&#39;not &#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">negate</span><span class="si">}</span><span class="s1">( </span><span class="si">{</span><span class="n">restricts_str</span><span class="si">}</span><span class="s1"> )&#39;</span></div>
+
+
+<span class="k">class</span> <span class="nc">JustOneRestriction</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exactly one must match, or there must be no restrictions&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="n">_evaluate_collapsable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_evaluate_wipe_empty</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+
+        <span class="n">armed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+                <span class="c1"># two matches found?</span>
+                <span class="k">if</span> <span class="n">armed</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+                <span class="n">armed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">armed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">restricts_str</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">))</span>
+        <span class="n">negate</span> <span class="o">=</span> <span class="s1">&#39;not &#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">negate</span><span class="si">}</span><span class="s1">exactly-one-of ( </span><span class="si">{</span><span class="n">restricts_str</span><span class="si">}</span><span class="s1"> )&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">AtMostOneOfRestriction</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Either none, or exactly one match must occur.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="n">_evaluate_collapsable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_evaluate_wipe_empty</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="n">armed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">vals</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">armed</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+            <span class="n">armed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">restricts_str</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">))</span>
+        <span class="n">negate</span> <span class="o">=</span> <span class="s1">&#39;not &#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">negate</span><span class="si">}</span><span class="s1">at-most-one-of ( </span><span class="si">{</span><span class="n">restricts_str</span><span class="si">}</span><span class="s1"> )&#39;</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.boolean</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

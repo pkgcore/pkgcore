@@ -1,0 +1,7 @@
+pkgcore.repository.syncable module
+==================================
+
+.. automodule:: pkgcore.repository.syncable
+   :members:
+   :undoc-members:
+   :show-inheritance:

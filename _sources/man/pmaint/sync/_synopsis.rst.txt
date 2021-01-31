@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint sync [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-f] [repo [repo ...]]

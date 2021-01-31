@@ -1,0 +1,7 @@
+pinspect portageq match - shorthand for `pquery --installed`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: match/_synopsis.rst
+.. include:: match/_description.rst
+.. include:: match/_options.rst
+.. include:: match/_subcommands.rst

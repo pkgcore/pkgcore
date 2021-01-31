@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect query get_repo_path [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] repo_id

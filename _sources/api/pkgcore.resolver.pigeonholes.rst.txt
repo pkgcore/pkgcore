@@ -1,0 +1,7 @@
+pkgcore.resolver.pigeonholes module
+===================================
+
+.. automodule:: pkgcore.resolver.pigeonholes
+   :members:
+   :undoc-members:
+   :show-inheritance:

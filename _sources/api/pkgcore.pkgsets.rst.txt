@@ -1,0 +1,22 @@
+pkgcore.pkgsets package
+=======================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.pkgsets.filelist
+   pkgcore.pkgsets.glsa
+   pkgcore.pkgsets.installed
+   pkgcore.pkgsets.live_rebuild_set
+   pkgcore.pkgsets.system
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.pkgsets
+   :members:
+   :undoc-members:
+   :show-inheritance:

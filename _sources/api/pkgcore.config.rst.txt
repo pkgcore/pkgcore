@@ -1,0 +1,23 @@
+pkgcore.config package
+======================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.config.basics
+   pkgcore.config.central
+   pkgcore.config.cparser
+   pkgcore.config.domain
+   pkgcore.config.errors
+   pkgcore.config.hint
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.config
+   :members:
+   :undoc-members:
+   :show-inheritance:

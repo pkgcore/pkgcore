@@ -1,0 +1,108 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.errors module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.errors module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.errors">
+<span id="pkgcore-ebuild-errors-module"></span><h1>pkgcore.ebuild.errors module<a class="headerlink" href="#module-pkgcore.ebuild.errors" title="Permalink to this headline">¶</a></h1>
+<p>atom exceptions</p>
+<dl class="py exception">
+<dt id="pkgcore.ebuild.errors.DepsetParseError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.ebuild.errors.</code><code class="sig-name descname">DepsetParseError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">s</span></em>, <em class="sig-param"><span class="n">token</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">msg</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">attr</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/errors.html#DepsetParseError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.errors.DepsetParseError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.package.errors.html#pkgcore.package.errors.InvalidDependency" title="pkgcore.package.errors.InvalidDependency"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.errors.InvalidDependency</span></code></a></p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.ebuild.errors.InvalidCPV">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.ebuild.errors.</code><code class="sig-name descname">InvalidCPV</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">msg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/errors.html#InvalidCPV"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.errors.InvalidCPV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.package.errors.html#pkgcore.package.errors.InvalidPackageName" title="pkgcore.package.errors.InvalidPackageName"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.errors.InvalidPackageName</span></code></a></p>
+<p>CPV with unsupported characters or format.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.ebuild.errors.InvalidVersion">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.ebuild.errors.</code><code class="sig-name descname">InvalidVersion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ver</span></em>, <em class="sig-param"><span class="n">rev</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/errors.html#InvalidVersion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.errors.InvalidVersion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.package.errors.html#pkgcore.package.errors.InvalidDependency" title="pkgcore.package.errors.InvalidDependency"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.errors.InvalidDependency</span></code></a></p>
+<p>Package version doesn’t follow required specifications.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.ebuild.errors.MalformedAtom">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.ebuild.errors.</code><code class="sig-name descname">MalformedAtom</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">err</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/errors.html#MalformedAtom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.errors.MalformedAtom" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.package.errors.html#pkgcore.package.errors.InvalidDependency" title="pkgcore.package.errors.InvalidDependency"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.errors.InvalidDependency</span></code></a></p>
+<p>Package atom doesn’t follow required specifications.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.errors module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

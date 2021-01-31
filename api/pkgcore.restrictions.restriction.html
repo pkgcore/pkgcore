@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.restrictions.restriction module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.restriction module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.restrictions.restriction">
+<span id="pkgcore-restrictions-restriction-module"></span><h1>pkgcore.restrictions.restriction module<a class="headerlink" href="#module-pkgcore.restrictions.restriction" title="Permalink to this headline">¶</a></h1>
+<p>base restriction class</p>
+<dl class="py class">
+<dt id="pkgcore.restrictions.restriction.AlwaysBool">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.restrictions.restriction.</code><code class="sig-name descname">AlwaysBool</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#AlwaysBool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.AlwaysBool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.restrictions.restriction.base" title="pkgcore.restrictions.restriction.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.restriction.base</span></code></a></p>
+<p>restriction that always yields a specific boolean</p>
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.AlwaysBool.force_False">
+<code class="sig-name descname">force_False</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#AlwaysBool.force_False"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.AlwaysBool.force_False" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.AlwaysBool.force_True">
+<code class="sig-name descname">force_True</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#AlwaysBool.force_True"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.AlwaysBool.force_True" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.AlwaysBool.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#AlwaysBool.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.AlwaysBool.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.AlwaysBool.negate">
+<code class="sig-name descname">negate</code><a class="headerlink" href="#pkgcore.restrictions.restriction.AlwaysBool.negate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.AlwaysBool.type">
+<code class="sig-name descname">type</code><a class="headerlink" href="#pkgcore.restrictions.restriction.AlwaysBool.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.restrictions.restriction.AnyMatch">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.restrictions.restriction.</code><code class="sig-name descname">AnyMatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#AnyMatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.AnyMatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.restrictions.restriction.base" title="pkgcore.restrictions.restriction.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.restriction.base</span></code></a></p>
+<p>Apply a nested restriction to every item in a sequence.</p>
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.AnyMatch.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">val</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#AnyMatch.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.AnyMatch.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.AnyMatch.negate">
+<code class="sig-name descname">negate</code><a class="headerlink" href="#pkgcore.restrictions.restriction.AnyMatch.negate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.AnyMatch.restriction">
+<code class="sig-name descname">restriction</code><a class="headerlink" href="#pkgcore.restrictions.restriction.AnyMatch.restriction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.AnyMatch.type">
+<code class="sig-name descname">type</code><a class="headerlink" href="#pkgcore.restrictions.restriction.AnyMatch.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.restrictions.restriction.FakeType">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.restrictions.restriction.</code><code class="sig-name descname">FakeType</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#FakeType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.FakeType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.restrictions.restriction.base" title="pkgcore.restrictions.restriction.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.restriction.base</span></code></a></p>
+<p>wrapper to wrap and fake a node_type</p>
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.FakeType.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#FakeType.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.FakeType.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.FakeType.type">
+<code class="sig-name descname">type</code><a class="headerlink" href="#pkgcore.restrictions.restriction.FakeType.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.restrictions.restriction.Negate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.restrictions.restriction.</code><code class="sig-name descname">Negate</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#Negate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.Negate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.restrictions.restriction.base" title="pkgcore.restrictions.restriction.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.restriction.base</span></code></a></p>
+<p>wrap and negate a restriction instance</p>
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.Negate.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#Negate.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.Negate.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.Negate.type">
+<code class="sig-name descname">type</code><a class="headerlink" href="#pkgcore.restrictions.restriction.Negate.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.restrictions.restriction.base">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.restrictions.restriction.</code><code class="sig-name descname">base</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.klass.SlotsPicklingMixin</span></code></p>
+<p>base restriction matching object.</p>
+<p>all derivatives <em>should</em> be __slots__ based (lot of instances may
+wind up in memory).</p>
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.base.force_False">
+<code class="sig-name descname">force_False</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">arg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#base.force_False"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.base.force_False" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.base.force_True">
+<code class="sig-name descname">force_True</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">arg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#base.force_True"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.base.force_True" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.restriction.base.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">arg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#base.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.base.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.restrictions.restriction.base.package_matching">
+<code class="sig-name descname">package_matching</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.restrictions.restriction.base.package_matching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.restrictions.restriction.curry_node_type">
+<code class="sig-prename descclassname">pkgcore.restrictions.restriction.</code><code class="sig-name descname">curry_node_type</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cls</span></em>, <em class="sig-param"><span class="n">node_type</span></em>, <em class="sig-param"><span class="n">extradoc</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/restriction.html#curry_node_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.restriction.curry_node_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function for creating restrictions of a certain type.</p>
+<p>This uses <code class="xref py py-obj docutils literal notranslate"><span class="pre">partial</span></code> to pass a node_type to the wrapped class,
+and extends the docstring.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cls</strong> – callable (usually a class) that is wrapped.</p></li>
+<li><p><strong>node_type</strong> – value passed as node_type.</p></li>
+<li><p><strong>extradoc</strong> – addition to the docstring. Defaults to
+“Automatically set to %s type.” % node_type</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>a wrapped callable.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.restriction module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

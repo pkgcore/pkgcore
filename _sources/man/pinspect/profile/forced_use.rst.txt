@@ -1,0 +1,7 @@
+pinspect profile forced_use - inspect forced use flags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: forced_use/_synopsis.rst
+.. include:: forced_use/_description.rst
+.. include:: forced_use/_options.rst
+.. include:: forced_use/_subcommands.rst

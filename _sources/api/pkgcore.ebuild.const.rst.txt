@@ -1,0 +1,7 @@
+pkgcore.ebuild.const module
+===========================
+
+.. automodule:: pkgcore.ebuild.const
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,492 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.merge.engine &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.engine</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.merge.engine</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">core engine for livefs modifications</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;alias_cset&quot;</span><span class="p">,</span> <span class="s2">&quot;map_new_cset_livefs&quot;</span><span class="p">,</span> <span class="s2">&quot;MergeEngine&quot;</span><span class="p">)</span>
+
+<span class="c1"># need better documentation...</span>
+
+<span class="c1"># pre merge triggers</span>
+<span class="c1"># post merge triggers</span>
+<span class="c1"># ordering?</span>
+
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">cpu_count</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">data_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">IGNORED_EXCEPTIONS</span>
+<span class="kn">from</span> <span class="nn">snakeoil.currying</span> <span class="kn">import</span> <span class="n">post_curry</span>
+<span class="kn">from</span> <span class="nn">snakeoil.fileutils</span> <span class="kn">import</span> <span class="n">touch</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ImmutableDict</span><span class="p">,</span> <span class="n">LazyValDict</span><span class="p">,</span> <span class="n">StackedDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">normpath</span>
+
+<span class="kn">from</span> <span class="nn">..fs</span> <span class="kn">import</span> <span class="n">contents</span><span class="p">,</span> <span class="n">livefs</span>
+<span class="kn">from</span> <span class="nn">..operations</span> <span class="kn">import</span> <span class="n">observer</span> <span class="k">as</span> <span class="n">observer_mod</span>
+<span class="kn">from</span> <span class="nn">..plugin</span> <span class="kn">import</span> <span class="n">get_plugins</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">errors</span>
+<span class="kn">from</span> <span class="nn">.const</span> <span class="kn">import</span> <span class="n">INSTALL_MODE</span><span class="p">,</span> <span class="n">REPLACE_MODE</span><span class="p">,</span> <span class="n">UNINSTALL_MODE</span>
+
+
+<div class="viewcode-block" id="alias_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.alias_cset">[docs]</a><span class="k">def</span> <span class="nf">alias_cset</span><span class="p">(</span><span class="n">alias</span><span class="p">,</span> <span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;alias a cset to another&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">csets</span><span class="p">[</span><span class="n">alias</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="map_new_cset_livefs"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.map_new_cset_livefs">[docs]</a><span class="k">def</span> <span class="nf">map_new_cset_livefs</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="n">cset_name</span><span class="o">=</span><span class="s1">&#39;new_cset&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find symlinks on disk that redirect new_cset, and return a livefs localized cset.&quot;&quot;&quot;</span>
+    <span class="n">initial</span> <span class="o">=</span> <span class="n">csets</span><span class="p">[</span><span class="n">cset_name</span><span class="p">]</span>
+    <span class="n">ondisk</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">contentsSet</span><span class="p">(</span><span class="n">livefs</span><span class="o">.</span><span class="n">intersect</span><span class="p">(</span><span class="n">initial</span><span class="o">.</span><span class="n">iterdirs</span><span class="p">(),</span> <span class="n">realpath</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+    <span class="n">livefs</span><span class="o">.</span><span class="n">recursively_fill_syms</span><span class="p">(</span><span class="n">ondisk</span><span class="p">)</span>
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">initial</span><span class="o">.</span><span class="n">map_directory_structure</span><span class="p">(</span><span class="n">ondisk</span><span class="p">,</span> <span class="n">add_conflicting_sym</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ret</span></div>
+
+
+<div class="viewcode-block" id="MergeEngine"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine">[docs]</a><span class="k">class</span> <span class="nc">MergeEngine</span><span class="p">:</span>
+
+    <span class="n">install_hooks</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+        <span class="p">(</span><span class="s2">&quot;sanity_check&quot;</span><span class="p">,</span> <span class="s2">&quot;pre_merge&quot;</span><span class="p">,</span> <span class="s2">&quot;merge&quot;</span><span class="p">,</span> <span class="s2">&quot;post_merge&quot;</span><span class="p">,</span> <span class="s2">&quot;final&quot;</span><span class="p">)}</span>
+    <span class="n">uninstall_hooks</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+        <span class="p">(</span><span class="s2">&quot;sanity_check&quot;</span><span class="p">,</span> <span class="s2">&quot;pre_unmerge&quot;</span><span class="p">,</span> <span class="s2">&quot;unmerge&quot;</span><span class="p">,</span> <span class="s2">&quot;post_unmerge&quot;</span><span class="p">,</span> <span class="s2">&quot;final&quot;</span><span class="p">)}</span>
+    <span class="n">replace_hooks</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+        <span class="nb">set</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="n">install_hooks</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span> <span class="n">uninstall_hooks</span><span class="o">.</span><span class="n">keys</span><span class="p">()))}</span>
+
+    <span class="n">install_csets</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;install_existing&quot;</span><span class="p">:</span> <span class="s2">&quot;get_install_livefs_intersect&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;resolved_install&quot;</span><span class="p">:</span> <span class="n">map_new_cset_livefs</span><span class="p">,</span>
+        <span class="s1">&#39;new_cset&#39;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">alias_cset</span><span class="p">,</span> <span class="s1">&#39;raw_new_cset&#39;</span><span class="p">),</span>
+        <span class="s2">&quot;install&quot;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">alias_cset</span><span class="p">,</span> <span class="s1">&#39;new_cset&#39;</span><span class="p">),</span>
+        <span class="s2">&quot;replace&quot;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">alias_cset</span><span class="p">,</span> <span class="s1">&#39;new_cset&#39;</span><span class="p">),</span>
+    <span class="p">}</span>
+    <span class="n">uninstall_csets</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;uninstall_existing&quot;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">alias_cset</span><span class="p">,</span> <span class="s2">&quot;uninstall&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;uninstall&quot;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">alias_cset</span><span class="p">,</span> <span class="s2">&quot;old_cset&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;old_cset&quot;</span><span class="p">:</span> <span class="s2">&quot;get_uninstall_livefs_intersect&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">replace_csets</span> <span class="o">=</span> <span class="n">install_csets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="n">replace_csets</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">uninstall_csets</span><span class="p">)</span>
+    <span class="n">replace_csets</span><span class="p">[</span><span class="s2">&quot;modifying&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">e</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s2">&quot;resolved_install&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;uninstall&quot;</span><span class="p">]))</span>
+    <span class="n">replace_csets</span><span class="p">[</span><span class="s2">&quot;uninstall&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;get_remove_cset&quot;</span>
+    <span class="n">replace_csets</span><span class="p">[</span><span class="s2">&quot;replace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;get_replace_cset&quot;</span>
+    <span class="n">replace_csets</span><span class="p">[</span><span class="s2">&quot;install_existing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;get_install_livefs_intersect&quot;</span>
+
+    <span class="n">install_csets_preserve</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;new_cset&quot;</span><span class="p">]</span>
+    <span class="n">uninstall_csets_preserve</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;old_cset&quot;</span><span class="p">]</span>
+    <span class="n">replace_csets_preserve</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;new_cset&quot;</span><span class="p">,</span> <span class="s2">&quot;old_cset&quot;</span><span class="p">]</span>
+
+    <span class="n">allow_reuse</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">tempdir</span><span class="p">,</span> <span class="n">hooks</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="n">preserves</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span>
+                 <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">disable_plugins</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">parallelism</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">observer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">observer</span> <span class="o">=</span> <span class="n">observer_mod</span><span class="o">.</span><span class="n">repo_observer</span><span class="p">(</span><span class="n">observer_mod</span><span class="o">.</span><span class="n">null_output</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="k">if</span> <span class="n">tempdir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tempdir</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span><span class="n">tempdir</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span> <span class="o">=</span> <span class="n">tempdir</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">parallelism</span> <span class="o">=</span> <span class="n">parallelism</span> <span class="k">if</span> <span class="n">parallelism</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">cpu_count</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span> <span class="o">=</span> <span class="n">ImmutableDict</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="p">[])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">hooks</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">preserve_csets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cset_sources</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># instantiate these separately so their values are preserved</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preserved_csets</span> <span class="o">=</span> <span class="n">LazyValDict</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">preserve_csets</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cset_source</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">csets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">v</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;cset values must be either the string name of &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;existing methods, or callables (got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">preserves</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_preserved_cset</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_cset</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">offset</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">disable_plugins</span><span class="p">:</span>
+            <span class="c1"># merge in default triggers first.</span>
+            <span class="k">for</span> <span class="n">trigger</span> <span class="ow">in</span> <span class="n">get_plugins</span><span class="p">(</span><span class="s1">&#39;triggers&#39;</span><span class="p">):</span>
+                <span class="n">t</span> <span class="o">=</span> <span class="n">trigger</span><span class="p">()</span>
+                <span class="n">t</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+        <span class="c1"># merge in overrides</span>
+        <span class="k">for</span> <span class="n">hook</span><span class="p">,</span> <span class="n">triggers</span> <span class="ow">in</span> <span class="n">hooks</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">trigger</span> <span class="ow">in</span> <span class="n">triggers</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_trigger</span><span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="n">trigger</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">regenerate_csets</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">hooks</span><span class="p">:</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">execute_hook</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+
+<div class="viewcode-block" id="MergeEngine.install"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.install">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">install</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">tempdir</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">disable_plugins</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate a MergeEngine instance configured for installing a pkg.</span>
+
+<span class="sd">        :param tempdir: tempspace for the merger to use; this space it must</span>
+<span class="sd">            control alone, no sharing.</span>
+<span class="sd">        :param pkg: :obj:`pkgcore.package.metadata.package` instance to install</span>
+<span class="sd">        :param offset: any livefs offset to force for modifications</span>
+<span class="sd">        :param disable_plugins: if enabled, run just the triggers passed in</span>
+<span class="sd">        :return: :obj:`MergeEngine`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hooks</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[</span><span class="n">y</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">install_hooks</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">csets</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">install_csets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;raw_new_cset&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">csets</span><span class="p">:</span>
+            <span class="n">csets</span><span class="p">[</span><span class="s2">&quot;raw_new_cset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">post_curry</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">get_pkg_contents</span><span class="p">,</span> <span class="n">pkg</span><span class="p">)</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">INSTALL_MODE</span><span class="p">,</span> <span class="n">tempdir</span><span class="p">,</span> <span class="n">hooks</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">install_csets_preserve</span><span class="p">,</span>
+                <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">disable_plugins</span><span class="o">=</span><span class="n">disable_plugins</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">offset</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+            <span class="c1"># wrap the results of new_cset to pass through an offset generator</span>
+            <span class="n">o</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="s2">&quot;raw_new_cset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">post_curry</span><span class="p">(</span>
+                <span class="n">o</span><span class="o">.</span><span class="n">generate_offset_cset</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="s2">&quot;raw_new_cset&quot;</span><span class="p">])</span>
+
+        <span class="n">o</span><span class="o">.</span><span class="n">new</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="k">return</span> <span class="n">o</span></div>
+
+<div class="viewcode-block" id="MergeEngine.uninstall"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.uninstall">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">uninstall</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">tempdir</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">disable_plugins</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate a MergeEngine instance configured for uninstalling a pkg.</span>
+
+<span class="sd">        :param tempdir: tempspace for the merger to use; this space it must</span>
+<span class="sd">            control alone, no sharing.</span>
+<span class="sd">        :param pkg: :obj:`pkgcore.package.metadata.package` instance to uninstall,</span>
+<span class="sd">            must be from a livefs vdb</span>
+<span class="sd">        :param offset: any livefs offset to force for modifications</span>
+<span class="sd">        :param disable_plugins: if enabled, run just the triggers passed in</span>
+<span class="sd">        :return: :obj:`MergeEngine`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hooks</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[</span><span class="n">y</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">uninstall_hooks</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="n">csets</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">uninstall_csets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="s2">&quot;raw_old_cset&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">csets</span><span class="p">:</span>
+            <span class="n">csets</span><span class="p">[</span><span class="s2">&quot;raw_old_cset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">post_curry</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">get_pkg_contents</span><span class="p">,</span> <span class="n">pkg</span><span class="p">)</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">UNINSTALL_MODE</span><span class="p">,</span> <span class="n">tempdir</span><span class="p">,</span> <span class="n">hooks</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">uninstall_csets_preserve</span><span class="p">,</span>
+                <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">disable_plugins</span><span class="o">=</span><span class="n">disable_plugins</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">offset</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+            <span class="c1"># wrap the results of new_cset to pass through an offset generator</span>
+            <span class="n">o</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="s2">&quot;old_cset&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">post_curry</span><span class="p">(</span>
+                <span class="n">o</span><span class="o">.</span><span class="n">generate_offset_cset</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="s2">&quot;old_cset&quot;</span><span class="p">])</span>
+
+        <span class="n">o</span><span class="o">.</span><span class="n">old</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="k">return</span> <span class="n">o</span></div>
+
+<div class="viewcode-block" id="MergeEngine.replace"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.replace">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">replace</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">tempdir</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">disable_plugins</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate a MergeEngine instance configured for replacing a pkg.</span>
+
+<span class="sd">        :param tempdir: tempspace for the merger to use; this space it must</span>
+<span class="sd">            control alone, no sharing.</span>
+<span class="sd">        :param old: :obj:`pkgcore.package.metadata.package` instance to replace,</span>
+<span class="sd">            must be from a livefs vdb</span>
+<span class="sd">        :param new: :obj:`pkgcore.package.metadata.package` instance</span>
+<span class="sd">        :param offset: any livefs offset to force for modifications</span>
+<span class="sd">        :param disable_plugins: if enabled, run just the triggers passed in</span>
+<span class="sd">        :return: :obj:`MergeEngine`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">hooks</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">[</span><span class="n">y</span><span class="p">()</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">v</span><span class="p">]</span> <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">replace_hooks</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="n">csets</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">replace_csets</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="n">csets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;raw_old_cset&#39;</span><span class="p">,</span> <span class="n">post_curry</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">get_pkg_contents</span><span class="p">,</span> <span class="n">old</span><span class="p">))</span>
+        <span class="n">csets</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;raw_new_cset&#39;</span><span class="p">,</span> <span class="n">post_curry</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">get_pkg_contents</span><span class="p">,</span> <span class="n">new</span><span class="p">))</span>
+
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">REPLACE_MODE</span><span class="p">,</span> <span class="n">tempdir</span><span class="p">,</span> <span class="n">hooks</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">replace_csets_preserve</span><span class="p">,</span>
+                <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">offset</span><span class="p">,</span> <span class="n">disable_plugins</span><span class="o">=</span><span class="n">disable_plugins</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">offset</span> <span class="o">!=</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;raw_old_cset&quot;</span><span class="p">,</span> <span class="s2">&quot;raw_new_cset&quot;</span><span class="p">):</span>
+                <span class="c1"># wrap the results of new_cset to pass through an</span>
+                <span class="c1"># offset generator</span>
+                <span class="n">o</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">post_curry</span><span class="p">(</span>
+                    <span class="n">o</span><span class="o">.</span><span class="n">generate_offset_cset</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+        <span class="n">o</span><span class="o">.</span><span class="n">old</span> <span class="o">=</span> <span class="n">old</span>
+        <span class="n">o</span><span class="o">.</span><span class="n">new</span> <span class="o">=</span> <span class="n">new</span>
+        <span class="k">return</span> <span class="n">o</span></div>
+
+<div class="viewcode-block" id="MergeEngine.replace_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.replace_cset">[docs]</a>    <span class="k">def</span> <span class="nf">replace_cset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">new_cset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Replace the cset referenced by this engine.</span>
+
+<span class="sd">        Use only if you know what you&#39;re doing.</span>
+
+<span class="sd">        :param name: name of the cset</span>
+<span class="sd">        :new_cset: a contentsSet instance to use</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">preserved_csets</span><span class="p">:</span>
+            <span class="c1"># yes this is evil awareness of LazyValDict internals...</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">preserved_csets</span><span class="o">.</span><span class="n">_vals</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_cset</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;attempted to replace a non preserved cset: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MergeEngine.regenerate_csets"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.regenerate_csets">[docs]</a>    <span class="k">def</span> <span class="nf">regenerate_csets</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Internal function, reset non preserverd csets.</span>
+
+<span class="sd">        Used in transitioning between hook points</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">csets</span> <span class="o">=</span> <span class="n">StackedDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preserved_csets</span><span class="p">,</span>
+            <span class="n">LazyValDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_cset_source</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_cset_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="n">key</span><span class="p">](</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">csets</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MergeEngine.add_preserved_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.add_preserved_cset">[docs]</a>    <span class="k">def</span> <span class="nf">add_preserved_cset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cset_name</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a cset generator for use.</span>
+
+<span class="sd">        The cset will stay in memory until the engine finishes all steps.</span>
+
+<span class="sd">        :param cset_name: what to call the generated cset</span>
+<span class="sd">        :param func: callable to get the cset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_cset</span><span class="p">(</span><span class="n">cset_name</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preserve_csets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cset_name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MergeEngine.add_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.add_cset">[docs]</a>    <span class="k">def</span> <span class="nf">add_cset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cset_name</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Regiser a cset generator for use.</span>
+
+<span class="sd">        The cset will be released from memory when it&#39;s no longer used.</span>
+
+<span class="sd">        :param cset_name: what to call the generated cset</span>
+<span class="sd">        :param func: callable to get the cset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;func must be a callable&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cset_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cset_name must be a string&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">[</span><span class="n">cset_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span></div>
+
+<div class="viewcode-block" id="MergeEngine.add_trigger"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.add_trigger">[docs]</a>    <span class="k">def</span> <span class="nf">add_trigger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook_name</span><span class="p">,</span> <span class="n">trigger</span><span class="p">,</span> <span class="n">required_csets</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a :obj:`pkgcore.merge.triggers.base` instance to be executed.</span>
+
+<span class="sd">        :param hook_name: engine step to hook the trigger into</span>
+<span class="sd">        :param trigger: :class:`pkgcore.merge.triggers.base` to add</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">hook_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;trigger </span><span class="si">{</span><span class="n">trigger</span><span class="si">!r}</span><span class="s2">&#39;s hook </span><span class="si">{</span><span class="n">hook_name</span><span class="si">}</span><span class="s2"> isn&#39;t a known hook&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">required_csets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">rcs</span> <span class="ow">in</span> <span class="n">required_csets</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">rcs</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cset_sources</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rcs</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">TriggerUnknownCset</span><span class="p">(</span><span class="n">trigger</span><span class="p">,</span> <span class="n">rcs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">[</span><span class="n">hook_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trigger</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MergeEngine.execute_hook"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.execute_hook">[docs]</a>    <span class="k">def</span> <span class="nf">execute_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hook</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute any triggers bound to a hook point.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="n">hook</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">regenerate_csets</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">trigger</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hooks</span><span class="p">[</span><span class="n">hook</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s2">&quot;priority&quot;</span><span class="p">)):</span>
+                <span class="c1"># error checking needed here.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">trigger_start</span><span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="n">trigger</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">trigger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">csets</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="n">IGNORED_EXCEPTIONS</span><span class="p">:</span>
+                        <span class="k">raise</span>
+                    <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">BlockModification</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;modification was blocked by trigger </span><span class="si">{</span><span class="n">trigger</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">raise</span>
+                    <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ModificationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;modification error occurred during trigger </span><span class="si">{</span><span class="n">trigger</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">raise</span>
+                    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">trigger</span><span class="o">.</span><span class="n">suppress_exceptions</span><span class="p">:</span>
+                            <span class="k">raise</span>
+
+                        <span class="n">handle</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">StringIO</span><span class="p">()</span>
+                        <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">handle</span><span class="p">)</span>
+
+                        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                            <span class="s2">&quot;unhandled exception caught and &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;suppressed:</span><span class="se">\n</span><span class="si">{</span><span class="n">handle</span><span class="o">.</span><span class="n">getvalue</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">trigger_end</span><span class="p">(</span><span class="n">hook</span><span class="p">,</span> <span class="n">trigger</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">phase</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="MergeEngine.generate_offset_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.generate_offset_cset">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">generate_offset_cset</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="n">cset_generator</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate a cset with offset applied.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cset_generator</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">)</span><span class="o">.</span><span class="n">insert_offset</span><span class="p">(</span><span class="n">engine</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MergeEngine.get_pkg_contents"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.get_pkg_contents">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_pkg_contents</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the cset of what files shall be merged to the livefs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">contents</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="MergeEngine.get_remove_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.get_remove_cset">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_remove_cset</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the cset of what files shall be removed from the livefs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">csets</span><span class="p">[</span><span class="s2">&quot;old_cset&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">csets</span><span class="p">[</span><span class="s2">&quot;install&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="MergeEngine.get_replace_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.get_replace_cset">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_replace_cset</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the cset of what will be replaced going from old-&gt;new pkg.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">csets</span><span class="p">[</span><span class="s2">&quot;install&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">csets</span><span class="p">[</span><span class="s2">&quot;old_cset&quot;</span><span class="p">])</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_livefs_intersect_cset</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="n">cset_name</span><span class="p">,</span> <span class="n">realpath</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate the livefs intersection against a cset.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">contents</span><span class="o">.</span><span class="n">contentsSet</span><span class="p">(</span><span class="n">livefs</span><span class="o">.</span><span class="n">intersect</span><span class="p">(</span><span class="n">csets</span><span class="p">[</span><span class="n">cset_name</span><span class="p">],</span> <span class="n">realpath</span><span class="o">=</span><span class="n">realpath</span><span class="p">))</span>
+
+<div class="viewcode-block" id="MergeEngine.get_install_livefs_intersect"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.get_install_livefs_intersect">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_install_livefs_intersect</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">_get_livefs_intersect_cset</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MergeEngine.get_uninstall_livefs_intersect"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.get_uninstall_livefs_intersect">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">get_uninstall_livefs_intersect</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">engine</span><span class="o">.</span><span class="n">_get_livefs_intersect_cset</span><span class="p">(</span><span class="n">engine</span><span class="p">,</span> <span class="n">csets</span><span class="p">,</span> <span class="s2">&quot;raw_old_cset&quot;</span><span class="p">)</span></div>
+
+    <span class="n">alias_cset</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">alias_cset</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MergeEngine.get_merged_cset"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.get_merged_cset">[docs]</a>    <span class="k">def</span> <span class="nf">get_merged_cset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">strip_offset</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">cset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">csets</span><span class="p">[</span><span class="s2">&quot;install&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">strip_offset</span><span class="p">:</span>
+            <span class="n">rewrite</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">change_offset_rewriter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">cset</span><span class="p">)</span>
+            <span class="n">cset</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">contentsSet</span><span class="p">(</span><span class="n">rewrite</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cset</span></div>
+
+<div class="viewcode-block" id="MergeEngine.get_writable_fsobj"><a class="viewcode-back" href="../../../api/pkgcore.merge.engine.html#pkgcore.merge.engine.MergeEngine.get_writable_fsobj">[docs]</a>    <span class="k">def</span> <span class="nf">get_writable_fsobj</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fsobj</span><span class="p">,</span> <span class="n">prefer_reuse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">empty</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">source</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">fsobj</span><span class="p">:</span>
+            <span class="n">source</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">mutable</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">fsobj</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_reuse</span> <span class="ow">and</span> <span class="n">prefer_reuse</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span>
+
+                <span class="c1"># XXX: this should be doing abspath fs intersection probably,</span>
+                <span class="c1"># although the paths generated are from triggers/engine- still.</span>
+
+                <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span><span class="p">):</span>
+                    <span class="c1"># the fsobj pathway isn&#39;t in temp space; force a transfer.</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="k">if</span> <span class="n">path</span><span class="p">:</span>
+                <span class="c1"># ok, it&#39;s tempspace, and reusable.</span>
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">data_source</span><span class="o">.</span><span class="n">local_source</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">source</span><span class="o">.</span><span class="n">encoding</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">empty</span><span class="p">:</span>
+                    <span class="n">obj</span><span class="o">.</span><span class="n">bytes_fileobj</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">truncate</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">obj</span>
+
+        <span class="c1"># clone it into tempspace; it&#39;s required we control the tempspace,</span>
+        <span class="c1"># so this function is safe in our usage.</span>
+        <span class="n">fd</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;merge-engine-&#39;</span><span class="p">,</span> <span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tempdir</span><span class="p">)</span>
+
+        <span class="c1"># XXX: annoying quirk of python, we don&#39;t want append mode, so &#39;a+&#39;</span>
+        <span class="c1"># isn&#39;t viable; wr will truncate the file, so data_source uses r+.</span>
+        <span class="c1"># this however doesn&#39;t allow us to state &quot;create if missing&quot;</span>
+        <span class="c1"># so we create it ourselves. Annoying, but so it goes.</span>
+        <span class="c1"># just touch the filepath.</span>
+        <span class="n">touch</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">new_source</span> <span class="o">=</span> <span class="n">data_source</span><span class="o">.</span><span class="n">local_source</span><span class="p">(</span>
+            <span class="n">path</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">fsobj</span><span class="p">,</span> <span class="s1">&#39;encoding&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">empty</span><span class="p">:</span>
+            <span class="n">data_source</span><span class="o">.</span><span class="n">transfer</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">bytes_fsobj</span><span class="p">(),</span> <span class="n">new_source</span><span class="o">.</span><span class="n">bytes_fsobj</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">new_source</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.engine</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,23 @@
+pkgcore.plugins package
+=======================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.plugins.builtin_configurables
+   pkgcore.plugins.builtin_formats
+   pkgcore.plugins.pkgcore_formatters
+   pkgcore.plugins.pkgcore_fsops_default
+   pkgcore.plugins.pkgcore_syncers
+   pkgcore.plugins.pkgcore_triggers
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.plugins
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pkgcore.ebuild.portageq module
+==============================
+
+.. automodule:: pkgcore.ebuild.portageq
+   :members:
+   :undoc-members:
+   :show-inheritance:

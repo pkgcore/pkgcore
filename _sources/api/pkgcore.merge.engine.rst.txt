@@ -1,0 +1,7 @@
+pkgcore.merge.engine module
+===========================
+
+.. automodule:: pkgcore.merge.engine
+   :members:
+   :undoc-members:
+   :show-inheritance:

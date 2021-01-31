@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect portageq get_repos [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [root]

@@ -1,0 +1,7 @@
+pmaint regen - regenerate repository caches
+-------------------------------------------
+
+.. include:: regen/_synopsis.rst
+.. include:: regen/_description.rst
+.. include:: regen/_options.rst
+.. include:: regen/_subcommands.rst

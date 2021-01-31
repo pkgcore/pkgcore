@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fs.livefs module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.livefs module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.fs.livefs">
+<span id="pkgcore-fs-livefs-module"></span><h1>pkgcore.fs.livefs module<a class="headerlink" href="#module-pkgcore.fs.livefs" title="Permalink to this headline">¶</a></h1>
+<p>interaction with the livefs: generating fs objects to represent the livefs.</p>
+<dl class="py function">
+<dt id="pkgcore.fs.livefs.gen_obj">
+<code class="sig-prename descclassname">pkgcore.fs.livefs.</code><code class="sig-name descname">gen_obj</code><span class="sig-paren">(</span><em class="sig-param">path</em>, <em class="sig-param">stat=None</em>, <em class="sig-param">chksum_handlers=None</em>, <em class="sig-param">real_location=None</em>, <em class="sig-param">stat_func=&lt;built-in function lstat&gt;</em>, <em class="sig-param">**overrides</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/livefs.html#gen_obj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.livefs.gen_obj" title="Permalink to this definition">¶</a></dt>
+<dd><p>given a fs path, and an optional stat, create an appropriate fs obj.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stat</strong> – stat object to reuse if available</p></li>
+<li><p><strong>real_location</strong> – real path to the object if path is the desired
+location, rather then existent location.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#KeyError" title="(in Python v3.9)"><strong>KeyError</strong></a> – if no obj type matches the stat checks</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsBase</span></code> derivative</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.livefs.iter_scan">
+<code class="sig-prename descclassname">pkgcore.fs.livefs.</code><code class="sig-name descname">iter_scan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">follow_symlinks</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">chksum_types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hidden</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">backup</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/livefs.html#iter_scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.livefs.iter_scan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively scan a path.</p>
+<p>Does not follow symlinks pointing at dirs, just merely yields an
+obj representing said symlink</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>an iterator of <code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.fs.fs.fsBase</span></code> objects.</p>
+</dd>
+<dt class="field-even">Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – str path of what directory to scan in the livefs</p></li>
+<li><p><strong>offset</strong> – if not None, prefix to strip from each objects location.
+if offset is /tmp, /tmp/blah becomes /blah</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.livefs.scan">
+<code class="sig-prename descclassname">pkgcore.fs.livefs.</code><code class="sig-name descname">scan</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/livefs.html#scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.livefs.scan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for list(iter_scan(<a href="#id1"><span class="problematic" id="id2">*</span></a>a, <a href="#id3"><span class="problematic" id="id4">**</span></a>kw))</p>
+<p>Look at <a class="reference internal" href="#pkgcore.fs.livefs.iter_scan" title="pkgcore.fs.livefs.iter_scan"><code class="xref py py-func docutils literal notranslate"><span class="pre">iter_scan()</span></code></a> for valid args.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.livefs.sorted_scan">
+<code class="sig-prename descclassname">pkgcore.fs.livefs.</code><code class="sig-name descname">sorted_scan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">nonexistent</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/livefs.html#sorted_scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.livefs.sorted_scan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively scan a path for regular, nonhidden files.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – path to directory to scan in the livefs</p></li>
+<li><p><strong>nonexistent</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.9)"><em>bool</em></a>) – return nonexistent given path if True, else return
+an empty list</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>an alphabetically sorted list of regular, nonhidden file locations
+accessible under the given path</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#EnvironmentError" title="(in Python v3.9)"><strong>EnvironmentError</strong></a> – on permission errors</p>
+</dd>
+</dl>
+<p>See <a class="reference internal" href="#pkgcore.fs.livefs.iter_scan" title="pkgcore.fs.livefs.iter_scan"><code class="xref py py-func docutils literal notranslate"><span class="pre">iter_scan()</span></code></a> for other valid args.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.livefs module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

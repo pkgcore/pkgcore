@@ -1,0 +1,647 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.misc &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.misc</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.misc</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">misc. stuff we&#39;ve not found a spot for yet.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;ChunkedDataDict&quot;</span><span class="p">,</span> <span class="s2">&quot;IncrementalsDict&quot;</span><span class="p">,</span> <span class="s2">&quot;PayloadDict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;chunked_data&quot;</span><span class="p">,</span> <span class="s2">&quot;collapsed_restrict_to_data&quot;</span><span class="p">,</span> <span class="s2">&quot;incremental_chunked&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;incremental_expansion&quot;</span><span class="p">,</span> <span class="s2">&quot;incremental_expansion_license&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;non_incremental_collapsed_restrict_to_data&quot;</span><span class="p">,</span> <span class="s2">&quot;optimize_incrementals&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sort_keywords&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">mappings</span>
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">alias_method</span><span class="p">,</span> <span class="n">generic_equality</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">boolean</span><span class="p">,</span> <span class="n">packages</span><span class="p">,</span> <span class="n">restriction</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">atom</span>
+
+<span class="n">restrict_payload</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;restrict_data&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;restrict&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">])</span>
+<span class="n">chunked_data</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;chunked_data&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;key&quot;</span><span class="p">,</span> <span class="s2">&quot;neg&quot;</span><span class="p">,</span> <span class="s2">&quot;pos&quot;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="sort_keywords"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.sort_keywords">[docs]</a><span class="k">def</span> <span class="nf">sort_keywords</span><span class="p">(</span><span class="n">keywords</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sort keywords in the proper order: i.e. glob-arches, arch, prefix-arches.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_sort_kwds</span><span class="p">(</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">kw</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;~-&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">keywords</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">_sort_kwds</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="optimize_incrementals"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.optimize_incrementals">[docs]</a><span class="k">def</span> <span class="nf">optimize_incrementals</span><span class="p">(</span><span class="n">sequence</span><span class="p">):</span>
+    <span class="c1"># roughly the algorithm walks sequences right-&gt;left,</span>
+    <span class="c1"># identifying terminal points for incrementals; aka, -x x, &#39;x&#39;</span>
+    <span class="c1"># is the terminal point- no point in having -x.</span>
+    <span class="n">finalized</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">sequence</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">item</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;encountered an incomplete negation (just -, no flag)&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+                <span class="c1"># seen enough.</span>
+                <span class="k">yield</span> <span class="n">item</span>
+                <span class="k">return</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">finalized</span><span class="p">:</span>
+                <span class="n">finalized</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">item</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">finalized</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">item</span>
+                <span class="n">finalized</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">item</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="incremental_chunked"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.incremental_chunked">[docs]</a><span class="k">def</span> <span class="nf">incremental_chunked</span><span class="p">(</span><span class="n">orig</span><span class="p">,</span> <span class="n">iterables</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">cinst</span> <span class="ow">in</span> <span class="n">iterables</span><span class="p">:</span>
+        <span class="n">orig</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">cinst</span><span class="o">.</span><span class="n">neg</span><span class="p">)</span>
+        <span class="n">orig</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">cinst</span><span class="o">.</span><span class="n">pos</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="incremental_expansion"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.incremental_expansion">[docs]</a><span class="k">def</span> <span class="nf">incremental_expansion</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">orig</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg_prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">finalize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">orig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">orig</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">token</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">msg_prefix</span><span class="si">}</span><span class="s2"> encountered an incomplete negation, &#39;-&#39;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+                <span class="n">orig</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">orig</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">finalize</span><span class="p">:</span>
+                <span class="n">orig</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">orig</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">token</span><span class="p">)</span>
+            <span class="n">orig</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">orig</span></div>
+
+
+<div class="viewcode-block" id="incremental_expansion_license"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.incremental_expansion_license">[docs]</a><span class="k">def</span> <span class="nf">incremental_expansion_license</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">licenses</span><span class="p">,</span> <span class="n">license_groups</span><span class="p">,</span> <span class="n">iterable</span><span class="p">,</span> <span class="n">msg_prefix</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">token</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">token</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">msg_prefix</span><span class="si">}</span><span class="s2">encountered an incomplete negation, &#39;-&#39;&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;@&#39;</span><span class="p">:</span>
+                    <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">msg_prefix</span><span class="si">}</span><span class="s2">encountered an incomplete negation&quot;</span>
+                            <span class="s2">&quot; of a license group, &#39;-@&#39;&quot;</span><span class="p">)</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">license_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="p">()))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">token</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;@&#39;</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">token</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">msg_prefix</span><span class="si">}</span><span class="s2">encountered an incomplete license group, &#39;@&#39;&quot;</span><span class="p">)</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">license_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">elif</span> <span class="n">token</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">seen</span></div>
+
+
+<div class="viewcode-block" id="IncrementalsDict"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.IncrementalsDict">[docs]</a><span class="k">class</span> <span class="nc">IncrementalsDict</span><span class="p">(</span><span class="n">mappings</span><span class="o">.</span><span class="n">DictMixin</span><span class="p">):</span>
+
+    <span class="n">disable_py3k_rewriting</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incrementals</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_incrementals</span> <span class="o">=</span> <span class="n">incrementals</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_incrementals</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="s2">&quot;getitem delitem len iter&quot;</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;__</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">__&#39;</span>
+        <span class="nb">locals</span><span class="p">()[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">alias_method</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_dict.</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;pop clear keys items values&quot;</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+        <span class="nb">locals</span><span class="p">()[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">alias_method</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;_dict.</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">x</span><span class="p">,</span> <span class="n">s</span></div>
+
+
+<div class="viewcode-block" id="collapsed_restrict_to_data"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.collapsed_restrict_to_data">[docs]</a><span class="k">class</span> <span class="nc">collapsed_restrict_to_data</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;defaults&#39;</span><span class="p">,</span> <span class="s1">&#39;freeform&#39;</span><span class="p">,</span> <span class="s1">&#39;atoms&#39;</span><span class="p">,</span> <span class="s1">&#39;__class__&#39;</span><span class="p">)</span>
+    <span class="n">incremental</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">restrict_sources</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        descriptive, no?</span>
+
+<span class="sd">        Basically splits an iterable of restrict:data into</span>
+<span class="sd">        level of specificity, repo, cat, pkg, atom (dict) for use</span>
+<span class="sd">        in filters</span>
+
+<span class="sd">        Finally, a finalize_defaults kwd is supported to control whether</span>
+<span class="sd">        incremental_expansion finalizes the initial defaults list.</span>
+<span class="sd">        defaults to True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">always</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">cat</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">multi</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">atom_d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">restrict_pairs</span> <span class="ow">in</span> <span class="n">restrict_sources</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">restrict_pairs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">data</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">restriction</span><span class="o">.</span><span class="n">AlwaysBool</span><span class="p">):</span>
+                    <span class="c1"># yes, odd attr name, but negate holds the val to return.</span>
+                    <span class="c1"># note also, we&#39;re dropping AlwaysFalse; it&#39;ll never match.</span>
+                    <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">negate</span><span class="p">:</span>
+                        <span class="n">always</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+                        <span class="k">for</span> <span class="n">atomlist</span> <span class="ow">in</span> <span class="n">atom_d</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                            <span class="n">atomlist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="nb">set</span><span class="p">([</span><span class="n">flag</span> <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">if</span> <span class="n">flag</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)])))</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">):</span>
+                    <span class="n">atom_d</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">):</span>
+                    <span class="n">multi</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;category&quot;</span><span class="p">:</span>
+                        <span class="n">cat</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;package&quot;</span><span class="p">:</span>
+                        <span class="n">pkg</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+                    <span class="k">elif</span> <span class="n">a</span><span class="o">.</span><span class="n">attr</span> <span class="o">==</span> <span class="s2">&quot;repo.repo_id&quot;</span><span class="p">:</span>
+                        <span class="n">repo</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">a</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">a</span><span class="si">!r}</span><span class="s2"> doesn&#39;t operate on &quot;</span>
+                            <span class="sa">f</span><span class="s2">&quot;package/category/repo: data </span><span class="si">{</span><span class="n">data</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">a</span><span class="si">!r}</span><span class="s2"> is not an AlwaysBool, PackageRestriction, &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;or atom: data </span><span class="si">{</span><span class="n">data</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">always</span><span class="p">:</span>
+            <span class="n">always</span> <span class="o">=</span> <span class="n">incremental_expansion</span><span class="p">(</span><span class="n">always</span><span class="p">,</span> <span class="n">finalize</span><span class="o">=</span><span class="n">kwds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;finalize_defaults&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">always</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="o">=</span> <span class="n">always</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">defaults_finalized</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">freeform</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">cat</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">multi</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span> <span class="o">=</span> <span class="n">atom_d</span>
+
+<div class="viewcode-block" id="collapsed_restrict_to_data.pull_data"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.collapsed_restrict_to_data.pull_data">[docs]</a>    <span class="k">def</span> <span class="nf">pull_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">force_copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pre_defaults</span><span class="o">=</span><span class="p">()):</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">specific</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">freeform</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">specific</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                    <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pre_defaults</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pre_defaults</span><span class="p">)</span>
+            <span class="n">incremental_expansion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">,</span> <span class="n">orig</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults_finalized</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">l</span><span class="p">:</span>
+            <span class="n">incremental_expansion</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">l</span><span class="p">),</span> <span class="n">orig</span><span class="o">=</span><span class="n">s</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+<div class="viewcode-block" id="collapsed_restrict_to_data.iter_pull_data"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.collapsed_restrict_to_data.iter_pull_data">[docs]</a>    <span class="k">def</span> <span class="nf">iter_pull_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">pre_defaults</span><span class="o">=</span><span class="p">()):</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">pre_defaults</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">item</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">item</span>
+        <span class="k">for</span> <span class="n">specific</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">freeform</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">specific</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">item</span>
+        <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">item</span></div></div>
+
+
+<div class="viewcode-block" id="non_incremental_collapsed_restrict_to_data"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data">[docs]</a><span class="k">class</span> <span class="nc">non_incremental_collapsed_restrict_to_data</span><span class="p">(</span><span class="n">collapsed_restrict_to_data</span><span class="p">):</span>
+
+<div class="viewcode-block" id="non_incremental_collapsed_restrict_to_data.pull_data"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data.pull_data">[docs]</a>    <span class="k">def</span> <span class="nf">pull_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">force_copy</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">specific</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">freeform</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">specific</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                    <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">l</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">force_copy</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">l</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+<div class="viewcode-block" id="non_incremental_collapsed_restrict_to_data.iter_pull_data"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data.iter_pull_data">[docs]</a>    <span class="k">def</span> <span class="nf">iter_pull_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">specific</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">freeform</span><span class="p">:</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span> <span class="k">for</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">specific</span> <span class="k">if</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">atoms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="n">l</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_cached_build_cp_atom_payload</span><span class="p">(</span><span class="n">cache</span><span class="p">,</span> <span class="n">sequence</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">payload_form</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">sequence</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">payload_form</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sequence</span><span class="p">))</span>
+    <span class="n">val</span> <span class="o">=</span> <span class="n">cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">_build_cp_atom_payload</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">payload_form</span><span class="o">=</span><span class="n">payload_form</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="k">def</span> <span class="nf">_build_cp_atom_payload</span><span class="p">(</span><span class="n">sequence</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">payload_form</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">locked</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">ldefault</span> <span class="o">=</span> <span class="n">locked</span><span class="o">.</span><span class="n">setdefault</span>
+
+    <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">if</span> <span class="n">payload_form</span><span class="p">:</span>
+        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">restrict_payload</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chain</span><span class="p">((</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">neg</span><span class="p">),</span> <span class="n">pos</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">chunked_data</span>
+
+    <span class="n">i</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">neg</span><span class="p">,</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pos</span><span class="p">),)</span>
+
+    <span class="n">i</span> <span class="o">=</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span> <span class="ow">or</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="s1">&#39;is_simple&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">neg</span><span class="p">:</span>
+                <span class="n">ldefault</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">pos</span><span class="p">:</span>
+                <span class="n">ldefault</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">neg</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">neg</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">locked</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">pos</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">locked</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">neg</span> <span class="ow">or</span> <span class="n">pos</span><span class="p">:</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">))</span>
+
+    <span class="c1"># thus far we&#39;ve done essentially a tracing for R-&gt;L, of globals,</span>
+    <span class="c1"># this leaves d-u/a X, =d-u/a-1 X # slipping through however,</span>
+    <span class="c1"># since the specific is later.  Plus it&#39;s reversed from what we want.</span>
+    <span class="c1"># so we rebuild, but apply the same global trick as we go.</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">locked</span><span class="p">:</span>
+        <span class="c1"># all is specific/non-simple, just reverse and return</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">vals</span><span class="p">)</span> <span class="k">for</span> <span class="n">vals</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">l</span><span class="p">))</span>
+
+    <span class="n">new_l</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="p">(</span>
+        <span class="n">restrict</span><span class="p">,</span>
+        <span class="nb">tuple</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">locked</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">),</span>  <span class="c1"># neg</span>
+        <span class="nb">tuple</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">locked</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">)</span>  <span class="c1"># pos</span>
+    <span class="p">)]</span>
+    <span class="c1"># we exploit a few things this time around in reusing the algo from above</span>
+    <span class="c1"># we know there is only going to be one global (which we just added),</span>
+    <span class="c1"># and that everything is specific.</span>
+
+    <span class="n">lget</span> <span class="o">=</span> <span class="n">locked</span><span class="o">.</span><span class="n">get</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+        <span class="c1"># only grab the deltas; if a + becomes a specific -</span>
+        <span class="n">neg</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">neg</span> <span class="k">if</span> <span class="n">lget</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pos</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">lget</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kc">False</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">neg</span> <span class="ow">or</span> <span class="n">pos</span><span class="p">:</span>
+            <span class="n">new_l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">new_l</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ChunkedDataDict"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict">[docs]</a><span class="k">class</span> <span class="nc">ChunkedDataDict</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_global_settings&#39;</span><span class="p">,</span> <span class="s1">&#39;_dict&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">frozen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">,</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ChunkedDataDict.clone"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.clone">[docs]</a>    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unfreeze</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">unfreeze</span><span class="p">:</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">_global_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span>
+            <span class="k">return</span> <span class="n">obj</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">obj</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">_global_settings</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.mk_item"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.mk_item">[docs]</a>    <span class="k">def</span> <span class="nf">mk_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">chunked_data</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">neg</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pos</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.add_global"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.add_global">[docs]</a>    <span class="k">def</span> <span class="nf">add_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_global</span><span class="p">(</span><span class="n">item</span><span class="o">.</span><span class="n">neg</span><span class="p">,</span> <span class="n">item</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">restrict</span><span class="o">=</span><span class="n">item</span><span class="o">.</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.add_bare_global"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.add_bare_global">[docs]</a>    <span class="k">def</span> <span class="nf">add_bare_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disabled</span><span class="p">,</span> <span class="n">enabled</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_global</span><span class="p">(</span><span class="n">disabled</span><span class="p">,</span> <span class="n">enabled</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_add_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disabled</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">restrict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">disabled</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">enabled</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="c1"># discard current global in the mapping.</span>
+        <span class="n">disabled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">disabled</span><span class="p">)</span>
+        <span class="n">enabled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">enabled</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">restrict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">restrict</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span>
+        <span class="n">payload</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mk_item</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">disabled</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">enabled</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">vals</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_expand_globals</span><span class="p">([</span><span class="n">payload</span><span class="p">])</span>
+
+<div class="viewcode-block" id="ChunkedDataDict.merge"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.merge">[docs]</a>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cdict</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cdict</span><span class="p">,</span> <span class="n">ChunkedDataDict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;merge expects a ChunkedDataDict instance; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">cdict</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cdict</span><span class="p">,</span> <span class="n">PayloadDict</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">PayloadDict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;merge expects a PayloadDataDict instance; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;got type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">cdict</span><span class="p">)</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">cdict</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># straight extensions for this, rather than update_from_stream.</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">cdict</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="c1"># note the cdict we&#39;re merging has the globals layer through it already, ours</span>
+        <span class="c1"># however needs to have the new globals appended to all untouched keys</span>
+        <span class="c1"># (no need to update the merged keys- they already have that global data</span>
+        <span class="c1"># interlaced)</span>
+        <span class="n">new_globals</span> <span class="o">=</span> <span class="n">cdict</span><span class="o">.</span><span class="n">_global_settings</span>
+        <span class="k">if</span> <span class="n">new_globals</span><span class="p">:</span>
+            <span class="n">updates</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">updates</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">cdict</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">updates</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_globals</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_expand_globals</span><span class="p">(</span><span class="n">new_globals</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_expand_globals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_globals</span><span class="p">):</span>
+        <span class="c1"># while a chain seems obvious here, reversed is used w/in _build_cp_atom;</span>
+        <span class="c1"># reversed doesn&#39;t like chain, so we just modify the list and do it this way.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_globals</span><span class="p">)</span>
+        <span class="n">restrict</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">new_globals</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">restrict</span> <span class="o">==</span> <span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">[:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                <span class="n">_build_cp_atom_payload</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">,</span> <span class="n">restrict</span><span class="p">))</span>
+
+<div class="viewcode-block" id="ChunkedDataDict.add"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cinst</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">([</span><span class="n">cinst</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.update_from_stream"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.update_from_stream">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">cinst</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">cinst</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># atom, or something similar.  use the key lookup.</span>
+                <span class="c1"># hack also... recreate the restriction; this is due to</span>
+                <span class="c1"># internal idiocy in ChunkedDataDict that will be fixed.</span>
+                <span class="n">new_globals</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span>
+                               <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">cinst</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">cinst</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_globals</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">cinst</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cinst</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_global</span><span class="p">(</span><span class="n">cinst</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.freeze"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.freeze">[docs]</a>    <span class="k">def</span> <span class="nf">freeze</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">,</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.optimize"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.optimize">[docs]</a>    <span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">cache</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">d_stream</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">_build_cp_atom_payload</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="kc">False</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="n">g_stream</span> <span class="o">=</span> <span class="p">(</span><span class="n">_build_cp_atom_payload</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">,</span>
+                <span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">,</span> <span class="n">payload_form</span><span class="o">=</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">PayloadDict</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">d_stream</span> <span class="o">=</span> <span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">_cached_build_cp_atom_payload</span><span class="p">(</span>
+                <span class="n">cache</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="kc">False</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="n">g_stream</span> <span class="o">=</span> <span class="p">(</span><span class="n">_cached_build_cp_atom_payload</span><span class="p">(</span>
+                <span class="n">cache</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">,</span>
+                <span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">,</span> <span class="n">payload_form</span><span class="o">=</span><span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">PayloadDict</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frozen</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">(</span><span class="n">d_stream</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">g_stream</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">d_stream</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">[:]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">g_stream</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.render_to_dict"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.render_to_dict">[docs]</a>    <span class="k">def</span> <span class="nf">render_to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">[:]</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+<div class="viewcode-block" id="ChunkedDataDict.render_to_payload"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.render_to_payload">[docs]</a>    <span class="k">def</span> <span class="nf">render_to_payload</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">PayloadDict</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="n">_build_cp_atom_payload</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="kc">True</span><span class="p">)</span>
+             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">_build_cp_atom_payload</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">,</span>
+                <span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">,</span> <span class="n">payload_form</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">d</span></div>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">render_to_dict</span><span class="p">())</span>
+
+<div class="viewcode-block" id="ChunkedDataDict.render_pkg"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.ChunkedDataDict.render_pkg">[docs]</a>    <span class="k">def</span> <span class="nf">render_pkg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">pre_defaults</span><span class="o">=</span><span class="p">()):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">items</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pre_defaults</span><span class="p">)</span>
+        <span class="n">incremental_chunked</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="p">(</span><span class="n">cinst</span> <span class="k">for</span> <span class="n">cinst</span> <span class="ow">in</span> <span class="n">items</span> <span class="k">if</span> <span class="n">cinst</span><span class="o">.</span><span class="n">key</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">s</span></div>
+
+    <span class="n">pull_data</span> <span class="o">=</span> <span class="n">render_pkg</span></div>
+
+
+<div class="viewcode-block" id="PayloadDict"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.PayloadDict">[docs]</a><span class="k">class</span> <span class="nc">PayloadDict</span><span class="p">(</span><span class="n">ChunkedDataDict</span><span class="p">):</span>
+
+<div class="viewcode-block" id="PayloadDict.mk_item"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.PayloadDict.mk_item">[docs]</a>    <span class="k">def</span> <span class="nf">mk_item</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">restrict_payload</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chain</span><span class="p">((</span><span class="s2">&quot;-&quot;</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">neg</span><span class="p">),</span> <span class="n">pos</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="PayloadDict.add_bare_global"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.PayloadDict.add_bare_global">[docs]</a>    <span class="k">def</span> <span class="nf">add_bare_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">payload</span><span class="p">):</span>
+        <span class="n">neg</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">payload</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">]</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">payload</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span><span class="p">]</span>
+        <span class="n">ChunkedDataDict</span><span class="o">.</span><span class="n">add_bare_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PayloadDict.add_global"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.PayloadDict.add_global">[docs]</a>    <span class="k">def</span> <span class="nf">add_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pinst</span><span class="p">):</span>
+        <span class="n">neg</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pinst</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">]</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pinst</span><span class="o">.</span><span class="n">data</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;-&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">ChunkedDataDict</span><span class="o">.</span><span class="n">add_global</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chunked_data</span><span class="p">(</span><span class="n">pinst</span><span class="o">.</span><span class="n">restrict</span><span class="p">,</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="PayloadDict.update_from_stream"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.PayloadDict.update_from_stream">[docs]</a>    <span class="k">def</span> <span class="nf">update_from_stream</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stream</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">pinst</span> <span class="ow">in</span> <span class="n">stream</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pinst</span><span class="o">.</span><span class="n">restrict</span><span class="p">,</span> <span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># atom, or something similar.  use the key lookup.</span>
+                <span class="c1"># hack also... recreate the restriction; this is due to</span>
+                <span class="c1"># internal idiocy in ChunkedDataDict that will be fixed.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">pinst</span><span class="o">.</span><span class="n">restrict</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pinst</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_global</span><span class="p">(</span><span class="n">pinst</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PayloadDict.render_pkg"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.misc.html#pkgcore.ebuild.misc.PayloadDict.render_pkg">[docs]</a>    <span class="k">def</span> <span class="nf">render_pkg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">pre_defaults</span><span class="o">=</span><span class="p">()):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">items</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_settings</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pre_defaults</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+            <span class="n">item</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">items</span> <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">incremental_expansion</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">orig</span><span class="o">=</span><span class="n">s</span><span class="p">)</span></div>
+
+    <span class="n">pull_data</span> <span class="o">=</span> <span class="n">render_pkg</span></div>
+
+
+<span class="k">def</span> <span class="nf">run_sanity_checks</span><span class="p">(</span><span class="n">pkgs</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run all sanity checks for a sequence of packages.&quot;&quot;&quot;</span>
+    <span class="n">failures</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">sanity_check</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">pkg_ops</span><span class="p">:</span> <span class="n">pkg_ops</span><span class="o">.</span><span class="n">sanity_check</span><span class="p">()</span>
+
+    <span class="c1"># generator of pkgs supporting sanity checks</span>
+    <span class="k">def</span> <span class="nf">_filter_pkgs</span><span class="p">(</span><span class="n">pkgs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgs</span><span class="p">:</span>
+            <span class="n">pkg_ops</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">pkg_operations</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pkg_ops</span><span class="o">.</span><span class="n">supports</span><span class="p">(</span><span class="s2">&quot;sanity_check&quot;</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">pkg_ops</span>
+
+    <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">threads</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">failed</span> <span class="ow">in</span> <span class="n">executor</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">sanity_check</span><span class="p">,</span> <span class="n">_filter_pkgs</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+                <span class="n">failures</span><span class="p">[</span><span class="n">pkg</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">failed</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">failures</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.misc</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

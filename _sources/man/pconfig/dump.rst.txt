@@ -1,0 +1,7 @@
+pconfig dump - dump the entire configuration
+--------------------------------------------
+
+.. include:: dump/_synopsis.rst
+.. include:: dump/_description.rst
+.. include:: dump/_options.rst
+.. include:: dump/_subcommands.rst

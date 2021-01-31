@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Positional Arguments &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Positional Arguments</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="positional-arguments">
+<h1>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list">
+<dt class="field-odd">TARGET</dt>
+<dd class="field-odd"><p>Various target arguments are supported including the following:</p>
+<dl class="simple">
+<dt>atom</dt><dd><p>An extended atom syntax is supported, see the related section
+in pkgcore(5).</p>
+</dd>
+<dt>package set</dt><dd><p>Used to define lists of packages, the syntax used for these is
+&#64;pkgset. For example, the &#64;system and &#64;world package sets are
+supported.</p>
+</dd>
+<dt>extended globbing</dt><dd><p>Globbing package names or atoms allows for use cases such as
+<code class="docutils literal notranslate"><span class="pre">'far*'</span></code> (merge every package starting with 'far'),
+<code class="docutils literal notranslate"><span class="pre">'dev-python/*::gentoo'</span></code> (merge every package in the dev-python
+category from the gentoo repo), or even '*' (merge everything).</p>
+</dd>
+</dl>
+<p>Also, the target '-' allows targets to be read from standard input.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="base-options">
+<h1>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--version</span></kbd></dt>
+<dd><p>Show this program's version information and exit.</p>
+<p>When running from within a git repo or a version
+installed from git the latest commit hash and date will
+be shown.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="config-options">
+<h1>Config Options<a class="headerlink" href="#config-options" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>--add-config SECTION KEY VALUE</dt><dd><p>modify existing pkgcore config section</p>
+</dd>
+<dt>--new-config SECTION KEY VALUE</dt><dd><p>add new pkgcore config section</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--empty-config</span></kbd></dt>
+<dd><p>skip loading user/system pkgcore config</p>
+</dd>
+<dt><kbd><span class="option">--config <var>PATH</var></span></kbd></dt>
+<dd><p>use custom pkgcore config file</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="operations">
+<h1>Operations<a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-u</span>, <span class="option">--upgrade</span></kbd></dt>
+<dd><p>Try to upgrade specified targets to the latest visible version. Note
+that altered package visibility due to keywording or masking can often
+hide the latest versions of packages, especially for stable
+configurations.</p>
+</dd>
+<dt><kbd><span class="option">-d</span>, <span class="option">--downgrade</span></kbd></dt>
+<dd><p>Try to downgrade specified targets to a lower visible version
+compared to what's currently installed.</p>
+<p>Useful for reverting to the previously installed package version;
+however, note that the -O/--nodeps option is generally used with this
+otherwise lots of downgrades will be pulled into the resolved deptree.</p>
+</dd>
+<dt><kbd><span class="option">-C</span>, <span class="option">--unmerge</span></kbd></dt>
+<dd><p>Target packages for unmerging from the system.</p>
+<p>WARNING: This does not ask for user confirmation for any targets so
+it's possible to quickly break a system.</p>
+</dd>
+<dt><kbd><span class="option">--clean</span></kbd></dt>
+<dd><p>Remove installed packages that aren't referenced by any target packages
+or sets. This defaults to using the world and system sets if no targets
+are specified.</p>
+<p>Use with <em>caution</em>, this option used incorrectly can render your system
+unusable. Note that this implies --deep.</p>
+</dd>
+<dt><kbd><span class="option">--list-sets</span></kbd></dt>
+<dd><p>display the list of available package sets</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="resolver-options">
+<h1>Resolver Options<a class="headerlink" href="#resolver-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-p</span>, <span class="option">--pretend</span></kbd></dt>
+<dd><p>Resolve package dependencies and display the results without performing
+any merges.</p>
+</dd>
+<dt><kbd><span class="option">-a</span>, <span class="option">--ask</span></kbd></dt>
+<dd><p>Perform the dependency resolution, but ask for user confirmation before
+beginning the fetch/build/merge process. The choice defaults to yes so
+pressing the &quot;Enter&quot; key will trigger acceptance.</p>
+</dd>
+<dt><kbd><span class="option">-f</span>, <span class="option">--fetchonly</span></kbd></dt>
+<dd><p>Only perform fetching of all targets from SRC_URI based on the current
+USE configuration.</p>
+</dd>
+<dt><kbd><span class="option">-1</span>, <span class="option">--oneshot</span></kbd></dt>
+<dd><p>Build and merge packages normally, but do not add any targets to the
+world file. Note that this is forcibly enabled if a package set is
+specified.</p>
+</dd>
+<dt><kbd><span class="option">-D</span>, <span class="option">--deep</span></kbd></dt>
+<dd><p>Force dependency resolution across the entire dependency tree for all
+specified targets.</p>
+</dd>
+<dt><kbd><span class="option">-N</span>, <span class="option">--newuse</span></kbd></dt>
+<dd><p>Include installed packages with USE flag changes in the list of viable
+targets for rebuilding.</p>
+<p>USE flag changes include flags being added, removed, enabled, or
+disabled with regards to a package. USE flag changes can occur via
+ebuild alterations, profile updates, or local configuration
+modifications.</p>
+<p>Note that this option implies -1/--oneshot.</p>
+</dd>
+<dt><kbd><span class="option">-i</span>, <span class="option">--ignore-cycles</span></kbd></dt>
+<dd><p>Ignore dependency cycles if they're found to be unbreakable; for
+example: a depends on b, and b depends on a, with neither built.</p>
+</dd>
+<dt><kbd><span class="option">--with-bdeps</span></kbd></dt>
+<dd><p>Pull in build time dependencies for built packages during dependency
+resolution, by default they're ignored.</p>
+</dd>
+<dt><kbd><span class="option">-O</span>, <span class="option">--nodeps</span></kbd></dt>
+<dd><p>Build and merge packages without resolving any dependencies.</p>
+</dd>
+<dt><kbd><span class="option">-o</span>, <span class="option">--onlydeps</span></kbd></dt>
+<dd><p>Build and merge only the dependencies for the packages specified.</p>
+</dd>
+<dt><kbd><span class="option">-n</span>, <span class="option">--noreplace</span></kbd></dt>
+<dd><p>Skip packages that are already installed. By default when running
+without this option, any specified target packages will be remerged
+regardless of if they are already installed.</p>
+</dd>
+<dt><kbd><span class="option">-b</span>, <span class="option">--buildpkg</span></kbd></dt>
+<dd><p>Force binary packages to be built for all merged packages.</p>
+</dd>
+<dt><kbd><span class="option">-k</span>, <span class="option">--usepkg</span></kbd></dt>
+<dd><p>Binary packages are preferred over ebuilds when performing dependency
+resolution.</p>
+</dd>
+<dt><kbd><span class="option">-K</span>, <span class="option">--usepkgonly</span></kbd></dt>
+<dd><p>Only binary packages are considered when performing dependency
+resolution.</p>
+</dd>
+<dt><kbd><span class="option">-S</span>, <span class="option">--source-only</span></kbd></dt>
+<dd><p>Only ebuilds are considered when performing dependency
+resolution.</p>
+</dd>
+<dt><kbd><span class="option">-e</span>, <span class="option">--empty</span></kbd></dt>
+<dd><p>Force all targets and their dependencies to be rebuilt.</p>
+</dd>
+</dl>
+<dl>
+<dt>-x TARGET[,TARGET,...], --exclude TARGET[,TARGET,...]</dt><dd><p>Comma-separated list of targets to pretend are installed.</p>
+<p>This supports extended package globbing, e.g. <code class="docutils literal notranslate"><span class="pre">'dev-python/*'</span></code>
+equates to faking the entire dev-python category is installed.</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--ignore-failures</span></kbd></dt>
+<dd><p>Skip failures during the following phases: sanity checks
+(pkg_pretend), fetching, dep resolution, and (un)merging.</p>
+</dd>
+<dt><kbd><span class="option">--force</span></kbd></dt>
+<dd><p>Force (un)merging on the livefs (vdb), regardless of if it's frozen.</p>
+</dd>
+<dt><kbd><span class="option">--preload-vdb-state</span></kbd></dt>
+<dd><p>Preload the installed package database which causes the resolver to
+work with a complete graph, thus disallowing actions that conflict with
+installed packages. If disabled, it's possible for the requested action
+to conflict with already installed dependencies that aren't involved in
+the graph of the requested operation.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="output-options">
+<h1>Output Options<a class="headerlink" href="#output-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--quiet-repo-display</span></kbd></dt>
+<dd><p>In the package merge list display, suppress ::repo output and instead
+use index numbers to indicate which repos packages come from.</p>
+</dd>
+<dt><kbd><span class="option">-F <var>FORMATTER</var></span>, <span class="option">--formatter <var>FORMATTER</var></span></kbd></dt>
+<dd><p>Select an output formatter to use for text formatting of --pretend or
+--ask output, currently available formatters include the following:
+basic, pkgcore, portage, portage-verbose, and paludis.</p>
+<p>The basic formatter is the nearest to simple text output and is
+intended for scripting while the portage/portage-verbose formatter
+closely emulates portage output and is used by default.</p>
+</dd>
+</dl>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Positional Arguments</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#config-options">Config Options</a></li>
+<li><a class="reference internal" href="#operations">Operations</a></li>
+<li><a class="reference internal" href="#resolver-options">Resolver Options</a></li>
+<li><a class="reference internal" href="#output-options">Output Options</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Positional Arguments</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

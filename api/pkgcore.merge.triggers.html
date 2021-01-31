@@ -1,0 +1,458 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.merge.triggers module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.triggers module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.merge.triggers">
+<span id="pkgcore-merge-triggers-module"></span><h1>pkgcore.merge.triggers module<a class="headerlink" href="#module-pkgcore.merge.triggers" title="Permalink to this headline">¶</a></h1>
+<p>triggers, callables to bind to a step in a MergeEngine to affect changes</p>
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.BaseSystemUnmergeProtection">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">BaseSystemUnmergeProtection</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">preserve_sequence</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#BaseSystemUnmergeProtection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.BaseSystemUnmergeProtection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.BaseSystemUnmergeProtection.priority">
+<code class="sig-name descname">priority</code><em class="property"> = -100</em><a class="headerlink" href="#pkgcore.merge.triggers.BaseSystemUnmergeProtection.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.BaseSystemUnmergeProtection.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('uninstall',)</em><a class="headerlink" href="#pkgcore.merge.triggers.BaseSystemUnmergeProtection.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.BaseSystemUnmergeProtection.suppress_exceptions">
+<code class="sig-name descname">suppress_exceptions</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.merge.triggers.BaseSystemUnmergeProtection.suppress_exceptions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.BaseSystemUnmergeProtection.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">uninstall</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#BaseSystemUnmergeProtection.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.BaseSystemUnmergeProtection.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.BinaryDebug">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">BinaryDebug</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'split'</span></em>, <em class="sig-param"><span class="n">strip_binary</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">objcopy_binary</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">extra_strip_flags</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">debug_storage</span><span class="o">=</span><span class="default_value">'/usr/lib/debug/'</span></em>, <em class="sig-param"><span class="n">compress</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#BinaryDebug"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.BinaryDebug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.ThreadedTrigger</span></code></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.BinaryDebug.default_strip_flags">
+<code class="sig-name descname">default_strip_flags</code><em class="property"> = ('--strip-unneeded', '-R', '.comment')</em><a class="headerlink" href="#pkgcore.merge.triggers.BinaryDebug.default_strip_flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.BinaryDebug.elf_regex">
+<code class="sig-name descname">elf_regex</code><em class="property"> = '(^| )ELF +(\\d+-bit )'</em><a class="headerlink" href="#pkgcore.merge.triggers.BinaryDebug.elf_regex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.BinaryDebug.identify_work">
+<code class="sig-name descname">identify_work</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#BinaryDebug.identify_work"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.BinaryDebug.identify_work" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.BinaryDebug.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('install',)</em><a class="headerlink" href="#pkgcore.merge.triggers.BinaryDebug.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.BinaryDebug.threading_get_args">
+<code class="sig-name descname">threading_get_args</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#BinaryDebug.threading_get_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.BinaryDebug.threading_get_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.BlockFileType">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">BlockFileType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">bad_regex</span></em>, <em class="sig-param"><span class="n">regex_to_check</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fatal</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#BlockFileType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.BlockFileType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.BlockFileType.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.BlockFileType.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.BlockFileType.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#BlockFileType.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.BlockFileType.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.CommonDirectoryModes">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">CommonDirectoryModes</code><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#CommonDirectoryModes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.CommonDirectoryModes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.CommonDirectoryModes.directories">
+<code class="sig-name descname">directories</code><em class="property"> = frozenset({'/bin', '/etc', '/lib', '/lib32', '/lib64', '/sbin', '/usr', '/usr/bin', '/usr/lib', '/usr/lib32', '/usr/lib64', '/usr/local', '/usr/sbin', '/usr/share', '/usr/share/info', '/usr/share/man', '/usr/share/man/man1', '/usr/share/man/man2', '/usr/share/man/man3', '/usr/share/man/man4', '/usr/share/man/man5', '/usr/share/man/man6', '/usr/share/man/man7', '/usr/share/man/man8', '/usr/share/man/man9', '/var'})</em><a class="headerlink" href="#pkgcore.merge.triggers.CommonDirectoryModes.directories" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.CommonDirectoryModes.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.CommonDirectoryModes.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.CommonDirectoryModes.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#CommonDirectoryModes.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.CommonDirectoryModes.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.InfoRegen">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">InfoRegen</code><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#InfoRegen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.InfoRegen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.InfoRegen.get_binary_path">
+<code class="sig-name descname">get_binary_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#InfoRegen.get_binary_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.InfoRegen.get_binary_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.InfoRegen.locations">
+<code class="sig-name descname">locations</code><em class="property"> = ('/usr/share/info',)</em><a class="headerlink" href="#pkgcore.merge.triggers.InfoRegen.locations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.InfoRegen.regen">
+<code class="sig-name descname">regen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">binary</span></em>, <em class="sig-param"><span class="n">basepath</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#InfoRegen.regen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.InfoRegen.regen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.InfoRegen.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.merge.triggers.InfoRegen.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.InfoRegen.should_skip_directory">
+<code class="sig-name descname">should_skip_directory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">basepath</span></em>, <em class="sig-param"><span class="n">files</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#InfoRegen.should_skip_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.InfoRegen.should_skip_directory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.InfoRegen.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#InfoRegen.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.InfoRegen.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.PruneFiles">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">PruneFiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sentinel_func</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#PruneFiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.PruneFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.PruneFiles.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.PruneFiles.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.PruneFiles.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#PruneFiles.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.PruneFiles.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.SavePkg">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">SavePkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_repo</span></em>, <em class="sig-param"><span class="n">pristine</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">skip_if_source</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#SavePkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.SavePkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.SavePkg.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 90</em><a class="headerlink" href="#pkgcore.merge.triggers.SavePkg.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.SavePkg.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('raw_new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.SavePkg.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.SavePkg.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#SavePkg.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.SavePkg.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.base">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">base</code><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>base trigger class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="#pkgcore.merge.triggers.base.required_csets" title="pkgcore.merge.triggers.base.required_csets"><strong>required_csets</strong></a> – If None, all csets are passed in, else it must be a
+sequence, those specific csets are passed in</p></li>
+<li><p><strong>_label</strong> – Either None, or a string to use for this triggers label</p></li>
+<li><p><strong>_hook</strong> – sequence of hook points to register into</p></li>
+<li><p><a class="reference internal" href="#pkgcore.merge.triggers.base.priority" title="pkgcore.merge.triggers.base.priority"><strong>priority</strong></a> – range of 0 to 100, order of execution for triggers per hook</p></li>
+<li><p><strong>_engine_types</strong> – if None, trigger works for all engine modes, else it’s
+limited to that mode, and must be a sequence</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.base.get_required_csets">
+<code class="sig-name descname">get_required_csets</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#base.get_required_csets"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.base.get_required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.base.label">
+<em class="property">property </em><code class="sig-name descname">label</code><a class="headerlink" href="#pkgcore.merge.triggers.base.label" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.base.localize">
+<code class="sig-name descname">localize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#base.localize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.base.localize" title="Permalink to this definition">¶</a></dt>
+<dd><p>‘localize’ a trigger to a specific merge engine process
+mainly used if the trigger comes from configuration</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.base.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 50</em><a class="headerlink" href="#pkgcore.merge.triggers.base.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.base.register">
+<code class="sig-name descname">register</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#base.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.base.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>register with a MergeEngine</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.base.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.merge.triggers.base.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.base.suppress_exceptions">
+<code class="sig-name descname">suppress_exceptions</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.merge.triggers.base.suppress_exceptions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.base.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">csets</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#base.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.base.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.detect_world_writable">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">detect_world_writable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fix_perms</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#detect_world_writable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.detect_world_writable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.detect_world_writable.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.detect_world_writable.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.detect_world_writable.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#detect_world_writable.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.detect_world_writable.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.fix_gid_perms">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">fix_gid_perms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gid</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">replacement</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#fix_gid_perms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.fix_gid_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.fix_gid_perms.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.fix_gid_perms.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.fix_gid_perms.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#fix_gid_perms.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.fix_gid_perms.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.fix_set_bits">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">fix_set_bits</code><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#fix_set_bits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.fix_set_bits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.fix_set_bits.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.fix_set_bits.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.fix_set_bits.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#fix_set_bits.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.fix_set_bits.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.fix_uid_perms">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">fix_uid_perms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uid</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">replacement</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#fix_uid_perms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.fix_uid_perms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.fix_uid_perms.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.merge.triggers.fix_uid_perms.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.fix_uid_perms.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#fix_uid_perms.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.fix_uid_perms.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.ldconfig">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">ldconfig</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ld_so_conf_path</span><span class="o">=</span><span class="default_value">'etc/ld.so.conf'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#ldconfig"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.ldconfig.default_ld_path">
+<code class="sig-name descname">default_ld_path</code><em class="property"> = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib', 'lib64', 'lib32']</em><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig.default_ld_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.ldconfig.ld_so_path">
+<code class="sig-name descname">ld_so_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">offset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#ldconfig.ld_so_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig.ld_so_path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.ldconfig.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 10</em><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.ldconfig.read_ld_so_conf">
+<code class="sig-name descname">read_ld_so_conf</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">offset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#ldconfig.read_ld_so_conf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig.read_ld_so_conf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.ldconfig.regen">
+<code class="sig-name descname">regen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#ldconfig.regen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig.regen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.ldconfig.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.ldconfig.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#ldconfig.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.ldconfig.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.merge">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">merge</code><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.merge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.merge.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('install',)</em><a class="headerlink" href="#pkgcore.merge.triggers.merge.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.merge.suppress_exceptions">
+<code class="sig-name descname">suppress_exceptions</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.merge.triggers.merge.suppress_exceptions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.merge.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">merging_cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#merge.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.merge.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.merge.triggers.unmerge">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.merge.triggers.</code><code class="sig-name descname">unmerge</code><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#unmerge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.unmerge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.unmerge.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('uninstall',)</em><a class="headerlink" href="#pkgcore.merge.triggers.unmerge.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.merge.triggers.unmerge.suppress_exceptions">
+<code class="sig-name descname">suppress_exceptions</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.merge.triggers.unmerge.suppress_exceptions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.merge.triggers.unmerge.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">unmerging_cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/merge/triggers.html#unmerge.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.merge.triggers.unmerge.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.merge.triggers module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

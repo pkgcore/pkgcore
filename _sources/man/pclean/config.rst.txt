@@ -1,0 +1,7 @@
+pclean config - remove config file settings
+-------------------------------------------
+
+.. include:: config/_synopsis.rst
+.. include:: config/_description.rst
+.. include:: config/_options.rst
+.. include:: config/_subcommands.rst

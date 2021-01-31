@@ -1,0 +1,7 @@
+pinspect profile unmasks - inspect package unmasks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: unmasks/_synopsis.rst
+.. include:: unmasks/_description.rst
+.. include:: unmasks/_options.rst
+.. include:: unmasks/_subcommands.rst

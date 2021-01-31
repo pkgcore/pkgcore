@@ -1,0 +1,7 @@
+pkgcore.sync.bzr module
+=======================
+
+.. automodule:: pkgcore.sync.bzr
+   :members:
+   :undoc-members:
+   :show-inheritance:

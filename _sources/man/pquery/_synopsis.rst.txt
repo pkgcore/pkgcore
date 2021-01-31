@@ -1,0 +1,4 @@
+Synopsis
+========
+
+pquery [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] [--domain DOMAIN] [--raw] [--unfiltered] [--virtuals {only,disable}] [-r REPO | -E | -B | -I | -A] [--all] [--has-use has_use] [--license license] [--revdep REVDEP] [--revdep-pkgs REVDEP_PKGS] [--restrict-revdep restrict_revdep] [--restrict-revdep-pkgs restrict_revdep_pkgs] [-S description] [--eapi eapi] [--owns owns] [--owns-re owns_re] [--maintainer maintainer] [--maintainer-name maintainer_name] [--maintainer-email maintainer_email] [--environment environment] [--pkgset pkgset] [-u] [-1] [-a] [--cpv] [-R] [--slot] [-n | --min | --max] [--blame] [--size] [--contents] [--highlight-dep HIGHLIGHT_DEP] [--print-revdep PRINT_REVDEP] [--attr attribute] [--force-attr attribute] [--one-attr attribute | --force-one-attr attribute] [TARGET [TARGET ...]]

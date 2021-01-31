@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.vdb.ondisk module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.ondisk module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.vdb.ondisk">
+<span id="pkgcore-vdb-ondisk-module"></span><h1>pkgcore.vdb.ondisk module<a class="headerlink" href="#module-pkgcore.vdb.ondisk" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.vdb.ondisk.ConfiguredTree">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.vdb.ondisk.</code><code class="sig-name descname">ConfiguredTree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vdb</span></em>, <em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="n">domain_settings</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/ondisk.html#ConfiguredTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.ondisk.ConfiguredTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.repository.wrapper.html#pkgcore.repository.wrapper.tree" title="pkgcore.repository.wrapper.tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.repository.wrapper.tree</span></code></a>, <a class="reference internal" href="#pkgcore.vdb.ondisk.tree" title="pkgcore.vdb.ondisk.tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.vdb.ondisk.tree</span></code></a></p>
+<p>Configured repository for packages installed on the filesystem.</p>
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.ConfiguredTree.configured">
+<code class="sig-name descname">configured</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.vdb.ondisk.ConfiguredTree.configured" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.ConfiguredTree.frozen_settable">
+<code class="sig-name descname">frozen_settable</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.vdb.ondisk.ConfiguredTree.frozen_settable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.vdb.ondisk.tree">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.vdb.ondisk.</code><code class="sig-name descname">tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="n">cache_location</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">repo_id</span><span class="o">=</span><span class="default_value">'vdb'</span></em>, <em class="sig-param"><span class="n">disable_cache</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/ondisk.html#tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.ondisk.tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.repository.prototype.html#pkgcore.repository.prototype.tree" title="pkgcore.repository.prototype.tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.tree</span></code></a></p>
+<p>Repository for packages installed on the filesystem.</p>
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.configurables">
+<code class="sig-name descname">configurables</code><em class="property"> = ('domain', 'settings')</em><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.configurables" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.configure">
+<code class="sig-name descname">configure</code><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.configure" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcore.vdb.ondisk.ConfiguredTree" title="pkgcore.vdb.ondisk.ConfiguredTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.vdb.ondisk.ConfiguredTree</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.configured">
+<code class="sig-name descname">configured</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.configured" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.livefs">
+<code class="sig-name descname">livefs</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.livefs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.vdb.ondisk.tree.notify_remove_package">
+<code class="sig-name descname">notify_remove_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/vdb/ondisk.html#tree.notify_remove_package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.notify_remove_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>internal function</p>
+<p>notify the repository that a pkg it provides is being removed</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.operations_kls">
+<code class="sig-name descname">operations_kls</code><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.operations_kls" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="pkgcore.vdb.repo_ops.html#pkgcore.vdb.repo_ops.operations" title="pkgcore.vdb.repo_ops.operations"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.vdb.repo_ops.operations</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.vdb.ondisk.tree.package_factory">
+<em class="property">class </em><code class="sig-name descname">package_factory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_repo</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.package_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.package.metadata.html#pkgcore.package.metadata.factory" title="pkgcore.package.metadata.factory"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.metadata.factory</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.package_factory.child_class">
+<code class="sig-name descname">child_class</code><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.package_factory.child_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="pkgcore.ebuild.ebuild_built.html#pkgcore.ebuild.ebuild_built.package" title="pkgcore.ebuild.ebuild_built.package"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebuild_built.package</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.vdb.ondisk.tree.package_factory.new_package">
+<code class="sig-name descname">new_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.package_factory.new_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate a new package instance</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.package_factory.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 5</em><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.package_factory.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.vdb.ondisk.tree.pkgcore_config_type">
+<code class="sig-name descname">pkgcore_config_type</code><em class="property"> = &lt;pkgcore.config.hint.ConfigHint object&gt;</em><a class="headerlink" href="#pkgcore.vdb.ondisk.tree.pkgcore_config_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.vdb.ondisk module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

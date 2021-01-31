@@ -1,0 +1,7 @@
+pkgcore.sync.darcs module
+=========================
+
+.. automodule:: pkgcore.sync.darcs
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pmaint mirror - mirror the sources for a package in full- grab everything that could be required
+------------------------------------------------------------------------------------------------
+
+.. include:: mirror/_synopsis.rst
+.. include:: mirror/_description.rst
+.. include:: mirror/_options.rst
+.. include:: mirror/_subcommands.rst

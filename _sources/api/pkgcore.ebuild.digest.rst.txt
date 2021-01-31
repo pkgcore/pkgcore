@@ -1,0 +1,7 @@
+pkgcore.ebuild.digest module
+============================
+
+.. automodule:: pkgcore.ebuild.digest
+   :members:
+   :undoc-members:
+   :show-inheritance:

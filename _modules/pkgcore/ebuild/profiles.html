@@ -1,0 +1,916 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.profiles &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.profiles</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.profiles</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;ProfileError&quot;</span><span class="p">,</span> <span class="s2">&quot;ProfileNode&quot;</span><span class="p">,</span> <span class="s2">&quot;EmptyRootNode&quot;</span><span class="p">,</span> <span class="s2">&quot;OnDiskProfile&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;UserProfile&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">caching</span><span class="p">,</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.bash</span> <span class="kn">import</span> <span class="n">iter_read_bash</span><span class="p">,</span> <span class="n">read_bash_dict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.data_source</span> <span class="kn">import</span> <span class="n">local_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.fileutils</span> <span class="kn">import</span> <span class="n">readlines_utf8</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ImmutableDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">abspath</span><span class="p">,</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">split_negations</span><span class="p">,</span> <span class="n">stable_unique</span>
+
+<span class="kn">from</span> <span class="nn">..config</span> <span class="kn">import</span> <span class="n">errors</span>
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+<span class="kn">from</span> <span class="nn">..fs.livefs</span> <span class="kn">import</span> <span class="n">sorted_scan</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">const</span><span class="p">,</span> <span class="n">cpv</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">ebuild_errors</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">misc</span><span class="p">,</span> <span class="n">repo_objs</span>
+<span class="kn">from</span> <span class="nn">.atom</span> <span class="kn">import</span> <span class="n">atom</span>
+<span class="kn">from</span> <span class="nn">.eapi</span> <span class="kn">import</span> <span class="n">EAPI</span><span class="p">,</span> <span class="n">get_eapi</span>
+
+
+<div class="viewcode-block" id="ProfileError"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.profiles.html#pkgcore.ebuild.profiles.ProfileError">[docs]</a><span class="k">class</span> <span class="nc">ProfileError</span><span class="p">(</span><span class="n">errors</span><span class="o">.</span><span class="n">ParsingError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">error</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;failed parsing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s2"> in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;failed parsing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">NonexistentProfile</span><span class="p">(</span><span class="n">ProfileError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Profile for a nonexistent directory.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;nonexistent profile directory&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_read_profile_files</span><span class="p">(</span><span class="n">files</span><span class="p">,</span> <span class="n">allow_line_cont</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read all the given data files.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+        <span class="c1"># determine file path relative to the profiles dir</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">relpath</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/profiles/&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="c1"># profiles base path</span>
+            <span class="n">relpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">iter_read_bash</span><span class="p">(</span>
+                <span class="n">path</span><span class="p">,</span> <span class="n">allow_line_cont</span><span class="o">=</span><span class="n">allow_line_cont</span><span class="p">,</span> <span class="n">enum_line</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span>
+
+
+<span class="k">def</span> <span class="nf">load_property</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">read_func</span><span class="o">=</span><span class="n">_read_profile_files</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="p">(),</span>
+                  <span class="n">parse_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">allow_line_cont</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                  <span class="n">eapi_optional</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator simplifying parsing profile files to generate a profile property.</span>
+
+<span class="sd">    :param filename: The filename to parse within that profile directory.</span>
+<span class="sd">    :keyword read_func: An invokable used to read the specified file.</span>
+<span class="sd">    :keyword fallback: What to return if the file does not exist for this profile. Must be immutable.</span>
+<span class="sd">    :keyword parse_func: An invokable used to parse the data.</span>
+<span class="sd">    :keyword allow_line_cont: Controls whether line continuations are respected.</span>
+<span class="sd">    :keyword allow_recurse: Controls whether or not this specific content can be a directory</span>
+<span class="sd">        of files, rather than just a file.  Only is consulted if we&#39;re parsing the profile</span>
+<span class="sd">        in non pms strict mode.</span>
+<span class="sd">    :keyword eapi_optional: If given, the EAPI for this profile node is checked to see if</span>
+<span class="sd">        the given optional evaluates to True; if so, then parsing occurs.  If False, then</span>
+<span class="sd">        the fallback is returned and no ondisk activity occurs.</span>
+<span class="sd">    :return: A :py:`klass.jit.attr_named` property instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="n">f2</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;_</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f2</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span>
+            <span class="n">_load_and_invoke</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">read_func</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span>
+            <span class="n">allow_recurse</span><span class="p">,</span> <span class="n">allow_line_cont</span><span class="p">,</span> <span class="n">parse_func</span><span class="p">,</span> <span class="n">eapi_optional</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">f</span>
+
+
+<span class="k">def</span> <span class="nf">_load_and_invoke</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">read_func</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="p">,</span>
+                     <span class="n">allow_line_cont</span><span class="p">,</span> <span class="n">parse_func</span><span class="p">,</span> <span class="n">eapi_optional</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">eapi_optional</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="n">eapi_optional</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fallback</span><span class="p">)</span>
+
+    <span class="n">profile_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+    <span class="n">base</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">profile_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+    <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pms_strict</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">allow_recurse</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+            <span class="n">files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">base</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Skip hidden files and backup files, those beginning with &#39;.&#39; or</span>
+        <span class="c1"># ending with &#39;~&#39;, respectively.</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">sorted_scan</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">hidden</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">backup</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">read_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">parse_func</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">parse_func</span><span class="p">(</span><span class="n">read_func</span><span class="p">(</span>
+                    <span class="n">files</span><span class="p">,</span> <span class="n">allow_line_cont</span><span class="o">=</span><span class="n">allow_line_cont</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">fallback</span>
+        <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">,</span> <span class="ne">EnvironmentError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ProfileError</span><span class="p">(</span><span class="n">profile_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+    <span class="k">except</span> <span class="ne">IsADirectoryError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ProfileError</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span>
+            <span class="s2">&quot;path is a directory, but this profile is PMS format- &quot;</span>
+            <span class="s2">&quot;directories aren&#39;t allowed. See layout.conf profile-formats &quot;</span>
+            <span class="s2">&quot;to enable directory support&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+
+<span class="n">_make_incrementals_dict</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">IncrementalsDict</span><span class="p">,</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">)</span>
+<span class="n">_Packages</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;_Packages&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;profile&quot;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="ProfileNode"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.profiles.html#pkgcore.ebuild.profiles.ProfileNode">[docs]</a><span class="k">class</span> <span class="nc">ProfileNode</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">caching</span><span class="o">.</span><span class="n">WeakInstMeta</span><span class="p">):</span>
+
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">_repo_map</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">pms_strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">NonexistentProfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pms_strict</span> <span class="o">=</span> <span class="n">pms_strict</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;profile at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> path=</span><span class="si">%r</span><span class="s1">, @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="n">system</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;packages.system&quot;</span><span class="p">)</span>
+    <span class="n">profile_set</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;packages.profile&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Relative path to the profile from the profiles directory.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/profiles/&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="c1"># profiles base path</span>
+            <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;packages&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">repo_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repoconfig</span>
+        <span class="c1"># TODO: get profile-set support into PMS</span>
+        <span class="n">profile_set</span> <span class="o">=</span> <span class="n">repo_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;profile-set&#39;</span> <span class="ow">in</span> <span class="n">repo_config</span><span class="o">.</span><span class="n">profile_formats</span>
+        <span class="n">sys</span><span class="p">,</span> <span class="n">neg_sys</span><span class="p">,</span> <span class="n">pro</span><span class="p">,</span> <span class="n">neg_pro</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">neg_wildcard</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">line</span> <span class="o">==</span> <span class="s1">&#39;-*&#39;</span><span class="p">:</span>
+                        <span class="n">neg_wildcard</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">elif</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+                        <span class="n">neg_sys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi_atom</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">:]))</span>
+                    <span class="k">elif</span> <span class="n">profile_set</span><span class="p">:</span>
+                        <span class="n">neg_pro</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi_atom</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">: invalid line format, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;*&#39;</span><span class="p">:</span>
+                        <span class="n">sys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi_atom</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+                    <span class="k">elif</span> <span class="n">profile_set</span><span class="p">:</span>
+                        <span class="n">pro</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi_atom</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">: invalid line format, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ebuild_errors</span><span class="o">.</span><span class="n">MalformedAtom</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: parsing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">system</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">neg_sys</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sys</span><span class="p">)]</span>
+        <span class="n">profile</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">neg_pro</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pro</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">neg_wildcard</span><span class="p">:</span>
+            <span class="n">system</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neg_wildcard</span><span class="p">)</span>
+            <span class="n">profile</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neg_wildcard</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_Packages</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">system</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">profile</span><span class="p">))</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;parent&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">parent_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">repo_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repoconfig</span>
+        <span class="k">if</span> <span class="n">repo_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;portage-2&#39;</span> <span class="ow">in</span> <span class="n">repo_config</span><span class="o">.</span><span class="n">profile_formats</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">repo_id</span><span class="p">,</span> <span class="n">separator</span><span class="p">,</span> <span class="n">profile_path</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">separator</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">repo_id</span><span class="p">:</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_repo_map</span><span class="p">[</span><span class="n">repo_id</span><span class="p">]</span>
+                        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                            <span class="c1"># check if requested repo ID matches the current</span>
+                            <span class="c1"># repo which could be the case when running against</span>
+                            <span class="c1"># unconfigured, external repos.</span>
+                            <span class="k">if</span> <span class="n">repo_id</span> <span class="o">==</span> <span class="n">repo_config</span><span class="o">.</span><span class="n">repo_id</span><span class="p">:</span>
+                                <span class="n">location</span> <span class="o">=</span> <span class="n">repo_config</span><span class="o">.</span><span class="n">location</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                                    <span class="sa">f</span><span class="s1">&#39;repo </span><span class="si">{</span><span class="n">repo_config</span><span class="o">.</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s1">: &#39;</span>
+                                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s2"> (line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s2">), &quot;</span>
+                                    <span class="sa">f</span><span class="s1">&#39;bad profile parent </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">: &#39;</span>
+                                    <span class="sa">f</span><span class="s1">&#39;unknown repo </span><span class="si">{</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s1">&#39;</span>
+                                <span class="p">)</span>
+                                <span class="k">continue</span>
+                    <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">abspath</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="s1">&#39;profiles&#39;</span><span class="p">,</span> <span class="n">profile_path</span><span class="p">)),</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">abspath</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">)),</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">))</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">abspath</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">line</span><span class="p">)),</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+                     <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">parents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kls</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;parent_node_kls&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+        <span class="n">parents</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent_paths</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">parents</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">kls</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">ProfileError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">repo_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repoconfig</span><span class="o">.</span><span class="n">repo_id</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;repo </span><span class="si">{</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s2">: &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/parent&#39; (line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s2">), &quot;</span>
+                    <span class="sa">f</span><span class="s1">&#39;bad profile parent </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">parents</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.provided&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">eapi_optional</span><span class="o">=</span><span class="s1">&#39;profile_pkg_provided&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_provided</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_parse_cpv</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cpv</span><span class="o">.</span><span class="n">VersionedCPV</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">cpv</span><span class="o">.</span><span class="n">InvalidCPV</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;invalid package.provided entry: </span><span class="si">{</span><span class="n">s</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">split_negations</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">_parse_cpv</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_parse_atom_negations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse files containing optionally negated package atoms.&quot;&quot;&quot;</span>
+        <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">:</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s2">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s2">: &#39;-&#39; negation without an atom&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">l</span> <span class="o">=</span> <span class="n">neg</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">l</span> <span class="o">=</span> <span class="n">pos</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi_atom</span><span class="p">(</span><span class="n">line</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">ebuild_errors</span><span class="o">.</span><span class="n">MalformedAtom</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: parsing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">neg</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_package_keywords_splitter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse package keywords files.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">atom</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">stable_unique</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">:])))</span>
+            <span class="k">except</span> <span class="n">ebuild_errors</span><span class="o">.</span><span class="n">MalformedAtom</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: parsing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.mask&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_atom_negations</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.unmask&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">unmasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_atom_negations</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.deprecated&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_atom_negations</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.keywords&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_package_keywords_splitter</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.accept_keywords&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">accept_keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_package_keywords_splitter</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.use&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">ChunkedDataDict</span><span class="p">()</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span>
+            <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_parse_package_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;deprecated&quot;</span><span class="p">,</span> <span class="n">read_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">readlines_utf8</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">replacement</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;#&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">replacement</span><span class="p">,</span> <span class="n">msg</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="c1"># only an empty replacement could trigger this; thus</span>
+                <span class="c1"># formatted badly.</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;deprecated profile missing replacement: &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/deprecated&#39;&quot;</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_parse_package_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="c1"># split the data down ordered cat/pkg lines</span>
+        <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi_atom</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">except</span> <span class="n">ebuild_errors</span><span class="o">.</span><span class="n">MalformedAtom</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: parsing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: missing USE flag(s): </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">misc</span><span class="o">.</span><span class="n">chunked_data</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="o">*</span><span class="n">split_negations</span><span class="p">(</span><span class="n">l</span><span class="p">[</span><span class="mi">1</span><span class="p">:])))</span>
+
+        <span class="k">return</span> <span class="n">ImmutableDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">misc</span><span class="o">.</span><span class="n">_build_cp_atom_payload</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">atom</span><span class="p">(</span><span class="n">k</span><span class="p">)))</span>
+                             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_parse_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">ChunkedDataDict</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+        <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="n">split_negations</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">neg</span> <span class="ow">or</span> <span class="n">pos</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">add_bare_global</span><span class="p">(</span><span class="n">neg</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;use.force&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">use_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;use.stable.force&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">eapi_optional</span><span class="o">=</span><span class="s1">&#39;profile_stable_use&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">use_stable_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.use.force&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_use_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_package_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.use.stable.force&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">eapi_optional</span><span class="o">=</span><span class="s1">&#39;profile_stable_use&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_use_stable_force</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_package_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;use.mask&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">use_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;use.stable.mask&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">eapi_optional</span><span class="o">=</span><span class="s1">&#39;profile_stable_use&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">use_stable_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.use.mask&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_use_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_package_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.use.stable.mask&quot;</span><span class="p">,</span> <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                   <span class="n">eapi_optional</span><span class="o">=</span><span class="s1">&#39;profile_stable_use&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_use_stable_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_package_use</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">masked_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_mask</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_mask</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">unfreeze</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_mask</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">stable_masked_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_mask</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">unfreeze</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_stable_mask</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_stable_mask</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_mask</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_mask</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_stable_mask</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_stable_mask</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">forced_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_force</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_force</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">unfreeze</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_force</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">stable_forced_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_force</span><span class="o">.</span><span class="n">clone</span><span class="p">(</span><span class="n">unfreeze</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_stable_force</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_stable_force</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_force</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_force</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_stable_force</span><span class="p">:</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span>
+                <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg_use_stable_force</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s1">&#39;make.defaults&#39;</span><span class="p">,</span> <span class="n">read_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">default_env</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">rendered</span> <span class="o">=</span> <span class="n">_make_incrementals_dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">parents</span><span class="p">:</span>
+            <span class="n">rendered</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">read_bash_dict</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vars_dict</span><span class="o">=</span><span class="n">rendered</span><span class="p">)</span>
+            <span class="n">rendered</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">ImmutableDict</span><span class="p">(</span><span class="n">rendered</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bashrc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;profile.bashrc&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">local_source</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s1">&#39;eapi&#39;</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="s1">&#39;0&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">eapi</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># handle fallback</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">get_eapi</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">relpath</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="n">relpath</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="s1">&#39;eapi&#39;</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">: empty file&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">get_eapi</span><span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">next</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">: multiple lines detected&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+        <span class="n">eapi_str</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">eapi_str</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">known_eapis</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">relpath</span><span class="si">!r}</span><span class="s1">: unknown EAPI </span><span class="si">{</span><span class="n">eapi_str</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">get_eapi</span><span class="p">(</span><span class="n">eapi_str</span><span class="p">)</span>
+
+    <span class="n">eapi_atom</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;eapi.atom_kls&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">repoconfig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_repoconfig_from_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_load_repoconfig_from_path</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="c1"># strip &#39;/&#39; so we don&#39;t get &#39;/usr/portage&#39; == (&#39;&#39;, &#39;usr&#39;, &#39;portage&#39;)</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">pindex</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="s1">&#39;profiles&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># not in a repo...</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">repo_path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">chunks</span><span class="p">[:</span><span class="n">pindex</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">repo_objs</span><span class="o">.</span><span class="n">RepoConfig</span><span class="p">(</span><span class="n">repo_path</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_autodetect_and_create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">repo_config</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_load_repoconfig_from_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># note while this else seems pointless, we do it this</span>
+        <span class="c1"># way so that we&#39;re not passing an arg unless needed- instance</span>
+        <span class="c1"># caching is a bit overprotective, even if pms_strict defaults to True,</span>
+        <span class="c1"># cls(path) is not cls(path, pms_strict=True)</span>
+
+        <span class="k">if</span> <span class="n">repo_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="s1">&#39;pms&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">repo_config</span><span class="o">.</span><span class="n">profile_formats</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">pms_strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">profile</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># optimization to avoid re-parsing what we already did.</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="s1">&#39;_repoconfig&#39;</span><span class="p">,</span> <span class="n">repo_config</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">profile</span></div>
+
+
+<div class="viewcode-block" id="EmptyRootNode"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.profiles.html#pkgcore.ebuild.profiles.EmptyRootNode">[docs]</a><span class="k">class</span> <span class="nc">EmptyRootNode</span><span class="p">(</span><span class="n">ProfileNode</span><span class="p">):</span>
+
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">parents</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">deprecated</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">pkg_use</span> <span class="o">=</span> <span class="n">masked_use</span> <span class="o">=</span> <span class="n">stable_masked_use</span> <span class="o">=</span> <span class="n">forced_use</span> <span class="o">=</span> <span class="n">stable_forced_use</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">ChunkedDataDict</span><span class="p">()</span>
+    <span class="n">forced_use</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+    <span class="n">pkg_use_force</span> <span class="o">=</span> <span class="n">pkg_use_mask</span> <span class="o">=</span> <span class="n">ImmutableDict</span><span class="p">()</span>
+    <span class="n">pkg_provided</span> <span class="o">=</span> <span class="n">system</span> <span class="o">=</span> <span class="n">profile_set</span> <span class="o">=</span> <span class="p">((),</span> <span class="p">())</span></div>
+
+
+<span class="k">class</span> <span class="nc">ProfileStack</span><span class="p">:</span>
+
+    <span class="n">_node_kls</span> <span class="o">=</span> <span class="n">ProfileNode</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_kls</span><span class="o">.</span><span class="n">_autodetect_and_create</span><span class="p">(</span><span class="n">profile</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ARCH&quot;</span><span class="p">)</span>
+
+    <span class="n">deprecated</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;node.deprecated&quot;</span><span class="p">)</span>
+    <span class="n">eapi</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;node.eapi&quot;</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;node.name&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">stack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">parent_paths</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_kls</span><span class="o">.</span><span class="n">_autodetect_and_create</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">ProfileError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="n">repo_id</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">repoconfig</span><span class="o">.</span><span class="n">repo_id</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;repo </span><span class="si">{</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s2">: &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">/parent&#39; (line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s2">), &quot;</span>
+                        <span class="sa">f</span><span class="s1">&#39;bad profile parent </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">: </span><span class="si">{</span><span class="n">e</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span>
+                    <span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">y</span>
+            <span class="k">yield</span> <span class="n">node</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">_system_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-selected system profile.</span>
+
+<span class="sd">        This should map directly to the profile linked to /etc/portage/make.profile.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># prefer main system profile; otherwise, fallback to custom user profile</span>
+        <span class="k">for</span> <span class="n">profile</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">profile</span><span class="p">,</span> <span class="n">UserProfileNode</span><span class="p">):</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="n">profile</span>
+
+    <span class="k">def</span> <span class="nf">_collapse_use_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">ChunkedDataDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">mapping</span> <span class="ow">in</span> <span class="n">stack</span><span class="p">:</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">mapping</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">forced_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_use_dict</span><span class="p">(</span><span class="s2">&quot;forced_use&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">masked_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_use_dict</span><span class="p">(</span><span class="s2">&quot;masked_use&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">stable_forced_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_use_dict</span><span class="p">(</span><span class="s2">&quot;stable_forced_use&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">stable_masked_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_use_dict</span><span class="p">(</span><span class="s2">&quot;stable_masked_use&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">pkg_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_collapse_use_dict</span><span class="p">(</span><span class="s2">&quot;pkg_use&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_collapse_generic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">clear</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">val</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+                <span class="n">s</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">s</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">default_env</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">incremental</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">incremental</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">v</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">incremental</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals_unfinalized</span><span class="p">:</span>
+                    <span class="n">d</span><span class="p">[</span><span class="n">incremental</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">v</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">incremental_expansion</span><span class="p">(</span>
+                        <span class="n">v</span><span class="p">,</span> <span class="n">msg_prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;While expanding </span><span class="si">{</span><span class="n">incremental</span><span class="si">}</span><span class="s2">, value </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">: &quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">v</span><span class="p">:</span>
+                        <span class="n">d</span><span class="p">[</span><span class="n">incremental</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ImmutableDict</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">profile_only_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;PROFILE_ONLY_VARIABLES&quot;</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PROFILE_ONLY_VARIABLES&quot;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;PROFILE_ONLY_VARIABLES&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">use_expand</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;USE_EXPAND variables defined by the profile.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;USE_EXPAND&quot;</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND&quot;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;USE flag settings for the profile.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;USE&#39;</span><span class="p">,</span> <span class="p">()))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">expand_use</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">expand_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Expand USE_EXPAND settings to USE flags.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">env</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_env</span>
+
+        <span class="n">use</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_expand</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">u2</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;_&#39;</span>
+            <span class="n">use</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">u2</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">use</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">use_expand_hidden</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;USE_EXPAND_HIDDEN&quot;</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_HIDDEN&quot;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_HIDDEN&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">iuse_implicit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;IUSE_IMPLICIT&quot;</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;IUSE_IMPLICIT&quot;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;IUSE_IMPLICIT&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">use_expand_implicit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;USE_EXPAND_IMPLICIT&quot;</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_IMPLICIT&quot;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_IMPLICIT&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">use_expand_unprefixed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;USE_EXPAND_UNPREFIXED&quot;</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_UNPREFIXED&quot;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_UNPREFIXED&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">iuse_effective</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">iuse_effective</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># EAPI 5 and above allow profile defined IUSE injection (see PMS)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_system_profile</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">profile_iuse_injection</span><span class="p">:</span>
+            <span class="n">iuse_effective</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">iuse_implicit</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_expand_implicit</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_expand_unprefixed</span><span class="p">):</span>
+                <span class="n">iuse_effective</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_VALUES_&quot;</span> <span class="o">+</span> <span class="n">v</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_expand</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_expand_implicit</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_VALUES_&quot;</span> <span class="o">+</span> <span class="n">v</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                    <span class="n">iuse_effective</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">iuse_effective</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_system_profile</span><span class="o">.</span><span class="n">repoconfig</span><span class="o">.</span><span class="n">known_arches</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_expand</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;USE_EXPAND_VALUES_&quot;</span> <span class="o">+</span> <span class="n">v</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+                    <span class="n">iuse_effective</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">x</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">iuse_effective</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">provides_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># delay importing to avoid circular imports</span>
+        <span class="kn">from</span> <span class="nn">.repository</span> <span class="kn">import</span> <span class="n">ProvidesRepo</span>
+        <span class="k">return</span> <span class="n">ProvidesRepo</span><span class="p">(</span><span class="n">pkgs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_generic</span><span class="p">(</span><span class="s2">&quot;pkg_provided&quot;</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">masks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_generic</span><span class="p">(</span><span class="s2">&quot;masks&quot;</span><span class="p">)))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">unmasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_generic</span><span class="p">(</span><span class="s1">&#39;unmasks&#39;</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">pkg_deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_generic</span><span class="p">(</span><span class="s2">&quot;pkg_deprecated&quot;</span><span class="p">)))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">keywords</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">accept_keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">accept_keywords</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_incremental_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack_override</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stack_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stack_override</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">masks</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">stack_override</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">masks</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_incremental_unmasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack_override</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">stack_override</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stack_override</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">unmasks</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">stack_override</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">unmasks</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bashrcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">bashrc</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">bashrc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="n">bashrc</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;bashrcs&quot;</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;node.path&quot;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">system</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_generic</span><span class="p">(</span><span class="s1">&#39;system&#39;</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">profile_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_collapse_generic</span><span class="p">(</span><span class="s1">&#39;profile_set&#39;</span><span class="p">,</span> <span class="n">clear</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="OnDiskProfile"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.profiles.html#pkgcore.ebuild.profiles.OnDiskProfile">[docs]</a><span class="k">class</span> <span class="nc">OnDiskProfile</span><span class="p">(</span><span class="n">ProfileStack</span><span class="p">):</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span>
+        <span class="p">{</span><span class="s1">&#39;basepath&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">},</span>
+        <span class="n">required</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;basepath&#39;</span><span class="p">,</span> <span class="s1">&#39;profile&#39;</span><span class="p">),</span>
+        <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;profile&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basepath</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">load_profile_base</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">basepath</span><span class="p">,</span> <span class="n">profile</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">basepath</span> <span class="o">=</span> <span class="n">basepath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">load_profile_base</span> <span class="o">=</span> <span class="n">load_profile_base</span>
+
+<div class="viewcode-block" id="OnDiskProfile.split_abspath"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.profiles.html#pkgcore.ebuild.profiles.OnDiskProfile.split_abspath">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">split_abspath</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="c1"># filter&#39;s heavy, but it handles &#39;/&#39; while also</span>
+        <span class="c1"># suppressing the leading &#39;/&#39;</span>
+        <span class="n">chunks</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># poor mans rindex.</span>
+            <span class="n">pbase</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="s1">&#39;profiles&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># no base found.</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">pjoin</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="o">*</span><span class="n">chunks</span><span class="p">[:</span><span class="n">pbase</span><span class="o">+</span><span class="mi">1</span><span class="p">]),</span> <span class="s1">&#39;/&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">chunks</span><span class="p">[</span><span class="n">pbase</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span></div>
+
+<div class="viewcode-block" id="OnDiskProfile.from_abspath"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.profiles.html#pkgcore.ebuild.profiles.OnDiskProfile.from_abspath">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_abspath</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">split_abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vals</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">load_profile_base</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">vals</span></div>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">stack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="n">ProfileStack</span><span class="o">.</span><span class="n">stack</span><span class="o">.</span><span class="n">function</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_profile_base</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="p">(</span><span class="n">EmptyRootNode</span><span class="o">.</span><span class="n">_autodetect_and_create</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">basepath</span><span class="p">),)</span> <span class="o">+</span> <span class="n">l</span>
+        <span class="k">return</span> <span class="n">l</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">_incremental_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_profile_base</span><span class="p">:</span>
+            <span class="n">stack</span> <span class="o">=</span> <span class="n">stack</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">ProfileStack</span><span class="o">.</span><span class="n">_incremental_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack_override</span><span class="o">=</span><span class="n">stack</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">_incremental_unmasks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_profile_base</span><span class="p">:</span>
+            <span class="n">stack</span> <span class="o">=</span> <span class="n">stack</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">ProfileStack</span><span class="o">.</span><span class="n">_incremental_unmasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack_override</span><span class="o">=</span><span class="n">stack</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">UserProfileNode</span><span class="p">(</span><span class="n">ProfileNode</span><span class="p">):</span>
+
+    <span class="n">parent_node_kls</span> <span class="o">=</span> <span class="n">ProfileNode</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">parent_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">override_path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">parent_path</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">pms_strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">parents</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">ProfileNode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">override_path</span><span class="p">),)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">parent_paths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">override_path</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),)</span>
+
+
+<div class="viewcode-block" id="UserProfile"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.profiles.html#pkgcore.ebuild.profiles.UserProfile">[docs]</a><span class="k">class</span> <span class="nc">UserProfile</span><span class="p">(</span><span class="n">OnDiskProfile</span><span class="p">):</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span>
+        <span class="p">{</span><span class="s1">&#39;user_path&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;parent_path&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;parent_profile&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">},</span>
+        <span class="n">required</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;user_path&#39;</span><span class="p">,</span> <span class="s1">&#39;parent_path&#39;</span><span class="p">,</span> <span class="s1">&#39;parent_profile&#39;</span><span class="p">),</span>
+        <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;profile&#39;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_path</span><span class="p">,</span> <span class="n">parent_path</span><span class="p">,</span> <span class="n">parent_profile</span><span class="p">,</span> <span class="n">load_profile_base</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">parent_path</span><span class="p">,</span> <span class="n">parent_profile</span><span class="p">,</span> <span class="n">load_profile_base</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node</span> <span class="o">=</span> <span class="n">UserProfileNode</span><span class="p">(</span><span class="n">user_path</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">parent_path</span><span class="p">,</span> <span class="n">parent_profile</span><span class="p">))</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.profiles</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

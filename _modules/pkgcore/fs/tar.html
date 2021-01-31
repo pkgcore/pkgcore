@@ -1,0 +1,322 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fs.tar &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.tar</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fs.tar</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">binpkg tar utilities</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">count</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">compression</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">cmp</span><span class="p">,</span> <span class="n">sorted_cmp</span>
+<span class="kn">from</span> <span class="nn">snakeoil.data_source</span> <span class="kn">import</span> <span class="n">invokable_data_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.tar</span> <span class="kn">import</span> <span class="n">tarfile</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">contents</span>
+<span class="kn">from</span> <span class="nn">.fs</span> <span class="kn">import</span> <span class="n">fsDev</span><span class="p">,</span> <span class="n">fsDir</span><span class="p">,</span> <span class="n">fsFifo</span><span class="p">,</span> <span class="n">fsFile</span><span class="p">,</span> <span class="n">fsSymlink</span>
+
+<span class="n">_unique_inode</span> <span class="o">=</span> <span class="n">count</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="p">)</span><span class="o">.</span><span class="fm">__next__</span>
+
+<span class="n">known_compressors</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;bz2&quot;</span><span class="p">:</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="o">.</span><span class="n">bz2open</span><span class="p">,</span>
+    <span class="s2">&quot;gz&quot;</span><span class="p">:</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="o">.</span><span class="n">gzopen</span><span class="p">,</span>
+    <span class="kc">None</span><span class="p">:</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="o">.</span><span class="n">open</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="write_set"><a class="viewcode-back" href="../../../api/pkgcore.fs.tar.html#pkgcore.fs.tar.write_set">[docs]</a><span class="k">def</span> <span class="nf">write_set</span><span class="p">(</span><span class="n">contents_set</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">compressor</span><span class="o">=</span><span class="s1">&#39;bzip2&#39;</span><span class="p">,</span> <span class="n">absolute_paths</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">parallelize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">compressor</span> <span class="o">==</span> <span class="s1">&#39;bz2&#39;</span><span class="p">:</span>
+        <span class="n">compressor</span> <span class="o">=</span> <span class="s1">&#39;bzip2&#39;</span>
+
+    <span class="n">tar_handle</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">handle</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">compress_handle</span><span class="p">(</span><span class="n">compressor</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span>
+        <span class="n">parallelize</span><span class="o">=</span><span class="n">parallelize</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tar_handle</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">filepath</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">handle</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">add_contents_to_tarfile</span><span class="p">(</span><span class="n">contents_set</span><span class="p">,</span> <span class="n">tar_handle</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">tar_handle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">tar_handle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="add_contents_to_tarfile"><a class="viewcode-back" href="../../../api/pkgcore.fs.tar.html#pkgcore.fs.tar.add_contents_to_tarfile">[docs]</a><span class="k">def</span> <span class="nf">add_contents_to_tarfile</span><span class="p">(</span><span class="n">contents_set</span><span class="p">,</span> <span class="n">tar_fd</span><span class="p">,</span> <span class="n">absolute_paths</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="c1"># first add directories, then everything else</span>
+    <span class="c1"># this is just a pkgcore optimization, it prefers to see the dirs first.</span>
+    <span class="n">dirs</span> <span class="o">=</span> <span class="n">contents_set</span><span class="o">.</span><span class="n">dirs</span><span class="p">()</span>
+    <span class="n">dirs</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dirs</span><span class="p">:</span>
+        <span class="n">tar_fd</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">fsobj_to_tarinfo</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">absolute_paths</span><span class="p">))</span>
+    <span class="k">del</span> <span class="n">dirs</span>
+    <span class="n">inodes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">contents_set</span><span class="o">.</span><span class="n">iterdirs</span><span class="p">(</span><span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">fsobj_to_tarinfo</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">absolute_paths</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">isreg</span><span class="p">():</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dev</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">inode</span><span class="p">)</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="n">inodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">_can_be_hardlinked</span><span class="p">(</span><span class="n">existing</span><span class="p">):</span>
+                    <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">LNKTYPE</span>
+                    <span class="n">t</span><span class="o">.</span><span class="n">linkname</span> <span class="o">=</span> <span class="s1">&#39;./</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">existing</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+                    <span class="n">t</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inodes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">bytes_fileobj</span><span class="p">()</span>
+            <span class="n">tar_fd</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+            <span class="c1">#tar_fd.addfile(t, fileobj=x.data.bytes_fileobj())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tar_fd</span><span class="o">.</span><span class="n">addfile</span><span class="p">(</span><span class="n">t</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="archive_to_fsobj"><a class="viewcode-back" href="../../../api/pkgcore.fs.tar.html#pkgcore.fs.tar.archive_to_fsobj">[docs]</a><span class="k">def</span> <span class="nf">archive_to_fsobj</span><span class="p">(</span><span class="n">src_tar</span><span class="p">):</span>
+    <span class="n">psep</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span>
+    <span class="n">dev</span> <span class="o">=</span> <span class="n">_unique_inode</span><span class="p">()</span>
+    <span class="c1"># inode cache used for supporting hardlinks.</span>
+    <span class="c1"># Since the tarfile specifies a hardlink target by path (rather than internally</span>
+    <span class="c1"># consistent inode numbers), we have to normalize the path lookup into this cache</span>
+    <span class="c1"># via abspath(os.path.join(&#39;/&#39;, key))...</span>
+    <span class="n">inodes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">src_tar</span><span class="p">:</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;uid&quot;</span><span class="p">:</span><span class="n">member</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="s2">&quot;gid&quot;</span><span class="p">:</span><span class="n">member</span><span class="o">.</span><span class="n">gid</span><span class="p">,</span>
+            <span class="s2">&quot;mtime&quot;</span><span class="p">:</span><span class="n">member</span><span class="o">.</span><span class="n">mtime</span><span class="p">,</span> <span class="s2">&quot;mode&quot;</span><span class="p">:</span><span class="n">member</span><span class="o">.</span><span class="n">mode</span><span class="p">}</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">psep</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">psep</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">isdir</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">psep</span><span class="p">)</span> <span class="o">==</span> <span class="s2">&quot;.&quot;</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">yield</span> <span class="n">fsDir</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">member</span><span class="o">.</span><span class="n">isreg</span><span class="p">()</span> <span class="ow">or</span> <span class="n">member</span><span class="o">.</span><span class="n">islnk</span><span class="p">():</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;dev&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dev</span>
+            <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">islnk</span><span class="p">():</span>
+                <span class="n">target</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">psep</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">linkname</span><span class="p">))</span>
+                <span class="n">inode</span> <span class="o">=</span> <span class="n">inodes</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">inode</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                        <span class="s2">&quot;Tarfile file </span><span class="si">%r</span><span class="s2"> is a hardlink to </span><span class="si">%r</span><span class="s2">, but we can&#39;t &quot;</span>
+                        <span class="s2">&quot;find the resolved hardlink target </span><span class="si">%r</span><span class="s2"> in the archive.  &quot;</span>
+                        <span class="s2">&quot;This means either a bug in pkgcore, or a malformed &quot;</span>
+                        <span class="s2">&quot;tarball.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">linkname</span><span class="p">,</span> <span class="n">target</span><span class="p">))</span>
+                <span class="n">d</span><span class="p">[</span><span class="s2">&quot;inode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inode</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="s2">&quot;inode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">inode</span> <span class="o">=</span> <span class="n">_unique_inode</span><span class="p">()</span>
+            <span class="c1"># Add the new file to the inode cache even if we&#39;re currently processing a</span>
+            <span class="c1"># hardlink; tar allows for hardlink chains of x -&gt; y -&gt; z; thus we have</span>
+            <span class="c1"># to ensure &#39;y&#39; is in the cache alongside it&#39;s target z to support &#39;x&#39;</span>
+            <span class="c1"># later lookup.</span>
+            <span class="n">inodes</span><span class="p">[</span><span class="n">location</span><span class="p">]</span> <span class="o">=</span> <span class="n">inode</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">invokable_data_source</span><span class="o">.</span><span class="n">wrap_function</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span>
+                <span class="n">src_tar</span><span class="o">.</span><span class="n">extractfile</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">name</span><span class="p">),</span> <span class="n">returns_text</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">returns_handle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">fsFile</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">member</span><span class="o">.</span><span class="n">issym</span><span class="p">()</span> <span class="ow">or</span> <span class="n">member</span><span class="o">.</span><span class="n">islnk</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">fsSymlink</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">linkname</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">member</span><span class="o">.</span><span class="n">isfifo</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">fsFifo</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">member</span><span class="o">.</span><span class="n">isdev</span><span class="p">():</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;major&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">major</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;minor&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">member</span><span class="o">.</span><span class="n">minor</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">fsDev</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="o">**</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                <span class="s2">&quot;unknown type </span><span class="si">%r</span><span class="s2">, </span><span class="si">%r</span><span class="s2"> was encounted walking tarmembers&quot;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="n">member</span><span class="p">,</span> <span class="n">member</span><span class="o">.</span><span class="n">type</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="fsobj_to_tarinfo"><a class="viewcode-back" href="../../../api/pkgcore.fs.tar.html#pkgcore.fs.tar.fsobj_to_tarinfo">[docs]</a><span class="k">def</span> <span class="nf">fsobj_to_tarinfo</span><span class="p">(</span><span class="n">fsobj</span><span class="p">,</span> <span class="n">absolute_path</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarInfo</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">REGTYPE</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">DIRTYPE</span>
+    <span class="k">elif</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">is_sym</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">SYMTYPE</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">linkname</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">target</span>
+    <span class="k">elif</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">is_fifo</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">FIFOTYPE</span>
+    <span class="k">elif</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">is_dev</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISCHR</span><span class="p">(</span><span class="n">fsobj</span><span class="o">.</span><span class="n">mode</span><span class="p">):</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">CHRTYPE</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">BLKTYPE</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">devmajor</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">major</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">devminor</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">minor</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">location</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">absolute_path</span><span class="p">:</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;./</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">fsobj</span><span class="o">.</span><span class="n">location</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">),)</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">mode</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">uid</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">uid</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">gid</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">gid</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">fsobj</span><span class="o">.</span><span class="n">mtime</span>
+    <span class="k">return</span> <span class="n">t</span></div>
+
+
+<div class="viewcode-block" id="generate_contents"><a class="viewcode-back" href="../../../api/pkgcore.fs.tar.html#pkgcore.fs.tar.generate_contents">[docs]</a><span class="k">def</span> <span class="nf">generate_contents</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">compressor</span><span class="o">=</span><span class="s2">&quot;bz2&quot;</span><span class="p">,</span> <span class="n">parallelize</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    generate a contentset from a tarball</span>
+
+<span class="sd">    :param filepath: string path to location on disk</span>
+<span class="sd">    :param compressor: defaults to bz2; decompressor to use, see</span>
+<span class="sd">        :obj:`known_compressors` for list of valid compressors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">compressor</span> <span class="o">==</span> <span class="s1">&#39;bz2&#39;</span><span class="p">:</span>
+        <span class="n">compressor</span> <span class="o">=</span> <span class="s1">&#39;bzip2&#39;</span>
+
+    <span class="n">tar_handle</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">handle</span> <span class="o">=</span> <span class="n">compression</span><span class="o">.</span><span class="n">decompress_handle</span><span class="p">(</span><span class="n">compressor</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span>
+        <span class="n">parallelize</span><span class="o">=</span><span class="n">parallelize</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">tar_handle</span> <span class="o">=</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">TarFile</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">filepath</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">handle</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">ReadError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;empty header&quot;</span><span class="p">):</span>
+            <span class="k">raise</span>
+        <span class="n">tar_handle</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">convert_archive</span><span class="p">(</span><span class="n">tar_handle</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="convert_archive"><a class="viewcode-back" href="../../../api/pkgcore.fs.tar.html#pkgcore.fs.tar.convert_archive">[docs]</a><span class="k">def</span> <span class="nf">convert_archive</span><span class="p">(</span><span class="n">archive</span><span class="p">):</span>
+    <span class="c1"># regarding the usage of del in this function... bear in mind these sets</span>
+    <span class="c1"># could easily have 10k -&gt; 100k entries in extreme cases; thus the del</span>
+    <span class="c1"># usage, explicitly trying to ensure we don&#39;t keep refs long term.</span>
+
+    <span class="c1"># this one is a bit fun.</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">archive_to_fsobj</span><span class="p">(</span><span class="n">archive</span><span class="p">))</span>
+    <span class="c1"># we use the data source as the unique key to get position.</span>
+    <span class="n">files_ordering</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">raw</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">is_reg</span><span class="p">))</span>
+    <span class="n">files_ordering</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="o">.</span><span class="n">data</span><span class="p">:</span> <span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files_ordering</span><span class="p">}</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">contentsSet</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">raw</span><span class="p">,</span> <span class="n">archive</span>
+
+    <span class="c1"># first rewrite affected syms.</span>
+    <span class="n">raw_syms</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">links</span><span class="p">()</span>
+    <span class="n">syms</span> <span class="o">=</span> <span class="n">contents</span><span class="o">.</span><span class="n">contentsSet</span><span class="p">(</span><span class="n">raw_syms</span><span class="p">)</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">syms</span><span class="p">):</span>
+            <span class="n">affected</span> <span class="o">=</span> <span class="n">syms</span><span class="o">.</span><span class="n">child_nodes</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">affected</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">syms</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">affected</span><span class="p">)</span>
+            <span class="n">syms</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">affected</span><span class="o">.</span><span class="n">change_offset</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">resolved_target</span><span class="p">))</span>
+            <span class="k">del</span> <span class="n">affected</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="n">t</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">raw_syms</span><span class="p">)</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">syms</span><span class="p">)</span>
+
+    <span class="k">del</span> <span class="n">raw_syms</span>
+    <span class="n">syms</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">syms</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># ok, syms are correct.  now we get the rest.</span>
+    <span class="c1"># we shift the readds into a separate list so that we don&#39;t reinspect</span>
+    <span class="c1"># them on later runs; this slightly reduces the working set.</span>
+    <span class="n">additions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">syms</span><span class="p">:</span>
+        <span class="n">affected</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">child_nodes</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">affected</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">t</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">affected</span><span class="p">)</span>
+        <span class="n">additions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">affected</span><span class="o">.</span><span class="n">change_offset</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">resolved_target</span><span class="p">))</span>
+
+    <span class="n">t</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">additions</span><span class="p">)</span>
+    <span class="n">t</span><span class="o">.</span><span class="n">add_missing_directories</span><span class="p">()</span>
+
+    <span class="c1"># finally... an insane sort.</span>
+    <span class="k">def</span> <span class="nf">sort_func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">y</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+                <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">return</span> <span class="n">cmp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">y</span><span class="o">.</span><span class="n">is_dir</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">+</span><span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">cmp</span><span class="p">(</span><span class="n">files_ordering</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">data</span><span class="p">],</span>
+                    <span class="n">files_ordering</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">data</span><span class="p">])</span>
+            <span class="k">return</span> <span class="o">+</span><span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">y</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="n">cmp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">contents</span><span class="o">.</span><span class="n">OrderedContentsSet</span><span class="p">(</span><span class="n">sorted_cmp</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">sort_func</span><span class="p">),</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.tar</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pconfig uncollapsable - show configuration objects that could not be collapsed/instantiated
+-------------------------------------------------------------------------------------------
+
+.. include:: uncollapsable/_synopsis.rst
+.. include:: uncollapsable/_description.rst
+.. include:: uncollapsable/_options.rst
+.. include:: uncollapsable/_subcommands.rst

@@ -1,0 +1,4 @@
+Synopsis
+========
+
+pmaint [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] {sync,copy,regen,perl-rebuild,env-update,mirror,digest,eclass} ...

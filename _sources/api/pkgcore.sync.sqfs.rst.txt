@@ -1,0 +1,7 @@
+pkgcore.sync.sqfs module
+========================
+
+.. automodule:: pkgcore.sync.sqfs
+   :members:
+   :undoc-members:
+   :show-inheritance:

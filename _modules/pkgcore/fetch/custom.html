@@ -1,0 +1,236 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fetch.custom &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../fetch.html" accesskey="U">pkgcore.fetch</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.custom</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fetch.custom</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">fetcher class that pulls files via executing another program to do the fetching</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;MalformedCommand&quot;</span><span class="p">,</span> <span class="s2">&quot;fetcher&quot;</span><span class="p">,)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">ensure_dirs</span><span class="p">,</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.process.spawn</span> <span class="kn">import</span> <span class="n">is_userpriv_capable</span><span class="p">,</span> <span class="n">spawn_bash</span>
+
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+<span class="kn">from</span> <span class="nn">..os_data</span> <span class="kn">import</span> <span class="n">portage_gid</span><span class="p">,</span> <span class="n">portage_uid</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">fetchable</span>
+
+
+<div class="viewcode-block" id="MalformedCommand"><a class="viewcode-back" href="../../../api/pkgcore.fetch.custom.html#pkgcore.fetch.custom.MalformedCommand">[docs]</a><span class="k">class</span> <span class="nc">MalformedCommand</span><span class="p">(</span><span class="n">errors</span><span class="o">.</span><span class="n">FetchError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;fetchcommand is malformed: </span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">command</span></div>
+
+
+<div class="viewcode-block" id="fetcher"><a class="viewcode-back" href="../../../api/pkgcore.fetch.custom.html#pkgcore.fetch.custom.fetcher">[docs]</a><span class="k">class</span> <span class="nc">fetcher</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">fetcher</span><span class="p">):</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span>
+        <span class="p">{</span><span class="s1">&#39;userpriv&#39;</span><span class="p">:</span> <span class="s1">&#39;bool&#39;</span><span class="p">,</span> <span class="s1">&#39;required_chksums&#39;</span><span class="p">:</span> <span class="s1">&#39;list&#39;</span><span class="p">,</span>
+         <span class="s1">&#39;distdir&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;command&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;resume_command&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">},</span>
+        <span class="n">allow_unknowns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">distdir</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">resume_command</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">required_chksums</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">userpriv</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">attempts</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+                 <span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_env</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param distdir: directory to download files to</span>
+<span class="sd">        :type distdir: string</span>
+<span class="sd">        :param command: shell command to execute to fetch a file</span>
+<span class="sd">        :type command: string</span>
+<span class="sd">        :param resume_command: if not None, command to use for resuming-</span>
+<span class="sd">            if None, command is reused</span>
+<span class="sd">        :param required_chksums: if None, all chksums must be verified,</span>
+<span class="sd">            else only chksums listed</span>
+<span class="sd">        :type required_chksums: None or sequence</span>
+<span class="sd">        :param userpriv: depriv for fetching?</span>
+<span class="sd">        :param attempts: max number of attempts before failing the fetch</span>
+<span class="sd">        :param readonly: controls whether fetching is allowed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">distdir</span> <span class="o">=</span> <span class="n">distdir</span>
+        <span class="k">if</span> <span class="n">required_chksums</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">required_chksums</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">required_chksums</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">required_chksums</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">required_chksums</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">required_chksums</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">required_chksums</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">required_chksums</span> <span class="o">=</span> <span class="n">required_chksums</span>
+
+        <span class="k">def</span> <span class="nf">rewrite_command</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+            <span class="n">new_command</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$</span><span class="si">{DISTDIR}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">)</span>
+            <span class="n">new_command</span> <span class="o">=</span> <span class="n">new_command</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$DISTDIR&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">)</span>
+            <span class="n">new_command</span> <span class="o">=</span> <span class="n">new_command</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$</span><span class="si">{URI}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%(URI)s</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">new_command</span> <span class="o">=</span> <span class="n">new_command</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$URI&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%(URI)s</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">new_command</span> <span class="o">=</span> <span class="n">new_command</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$</span><span class="si">{FILE}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%(FILE)s</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">new_command</span> <span class="o">=</span> <span class="n">new_command</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;$FILE&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%(FILE)s</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">new_command</span> <span class="o">==</span> <span class="n">string</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MalformedCommand</span><span class="p">(</span><span class="n">string</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">new_command</span> <span class="o">%</span> <span class="p">{</span><span class="s2">&quot;URI&quot;</span><span class="p">:</span> <span class="s2">&quot;blah&quot;</span><span class="p">,</span> <span class="s2">&quot;FILE&quot;</span><span class="p">:</span> <span class="s2">&quot;blah&quot;</span><span class="p">}</span>
+            <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">k</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">MalformedCommand</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">command</span><span class="si">}</span><span class="s2">: unexpected key </span><span class="si">{</span><span class="n">k</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_command</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">command</span> <span class="o">=</span> <span class="n">rewrite_command</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resume_command</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resume_command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">resume_command</span> <span class="o">=</span> <span class="n">rewrite_command</span><span class="p">(</span><span class="n">resume_command</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">attempts</span> <span class="o">=</span> <span class="n">attempts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">userpriv</span> <span class="o">=</span> <span class="n">userpriv</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readonly</span> <span class="o">=</span> <span class="n">readonly</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extra_env</span> <span class="o">=</span> <span class="n">extra_env</span>
+
+<div class="viewcode-block" id="fetcher.fetch"><a class="viewcode-back" href="../../../api/pkgcore.fetch.custom.html#pkgcore.fetch.custom.fetcher.fetch">[docs]</a>    <span class="k">def</span> <span class="nf">fetch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fetch a file.</span>
+
+<span class="sd">        :type target: :obj:`pkgcore.fetch.fetchable` instance</span>
+<span class="sd">        :return: None if fetching failed,</span>
+<span class="sd">            else on disk location of the copied file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">fetchable</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;target must be fetchable instance/derivative: </span><span class="si">{</span><span class="n">target</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">kw</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="mo">0o775</span><span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">readonly</span><span class="p">:</span>
+            <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;mode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mo">0o555</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">userpriv</span><span class="p">:</span>
+            <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;gid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">portage_gid</span>
+        <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;minimal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">DistdirPerms</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="s2">&quot;if userpriv, uid must be </span><span class="si">%i</span><span class="s2">, gid must be </span><span class="si">%i</span><span class="s2">. &quot;</span>
+                <span class="s2">&quot;if not readonly, directory must be 0775, else 0555&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">portage_uid</span><span class="p">,</span> <span class="n">portage_gid</span><span class="p">))</span>
+
+        <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="n">target</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">uris</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">uri</span><span class="p">)</span>
+        <span class="n">last_exc</span> <span class="o">=</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;fetching failed for an unknown reason&quot;</span><span class="p">)</span>
+        <span class="n">spawn_opts</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;umask&#39;</span><span class="p">:</span> <span class="mo">0o002</span><span class="p">,</span> <span class="s1">&#39;env&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">extra_env</span><span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">userpriv</span> <span class="ow">and</span> <span class="n">is_userpriv_capable</span><span class="p">():</span>
+            <span class="n">spawn_opts</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;uid&quot;</span><span class="p">:</span> <span class="n">portage_uid</span><span class="p">,</span> <span class="s2">&quot;gid&quot;</span><span class="p">:</span> <span class="n">portage_gid</span><span class="p">})</span>
+
+        <span class="k">for</span> <span class="n">_attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">attempts</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_verify</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">path</span>
+            <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingDistfile</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command</span>
+                <span class="n">last_exc</span> <span class="o">=</span> <span class="n">e</span>
+            <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ChksumFailure</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">FetchFailed</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">last_exc</span> <span class="o">=</span> <span class="n">e</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">resumable</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                        <span class="n">command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">command</span>
+                    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">UnmodifiableFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">command</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resume_command</span>
+            <span class="c1"># Note we&#39;re not even checking the results, the verify portion of</span>
+            <span class="c1"># the loop handles this. In other words, don&#39;t trust the external</span>
+            <span class="c1"># fetcher&#39;s exit code, trust our chksums instead.</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">spawn_bash</span><span class="p">(</span>
+                    <span class="n">command</span> <span class="o">%</span> <span class="p">{</span><span class="s2">&quot;URI&quot;</span><span class="p">:</span> <span class="nb">next</span><span class="p">(</span><span class="n">uris</span><span class="p">),</span> <span class="s2">&quot;FILE&quot;</span><span class="p">:</span> <span class="n">target</span><span class="o">.</span><span class="n">filename</span><span class="p">},</span>
+                    <span class="o">**</span><span class="n">spawn_opts</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">FetchFailed</span><span class="p">(</span>
+                    <span class="n">target</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;ran out of urls to fetch from&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">last_exc</span></div>
+
+<div class="viewcode-block" id="fetcher.get_path"><a class="viewcode-back" href="../../../api/pkgcore.fetch.custom.html#pkgcore.fetch.custom.fetcher.get_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchable</span><span class="p">):</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">distdir</span><span class="p">,</span> <span class="n">fetchable</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_verify</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">fetchable</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">path</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="fetcher.get_storage_path"><a class="viewcode-back" href="../../../api/pkgcore.fetch.custom.html#pkgcore.fetch.custom.fetcher.get_storage_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_storage_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">distdir</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../fetch.html" >pkgcore.fetch</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.custom</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

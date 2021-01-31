@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.pkgsets.installed &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.pkgsets.installed</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.pkgsets.installed</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Installed&quot;</span><span class="p">,</span> <span class="s2">&quot;VersionedInstalled&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">packages</span><span class="p">,</span> <span class="n">values</span>
+
+
+<span class="k">class</span> <span class="nc">_Base</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Base for Installed and VersionedInstalled.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vdb</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vdbs</span> <span class="o">=</span> <span class="n">vdb</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">restrict</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+            <span class="s2">&quot;package_is_real&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">EqualityMatch</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdbs</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">getter</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Installed"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.installed.html#pkgcore.pkgsets.installed.Installed">[docs]</a><span class="k">class</span> <span class="nc">Installed</span><span class="p">(</span><span class="n">_Base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set of packages holding slotted atoms of all installed packages.&quot;&quot;&quot;</span>
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">({</span><span class="s1">&#39;vdb&#39;</span><span class="p">:</span> <span class="s1">&#39;refs:repo&#39;</span><span class="p">},</span> <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;pkgset&#39;</span><span class="p">)</span>
+    <span class="n">getter</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;slotted_atom&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="VersionedInstalled"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.installed.html#pkgcore.pkgsets.installed.VersionedInstalled">[docs]</a><span class="k">class</span> <span class="nc">VersionedInstalled</span><span class="p">(</span><span class="n">_Base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set of packages holding versioned atoms of all installed packages.&quot;&quot;&quot;</span>
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">({</span><span class="s1">&#39;vdb&#39;</span><span class="p">:</span> <span class="s1">&#39;refs:repo&#39;</span><span class="p">},</span> <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;pkgset&#39;</span><span class="p">)</span>
+    <span class="n">getter</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;versioned_atom&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.pkgsets.installed</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

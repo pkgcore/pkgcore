@@ -1,0 +1,7 @@
+pkgcore.vdb.ondisk module
+=========================
+
+.. automodule:: pkgcore.vdb.ondisk
+   :members:
+   :undoc-members:
+   :show-inheritance:

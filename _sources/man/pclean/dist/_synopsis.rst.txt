@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pclean dist [-p] [-x EXCLUDE] [-X EXCLUDE_FILE] [-S PKGSET] [-m TIME] [-s SIZE] [-I] [-E] [-f] [-r REPO] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [TARGET [TARGET ...]]

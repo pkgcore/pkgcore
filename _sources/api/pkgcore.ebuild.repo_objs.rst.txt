@@ -1,0 +1,7 @@
+pkgcore.ebuild.repo\_objs module
+================================
+
+.. automodule:: pkgcore.ebuild.repo_objs
+   :members:
+   :undoc-members:
+   :show-inheritance:

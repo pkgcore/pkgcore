@@ -1,0 +1,22 @@
+pkgcore.fs package
+==================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.fs.contents
+   pkgcore.fs.fs
+   pkgcore.fs.livefs
+   pkgcore.fs.ops
+   pkgcore.fs.tar
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.fs
+   :members:
+   :undoc-members:
+   :show-inheritance:

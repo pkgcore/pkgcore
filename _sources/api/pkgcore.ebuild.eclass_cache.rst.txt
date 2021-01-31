@@ -1,0 +1,7 @@
+pkgcore.ebuild.eclass\_cache module
+===================================
+
+.. automodule:: pkgcore.ebuild.eclass_cache
+   :members:
+   :undoc-members:
+   :show-inheritance:

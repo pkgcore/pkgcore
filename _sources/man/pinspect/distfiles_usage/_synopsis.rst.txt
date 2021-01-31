@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pinspect distfiles_usage [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--no-final-summary | --no-repo-summary | --no-detail] [--sort-by-name] [--first FIRST | --last LAST] [--include-nonmirrored] [--include-restricted] [repo [repo ...]]

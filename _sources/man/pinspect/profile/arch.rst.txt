@@ -1,0 +1,7 @@
+pinspect profile arch - output the arch defined for this profile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: arch/_synopsis.rst
+.. include:: arch/_description.rst
+.. include:: arch/_options.rst
+.. include:: arch/_subcommands.rst

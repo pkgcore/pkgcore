@@ -1,0 +1,7 @@
+pkgcore.repository.prototype module
+===================================
+
+.. automodule:: pkgcore.repository.prototype
+   :members:
+   :undoc-members:
+   :show-inheritance:

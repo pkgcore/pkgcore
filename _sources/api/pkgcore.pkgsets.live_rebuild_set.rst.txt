@@ -1,0 +1,7 @@
+pkgcore.pkgsets.live\_rebuild\_set module
+=========================================
+
+.. automodule:: pkgcore.pkgsets.live_rebuild_set
+   :members:
+   :undoc-members:
+   :show-inheritance:

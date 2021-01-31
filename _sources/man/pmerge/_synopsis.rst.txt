@@ -1,0 +1,4 @@
+Synopsis
+========
+
+pmerge [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] [--domain DOMAIN] [-u | -d | -C | --clean | --list-sets] [-p] [-a] [-f] [-1] [-D] [-N] [-i] [--with-bdeps] [-O] [-o] [-n] [-b] [-k] [-K] [-S] [-e] [-x TARGET[,TARGET,...]] [--ignore-failures] [--force] [--preload-vdb-state] [--quiet-repo-display] [-F FORMATTER] [TARGET [TARGET ...]]

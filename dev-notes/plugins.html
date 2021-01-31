@@ -1,0 +1,222 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Plugins system &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Pkgcore/Portage differences" href="portage-differences.html" />
+    <link rel="prev" title="How to use guppy/heapy for tracking down memory usage" href="heapy.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="portage-differences.html" title="Pkgcore/Portage differences"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="heapy.html" title="How to use guppy/heapy for tracking down memory usage"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Plugins system</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="plugins-system">
+<h1>Plugins system<a class="headerlink" href="#plugins-system" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="goals">
+<h2>Goals<a class="headerlink" href="#goals" title="Permalink to this headline">¶</a></h2>
+<p>The plugin system (<code class="docutils literal notranslate"><span class="pre">pkgcore.plugin</span></code>) is used to pick up extra code
+(potentially distributed separately from pkgcore itself) at a place
+where using the config system is not a good idea for some reason. This
+means that for a lot of things that most people would call &quot;plugins&quot;
+you should not actually use <code class="docutils literal notranslate"><span class="pre">pkgcore.plugin</span></code>, you should use the
+config system. Things like extra repository types should simply be
+used as &quot;class&quot; value in the configuration. The plugin system is
+currently mainly used in places where handing in a <code class="docutils literal notranslate"><span class="pre">ConfigManager</span></code>
+is too inconvenient.</p>
+</div>
+<div class="section" id="using-plugins">
+<h2>Using plugins<a class="headerlink" href="#using-plugins" title="Permalink to this headline">¶</a></h2>
+<p>Plugins are looked up based on a string &quot;key&quot;. You can always look up
+all available plugins matching this key with
+<code class="docutils literal notranslate"><span class="pre">pkgcore.plugin.get_plugins(key)</span></code>. For some kinds of plugin (the
+ones defining a &quot;priority&quot; attribute) you can also get the &quot;best&quot;
+plugin with <code class="docutils literal notranslate"><span class="pre">pkgcore.plugin.get_plugin(key)</span></code>. This does not make
+sense for all kinds of plugin, so not all of them define this.</p>
+<p>The plugin system does not care about what kind of object plugins are,
+this depends entirely on the key.</p>
+</div>
+<div class="section" id="adding-plugins">
+<h2>Adding plugins<a class="headerlink" href="#adding-plugins" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="basics-caching">
+<h3>Basics, caching<a class="headerlink" href="#basics-caching" title="Permalink to this headline">¶</a></h3>
+<p>Plugins for pkgcore are loaded from modules inside the
+<code class="docutils literal notranslate"><span class="pre">pkgcore.plugins</span></code> package. This package has some magic to make
+plugins in any subdirectory <code class="docutils literal notranslate"><span class="pre">pkgcore/plugins</span></code> under a directory on
+<code class="docutils literal notranslate"><span class="pre">sys.path</span></code> work. So if pkgcore itself is installed in site-packages
+you can still add plugins to <code class="docutils literal notranslate"><span class="pre">/home/you/pythonlib/pkgcore/plugins</span></code>
+if <code class="docutils literal notranslate"><span class="pre">/home/you/pythonlib</span></code> is in <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code>. You should not put an
+<code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> in this extra plugin directory.</p>
+<p>Plugin modules should contain a <code class="docutils literal notranslate"><span class="pre">pkgcore_plugins</span></code> directory that
+maps the &quot;key&quot; strings to a sequence of plugins. This dictionary has
+to be constant, since pkgcore keeps track of what plugin module
+provides plugins for what keys in a cache file to avoid unnecessary
+imports. So this is invalid:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">spork_package</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">pkgcore_plugins</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">pkgcore_plugins</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;myplug&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">spork_package</span><span class="o">.</span><span class="n">ThePlugin</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>since if the plugin cache is generated while the package is not
+available pkgcore will cache the module as not providing any
+<code class="docutils literal notranslate"><span class="pre">myplug</span></code> plugins, and the cache will not be updated if the package
+becomes available (only changes to the mtime of actual plugin modules
+invalidate the cache). Instead you should do something like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">spork_package</span> <span class="kn">import</span> <span class="n">ThePlugin</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">class</span> <span class="nc">ThePlugin</span><span class="p">:</span>
+        <span class="n">disabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+<span class="n">pkgcore_plugins</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;myplug&#39;</span><span class="p">:</span> <span class="p">[</span><span class="n">ThePlugin</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>If a plugin has a &quot;disabled&quot; attribute the plugin system will never
+return it from <code class="docutils literal notranslate"><span class="pre">get_plugin</span></code> or <code class="docutils literal notranslate"><span class="pre">get_plugins</span></code>.</p>
+</div>
+<div class="section" id="priority">
+<h3>Priority<a class="headerlink" href="#priority" title="Permalink to this headline">¶</a></h3>
+<p>If you want your plugin to support <code class="docutils literal notranslate"><span class="pre">get_plugin</span></code> it should have a
+<code class="docutils literal notranslate"><span class="pre">priority</span></code> attribute: an integer indicating how &quot;preferred&quot; this
+plugin is. The plugin with the highest priority (that is not disabled)
+is returned from <code class="docutils literal notranslate"><span class="pre">get_plugin</span></code>.</p>
+<p>Some types of plugins need more information to determine a priority
+value. Those should not have a priority attribute. They should use
+<code class="docutils literal notranslate"><span class="pre">get_plugins</span></code> instead and have a method that gets passed the extra
+data and returns the priority.</p>
+</div>
+<div class="section" id="import-behaviour">
+<h3>Import behaviour<a class="headerlink" href="#import-behaviour" title="Permalink to this headline">¶</a></h3>
+<p>Assuming the cache is working correctly (it was generated after
+installing a plugin as root) pkgcore will import all plugin modules
+containing plugins for a requested key in priority order until it hits
+one that is not disabled. The &quot;disabled&quot; value is not cached (a plugin
+that is unconditionally disabled makes no sense), but the priority
+value is. You can fake a dynamic priority by having two instances of
+your plugin registered and only one of them enabled at the same
+time.</p>
+<p>This means it makes sense to have only one kind of plugin per plugin
+module (unless the required imports overlap): this avoids pulling in
+imports for other kinds of plugin when one kind of plugin is
+requested.</p>
+<p>The disabled value is not cached by the plugin system after the plugin
+module is imported. This means it should be a simple attribute (either
+completely constant or set at import time) or property that does its
+own caching.</p>
+</div>
+</div>
+<div class="section" id="adding-a-plugin-package">
+<h2>Adding a plugin package<a class="headerlink" href="#adding-a-plugin-package" title="Permalink to this headline">¶</a></h2>
+<p>Both <code class="docutils literal notranslate"><span class="pre">get_plugin</span></code> and <code class="docutils literal notranslate"><span class="pre">get_plugins</span></code> take a plugin package as
+second argument. This means you can use the plugin system for external
+pkgcore-related tools without cluttering up the main pkgcore plugin
+directory. If you do this you will probably want to copy the
+<code class="docutils literal notranslate"><span class="pre">__path__</span></code> trick from <code class="docutils literal notranslate"><span class="pre">pkgcore/plugin/__init__.py</span></code> to support
+plugins elsewhere on <code class="docutils literal notranslate"><span class="pre">sys.path</span></code>.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Plugins system</a><ul>
+<li><a class="reference internal" href="#goals">Goals</a></li>
+<li><a class="reference internal" href="#using-plugins">Using plugins</a></li>
+<li><a class="reference internal" href="#adding-plugins">Adding plugins</a><ul>
+<li><a class="reference internal" href="#basics-caching">Basics, caching</a></li>
+<li><a class="reference internal" href="#priority">Priority</a></li>
+<li><a class="reference internal" href="#import-behaviour">Import behaviour</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#adding-a-plugin-package">Adding a plugin package</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="heapy.html"
+                        title="previous chapter">How to use guppy/heapy for tracking down memory usage</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="portage-differences.html"
+                        title="next chapter">Pkgcore/Portage differences</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="portage-differences.html" title="Pkgcore/Portage differences"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="heapy.html" title="How to use guppy/heapy for tracking down memory usage"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Plugins system</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

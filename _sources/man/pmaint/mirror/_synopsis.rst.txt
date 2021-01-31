@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint mirror [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-f] query [query ...]

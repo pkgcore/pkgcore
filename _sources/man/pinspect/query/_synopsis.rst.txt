@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pinspect query [-h] [--debug] [-q] [-v] [--color BOOLEAN] {best_version,env_var,get_profiles,get_repo_path,get_repos,has_version,mass_best_version} ...

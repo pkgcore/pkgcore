@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint perl-rebuild [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] new_version

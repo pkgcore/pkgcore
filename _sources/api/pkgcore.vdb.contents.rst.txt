@@ -1,0 +1,7 @@
+pkgcore.vdb.contents module
+===========================
+
+.. automodule:: pkgcore.vdb.contents
+   :members:
+   :undoc-members:
+   :show-inheritance:

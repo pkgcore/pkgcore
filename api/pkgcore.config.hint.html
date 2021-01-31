@@ -1,0 +1,144 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.config.hint module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.hint module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.config.hint">
+<span id="pkgcore-config-hint-module"></span><h1>pkgcore.config.hint module<a class="headerlink" href="#module-pkgcore.config.hint" title="Permalink to this headline">¶</a></h1>
+<p>Config introspection support.</p>
+<dl class="py class">
+<dt id="pkgcore.config.hint.ConfigHint">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.hint.</code><code class="sig-name descname">ConfigHint</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">types</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">positional</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">doc</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">typename</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">allow_unknowns</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">authorative</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">requires_config</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">raw_class</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/hint.html#ConfigHint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.hint.ConfigHint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Hint for introspection supplying overrides.</p>
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.allow_unknowns">
+<code class="sig-name descname">allow_unknowns</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.allow_unknowns" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.authorative">
+<code class="sig-name descname">authorative</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.authorative" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.hint.ConfigHint.clone">
+<code class="sig-name descname">clone</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/hint.html#ConfigHint.clone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.clone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.doc">
+<code class="sig-name descname">doc</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.doc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.positional">
+<code class="sig-name descname">positional</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.positional" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.raw_class">
+<code class="sig-name descname">raw_class</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.raw_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.required">
+<code class="sig-name descname">required</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.required" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.requires_config">
+<code class="sig-name descname">requires_config</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.requires_config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.typename">
+<code class="sig-name descname">typename</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.typename" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.hint.ConfigHint.types">
+<code class="sig-name descname">types</code><a class="headerlink" href="#pkgcore.config.hint.ConfigHint.types" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.config.hint.configurable">
+<code class="sig-prename descclassname">pkgcore.config.hint.</code><code class="sig-name descname">configurable</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/hint.html#configurable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.hint.configurable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator version of ConfigHint.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.hint module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

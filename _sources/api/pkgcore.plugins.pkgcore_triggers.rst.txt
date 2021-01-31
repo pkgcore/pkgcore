@@ -1,0 +1,7 @@
+pkgcore.plugins.pkgcore\_triggers module
+========================================
+
+.. automodule:: pkgcore.plugins.pkgcore_triggers
+   :members:
+   :undoc-members:
+   :show-inheritance:

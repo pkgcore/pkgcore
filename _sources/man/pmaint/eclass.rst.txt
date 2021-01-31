@@ -1,0 +1,7 @@
+pmaint eclass - generate eclass docs
+------------------------------------
+
+.. include:: eclass/_synopsis.rst
+.. include:: eclass/_description.rst
+.. include:: eclass/_options.rst
+.. include:: eclass/_subcommands.rst

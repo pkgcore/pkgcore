@@ -1,0 +1,7 @@
+pclean dist - remove distfiles
+------------------------------
+
+.. include:: dist/_synopsis.rst
+.. include:: dist/_description.rst
+.. include:: dist/_options.rst
+.. include:: dist/_subcommands.rst

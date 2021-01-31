@@ -1,0 +1,160 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.sync.rsync module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.rsync module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.sync.rsync">
+<span id="pkgcore-sync-rsync-module"></span><h1>pkgcore.sync.rsync module<a class="headerlink" href="#module-pkgcore.sync.rsync" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.sync.rsync.rsync_syncer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.sync.rsync.</code><code class="sig-name descname">rsync_syncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">basedir</span></em>, <em class="sig-param"><span class="n">uri</span></em>, <em class="sig-param"><span class="n">conn_timeout</span><span class="o">=</span><span class="default_value">15</span></em>, <em class="sig-param"><span class="n">usersync</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">compress</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">excludes</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">includes</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">retries</span><span class="o">=</span><span class="default_value">5</span></em>, <em class="sig-param"><span class="n">proxy</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">opts</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">extra_opts</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/rsync.html#rsync_syncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.sync.base.html#pkgcore.sync.base.ExternalSyncer" title="pkgcore.sync.base.ExternalSyncer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.base.ExternalSyncer</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_syncer.binary">
+<code class="sig-name descname">binary</code><em class="property"> = 'rsync'</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.binary" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_syncer.default_conn_timeout">
+<code class="sig-name descname">default_conn_timeout</code><em class="property"> = 15</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.default_conn_timeout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_syncer.default_excludes">
+<code class="sig-name descname">default_excludes</code><em class="property"> = ['/distfiles', '/local', '/packages']</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.default_excludes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_syncer.default_includes">
+<code class="sig-name descname">default_includes</code><em class="property"> = []</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.default_includes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_syncer.default_opts">
+<code class="sig-name descname">default_opts</code><em class="property"> = ['--recursive', '--delete', '--delete-delay', '--perms', '--times', '--compress', '--force', '--links', '--safe-links', '--stats', '--human-readable', '--timeout=180', '--whole-file']</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.default_opts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_syncer.default_retries">
+<code class="sig-name descname">default_retries</code><em class="property"> = 5</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.default_retries" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.sync.rsync.rsync_syncer.parse_hostname">
+<em class="property">static </em><code class="sig-name descname">parse_hostname</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">uri</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/rsync.html#rsync_syncer.parse_hostname"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.parse_hostname" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_syncer.pkgcore_config_type">
+<code class="sig-name descname">pkgcore_config_type</code><em class="property"> = &lt;pkgcore.config.hint.ConfigHint object&gt;</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_syncer.pkgcore_config_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.sync.rsync.rsync_timestamp_syncer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.sync.rsync.</code><code class="sig-name descname">rsync_timestamp_syncer</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/rsync.html#rsync_timestamp_syncer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.rsync.rsync_timestamp_syncer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.sync.rsync.rsync_syncer" title="pkgcore.sync.rsync.rsync_syncer"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.sync.rsync.rsync_syncer</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.sync.rsync.rsync_timestamp_syncer.current_timestamp">
+<code class="sig-name descname">current_timestamp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/sync/rsync.html#rsync_timestamp_syncer.current_timestamp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.sync.rsync.rsync_timestamp_syncer.current_timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>path</strong> – override the default path for the timestamp to read</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>string of the timestamp data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_timestamp_syncer.forcable">
+<code class="sig-name descname">forcable</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_timestamp_syncer.forcable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_timestamp_syncer.forward_sync_delay">
+<code class="sig-name descname">forward_sync_delay</code><em class="property"> = 1500</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_timestamp_syncer.forward_sync_delay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.sync.rsync.rsync_timestamp_syncer.negative_sync_delay">
+<code class="sig-name descname">negative_sync_delay</code><em class="property"> = 3600</em><a class="headerlink" href="#pkgcore.sync.rsync.rsync_timestamp_syncer.negative_sync_delay" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.sync.rsync module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

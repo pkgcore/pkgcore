@@ -1,0 +1,20 @@
+pkgcore.cache package
+=====================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.cache.errors
+   pkgcore.cache.flat_hash
+   pkgcore.cache.fs_template
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.cache
+   :members:
+   :undoc-members:
+   :show-inheritance:

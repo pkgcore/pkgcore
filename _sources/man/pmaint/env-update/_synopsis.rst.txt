@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint env-update [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--skip-ldconfig]

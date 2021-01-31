@@ -1,0 +1,7 @@
+pkgcore.config.domain module
+============================
+
+.. automodule:: pkgcore.config.domain
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pinspect profile bashrcs - inspect bashrcs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: bashrcs/_synopsis.rst
+.. include:: bashrcs/_description.rst
+.. include:: bashrcs/_options.rst
+.. include:: bashrcs/_subcommands.rst

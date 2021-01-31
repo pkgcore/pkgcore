@@ -1,0 +1,369 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.ebd module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebd module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.ebd">
+<span id="pkgcore-ebuild-ebd-module"></span><h1>pkgcore.ebuild.ebd module<a class="headerlink" href="#module-pkgcore.ebuild.ebd" title="Permalink to this headline">¶</a></h1>
+<p>EBuild Daemon (ebd), main high level interface to ebuild execution env.</p>
+<p>Wraps <a class="reference internal" href="pkgcore.ebuild.processor.html#module-pkgcore.ebuild.processor" title="pkgcore.ebuild.processor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.ebuild.processor</span></code></a> functionality into a higher level
+api, for example per phase methods.</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebd.binpkg_localize">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebd.</code><code class="sig-name descname">binpkg_localize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#binpkg_localize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.binpkg_localize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.ebd.ebd" title="pkgcore.ebuild.ebd.ebd"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.ebd</span></code></a>, <a class="reference internal" href="#pkgcore.ebuild.ebd.setup_mixin" title="pkgcore.ebuild.ebd.setup_mixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.setup_mixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.format.build</span></code></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.binpkg_localize.finalize">
+<code class="sig-name descname">finalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.binpkg_localize.finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.binpkg_localize.setup">
+<code class="sig-name descname">setup</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.binpkg_localize.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebd.binpkg_localize.setup_is_for_src">
+<code class="sig-name descname">setup_is_for_src</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.ebuild.ebd.binpkg_localize.setup_is_for_src" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebd.binpkg_localize.stage_depends">
+<code class="sig-name descname">stage_depends</code><em class="property"> = {'finalize': 'setup', 'setup': 'start'}</em><a class="headerlink" href="#pkgcore.ebuild.ebd.binpkg_localize.stage_depends" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.binpkg_localize.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.binpkg_localize.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebd.buildable">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebd.</code><code class="sig-name descname">buildable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">verified_files</span></em>, <em class="sig-param"><span class="n">eclass_cache</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force_test</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#buildable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.ebd.ebd" title="pkgcore.ebuild.ebd.ebd"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.ebd</span></code></a>, <a class="reference internal" href="#pkgcore.ebuild.ebd.setup_mixin" title="pkgcore.ebuild.ebd.setup_mixin"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.setup_mixin</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.format.build</span></code></p>
+<p>Generic build operation.</p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.compile">
+<code class="sig-name descname">compile</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.compile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.configure">
+<code class="sig-name descname">configure</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.configure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.finalize">
+<code class="sig-name descname">finalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.install">
+<code class="sig-name descname">install</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.install" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.nofetch">
+<code class="sig-name descname">nofetch</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#buildable.nofetch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.nofetch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the nofetch phase.</p>
+<p>We need the same prerequisites as setup, so reuse that.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.prepare">
+<code class="sig-name descname">prepare</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.prepare" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.setup">
+<code class="sig-name descname">setup</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.test">
+<code class="sig-name descname">test</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.test" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.buildable.unpack">
+<code class="sig-name descname">unpack</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.buildable.unpack" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebd.ebd">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebd.</code><code class="sig-name descname">ebd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">initial_env</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">env_data_source</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">clean</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">tmp_offset</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">allow_fetching</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.cleanup">
+<code class="sig-name descname">cleanup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">disable_observer</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.cleanup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.cleanup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.do_cleanup">
+<code class="sig-name descname">do_cleanup</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.do_cleanup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.feat_or_bool">
+<code class="sig-name descname">feat_or_bool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">extra_env</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.feat_or_bool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.feat_or_bool" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.get_env_source">
+<code class="sig-name descname">get_env_source</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.get_env_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.get_env_source" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.set_is_being_replaced_by">
+<code class="sig-name descname">set_is_being_replaced_by</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.set_is_being_replaced_by"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.set_is_being_replaced_by" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.set_is_replacing">
+<code class="sig-name descname">set_is_replacing</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.set_is_replacing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.set_is_replacing" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.set_path_vars">
+<em class="property">static </em><code class="sig-name descname">set_path_vars</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">domain</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.set_path_vars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.set_path_vars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.setup_logging">
+<code class="sig-name descname">setup_logging</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.setup_logging"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.setup_logging" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.setup_workdir">
+<code class="sig-name descname">setup_workdir</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.setup_workdir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.setup_workdir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.ebd.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#ebd.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.ebd.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebd.install_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebd.</code><code class="sig-name descname">install_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#install_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.install_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.ebd.ebd" title="pkgcore.ebuild.ebd.ebd"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.ebd</span></code></a>, <a class="reference internal" href="pkgcore.operations.format.html#pkgcore.operations.format.install" title="pkgcore.operations.format.install"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.format.install</span></code></a></p>
+<p>Phase operations and steps for install execution.</p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.install_op.add_triggers">
+<code class="sig-name descname">add_triggers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain_op</span></em>, <em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#install_op.add_triggers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.install_op.add_triggers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.install_op.finalize">
+<code class="sig-name descname">finalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.install_op.finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.install_op.postinst">
+<code class="sig-name descname">postinst</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.install_op.postinst" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.install_op.preinst">
+<code class="sig-name descname">preinst</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.install_op.preinst" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.install_op.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.install_op.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebd.replace_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebd.</code><code class="sig-name descname">replace_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="n">old_pkg</span></em>, <em class="sig-param"><span class="n">new_pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#replace_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.operations.format.html#pkgcore.operations.format.replace" title="pkgcore.operations.format.replace"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.format.replace</span></code></a></p>
+<p>Phase operations and steps for replace execution.</p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.replace_op.add_triggers">
+<code class="sig-name descname">add_triggers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain_op</span></em>, <em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#replace_op.add_triggers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.add_triggers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.replace_op.finalize">
+<code class="sig-name descname">finalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebd.replace_op.install_kls">
+<code class="sig-name descname">install_kls</code><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.install_kls" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcore.ebuild.ebd.install_op" title="pkgcore.ebuild.ebd.install_op"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.install_op</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.replace_op.postinst">
+<code class="sig-name descname">postinst</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.postinst" title="Permalink to this definition">¶</a></dt>
+<dd><p>any post unmerge steps needed</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.replace_op.postrm">
+<code class="sig-name descname">postrm</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.postrm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.replace_op.preinst">
+<code class="sig-name descname">preinst</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.preinst" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.replace_op.prerm">
+<code class="sig-name descname">prerm</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.prerm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.replace_op.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebd.replace_op.uninstall_kls">
+<code class="sig-name descname">uninstall_kls</code><a class="headerlink" href="#pkgcore.ebuild.ebd.replace_op.uninstall_kls" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcore.ebuild.ebd.uninstall_op" title="pkgcore.ebuild.ebd.uninstall_op"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.uninstall_op</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebd.setup_mixin">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebd.</code><code class="sig-name descname">setup_mixin</code><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#setup_mixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.setup_mixin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.setup_mixin.setup">
+<code class="sig-name descname">setup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">setup_phase_override</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#setup_mixin.setup"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.setup_mixin.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebd.setup_mixin.setup_is_for_src">
+<code class="sig-name descname">setup_is_for_src</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.ebd.setup_mixin.setup_is_for_src" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebd.uninstall_op">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebd.</code><code class="sig-name descname">uninstall_op</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#uninstall_op"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.uninstall_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.ebd.ebd" title="pkgcore.ebuild.ebd.ebd"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebd.ebd</span></code></a>, <a class="reference internal" href="pkgcore.operations.format.html#pkgcore.operations.format.uninstall" title="pkgcore.operations.format.uninstall"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.format.uninstall</span></code></a></p>
+<p>Phase operations and steps for uninstall execution.</p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.uninstall_op.add_triggers">
+<code class="sig-name descname">add_triggers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain_op</span></em>, <em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#uninstall_op.add_triggers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.uninstall_op.add_triggers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.uninstall_op.finalize">
+<code class="sig-name descname">finalize</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.uninstall_op.finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.uninstall_op.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebd.html#uninstall_op.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebd.uninstall_op.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.uninstall_op.postrm">
+<code class="sig-name descname">postrm</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.uninstall_op.postrm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.uninstall_op.prerm">
+<code class="sig-name descname">prerm</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.uninstall_op.prerm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebd.uninstall_op.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.ebd.uninstall_op.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebd module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

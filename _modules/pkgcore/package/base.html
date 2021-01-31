@@ -1,0 +1,244 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.package.base &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.base</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.package.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;base package class; instances should derive from this.</span>
+
+<span class="sd">Right now, doesn&#39;t provide much, need to change that down the line</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;wrapper&quot;</span><span class="p">,</span> <span class="s2">&quot;dynamic_getattr_dict&quot;</span><span class="p">,</span> <span class="s2">&quot;DynamicGetattrSetter&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span><span class="p">,</span> <span class="n">sequences</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">exceptions</span> <span class="k">as</span> <span class="n">base_errors</span>
+<span class="kn">from</span> <span class="nn">..operations</span> <span class="kn">import</span> <span class="nb">format</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">errors</span>
+
+
+<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../api/pkgcore.package.base.html#pkgcore.package.base.base">[docs]</a><span class="k">class</span> <span class="nc">base</span><span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">SlotsPicklingMixin</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">immutable_instance</span><span class="p">):</span>
+
+    <span class="n">built</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">configurable</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">_operations</span> <span class="o">=</span> <span class="nb">format</span><span class="o">.</span><span class="n">operations</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;__weakref__&quot;</span><span class="p">,)</span>
+    <span class="n">_get_attr</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">versioned_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;versioned_atom&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unversioned_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;unversioned_atom&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="base.operations"><a class="viewcode-back" href="../../../api/pkgcore.package.base.html#pkgcore.package.base.base.operations">[docs]</a>    <span class="k">def</span> <span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_operations</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_supported</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="wrapper"><a class="viewcode-back" href="../../../api/pkgcore.package.base.html#pkgcore.package.base.wrapper">[docs]</a><span class="k">class</span> <span class="nc">wrapper</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_raw_pkg&quot;</span><span class="p">,</span> <span class="s2">&quot;_domain&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="wrapper.operations"><a class="viewcode-back" href="../../../api/pkgcore.package.base.html#pkgcore.package.base.wrapper.operations">[docs]</a>    <span class="k">def</span> <span class="nf">operations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">_operations</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_pkg</span><span class="p">):</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_raw_pkg&quot;</span><span class="p">,</span> <span class="n">raw_pkg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">wrapper</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_raw_pkg</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span> <span class="o">==</span> <span class="n">other</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">wrapper</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">_raw_pkg</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span> <span class="o">&lt;</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="fm">__le__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__lt__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__gt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">wrapper</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span> <span class="o">&gt;</span> <span class="n">other</span><span class="o">.</span><span class="n">_raw_pkg</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span> <span class="o">&gt;</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="fm">__ge__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__gt__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="fm">__getattr__</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">GetAttrProxy</span><span class="p">(</span><span class="s2">&quot;_raw_pkg&quot;</span><span class="p">)</span>
+    <span class="fm">__dir__</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">DirProxy</span><span class="p">(</span><span class="s2">&quot;_raw_pkg&quot;</span><span class="p">)</span>
+
+    <span class="n">_get_attr</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_raw_pkg._get_attr&quot;</span><span class="p">)</span>
+    <span class="n">built</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_raw_pkg.built&quot;</span><span class="p">)</span>
+    <span class="n">versioned_atom</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_raw_pkg.versioned_atom&quot;</span><span class="p">)</span>
+    <span class="n">unversioned_atom</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_raw_pkg.unversioned_atom&quot;</span><span class="p">)</span>
+    <span class="n">is_supported</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s1">&#39;_raw_pkg.is_supported&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="dynamic_getattr_dict"><a class="viewcode-back" href="../../../api/pkgcore.package.base.html#pkgcore.package.base.dynamic_getattr_dict">[docs]</a><span class="k">def</span> <span class="nf">dynamic_getattr_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+    <span class="n">functor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_attr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">functor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">functor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">val</span>
+    <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">MetadataException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">attr</span> <span class="o">==</span> <span class="n">attr</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MetadataException</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">error</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">verbose</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">errors</span><span class="o">.</span><span class="n">PackageError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MetadataException</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span> <span class="nn">e</span>
+    <span class="k">except</span> <span class="ne">PermissionError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">base_errors</span><span class="o">.</span><span class="n">PermissionDenied</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span></div>
+
+
+<div class="viewcode-block" id="DynamicGetattrSetter"><a class="viewcode-back" href="../../../api/pkgcore.package.base.html#pkgcore.package.base.DynamicGetattrSetter">[docs]</a><span class="k">class</span> <span class="nc">DynamicGetattrSetter</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Metaclass utilizing __getattr__ to JIT generate attributes and store them.</span>
+
+<span class="sd">    Consider `snakeoil.klass.jit_attr` for comparison; that pseudo property</span>
+<span class="sd">    will invoke a functor and store the result, but every subsequent access- still</span>
+<span class="sd">    pays overhead of passing through the redirects.</span>
+
+<span class="sd">    This metaclass lacks that overhead; via hooking __getattr__, this generates</span>
+<span class="sd">    the requested attribute, stores it on the instance, and returns it.  All</span>
+<span class="sd">    future access of that attribute go through the fast path cpy access ways.</span>
+
+<span class="sd">    This optimization in the early days of pkgcore had drastic impact; in modern</span>
+<span class="sd">    times python has improved.  There still is gain, but the implementation complexity</span>
+<span class="sd">    may warrant phasing this out in favor of `snakeoil.klas.jit_attr` alternatives.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DynamicGetattrSetter.register"><a class="viewcode-back" href="../../../api/pkgcore.package.base.html#pkgcore.package.base.DynamicGetattrSetter.register">[docs]</a>    <span class="k">class</span> <span class="nc">register</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Decorator used to mark a function as an attribute loader.&quot;&quot;&quot;</span>
+
+        <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;functor&#39;</span><span class="p">,)</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">functor</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">functor</span> <span class="o">=</span> <span class="n">functor</span></div>
+
+    <span class="k">def</span> <span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">class_dict</span><span class="p">):</span>
+        <span class="n">new_functions</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">attr</span><span class="p">:</span> <span class="n">class_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span><span class="o">.</span><span class="n">functor</span>
+            <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">thing</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">class_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">thing</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">register</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="n">existing</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">base</span> <span class="ow">in</span> <span class="n">bases</span><span class="p">:</span>
+            <span class="n">existing</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="s1">&#39;_get_attr&#39;</span><span class="p">,</span> <span class="p">{}))</span>
+
+        <span class="n">slots</span> <span class="o">=</span> <span class="n">class_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;__slots__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">slots</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># only add slots for new attr&#39;s; assume the layer above already slotted</span>
+            <span class="c1"># if this layer is setting slots.</span>
+            <span class="n">class_dict</span><span class="p">[</span><span class="s1">&#39;__slots__&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">sequences</span><span class="o">.</span><span class="n">iter_stable_unique</span><span class="p">(</span>
+                    <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
+                        <span class="n">slots</span><span class="p">,</span>
+                        <span class="nb">set</span><span class="p">(</span><span class="n">new_functions</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">d</span> <span class="o">=</span> <span class="n">existing</span> <span class="k">if</span> <span class="n">class_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;__DynamicGetattrSetter_auto_inherit__&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="k">else</span> <span class="p">{}</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">new_functions</span><span class="p">)</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">class_dict</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;_get_attr&#39;</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="n">class_dict</span><span class="p">[</span><span class="s1">&#39;_get_attr&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">d</span>
+        <span class="n">class_dict</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;__getattr__&#39;</span><span class="p">,</span> <span class="n">dynamic_getattr_dict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">class_dict</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.base</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

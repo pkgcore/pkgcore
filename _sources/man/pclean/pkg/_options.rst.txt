@@ -1,0 +1,85 @@
+Generic Cleaning Options
+------------------------
+
+TARGET                                        
+                                              packages to target for cleaning
+
+-p, --pretend                                 
+                                              dry run without performing any changes
+
+-x EXCLUDE, --exclude EXCLUDE                 
+                                              list of packages to exclude from removal
+
+-X EXCLUDE_FILE, --exclude-file EXCLUDE_FILE  
+                                              path to exclusion file
+
+-S PKGSET, --pkgsets PKGSET                   
+                                              list of pkgsets to include or exclude from removal
+
+File Cleaning Options
+---------------------
+
+-m TIME, --modified TIME  
+                          Don't remove files that have been modified since a given time. For
+                          example, to skip files newer than a year use "1y" as an argument to this
+                          option.  this option.
+                          
+                          Supported units are y, m, w, and d, and s representing years, months,
+                          weeks, days, and seconds, respectively.
+
+-s SIZE, --size SIZE      
+                          Don't remove files bigger than a given size.  For example, to skip
+                          files larger than 100 megabytes use "100M" as an argument to this
+                          option.
+                          
+                          Supported units are B, K, M, and G representing bytes, kilobytes,
+                          megabytes, and gigabytes, respectively.
+
+Repo Cleaning Options
+---------------------
+
+-I, --installed         
+                        skip files for packages that are currently installed
+
+-E, --exists            
+                        skip files for packages that relate to ebuilds in the tree
+
+-f, --fetch-restricted  
+                        skip fetch-restricted files
+
+-r REPO, --repo REPO    
+                        Target repository to search for matches. If no repo is specified all
+                        relevant repos are used.
+
+Binpkg Cleaning Options
+-----------------------
+
+--source-repo REPO             
+                               remove binpkgs with matching source repo
+
+-b, --bindist                  
+                               only remove binpkgs that restrict distribution
+
+-c CHANGED, --changed CHANGED  
+                               comma separated list of package attributes to check for ebuild changes
+
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.

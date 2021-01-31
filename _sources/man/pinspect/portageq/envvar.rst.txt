@@ -1,0 +1,7 @@
+pinspect portageq envvar - return configuration defined variables.  Use envvar2 instead, this will be removed.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: envvar/_synopsis.rst
+.. include:: envvar/_description.rst
+.. include:: envvar/_options.rst
+.. include:: envvar/_subcommands.rst

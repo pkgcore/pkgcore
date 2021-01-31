@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig configurables [-h] [--debug] [-q] [-v] [--color BOOLEAN] [typename]

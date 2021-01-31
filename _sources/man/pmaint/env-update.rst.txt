@@ -1,0 +1,7 @@
+pmaint env-update - update env.d and ldconfig
+---------------------------------------------
+
+.. include:: env-update/_synopsis.rst
+.. include:: env-update/_description.rst
+.. include:: env-update/_options.rst
+.. include:: env-update/_subcommands.rst

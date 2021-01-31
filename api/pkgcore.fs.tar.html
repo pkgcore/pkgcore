@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fs.tar module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.tar module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.fs.tar">
+<span id="pkgcore-fs-tar-module"></span><h1>pkgcore.fs.tar module<a class="headerlink" href="#module-pkgcore.fs.tar" title="Permalink to this headline">¶</a></h1>
+<p>binpkg tar utilities</p>
+<dl class="py function">
+<dt id="pkgcore.fs.tar.add_contents_to_tarfile">
+<code class="sig-prename descclassname">pkgcore.fs.tar.</code><code class="sig-name descname">add_contents_to_tarfile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">contents_set</span></em>, <em class="sig-param"><span class="n">tar_fd</span></em>, <em class="sig-param"><span class="n">absolute_paths</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/tar.html#add_contents_to_tarfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.tar.add_contents_to_tarfile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.tar.archive_to_fsobj">
+<code class="sig-prename descclassname">pkgcore.fs.tar.</code><code class="sig-name descname">archive_to_fsobj</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">src_tar</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/tar.html#archive_to_fsobj"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.tar.archive_to_fsobj" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.tar.convert_archive">
+<code class="sig-prename descclassname">pkgcore.fs.tar.</code><code class="sig-name descname">convert_archive</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">archive</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/tar.html#convert_archive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.tar.convert_archive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.tar.fsobj_to_tarinfo">
+<code class="sig-prename descclassname">pkgcore.fs.tar.</code><code class="sig-name descname">fsobj_to_tarinfo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fsobj</span></em>, <em class="sig-param"><span class="n">absolute_path</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/tar.html#fsobj_to_tarinfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.tar.fsobj_to_tarinfo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.tar.generate_contents">
+<code class="sig-prename descclassname">pkgcore.fs.tar.</code><code class="sig-name descname">generate_contents</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filepath</span></em>, <em class="sig-param"><span class="n">compressor</span><span class="o">=</span><span class="default_value">'bz2'</span></em>, <em class="sig-param"><span class="n">parallelize</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/tar.html#generate_contents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.tar.generate_contents" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate a contentset from a tarball</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>filepath</strong> – string path to location on disk</p></li>
+<li><p><strong>compressor</strong> – defaults to bz2; decompressor to use, see
+<code class="xref py py-obj docutils literal notranslate"><span class="pre">known_compressors</span></code> for list of valid compressors</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.fs.tar.write_set">
+<code class="sig-prename descclassname">pkgcore.fs.tar.</code><code class="sig-name descname">write_set</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">contents_set</span></em>, <em class="sig-param"><span class="n">filepath</span></em>, <em class="sig-param"><span class="n">compressor</span><span class="o">=</span><span class="default_value">'bzip2'</span></em>, <em class="sig-param"><span class="n">absolute_paths</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">parallelize</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fs/tar.html#write_set"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fs.tar.write_set" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.tar module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

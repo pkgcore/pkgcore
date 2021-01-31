@@ -1,0 +1,7 @@
+pkgcore.merge.errors module
+===========================
+
+.. automodule:: pkgcore.merge.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:

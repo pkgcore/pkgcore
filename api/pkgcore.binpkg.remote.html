@@ -1,0 +1,136 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.binpkg.remote module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.remote module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.binpkg.remote">
+<span id="pkgcore-binpkg-remote-module"></span><h1>pkgcore.binpkg.remote module<a class="headerlink" href="#module-pkgcore.binpkg.remote" title="Permalink to this headline">¶</a></h1>
+<p>remote binpkg support</p>
+<p>Currently this primarily just holds the Packages cache used for remote, and
+local binpkg repositories</p>
+<dl class="py class">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV0">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.remote.</code><code class="sig-name descname">PackagesCacheV0</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/remote.html#PackagesCacheV0"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.cache.html#pkgcore.cache.bulk" title="pkgcore.cache.bulk"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.cache.bulk</span></code></a></p>
+<p>Cache backend for writing binpkg Packages caches</p>
+<p>Note this follows version 0 semantics- not the most efficient, and
+doesn’t bundle certain useful keys like RESTRICT</p>
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV0.deserialized_inheritable">
+<code class="sig-name descname">deserialized_inheritable</code><em class="property"> = frozenset({'CBUILD', 'CHOST', 'source_repository'})</em><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV0.deserialized_inheritable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV0.read_preamble">
+<code class="sig-name descname">read_preamble</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">handle</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/remote.html#PackagesCacheV0.read_preamble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV0.read_preamble" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV0.update_from_repo">
+<code class="sig-name descname">update_from_repo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/remote.html#PackagesCacheV0.update_from_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV0.update_from_repo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV0.update_from_xpak">
+<code class="sig-name descname">update_from_xpak</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">xpak</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/remote.html#PackagesCacheV0.update_from_xpak"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV0.update_from_xpak" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV0.version">
+<code class="sig-name descname">version</code><em class="property"> = 0</em><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV0.version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV1">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.remote.</code><code class="sig-name descname">PackagesCacheV1</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/remote.html#PackagesCacheV1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.binpkg.remote.PackagesCacheV0" title="pkgcore.binpkg.remote.PackagesCacheV0"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.binpkg.remote.PackagesCacheV0</span></code></a></p>
+<p>Cache backend for writing binpkg Packages caches in format version 1.</p>
+<p>See <a class="reference internal" href="#pkgcore.binpkg.remote.PackagesCacheV0" title="pkgcore.binpkg.remote.PackagesCacheV0"><code class="xref py py-class docutils literal notranslate"><span class="pre">PackagesCacheV0</span></code></a> for usage information; this just writes
+a better ondisk format.</p>
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV1.deserialized_inheritable">
+<code class="sig-name descname">deserialized_inheritable</code><em class="property"> = frozenset({'CBUILD', 'CHOST', 'EAPI', 'KEYWORDS', 'LICENSE', 'RESTRICT', 'SLOT', 'USE', 'source_repository'})</em><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV1.deserialized_inheritable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.remote.PackagesCacheV1.version">
+<code class="sig-name descname">version</code><em class="property"> = 1</em><a class="headerlink" href="#pkgcore.binpkg.remote.PackagesCacheV1.version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.remote module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

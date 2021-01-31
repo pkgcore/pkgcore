@@ -1,0 +1,7 @@
+pkgcore.const module
+====================
+
+.. automodule:: pkgcore.const
+   :members:
+   :undoc-members:
+   :show-inheritance:

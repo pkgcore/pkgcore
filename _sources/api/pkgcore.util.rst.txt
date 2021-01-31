@@ -1,0 +1,22 @@
+pkgcore.util package
+====================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.util.commandline
+   pkgcore.util.file_type
+   pkgcore.util.packages
+   pkgcore.util.parserestrict
+   pkgcore.util.thread_pool
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.util
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile deprecated [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

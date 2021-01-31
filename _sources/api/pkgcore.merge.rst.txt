@@ -1,0 +1,21 @@
+pkgcore.merge package
+=====================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.merge.const
+   pkgcore.merge.engine
+   pkgcore.merge.errors
+   pkgcore.merge.triggers
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.merge
+   :members:
+   :undoc-members:
+   :show-inheritance:

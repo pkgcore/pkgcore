@@ -1,0 +1,7 @@
+pkgcore.cache.flat\_hash module
+===============================
+
+.. automodule:: pkgcore.cache.flat_hash
+   :members:
+   :undoc-members:
+   :show-inheritance:

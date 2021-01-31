@@ -1,0 +1,7 @@
+pinspect license_usage - report of license usage for targeted repos
+-------------------------------------------------------------------
+
+.. include:: license_usage/_synopsis.rst
+.. include:: license_usage/_description.rst
+.. include:: license_usage/_options.rst
+.. include:: license_usage/_subcommands.rst

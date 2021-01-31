@@ -1,0 +1,15 @@
+Description
+===========
+
+pinspect is used to extract various information from repos. For example,
+it can perform aggregated EAPI, license, eclass, and mirror usage queries
+across specified repos. Any repo type can be queried, e.g. ebuild,
+binary, or vdb.
+
+It also provides an interface to all profile specific metadata, e.g. package
+masks, inheritance trees, etc. This makes it easier to inspect profile
+differences without sorting through the inheritance tree and reading the raw
+files.
+
+Finally, a portageq compatible interface is provided for several commands that
+were historically used in ebuilds.

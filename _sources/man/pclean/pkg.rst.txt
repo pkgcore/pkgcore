@@ -1,0 +1,7 @@
+pclean pkg - remove binpkgs
+---------------------------
+
+.. include:: pkg/_synopsis.rst
+.. include:: pkg/_description.rst
+.. include:: pkg/_options.rst
+.. include:: pkg/_subcommands.rst

@@ -1,0 +1,22 @@
+pkgcore.operations package
+==========================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.operations.domain
+   pkgcore.operations.format
+   pkgcore.operations.observer
+   pkgcore.operations.regen
+   pkgcore.operations.repo
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.operations
+   :members:
+   :undoc-members:
+   :show-inheritance:

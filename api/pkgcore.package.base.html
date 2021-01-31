@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.package.base module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.base module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.package.base">
+<span id="pkgcore-package-base-module"></span><h1>pkgcore.package.base module<a class="headerlink" href="#module-pkgcore.package.base" title="Permalink to this headline">¶</a></h1>
+<p>base package class; instances should derive from this.</p>
+<p>Right now, doesn’t provide much, need to change that down the line</p>
+<dl class="py class">
+<dt id="pkgcore.package.base.DynamicGetattrSetter">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.package.base.</code><code class="sig-name descname">DynamicGetattrSetter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">name</span></em>, <em class="sig-param"><span class="n">bases</span></em>, <em class="sig-param"><span class="n">class_dict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/base.html#DynamicGetattrSetter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.base.DynamicGetattrSetter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#type" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">type</span></code></a></p>
+<p>Metaclass utilizing __getattr__ to JIT generate attributes and store them.</p>
+<p>Consider <cite>snakeoil.klass.jit_attr</cite> for comparison; that pseudo property
+will invoke a functor and store the result, but every subsequent access- still
+pays overhead of passing through the redirects.</p>
+<p>This metaclass lacks that overhead; via hooking __getattr__, this generates
+the requested attribute, stores it on the instance, and returns it.  All
+future access of that attribute go through the fast path cpy access ways.</p>
+<p>This optimization in the early days of pkgcore had drastic impact; in modern
+times python has improved.  There still is gain, but the implementation complexity
+may warrant phasing this out in favor of <cite>snakeoil.klas.jit_attr</cite> alternatives.</p>
+<dl class="py class">
+<dt id="pkgcore.package.base.DynamicGetattrSetter.register">
+<em class="property">class </em><code class="sig-name descname">register</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">functor</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/base.html#DynamicGetattrSetter.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.base.DynamicGetattrSetter.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Decorator used to mark a function as an attribute loader.</p>
+<dl class="py attribute">
+<dt id="pkgcore.package.base.DynamicGetattrSetter.register.functor">
+<code class="sig-name descname">functor</code><a class="headerlink" href="#pkgcore.package.base.DynamicGetattrSetter.register.functor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.package.base.base">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.package.base.</code><code class="sig-name descname">base</code><a class="reference internal" href="../_modules/pkgcore/package/base.html#base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.base.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.klass.SlotsPicklingMixin</span></code></p>
+<dl class="py attribute">
+<dt id="pkgcore.package.base.base.built">
+<code class="sig-name descname">built</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.package.base.base.built" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.package.base.base.configurable">
+<code class="sig-name descname">configurable</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.package.base.base.configurable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.base.is_supported">
+<em class="property">property </em><code class="sig-name descname">is_supported</code><a class="headerlink" href="#pkgcore.package.base.base.is_supported" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.base.operations">
+<code class="sig-name descname">operations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/base.html#base.operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.base.base.operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.base.unversioned_atom">
+<em class="property">property </em><code class="sig-name descname">unversioned_atom</code><a class="headerlink" href="#pkgcore.package.base.base.unversioned_atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.base.versioned_atom">
+<em class="property">property </em><code class="sig-name descname">versioned_atom</code><a class="headerlink" href="#pkgcore.package.base.base.versioned_atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.package.base.dynamic_getattr_dict">
+<code class="sig-prename descclassname">pkgcore.package.base.</code><code class="sig-name descname">dynamic_getattr_dict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">self</span></em>, <em class="sig-param"><span class="n">attr</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/base.html#dynamic_getattr_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.base.dynamic_getattr_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.package.base.wrapper">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.package.base.</code><code class="sig-name descname">wrapper</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">raw_pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/base.html#wrapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.base.wrapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.package.base.base" title="pkgcore.package.base.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.base.base</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.package.base.wrapper.built">
+<em class="property">property </em><code class="sig-name descname">built</code><a class="headerlink" href="#pkgcore.package.base.wrapper.built" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _raw_pkg.built</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.wrapper.is_supported">
+<em class="property">property </em><code class="sig-name descname">is_supported</code><a class="headerlink" href="#pkgcore.package.base.wrapper.is_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _raw_pkg.is_supported</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.wrapper.operations">
+<code class="sig-name descname">operations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/base.html#wrapper.operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.base.wrapper.operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.wrapper.unversioned_atom">
+<em class="property">property </em><code class="sig-name descname">unversioned_atom</code><a class="headerlink" href="#pkgcore.package.base.wrapper.unversioned_atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _raw_pkg.unversioned_atom</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.base.wrapper.versioned_atom">
+<em class="property">property </em><code class="sig-name descname">versioned_atom</code><a class="headerlink" href="#pkgcore.package.base.wrapper.versioned_atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _raw_pkg.versioned_atom</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.base module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

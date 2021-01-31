@@ -1,0 +1,164 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.package.metadata module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.metadata module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.package.metadata">
+<span id="pkgcore-package-metadata-module"></span><h1>pkgcore.package.metadata module<a class="headerlink" href="#module-pkgcore.package.metadata" title="Permalink to this headline">¶</a></h1>
+<p>package with its metadata accessible (think ‘no longer abstract’)</p>
+<dl class="py function">
+<dt id="pkgcore.package.metadata.DeriveMetadataKls">
+<code class="sig-prename descclassname">pkgcore.package.metadata.</code><code class="sig-name descname">DeriveMetadataKls</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">original_kls</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/metadata.html#DeriveMetadataKls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.metadata.DeriveMetadataKls" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.package.metadata.factory">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.package.metadata.</code><code class="sig-name descname">factory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_repo</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/metadata.html#factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.metadata.factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>package generator</p>
+<p>does weakref caching per repository</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pkgcore.package.metadata.factory.child_class" title="pkgcore.package.metadata.factory.child_class"><strong>child_class</strong></a> – callable to generate packages</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="pkgcore.package.metadata.factory.child_class">
+<code class="sig-name descname">child_class</code><a class="headerlink" href="#pkgcore.package.metadata.factory.child_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.metadata.DeriveMetadataKls.&lt;locals&gt;.package</span></code></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.metadata.factory.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/metadata.html#factory.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.metadata.factory.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>wipe the weakref cache of packages instances</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.metadata.factory.new_package">
+<code class="sig-name descname">new_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/package/metadata.html#factory.new_package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.package.metadata.factory.new_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate a new package instance</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.package.metadata.package">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.package.metadata.</code><code class="sig-name descname">package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_repository</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.package.metadata.package" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.ebuild.cpv.html#pkgcore.ebuild.cpv.VersionedCPV" title="pkgcore.ebuild.cpv.VersionedCPV"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.cpv.VersionedCPV</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.package.metadata.package.add_format_triggers">
+<code class="sig-name descname">add_format_triggers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">op_inst</span></em>, <em class="sig-param"><span class="n">format_op_inst</span></em>, <em class="sig-param"><span class="n">engine_inst</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.package.metadata.package.add_format_triggers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.package.metadata.package.built">
+<code class="sig-name descname">built</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.package.metadata.package.built" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.package.metadata.package.data">
+<code class="sig-name descname">data</code><a class="headerlink" href="#pkgcore.package.metadata.package.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.package.metadata.package.immutable">
+<code class="sig-name descname">immutable</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.package.metadata.package.immutable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.package.metadata.package.package_is_real">
+<code class="sig-name descname">package_is_real</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.package.metadata.package.package_is_real" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.metadata.package.release_cached_data">
+<code class="sig-name descname">release_cached_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">all</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.package.metadata.package.release_cached_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.metadata.package.repo">
+<em class="property">property </em><code class="sig-name descname">repo</code><a class="headerlink" href="#pkgcore.package.metadata.package.repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _parent._parent_repo</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.package.metadata.package.slotted_atom">
+<em class="property">property </em><code class="sig-name descname">slotted_atom</code><a class="headerlink" href="#pkgcore.package.metadata.package.slotted_atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.metadata module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

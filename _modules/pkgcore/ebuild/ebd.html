@@ -1,0 +1,1104 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.ebd &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebd</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.ebd</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">EBuild Daemon (ebd), main high level interface to ebuild execution env.</span>
+
+<span class="sd">Wraps :obj:`pkgcore.ebuild.processor` functionality into a higher level</span>
+<span class="sd">api, for example per phase methods.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;ebd&quot;</span><span class="p">,</span> <span class="s2">&quot;setup_mixin&quot;</span><span class="p">,</span> <span class="s2">&quot;install_op&quot;</span><span class="p">,</span> <span class="s2">&quot;uninstall_op&quot;</span><span class="p">,</span> <span class="s2">&quot;replace_op&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;buildable&quot;</span><span class="p">,</span> <span class="s2">&quot;binpkg_localize&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">TemporaryFile</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">data_source</span><span class="p">,</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">IGNORED_EXCEPTIONS</span>
+<span class="kn">from</span> <span class="nn">snakeoil.contexts</span> <span class="kn">import</span> <span class="n">chdir</span>
+<span class="kn">from</span> <span class="nn">snakeoil.currying</span> <span class="kn">import</span> <span class="n">post_curry</span><span class="p">,</span> <span class="n">pretty_docs</span>
+<span class="kn">from</span> <span class="nn">snakeoil.fileutils</span> <span class="kn">import</span> <span class="n">touch</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">ensure_dirs</span><span class="p">,</span> <span class="n">listdir_files</span><span class="p">,</span> <span class="n">normpath</span><span class="p">,</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.process.spawn</span> <span class="kn">import</span> <span class="p">(</span><span class="n">is_sandbox_capable</span><span class="p">,</span> <span class="n">is_userpriv_capable</span><span class="p">,</span>
+                                    <span class="n">spawn</span><span class="p">,</span> <span class="n">spawn_bash</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span><span class="p">,</span> <span class="n">iter_stable_unique</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">const</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..operations</span> <span class="kn">import</span> <span class="nb">format</span><span class="p">,</span> <span class="n">observer</span>
+<span class="kn">from</span> <span class="nn">..os_data</span> <span class="kn">import</span> <span class="n">portage_gid</span><span class="p">,</span> <span class="n">portage_uid</span><span class="p">,</span> <span class="n">xargs</span>
+<span class="kn">from</span> <span class="nn">..package.mutated</span> <span class="kn">import</span> <span class="n">MutatedPkg</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">ebd_ipc</span><span class="p">,</span> <span class="n">ebuild_built</span><span class="p">,</span> <span class="n">errors</span>
+<span class="kn">from</span> <span class="nn">.processor</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ProcessorError</span><span class="p">,</span> <span class="n">chuck_UnhandledCommand</span><span class="p">,</span>
+                        <span class="n">expected_ebuild_env</span><span class="p">,</span> <span class="n">inherit_handler</span><span class="p">,</span>
+                        <span class="n">release_ebuild_processor</span><span class="p">,</span> <span class="n">request_ebuild_processor</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ebd"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd">[docs]</a><span class="k">class</span> <span class="nc">ebd</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">initial_env</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">env_data_source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tmp_offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">allow_fetching</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param pkg:</span>
+<span class="sd">            :class:`pkgcore.ebuild.ebuild_src.package`</span>
+<span class="sd">            instance this env is being setup for</span>
+<span class="sd">        :param initial_env: initial environment to use for this ebuild</span>
+<span class="sd">        :param env_data_source: a :obj:`snakeoil.data_source.base` instance</span>
+<span class="sd">            to restore the environment from- used for restoring the</span>
+<span class="sd">            state of an ebuild processing, whether for unmerging, or</span>
+<span class="sd">            walking phases during building</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allow_fetching</span> <span class="o">=</span> <span class="n">allow_fetching</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;observer&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">is_supported</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;package </span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2"> uses unsupported EAPI: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">initial_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># copy.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">initial_env</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;USE&quot;</span><span class="p">,</span> <span class="s2">&quot;ACCEPT_LICENSE&quot;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Drop all USE_EXPAND variables from the exported environment.</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">use_expand</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># Only export USE_EXPAND variables for the package&#39;s enabled USE flags.</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">use_expand_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">m</span><span class="p">:</span>
+                <span class="n">use_expand</span><span class="p">,</span> <span class="n">value</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">groups</span><span class="p">()</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">use_expand</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bashrc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;bashrc&quot;</span><span class="p">,</span> <span class="p">())</span>
+
+        <span class="c1"># TODO: drop this once we rewrite/remove calling python-based scripts</span>
+        <span class="c1"># from the bash side</span>
+        <span class="k">if</span> <span class="s2">&quot;PYTHONPATH&quot;</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PYTHONPATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;PYTHONPATH&quot;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">features</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;FEATURES&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_path_vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">)</span>
+
+        <span class="c1"># internally implemented EAPI specific functions to skip when exporting env</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PKGCORE_EAPI_FUNCS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">bash_funcs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">env_data_source</span> <span class="o">=</span> <span class="n">env_data_source</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">env_data_source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">env_data_source</span><span class="p">,</span> <span class="n">data_source</span><span class="o">.</span><span class="n">base</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;env_data_source must be None, or a pkgcore.data_source.base &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;derivative: </span><span class="si">{</span><span class="n">env_data_source</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">env_data_source</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">iuse_effective_regex</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;^(</span><span class="si">{</span><span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse_effective</span><span class="p">)</span><span class="si">}</span><span class="s2">)$&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PKGCORE_IUSE_EFFECTIVE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">iuse_effective_regex</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">.</span><span class="se">\\</span><span class="s2">*&quot;</span><span class="p">,</span> <span class="s2">&quot;.*&quot;</span><span class="p">)</span>
+
+        <span class="n">expected_ebuild_env</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">env_source_override</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">env_data_source</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PKGCORE_FINALIZED_RESTRICT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">restrict</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">restrict</span>
+
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;sandbox&quot;</span><span class="p">,</span> <span class="s2">&quot;userpriv&quot;</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feat_or_bool</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">userpriv</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">getuid</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">userpriv</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="s2">&quot;PORT_LOGDIR&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logging</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PORT_LOGDIR&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s</span><span class="s2">.log&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">-%H%M%S&quot;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">localtime</span><span class="p">())))</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PORT_LOGDIR&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">logging</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PKGCORE_PKG_REPO&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">source_repository</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;XARGS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xargs</span>
+
+        <span class="c1"># wipe variables listed in ENV_UNSET for supporting EAPIs</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_env_unset</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;ENV_UNSET&#39;</span><span class="p">,</span> <span class="p">()):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="c1"># wipe any remaining internal settings from the exported env</span>
+        <span class="n">wipes</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">str</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">wipes</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_op_vars</span><span class="p">(</span><span class="n">tmp_offset</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean_at_start</span> <span class="o">=</span> <span class="n">clean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean_needed</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># various IPC command support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ipc_helpers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="c1"># bash helpers</span>
+            <span class="s1">&#39;doins&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Doins</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dodoc&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dodoc</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dohtml&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dohtml</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;doinfo&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Doinfo</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dodir&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dodir</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;doexe&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Doexe</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dobin&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dobin</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dosbin&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dosbin</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dolib&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dolib</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dolib.so&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dolib_so</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dolib.a&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dolib_a</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;doman&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Doman</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;domo&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Domo</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dosym&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dosym</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dohard&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dohard</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;keepdir&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Keepdir</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+
+            <span class="c1"># bash functions</span>
+            <span class="s1">&#39;has_version&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Has_Version</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;best_version&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Best_Version</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;unpack&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Unpack</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;eapply&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Eapply</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;eapply_user&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Eapply_User</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;docompress&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Docompress</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s1">&#39;dostrip&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Dostrip</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+
+            <span class="c1"># internals</span>
+            <span class="s1">&#39;filter_env&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">FilterEnv</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="ebd.start"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_at_start</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">clean_needed</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleanup</span><span class="p">():</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_workdir</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_env_data_source</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean_needed</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="ebd.set_path_vars"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.set_path_vars">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">set_path_vars</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="c1"># XXX: note this is just EAPI 3 and EAPI 7 compatibility; not full prefix, soon..</span>
+        <span class="n">trailing_slash</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">trailing_slash</span>
+        <span class="n">env</span><span class="p">[</span><span class="s1">&#39;ROOT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span> <span class="o">+</span> <span class="n">trailing_slash</span>
+        <span class="n">env</span><span class="p">[</span><span class="s1">&#39;PKGCORE_PREFIX_SUPPORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;false&#39;</span>
+        <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">prefix_capable</span><span class="p">:</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">&#39;EPREFIX&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">prefix</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">&#39;EROOT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">pjoin</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;ROOT&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">trailing_slash</span><span class="p">),</span> <span class="n">env</span><span class="p">[</span><span class="s1">&#39;EPREFIX&#39;</span><span class="p">])</span>
+                <span class="o">+</span> <span class="n">trailing_slash</span><span class="p">)</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">&#39;PKGCORE_PREFIX_SUPPORT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+
+        <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_sysroot</span><span class="p">:</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">&#39;SYSROOT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="s1">&#39;ROOT&#39;</span><span class="p">]</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">&#39;ESYSROOT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;SYSROOT&#39;</span><span class="p">],</span> <span class="n">env</span><span class="p">[</span><span class="s1">&#39;EPREFIX&#39;</span><span class="p">])</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">&#39;BROOT&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="s1">&#39;EPREFIX&#39;</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_set_op_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tmp_offset</span><span class="p">):</span>
+        <span class="c1"># don&#39;t fool with this, without fooling with setup.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tmpdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">pm_tmpdir</span>
+        <span class="k">if</span> <span class="n">tmp_offset</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tmpdir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">tmp_offset</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">builddir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpdir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CATEGORY&quot;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PF&quot;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;temp&quot;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s2">&quot;WORKDIR&quot;</span><span class="p">,</span> <span class="s2">&quot;work&quot;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;image&quot;</span><span class="p">),</span>
+                     <span class="p">(</span><span class="s2">&quot;HOME&quot;</span><span class="p">,</span> <span class="s2">&quot;homedir&quot;</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builddir</span><span class="p">,</span> <span class="n">y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;D&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">trailing_slash</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PORTAGE_LOGFILE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="s2">&quot;build.log&quot;</span><span class="p">))</span>
+
+        <span class="c1"># XXX: Note that this is just EAPI 3 support, not yet prefix</span>
+        <span class="c1"># full awareness.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">prefix_capable</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;ED&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span>
+                <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;D&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;EPREFIX&quot;</span><span class="p">]))</span> \
+                    <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">trailing_slash</span>
+
+        <span class="c1"># temporary install dir correct for all EAPIs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ED</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ED&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="ebd.get_env_source"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.get_env_source">[docs]</a>    <span class="k">def</span> <span class="nf">get_env_source</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="s2">&quot;environment&quot;</span><span class="p">),</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data_source</span><span class="o">.</span><span class="n">bytes_data_source</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_setup_env_data_source</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o770</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">portage_gid</span><span class="p">,</span> <span class="n">minimal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">],</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> doesn&#39;t fulfill minimum mode </span><span class="si">%o</span><span class="s2"> and gid </span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">],</span> <span class="mo">0o770</span><span class="p">,</span> <span class="n">portage_gid</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_data_source</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="s2">&quot;environment&quot;</span><span class="p">)</span>
+            <span class="c1"># load data first (might be a local_source), *then* write</span>
+            <span class="c1"># if it&#39;s a src_ebuild being installed, trying to do two steps</span>
+            <span class="c1"># stomps the local_sources data.</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env_data_source</span><span class="o">.</span><span class="n">bytes_fileobj</span><span class="p">()</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_set_per_phase_env</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_merge_type</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">env</span><span class="p">)</span>
+
+        <span class="c1"># add phase specific helper paths to PATH if they exist</span>
+        <span class="n">ebuild_phase</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">phases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ebuild_phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">helpers</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">((</span>
+                <span class="n">const</span><span class="o">.</span><span class="n">PATH_FORCED_PREPEND</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">helpers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;global&#39;</span><span class="p">,</span> <span class="p">()),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">helpers</span><span class="p">[</span><span class="n">ebuild_phase</span><span class="p">],</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PATH&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">),</span>
+            <span class="p">))</span>
+            <span class="n">env</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setup_merge_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">env</span><span class="p">):</span>
+        <span class="c1"># only allowed in pkg_ phases.</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">phases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;pkg_&quot;</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="ow">not</span> <span class="n">phase</span> <span class="o">==</span> <span class="s1">&#39;setup-binpkg&#39;</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># note all pkgs have this attribute</span>
+        <span class="n">is_source</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;_is_from_source&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_merge_type</span><span class="p">:</span>
+            <span class="n">env</span><span class="p">[</span><span class="s2">&quot;MERGE_TYPE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">is_source</span> <span class="ow">and</span> <span class="s2">&quot;source&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;binary&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># we still must export this, just via the portage var name w/</span>
+            <span class="c1"># different values.  if we didn&#39;t, spec or not, kernel binpkg</span>
+            <span class="c1"># merging would be broke.</span>
+            <span class="n">env</span><span class="p">[</span><span class="s2">&quot;EMERGE_FROM&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">is_source</span> <span class="ow">and</span> <span class="s2">&quot;ebuild&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;binary&quot;</span>
+
+<div class="viewcode-block" id="ebd.setup_logging"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.setup_logging">[docs]</a>    <span class="k">def</span> <span class="nf">setup_logging</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">logging</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logging</span><span class="p">),</span>
+                                            <span class="n">mode</span><span class="o">=</span><span class="mo">0o2770</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">portage_gid</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">logging</span><span class="p">),</span>
+                <span class="s2">&quot;PORT_LOGDIR, desired mode 02770 and gid </span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">portage_gid</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ebd.setup_workdir"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.setup_workdir">[docs]</a>    <span class="k">def</span> <span class="nf">setup_workdir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># ensure dirs.</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;HOME&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="s2">&quot;WORKDIR&quot;</span><span class="p">,</span> <span class="s2">&quot;D&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">k</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o4770</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">portage_gid</span><span class="p">,</span> <span class="n">minimal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">k</span><span class="p">],</span>
+                    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> doesn&#39;t fulfill minimum mode </span><span class="si">%o</span><span class="s2"> and gid </span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="mo">0o770</span><span class="p">,</span> <span class="n">portage_gid</span><span class="p">))</span>
+            <span class="c1"># XXX hack, just &#39;til pkgcore controls these directories</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">k</span><span class="p">])</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="mo">0o2000</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="si">}</span><span class="s2"> ( </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> ) is setgid&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_generic_phase</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">userpriv</span><span class="p">,</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">extra_handlers</span><span class="o">=</span><span class="p">{},</span>
+                       <span class="n">failure_allowed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">suppress_bashrc</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param phase: phase to execute</span>
+<span class="sd">        :param userpriv: will we drop to</span>
+<span class="sd">            :obj:`pkgcore.os_data.portage_uid` and</span>
+<span class="sd">            :obj:`pkgcore.os_data.portage_gid` access for this phase?</span>
+<span class="sd">        :param sandbox: should this phase be sandboxed?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">phase</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">mandatory_phases</span><span class="p">:</span>
+            <span class="c1"># TODO(ferringb): Note the preinst hack; this will be removed once dyn_pkg_preinst</span>
+            <span class="c1"># is dead in full (currently it has a selinux labelling and suidctl ran from there)</span>
+            <span class="k">if</span> <span class="n">phase</span> <span class="o">!=</span> <span class="s1">&#39;preinst&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="s1">&#39;selinux&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span> <span class="ow">and</span> <span class="s1">&#39;suidctl&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">userpriv</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">userpriv</span> <span class="ow">and</span> <span class="n">userpriv</span>
+        <span class="n">sandbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sandbox</span> <span class="ow">and</span> <span class="n">sandbox</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_per_phase_env</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+        <span class="n">extra_handlers</span> <span class="o">=</span> <span class="n">extra_handlers</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">extra_handlers</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_ipc_helpers</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">suppress_bashrc</span><span class="p">:</span>
+            <span class="n">extra_handlers</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;request_bashrcs&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_request_bashrcs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">run_generic_phase</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">userpriv</span><span class="p">,</span> <span class="n">sandbox</span><span class="p">,</span>
+            <span class="n">extra_handlers</span><span class="o">=</span><span class="n">extra_handlers</span><span class="p">,</span> <span class="n">failure_allowed</span><span class="o">=</span><span class="n">failure_allowed</span><span class="p">,</span>
+            <span class="n">logging</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">logging</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_request_bashrcs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ebd</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_package_bashrcs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">source</span><span class="o">.</span><span class="n">path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ebd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;path</span><span class="se">\n</span><span class="si">{</span><span class="n">source</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">source</span><span class="o">.</span><span class="n">get_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">chuck_UnhandledCommand</span><span class="p">(</span>
+                    <span class="n">ebd</span><span class="p">,</span> <span class="s2">&quot;bashrc request: unable to process bashrc &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;due to source &#39;</span><span class="si">{</span><span class="n">source</span><span class="si">}</span><span class="s2">&#39; due to lacking usable get_*&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ebd</span><span class="o">.</span><span class="n">expect</span><span class="p">(</span><span class="s2">&quot;next&quot;</span><span class="p">):</span>
+                <span class="n">chuck_UnhandledCommand</span><span class="p">(</span>
+                    <span class="n">ebd</span><span class="p">,</span> <span class="s2">&quot;bashrc transfer, didn&#39;t receive &#39;next&#39; response.  &quot;</span>
+                    <span class="s2">&quot;failure?&quot;</span><span class="p">)</span>
+        <span class="n">ebd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;end_request&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ebd.set_is_replacing"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.set_is_replacing">[docs]</a>    <span class="k">def</span> <span class="nf">set_is_replacing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">pkgs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">exports_replacing</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;REPLACING_VERSIONS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">PVR</span> <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ebd.set_is_being_replaced_by"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.set_is_being_replaced_by">[docs]</a>    <span class="k">def</span> <span class="nf">set_is_being_replaced_by</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">exports_replacing</span> <span class="ow">and</span> <span class="n">pkg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;REPLACED_BY_VERSION&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">PVR</span></div>
+
+<div class="viewcode-block" id="ebd.cleanup"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.cleanup">[docs]</a>    <span class="k">def</span> <span class="nf">cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">disable_observer</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">clean_needed</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builddir</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">disable_observer</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_cleanup</span><span class="p">(</span><span class="n">disable_observer</span><span class="o">=</span><span class="n">disable_observer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">do_cleanup</span><span class="p">()</span></div>
+
+    <span class="nd">@observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;cleanup&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">do_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builddir</span><span class="p">)</span>
+            <span class="c1"># try to wipe the cat dir; if not empty, ignore it</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builddir</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir</span>
+                <span class="c1"># in particular, Solaris uses EEXIST in that case.</span>
+                <span class="c1"># https://github.com/pkgcore/pkgcore/pull/181</span>
+                <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">ENOTEMPTY</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">EEXIST</span><span class="p">):</span>
+                    <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;clean: Caught exception while cleansing: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="ebd.feat_or_bool"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.ebd.feat_or_bool">[docs]</a>    <span class="k">def</span> <span class="nf">feat_or_bool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">extra_env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">v</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">extra_env</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">extra_env</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">extra_env</span><span class="p">[</span><span class="n">name</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">v</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+    <span class="k">def</span> <span class="nf">__stage_step_callback__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">touch</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builddir</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;.</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span><span class="p">:</span>
+            <span class="c1"># we really don&#39;t care...</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_reload_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__set_stage_state__</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">listdir_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builddir</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)])</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">):</span>
+                <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="setup_mixin"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.setup_mixin">[docs]</a><span class="k">class</span> <span class="nc">setup_mixin</span><span class="p">:</span>
+
+    <span class="n">setup_is_for_src</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="setup_mixin.setup"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.setup_mixin.setup">[docs]</a>    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">setup_phase_override</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">setup_logging</span><span class="p">()</span>
+
+        <span class="n">additional_commands</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">phase_name</span> <span class="o">=</span> <span class="s2">&quot;setup-binpkg&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_is_for_src</span><span class="p">:</span>
+            <span class="n">phase_name</span> <span class="o">=</span> <span class="s2">&quot;setup&quot;</span>
+        <span class="k">if</span> <span class="n">setup_phase_override</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">phase_name</span> <span class="o">=</span> <span class="n">setup_phase_override</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_is_for_src</span><span class="p">:</span>
+            <span class="n">additional_commands</span><span class="p">[</span><span class="s2">&quot;request_inherit&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">inherit_handler</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclass_cache</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span>
+            <span class="n">phase_name</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">extra_handlers</span><span class="o">=</span><span class="n">additional_commands</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">run_generic_phase</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">userpriv</span><span class="p">,</span> <span class="n">sandbox</span><span class="p">,</span> <span class="n">fd_pipes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                      <span class="n">extra_handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">failure_allowed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">logging</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param phase: phase to execute</span>
+<span class="sd">    :param env: environment mapping for the phase</span>
+<span class="sd">    :param userpriv: will we drop to</span>
+<span class="sd">        :obj:`pkgcore.os_data.portage_uid` and</span>
+<span class="sd">        :obj:`pkgcore.os_data.portage_gid` access for this phase?</span>
+<span class="sd">    :param sandbox: should this phase be sandboxed?</span>
+<span class="sd">    :param fd_pipes: use custom file descriptors for ebd instance</span>
+<span class="sd">    :type fd_pipes: mapping between file descriptors</span>
+<span class="sd">    :param extra_handlers: extra command handlers</span>
+<span class="sd">    :type extra_handlers: mapping from string to callable</span>
+<span class="sd">    :param failure_allowed: allow failure without raising error</span>
+<span class="sd">    :type failure_allowed: boolean</span>
+<span class="sd">    :param logging: None or a filepath to log output to</span>
+<span class="sd">    :return: True when the phase has finished execution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">userpriv</span> <span class="o">=</span> <span class="n">userpriv</span> <span class="ow">and</span> <span class="n">is_userpriv_capable</span><span class="p">()</span>
+    <span class="n">sandbox</span> <span class="o">=</span> <span class="n">sandbox</span> <span class="ow">and</span> <span class="n">is_sandbox_capable</span><span class="p">()</span>
+    <span class="n">tmpdir</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tmpdir&#39;</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;T&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">expected_ebuild_env</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+
+    <span class="n">ebd</span> <span class="o">=</span> <span class="n">request_ebuild_processor</span><span class="p">(</span><span class="n">userpriv</span><span class="o">=</span><span class="n">userpriv</span><span class="p">,</span> <span class="n">sandbox</span><span class="o">=</span><span class="n">sandbox</span><span class="p">,</span> <span class="n">fd_pipes</span><span class="o">=</span><span class="n">fd_pipes</span><span class="p">)</span>
+    <span class="c1"># this is a bit of a hack; used until ebd accepts observers that handle</span>
+    <span class="c1"># the output redirection on its own.  Primary relevance is when</span>
+    <span class="c1"># stdout/stderr are pointed at a file; we leave buffering on, just</span>
+    <span class="c1"># force the flush for synchronization.</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ebd</span><span class="o">.</span><span class="n">run_phase</span><span class="p">(</span><span class="n">phase</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">tmpdir</span><span class="o">=</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">sandbox</span><span class="o">=</span><span class="n">sandbox</span><span class="p">,</span>
+                             <span class="n">logging</span><span class="o">=</span><span class="n">logging</span><span class="p">,</span> <span class="n">additional_commands</span><span class="o">=</span><span class="n">extra_handlers</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">failure_allowed</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span>
+                    <span class="n">phase</span> <span class="o">+</span> <span class="s2">&quot;: Failed building (False/0 return from handler)&quot;</span><span class="p">)</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;executing phase </span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">: execution failed, ignoring&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">IpcError</span><span class="p">):</span>
+            <span class="c1"># notify bash side of IPC error</span>
+            <span class="n">ebd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">ret</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">IpcInternalError</span><span class="p">):</span>
+                <span class="c1"># show main exception cause for internal IPC errors</span>
+                <span class="n">ebd</span><span class="o">.</span><span class="n">shutdown_processor</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">e</span><span class="o">.</span><span class="n">__cause__</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ebd</span><span class="o">.</span><span class="n">shutdown_processor</span><span class="p">()</span>
+        <span class="k">except</span> <span class="n">ProcessorError</span> <span class="k">as</span> <span class="n">pe</span><span class="p">:</span>
+            <span class="c1"># catch die errors during shutdown</span>
+            <span class="n">e</span> <span class="o">=</span> <span class="n">pe</span>
+        <span class="n">release_ebuild_processor</span><span class="p">(</span><span class="n">ebd</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">ProcessorError</span><span class="p">):</span>
+            <span class="c1"># force verbose die output</span>
+            <span class="n">e</span><span class="o">.</span><span class="n">_verbosity</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">IGNORED_EXCEPTIONS</span> <span class="o">+</span> <span class="p">(</span><span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">,)):</span>
+            <span class="k">raise</span>
+        <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Executing phase </span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2">: Caught exception: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="n">release_ebuild_processor</span><span class="p">(</span><span class="n">ebd</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="install_op"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.install_op">[docs]</a><span class="k">class</span> <span class="nc">install_op</span><span class="p">(</span><span class="n">ebd</span><span class="p">,</span> <span class="nb">format</span><span class="o">.</span><span class="n">install</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Phase operations and steps for install execution.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="nb">format</span><span class="o">.</span><span class="n">install</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="n">ebd</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">observer</span><span class="p">,</span> <span class="n">initial_env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">settings</span><span class="p">,</span>
+            <span class="n">env_data_source</span><span class="o">=</span><span class="n">pkg</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">preinst</span> <span class="o">=</span> <span class="n">pretty_docs</span><span class="p">(</span>
+        <span class="n">observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;preinst&quot;</span><span class="p">)(</span>
+            <span class="n">post_curry</span><span class="p">(</span><span class="n">ebd</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">,</span> <span class="s2">&quot;preinst&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="s2">&quot;run the postinst phase&quot;</span><span class="p">)</span>
+    <span class="n">postinst</span> <span class="o">=</span> <span class="n">pretty_docs</span><span class="p">(</span>
+        <span class="n">observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;postinst&quot;</span><span class="p">)(</span>
+            <span class="n">post_curry</span><span class="p">(</span><span class="n">ebd</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">,</span> <span class="s2">&quot;postinst&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="s2">&quot;run the postinst phase&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="install_op.add_triggers"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.install_op.add_triggers">[docs]</a>    <span class="k">def</span> <span class="nf">add_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_op</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="o">.</span><span class="n">add_format_triggers</span><span class="p">(</span><span class="n">domain_op</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="uninstall_op"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.uninstall_op">[docs]</a><span class="k">class</span> <span class="nc">uninstall_op</span><span class="p">(</span><span class="n">ebd</span><span class="p">,</span> <span class="nb">format</span><span class="o">.</span><span class="n">uninstall</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Phase operations and steps for uninstall execution.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="nb">format</span><span class="o">.</span><span class="n">uninstall</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="n">ebd</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">observer</span><span class="p">,</span> <span class="n">initial_env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">settings</span><span class="p">,</span>
+            <span class="n">env_data_source</span><span class="o">=</span><span class="n">pkg</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">tmp_offset</span><span class="o">=</span><span class="s2">&quot;unmerge&quot;</span><span class="p">)</span>
+
+    <span class="n">prerm</span> <span class="o">=</span> <span class="n">pretty_docs</span><span class="p">(</span>
+        <span class="n">observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;prerm&quot;</span><span class="p">)(</span>
+            <span class="n">post_curry</span><span class="p">(</span><span class="n">ebd</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">,</span> <span class="s2">&quot;prerm&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">)),</span>
+        <span class="s2">&quot;run the prerm phase&quot;</span><span class="p">)</span>
+    <span class="n">postrm</span> <span class="o">=</span> <span class="n">pretty_docs</span><span class="p">(</span>
+        <span class="n">observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;postrm&quot;</span><span class="p">)(</span>
+            <span class="n">post_curry</span><span class="p">(</span>
+                <span class="n">ebd</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">,</span> <span class="s2">&quot;postrm&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="n">failure_allowed</span><span class="o">=</span><span class="kc">True</span><span class="p">)),</span>
+        <span class="s2">&quot;run the postrm phase&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="uninstall_op.add_triggers"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.uninstall_op.add_triggers">[docs]</a>    <span class="k">def</span> <span class="nf">add_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_op</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="o">.</span><span class="n">add_format_triggers</span><span class="p">(</span><span class="n">domain_op</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="uninstall_op.finish"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.uninstall_op.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">format</span><span class="o">.</span><span class="n">uninstall</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="replace_op"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.replace_op">[docs]</a><span class="k">class</span> <span class="nc">replace_op</span><span class="p">(</span><span class="nb">format</span><span class="o">.</span><span class="n">replace</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Phase operations and steps for replace execution.&quot;&quot;&quot;</span>
+
+    <span class="n">install_kls</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">install_op</span><span class="p">)</span>
+    <span class="n">uninstall_kls</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">uninstall_op</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">old_pkg</span><span class="p">,</span> <span class="n">new_pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">old_pkg</span><span class="p">,</span> <span class="n">new_pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_op</span> <span class="o">=</span> <span class="n">install_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">new_pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_op</span><span class="o">.</span><span class="n">set_is_replacing</span><span class="p">(</span><span class="n">old_pkg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uninstall_op</span> <span class="o">=</span> <span class="n">uninstall_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">old_pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uninstall_op</span><span class="o">.</span><span class="n">set_is_being_replaced_by</span><span class="p">(</span><span class="n">new_pkg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_op</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uninstall_op</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="n">prerm</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_method</span><span class="p">(</span><span class="s2">&quot;uninstall_op.prerm&quot;</span><span class="p">)</span>
+    <span class="n">postrm</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_method</span><span class="p">(</span><span class="s2">&quot;uninstall_op.postrm&quot;</span><span class="p">)</span>
+    <span class="n">preinst</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_method</span><span class="p">(</span><span class="s2">&quot;install_op.preinst&quot;</span><span class="p">)</span>
+    <span class="n">postinst</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_method</span><span class="p">(</span><span class="s2">&quot;install_op.postinst&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">uninstall_op</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+        <span class="n">ret2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">install_op</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">ret</span> <span class="ow">and</span> <span class="n">ret2</span><span class="p">)</span>
+
+<div class="viewcode-block" id="replace_op.add_triggers"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.replace_op.add_triggers">[docs]</a>    <span class="k">def</span> <span class="nf">add_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain_op</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">uninstall_op</span><span class="o">.</span><span class="n">add_triggers</span><span class="p">(</span><span class="n">domain_op</span><span class="p">,</span> <span class="n">engine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">install_op</span><span class="o">.</span><span class="n">add_triggers</span><span class="p">(</span><span class="n">domain_op</span><span class="p">,</span> <span class="n">engine</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="buildable"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.buildable">[docs]</a><span class="k">class</span> <span class="nc">buildable</span><span class="p">(</span><span class="n">ebd</span><span class="p">,</span> <span class="n">setup_mixin</span><span class="p">,</span> <span class="nb">format</span><span class="o">.</span><span class="n">build</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic build operation.&quot;&quot;&quot;</span>
+
+    <span class="c1"># XXX this is unclean- should be handing in strictly what is build</span>
+    <span class="c1"># env, rather then dumping domain settings as env.</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">verified_files</span><span class="p">,</span> <span class="n">eclass_cache</span><span class="p">,</span>
+                 <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_test</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param pkg: :obj:`pkgcore.ebuild.ebuild_src.package` instance we&#39;ll be</span>
+<span class="sd">            building</span>
+<span class="sd">        :param eclass_cache: the :class:`pkgcore.ebuild.eclass_cache`</span>
+<span class="sd">            we&#39;ll be using</span>
+<span class="sd">        :param verified_files: mapping of fetchables mapped to their disk location</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_built_class</span> <span class="o">=</span> <span class="n">ebuild_built</span><span class="o">.</span><span class="n">fresh_built_package</span>
+        <span class="nb">format</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">verified_files</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+        <span class="n">domain_settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">settings</span>
+        <span class="n">ebd</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">initial_env</span><span class="o">=</span><span class="n">domain_settings</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;FILESDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">ebuild</span><span class="o">.</span><span class="n">path</span><span class="p">),</span> <span class="s2">&quot;files&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclass_cache</span> <span class="o">=</span> <span class="n">eclass_cache</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">run_test</span> <span class="o">=</span> <span class="n">force_test</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">feat_or_bool</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="n">domain_settings</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allow_failed_test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">feat_or_bool</span><span class="p">(</span><span class="s2">&quot;test-fail-continue&quot;</span><span class="p">,</span> <span class="n">domain_settings</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;test&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_test</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">force_test</span> <span class="ow">and</span> <span class="s2">&quot;test&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_test</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;disabling test for </span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2"> due to test use flag being disabled&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run_test</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># XXX minor hack</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">default</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;DISTCC&quot;</span><span class="p">,</span> <span class="s2">&quot;.distcc&quot;</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;CCACHE&quot;</span><span class="p">,</span> <span class="s2">&quot;ccache&quot;</span><span class="p">)):</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">feat_or_bool</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">domain_settings</span><span class="p">)</span> <span class="ow">and</span>
+                 <span class="n">s</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrict</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">b</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">b</span><span class="p">:</span>
+                <span class="c1"># looks weird I realize, but</span>
+                <span class="c1"># pjoin(&quot;/foor/bar&quot;, &quot;/barr/foo&quot;) == &quot;/barr/foo&quot;</span>
+                <span class="c1"># and pjoin(&quot;/foo/bar&quot;, &quot;.asdf&quot;) == &quot;/foo/bar/.asdf&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="s2">&quot;_DIR&quot;</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">default</span><span class="p">))</span>
+                <span class="c1"># gentoo bug 355283</span>
+                <span class="n">libdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ABI&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">libdir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">libdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LIBDIR_</span><span class="si">{</span><span class="n">libdir</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">libdir</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">libdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">libdir</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">libdir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">libdir</span> <span class="o">=</span> <span class="s2">&quot;lib&quot;</span>
+                <span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;/usr/</span><span class="si">{</span><span class="n">libdir</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">s</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="si">}</span><span class="s2">/bin&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;_PATH&quot;</span><span class="p">,</span> <span class="s2">&quot;_DIR&quot;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">s</span> <span class="o">+</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">:</span>
+                        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">s</span><span class="o">+</span><span class="n">y</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># ordering must match appearance order in SRC_URI per PMS</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;A&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">iter_stable_unique</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">distfiles</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_AA</span><span class="p">:</span>
+            <span class="n">pkg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span>
+            <span class="k">while</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;_raw_pkg&#39;</span><span class="p">):</span>
+                <span class="n">pkg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;_raw_pkg&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;AA&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">distfiles</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_KV</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;KV&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">KV</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_merge_type</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;MERGE_TYPE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;source&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_portdir</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PORTDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">location</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;ECLASSDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">eclass_cache</span><span class="o">.</span><span class="n">eclassdir</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_is_for_src</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_init_distfiles_env</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_init_distfiles_env</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO: PORTAGE_ACTUAL_DISTDIR usage by vcs eclasses needs to be killed off</span>
+        <span class="n">distdir_write</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">fetcher</span><span class="o">.</span><span class="n">get_storage_path</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">distdir_write</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span>
+                <span class="s2">&quot;no usable distdir was found &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;for PORTAGE_ACTUAL_DISTDIR from fetcher </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">fetcher</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PORTAGE_ACTUAL_DISTDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">distdir_write</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">normpath</span><span class="p">(</span>
+            <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">builddir</span><span class="p">,</span> <span class="s2">&quot;distdir&quot;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;PORTAGE_ACTUAL_DISTDIR&quot;</span><span class="p">,</span> <span class="s2">&quot;DISTDIR&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">realpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="n">x</span><span class="p">])</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span>
+
+    <span class="k">def</span> <span class="nf">_setup_distfiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">verified_files</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_fetching</span><span class="p">:</span>
+            <span class="n">ops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">pkg_operations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ops</span><span class="o">.</span><span class="n">fetch</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span><span class="s2">&quot;failed fetching required distfiles&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">verified_files</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">_fetch_op</span><span class="o">.</span><span class="n">verified_files</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verified_files</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">])</span> <span class="ow">and</span>
+                            <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">islink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">])):</span>
+                        <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">])</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">])</span>
+
+            <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">],</span>
+                    <span class="sa">f</span><span class="s2">&quot;failed removing existing file/dir/link: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o770</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">portage_gid</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;failed creating distdir symlink directory&quot;</span><span class="p">)</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">dest</span> <span class="ow">in</span> <span class="p">[</span>
+                        <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTDIR&quot;</span><span class="p">],</span> <span class="n">v</span><span class="o">.</span><span class="n">filename</span><span class="p">))</span>
+                        <span class="k">for</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">verified_files</span><span class="o">.</span><span class="n">items</span><span class="p">()]:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+
+            <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Failed symlinking in distfiles for src </span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="nd">@observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;setup&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute the setup phase, mapping out to pkg_setup in the ebuild.</span>
+
+<span class="sd">        Necessarily dirs are created as required, and build env is</span>
+<span class="sd">        initialized at this point.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">distcc</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;/lock&quot;</span><span class="p">,</span> <span class="s2">&quot;/state&quot;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTCC_DIR&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">),</span>
+                                   <span class="n">mode</span><span class="o">=</span><span class="mo">0o2775</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">portage_gid</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                        <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;DISTCC_DIR&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">),</span>
+                        <span class="s2">&quot;failed creating needed distcc directory&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ccache</span><span class="p">:</span>
+            <span class="c1"># yuck.</span>
+            <span class="n">st</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">st</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">])</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">st</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o2775</span><span class="p">,</span>
+                                   <span class="n">gid</span><span class="o">=</span><span class="n">portage_gid</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span>
+                        <span class="s2">&quot;failed creation of ccache dir&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+                <span class="c1"># XXX this is more then mildly stupid.</span>
+                <span class="n">st</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">])</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">st</span><span class="o">.</span><span class="n">st_gid</span> <span class="o">!=</span> <span class="n">portage_gid</span> <span class="ow">or</span> <span class="p">(</span><span class="n">st</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="mo">0o2775</span><span class="p">)</span> <span class="o">!=</span> <span class="mo">0o2775</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">cwd</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">()</span>
+                    <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                        <span class="n">cwd</span> <span class="o">=</span> <span class="s2">&quot;/&quot;</span>
+                    <span class="k">with</span> <span class="n">chdir</span><span class="p">(</span><span class="n">cwd</span><span class="p">):</span>
+                        <span class="c1"># crap.</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span> <span class="mo">0o2775</span><span class="p">)</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">portage_gid</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="mi">0</span> <span class="o">!=</span> <span class="n">spawn</span><span class="p">(</span>
+                                <span class="p">[</span><span class="s2">&quot;chgrp&quot;</span><span class="p">,</span> <span class="s2">&quot;-R&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">portage_gid</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">]]):</span>
+                            <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span>
+                                <span class="s2">&quot;failed changing ownership for CCACHE_DIR&quot;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="mi">0</span> <span class="o">!=</span> <span class="n">spawn_bash</span><span class="p">(</span>
+                                <span class="s2">&quot;find &#39;</span><span class="si">%s</span><span class="s2">&#39; -type d -print0 | </span><span class="si">%s</span><span class="s2"> --null chmod 02775&quot;</span>
+                                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span> <span class="n">xargs</span><span class="p">)):</span>
+                            <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span>
+                                <span class="s2">&quot;failed correcting perms for CCACHE_DIR&quot;</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="mi">0</span> <span class="o">!=</span> <span class="n">spawn_bash</span><span class="p">(</span>
+                                <span class="s2">&quot;find &#39;</span><span class="si">%s</span><span class="s2">&#39; -type f -print0 | </span><span class="si">%s</span><span class="s2"> --null chmod 0775&quot;</span>
+                                <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span> <span class="n">xargs</span><span class="p">)):</span>
+                            <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span>
+                                <span class="s2">&quot;failed correcting perms for CCACHE_DIR&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">FailedDirectory</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;CCACHE_DIR&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;failed ensuring perms/group owner for CCACHE_DIR&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="k">return</span> <span class="n">setup_mixin</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute the configure phase.</span>
+
+<span class="sd">        Does nothing if the pkg&#39;s EAPI is less than 2 (that spec lacks a</span>
+<span class="sd">        separated configure phase).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;configure&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">phases</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span><span class="s2">&quot;configure&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">prepare</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute a source preparation phase.</span>
+
+<span class="sd">        does nothing if the pkg&#39;s EAPI is less than 2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="s2">&quot;prepare&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">phases</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span><span class="s2">&quot;prepare&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">user_patches</span> <span class="ow">and</span>
+                    <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;T&#39;</span><span class="p">],</span> <span class="s1">&#39;.user_patches_applied&#39;</span><span class="p">))):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                    <span class="s1">&#39;eapply_user (or default) must be called in src_prepare()&#39;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span><span class="s1">&#39;missing eapply_user call&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+<div class="viewcode-block" id="buildable.nofetch"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.buildable.nofetch">[docs]</a>    <span class="k">def</span> <span class="nf">nofetch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute the nofetch phase.</span>
+
+<span class="sd">        We need the same prerequisites as setup, so reuse that.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ensure_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o770</span><span class="p">,</span> <span class="n">gid</span><span class="o">=</span><span class="n">portage_gid</span><span class="p">,</span> <span class="n">minimal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">setup_mixin</span><span class="o">.</span><span class="n">setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;nofetch&quot;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">unpack</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute the unpack phase.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">setup_is_for_src</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup_distfiles</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">userpriv</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">chown</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;WORKDIR&quot;</span><span class="p">],</span> <span class="n">portage_uid</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="nb">format</span><span class="o">.</span><span class="n">GenericBuildError</span><span class="p">(</span>
+                    <span class="s2">&quot;failed forcing </span><span class="si">%i</span><span class="s2"> uid for WORKDIR: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="n">portage_uid</span><span class="p">,</span> <span class="n">e</span><span class="p">))</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span><span class="s2">&quot;unpack&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="nb">compile</span> <span class="o">=</span> <span class="n">pretty_docs</span><span class="p">(</span>
+        <span class="n">observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;compile&quot;</span><span class="p">)(</span>
+            <span class="n">post_curry</span><span class="p">(</span><span class="n">ebd</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">,</span> <span class="s2">&quot;compile&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)),</span>
+        <span class="s2">&quot;Run the compile phase (maps to src_compile).&quot;</span><span class="p">)</span>
+
+    <span class="nd">@observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;install&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">install</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the install phase (maps to src_install).&quot;&quot;&quot;</span>
+        <span class="c1"># TODO: replace print() usage with observer</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&gt;&gt;&gt; Install </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;PF&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> into </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ED</span><span class="si">!r}</span><span class="s2"> category </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;CATEGORY&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span><span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&gt;&gt;&gt; Completed installing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s1">&#39;PF&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> into </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ED</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="nd">@observer</span><span class="o">.</span><span class="n">decorate_build_method</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the test phase (if enabled), maps to src_test.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_test</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span>
+            <span class="s2">&quot;test&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="n">failure_allowed</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">allow_failed_test</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Finalize the operation.</span>
+
+<span class="sd">        This yields a built package, but the packages metadata/contents are</span>
+<span class="sd">        bound to the workdir. In other words, install the package somewhere</span>
+<span class="sd">        prior to executing clean if you intend on installing it.</span>
+
+<span class="sd">        :return: :obj:`pkgcore.ebuild.ebuild_built.package` instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">factory</span> <span class="o">=</span> <span class="n">ebuild_built</span><span class="o">.</span><span class="n">fake_package_factory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_built_class</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">factory</span><span class="o">.</span><span class="n">new_package</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;D&quot;</span><span class="p">],</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="s2">&quot;environment&quot;</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="binpkg_localize"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebd.html#pkgcore.ebuild.ebd.binpkg_localize">[docs]</a><span class="k">class</span> <span class="nc">binpkg_localize</span><span class="p">(</span><span class="n">ebd</span><span class="p">,</span> <span class="n">setup_mixin</span><span class="p">,</span> <span class="nb">format</span><span class="o">.</span><span class="n">build</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;finalize&quot;</span><span class="p">:</span> <span class="s2">&quot;setup&quot;</span><span class="p">,</span> <span class="s2">&quot;setup&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">}</span>
+    <span class="n">setup_is_for_src</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_built_class</span> <span class="o">=</span> <span class="n">ebuild_built</span><span class="o">.</span><span class="n">package</span>
+        <span class="nb">format</span><span class="o">.</span><span class="n">build</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="p">{},</span> <span class="n">observer</span><span class="o">=</span><span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;observer&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="n">ebd</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_merge_type</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;MERGE_TYPE&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;binpkg&quot;</span>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">MutatedPkg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;environment&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_env_source</span><span class="p">()})</span></div>
+
+
+<span class="k">class</span> <span class="nc">ebuild_operations</span><span class="p">:</span>
+
+    <span class="n">_checks</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_register_check</span><span class="p">(</span><span class="n">checks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Decorator to register sanity checks that will be run.&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">_wrap_func</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+            <span class="k">def</span> <span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">wrapped</span>
+        <span class="k">return</span> <span class="n">_wrap_func</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_implementation_sanity_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run all defined sanity checks.&quot;&quot;&quot;</span>
+        <span class="n">failures</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checks</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">failures</span>
+
+    <span class="nd">@_register_check</span><span class="p">(</span><span class="n">_checks</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_check_required_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform REQUIRED_USE verification against a set of USE flags.</span>
+
+<span class="sd">        Note that this assumes the REQUIRED_USE depset has been evaluated</span>
+<span class="sd">        against a known set of enabled USE flags and is in collapsed form.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">has_required_use</span><span class="p">:</span>
+            <span class="n">failures</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">required_use</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">failures</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">errors</span><span class="o">.</span><span class="n">RequiredUseError</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">failures</span><span class="p">)</span>
+
+    <span class="nd">@_register_check</span><span class="p">(</span><span class="n">_checks</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_check_pkg_pretend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run pkg_pretend phase.&quot;&quot;&quot;</span>
+        <span class="c1"># pkg_pretend is not defined or required</span>
+        <span class="k">if</span> <span class="s1">&#39;pretend&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">mandatory_phases</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">commands</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">pkg</span><span class="o">.</span><span class="n">built</span><span class="p">:</span>
+            <span class="n">commands</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;request_inherit&#39;</span><span class="p">:</span> <span class="n">partial</span><span class="p">(</span><span class="n">inherit_handler</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eclass_cache</span><span class="p">),</span>
+                <span class="s1">&#39;has_version&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Has_Version</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+                <span class="s1">&#39;best_version&#39;</span><span class="p">:</span> <span class="n">ebd_ipc</span><span class="o">.</span><span class="n">Best_Version</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="p">}</span>
+
+        <span class="c1"># Use base build tempdir for $T instead of full pkg specific path to</span>
+        <span class="c1"># avoid having to create/remove directories -- pkg_pretend isn&#39;t</span>
+        <span class="c1"># allowed to write to the filesystem anyway.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">expected_ebuild_env</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;T&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">pm_tmpdir</span>
+        <span class="n">ebd</span><span class="o">.</span><span class="n">set_path_vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">domain</span><span class="p">)</span>
+        <span class="c1"># avoid clipping eend() messages</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">[</span><span class="s2">&quot;PKGCORE_RC_PREFIX&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;2&#39;</span>
+
+        <span class="k">with</span> <span class="n">TemporaryFile</span><span class="p">()</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c1"># suppress bash output by default</span>
+            <span class="n">fd_pipes</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">(),</span> <span class="mi">2</span><span class="p">:</span> <span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">()}</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">run_generic_phase</span><span class="p">(</span>
+                    <span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;pretend&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">tmpdir</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fd_pipes</span><span class="o">=</span><span class="n">fd_pipes</span><span class="p">,</span>
+                    <span class="n">userpriv</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sandbox</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">extra_handlers</span><span class="o">=</span><span class="n">commands</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">ProcessorError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">errors</span><span class="o">.</span><span class="n">PkgPretendError</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">src_operations</span><span class="p">(</span><span class="n">ebuild_operations</span><span class="p">,</span> <span class="nb">format</span><span class="o">.</span><span class="n">build_operations</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">eclass_cache</span><span class="p">,</span> <span class="n">fetcher</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">format</span><span class="o">.</span><span class="n">build_operations</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fetcher</span> <span class="o">=</span> <span class="n">fetcher</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eclass_cache</span> <span class="o">=</span> <span class="n">eclass_cache</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_implementation_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">verified_files</span><span class="p">,</span>
+                                  <span class="n">clean</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_fetching</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">force_test</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">buildable</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">verified_files</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_eclass_cache</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">observer</span><span class="p">,</span>
+            <span class="n">clean</span><span class="o">=</span><span class="n">clean</span><span class="p">,</span> <span class="n">allow_fetching</span><span class="o">=</span><span class="n">allow_fetching</span><span class="p">,</span> <span class="n">force_test</span><span class="o">=</span><span class="n">force_test</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">misc_operations</span><span class="p">(</span><span class="n">ebd</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generic_phase</span><span class="p">(</span><span class="s1">&#39;info&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">built_operations</span><span class="p">(</span><span class="n">ebuild_operations</span><span class="p">,</span> <span class="nb">format</span><span class="o">.</span><span class="n">operations</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">fetcher</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">initial_env</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">format</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="n">observer</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_fetcher</span> <span class="o">=</span> <span class="n">fetcher</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initial_env</span> <span class="o">=</span> <span class="n">initial_env</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_localized_ebd</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_implementation_localize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">force</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;_is_from_source&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_localized_ebd</span> <span class="o">=</span> <span class="n">op</span> <span class="o">=</span> <span class="n">binpkg_localize</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">initial_env</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_initial_env</span><span class="p">,</span> <span class="n">env_data_source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span>
+            <span class="n">observer</span><span class="o">=</span><span class="n">observer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">op</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_implementation_cleanup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_localized_ebd</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_localized_ebd</span><span class="o">.</span><span class="n">cleanup</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_check_support_configure</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span>
+        <span class="k">if</span> <span class="s1">&#39;config&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">mandatory_phases</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_cmd_implementation_configure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="n">misc</span> <span class="o">=</span> <span class="n">misc_operations</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">env_data_source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">environment</span><span class="p">,</span> <span class="n">clean</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">misc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+            <span class="n">misc</span><span class="o">.</span><span class="n">configure</span><span class="p">()</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">misc</span><span class="o">.</span><span class="n">cleanup</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebd</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

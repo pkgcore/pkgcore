@@ -1,0 +1,7 @@
+pinspect profile provided - list all package.provided packages
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: provided/_synopsis.rst
+.. include:: provided/_description.rst
+.. include:: provided/_options.rst
+.. include:: provided/_subcommands.rst

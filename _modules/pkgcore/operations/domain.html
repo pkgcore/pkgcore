@@ -1,0 +1,389 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.operations.domain &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../operations.html" accesskey="U">pkgcore.operations</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.domain</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.operations.domain</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">repository modifications (installing, removing, replacing)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Failure&quot;</span><span class="p">,</span> <span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;install&quot;</span><span class="p">,</span> <span class="s2">&quot;uninstall&quot;</span><span class="p">,</span> <span class="s2">&quot;replace&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">osutils</span>
+<span class="kn">from</span> <span class="nn">snakeoil.dependant_methods</span> <span class="kn">import</span> <span class="n">ForcedDepends</span>
+
+<span class="kn">from</span> <span class="nn">..exceptions</span> <span class="kn">import</span> <span class="n">PkgcoreException</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..merge</span> <span class="kn">import</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">merge_errors</span>
+<span class="kn">from</span> <span class="nn">..merge.engine</span> <span class="kn">import</span> <span class="n">MergeEngine</span>
+<span class="kn">from</span> <span class="nn">..package.mutated</span> <span class="kn">import</span> <span class="n">MutatedPkg</span>
+
+
+<span class="k">class</span> <span class="nc">fake_lock</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">acquire_write_lock</span> <span class="o">=</span> <span class="n">acquire_read_lock</span> <span class="o">=</span> <span class="fm">__init__</span>
+    <span class="n">release_read_lock</span> <span class="o">=</span> <span class="n">release_write_lock</span> <span class="o">=</span> <span class="fm">__init__</span>
+
+
+<div class="viewcode-block" id="Failure"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.Failure">[docs]</a><span class="k">class</span> <span class="nc">Failure</span><span class="p">(</span><span class="n">PkgcoreException</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base">[docs]</a><span class="k">class</span> <span class="nc">base</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ForcedDepends</span><span class="p">):</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">stage_hooks</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">domain</span> <span class="o">=</span> <span class="n">domain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="n">repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">underway</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">offset</span> <span class="o">=</span> <span class="n">offset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">=</span> <span class="n">observer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">triggers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">triggers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">create_op</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s2">&quot;lock&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span> <span class="o">=</span> <span class="n">fake_lock</span><span class="p">()</span>
+
+<div class="viewcode-block" id="base.create_op"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.create_op">[docs]</a>    <span class="k">def</span> <span class="nf">create_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;create_op&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="base.create_repo_op"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.create_repo_op">[docs]</a>    <span class="k">def</span> <span class="nf">create_repo_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;create_repo_op&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="base.create_engine"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.create_engine">[docs]</a>    <span class="k">def</span> <span class="nf">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;create_repo_op&#39;</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_create_tempspace</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">location</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">pm_tmpdir</span>
+        <span class="n">osutils</span><span class="o">.</span><span class="n">ensure_dirs</span><span class="p">(</span><span class="n">location</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">(</span><span class="nb">dir</span><span class="o">=</span><span class="n">location</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s2">&quot;merge-engine-tmp&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_add_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">trigger</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">triggers</span><span class="p">:</span>
+            <span class="n">trigger</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+
+<div class="viewcode-block" id="base.customize_engine"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.customize_engine">[docs]</a>    <span class="k">def</span> <span class="nf">customize_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="base.start"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;start the transaction&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_tempspace</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">me</span> <span class="o">=</span> <span class="n">engine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_engine</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">add_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">engine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_add_triggers</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">customize_engine</span><span class="p">(</span><span class="n">engine</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">underway</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">acquire_write_lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">sanity_check</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="base.finish"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;finish the transaction&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">final</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release_write_lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">underway</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean_tempdir</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="base.finalize_repo"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.finalize_repo">[docs]</a>    <span class="k">def</span> <span class="nf">finalize_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;finalize the repository operations&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_op</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="base.clean_tempdir"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.base.clean_tempdir">[docs]</a>    <span class="k">def</span> <span class="nf">clean_tempdir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">_modify_repo_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;underway&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2"> merge was underway, but wasn&#39;t completed&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release_write_lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clean_tempdir</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="install"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.install">[docs]</a><span class="k">class</span> <span class="nc">install</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;base interface for installing a pkg into a livefs repo.</span>
+
+<span class="sd">    Repositories should override as needed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;finish&quot;</span><span class="p">:</span> <span class="s2">&quot;postinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postinst&quot;</span><span class="p">:</span> <span class="s2">&quot;finalize_repo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;finalize_repo&quot;</span><span class="p">:</span> <span class="s2">&quot;repo_add&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;repo_add&quot;</span><span class="p">:</span> <span class="s2">&quot;create_repo_op&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;create_repo_op&quot;</span><span class="p">:</span> <span class="s2">&quot;transfer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;transfer&quot;</span><span class="p">:</span> <span class="s2">&quot;preinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;preinst&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">stage_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;merge_metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;postinst&quot;</span><span class="p">,</span> <span class="s2">&quot;preinst&quot;</span><span class="p">,</span> <span class="s2">&quot;transfer&quot;</span><span class="p">]</span>
+    <span class="n">format_install_op_name</span> <span class="o">=</span> <span class="s2">&quot;_repo_install_op&quot;</span>
+    <span class="n">engine_kls</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">MergeEngine</span><span class="o">.</span><span class="n">install</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+
+<div class="viewcode-block" id="install.create_op"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.install.create_op">[docs]</a>    <span class="k">def</span> <span class="nf">create_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_install_op_name</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">create_repo_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">install</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="install.create_engine"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.install.create_engine">[docs]</a>    <span class="k">def</span> <span class="nf">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_kls</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">preinst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;execute any pre-transfer steps required&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">preinst</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_update_new_pkg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span> <span class="o">=</span> <span class="n">MutatedPkg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;contents&quot;</span><span class="p">:</span> <span class="n">cset</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">transfer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;execute the actual transfer&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">merge_phase</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">pre_merge</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">merge</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">post_merge</span><span class="p">):</span>
+            <span class="n">merge_phase</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_new_pkg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">get_merged_cset</span><span class="p">())</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">postinst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;execute any post-transfer steps required&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">postinst</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">repo_add</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_op</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ignoring unexpected result from install finalize- </span><span class="si">{</span><span class="n">ret</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="uninstall"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.uninstall">[docs]</a><span class="k">class</span> <span class="nc">uninstall</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;base interface for uninstalling a pkg from a livefs repo.</span>
+
+<span class="sd">    Repositories should override as needed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;finish&quot;</span><span class="p">:</span> <span class="s2">&quot;postrm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postrm&quot;</span><span class="p">:</span> <span class="s2">&quot;finalize_repo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;finalize_repo&quot;</span><span class="p">:</span> <span class="s2">&quot;repo_remove&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;repo_remove&quot;</span><span class="p">:</span> <span class="s2">&quot;remove&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;remove&quot;</span><span class="p">:</span> <span class="s2">&quot;prerm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;prerm&quot;</span><span class="p">:</span> <span class="s2">&quot;create_repo_op&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;create_repo_op&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">stage_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;merge_metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;postrm&quot;</span><span class="p">,</span> <span class="s2">&quot;prerm&quot;</span><span class="p">,</span> <span class="s2">&quot;remove&quot;</span><span class="p">]</span>
+    <span class="n">format_uninstall_op_name</span> <span class="o">=</span> <span class="s2">&quot;_repo_uninstall_op&quot;</span>
+    <span class="n">engine_kls</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">MergeEngine</span><span class="o">.</span><span class="n">uninstall</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+
+<div class="viewcode-block" id="uninstall.create_op"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.uninstall.create_op">[docs]</a>    <span class="k">def</span> <span class="nf">create_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">format_uninstall_op_name</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">create_repo_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">uninstall</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="uninstall.create_engine"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.uninstall.create_engine">[docs]</a>    <span class="k">def</span> <span class="nf">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_kls</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">prerm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;execute any pre-removal steps required&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">prerm</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;execute any removal steps required&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">unmerge_phase</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">pre_unmerge</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">unmerge</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">me</span><span class="o">.</span><span class="n">post_unmerge</span><span class="p">):</span>
+            <span class="n">unmerge_phase</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">postrm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;execute any post-removal steps required&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">postrm</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">repo_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_op</span><span class="o">.</span><span class="n">remove_data</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">cleanup</span><span class="p">(</span><span class="n">disable_observer</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ignoring unexpected result from uninstall finalize- </span><span class="si">{</span><span class="n">ret</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;underway&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="si">}</span><span class="s2"> unmerge was underway, but wasn&#39;t completed&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release_write_lock</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="replace"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.replace">[docs]</a><span class="k">class</span> <span class="nc">replace</span><span class="p">(</span><span class="n">install</span><span class="p">,</span> <span class="n">uninstall</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;base interface for replacing a pkg in a livefs repo with another.</span>
+
+<span class="sd">    Repositories should override as needed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">stage_depends</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;finish&quot;</span><span class="p">:</span> <span class="s2">&quot;postinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postinst&quot;</span><span class="p">:</span> <span class="s2">&quot;postrm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;postrm&quot;</span><span class="p">:</span> <span class="s2">&quot;finalize_repo&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;finalize_repo&quot;</span><span class="p">:</span> <span class="s2">&quot;repo_remove&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;repo_remove&quot;</span><span class="p">:</span> <span class="s2">&quot;remove&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;remove&quot;</span><span class="p">:</span> <span class="s2">&quot;prerm&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;prerm&quot;</span><span class="p">:</span> <span class="s2">&quot;repo_add&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;repo_add&quot;</span><span class="p">:</span> <span class="s2">&quot;create_repo_op&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;create_repo_op&quot;</span><span class="p">:</span> <span class="s2">&quot;transfer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;transfer&quot;</span><span class="p">:</span> <span class="s2">&quot;preinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;preinst&quot;</span><span class="p">:</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">stage_hooks</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;merge_metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;unmerge_metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;postrm&quot;</span><span class="p">,</span> <span class="s2">&quot;prerm&quot;</span><span class="p">,</span> <span class="s2">&quot;postinst&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;preinst&quot;</span><span class="p">,</span> <span class="s2">&quot;unmerge_metadata&quot;</span><span class="p">,</span> <span class="s2">&quot;merge_metadata&quot;</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="n">engine_kls</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">MergeEngine</span><span class="o">.</span><span class="n">replace</span><span class="p">)</span>
+    <span class="n">format_replace_op_name</span> <span class="o">=</span> <span class="s2">&quot;_repo_replace_op&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">oldpkg</span><span class="p">,</span> <span class="n">newpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span> <span class="o">=</span> <span class="n">oldpkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span> <span class="o">=</span> <span class="n">newpkg</span>
+        <span class="n">base</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">observer</span><span class="p">,</span> <span class="n">offset</span><span class="p">)</span>
+
+<div class="viewcode-block" id="replace.create_op"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.replace.create_op">[docs]</a>    <span class="k">def</span> <span class="nf">create_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_replace_op_name</span><span class="p">)(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">create_repo_op</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">operations</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="replace.create_engine"><a class="viewcode-back" href="../../../api/pkgcore.operations.domain.html#pkgcore.operations.domain.replace.create_engine">[docs]</a>    <span class="k">def</span> <span class="nf">create_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine_kls</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tempspace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="p">,</span>
+            <span class="n">offset</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">offset</span><span class="p">,</span> <span class="n">observer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_op</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ignoring unexpected result from replace finalize- </span><span class="si">{</span><span class="n">ret</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">base</span><span class="o">.</span><span class="n">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;underway&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">old_pkg</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">new_pkg</span><span class="si">}</span><span class="s2"> replacement was underway, but &quot;</span>
+                <span class="s2">&quot;wasn&#39;t completed&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lock</span><span class="o">.</span><span class="n">release_write_lock</span><span class="p">()</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../operations.html" >pkgcore.operations</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.domain</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcore.binpkg.repo\_ops module
+===============================
+
+.. automodule:: pkgcore.binpkg.repo_ops
+   :members:
+   :undoc-members:
+   :show-inheritance:

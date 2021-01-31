@@ -1,0 +1,200 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.restrictions.boolean module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.boolean module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.restrictions.boolean">
+<span id="pkgcore-restrictions-boolean-module"></span><h1>pkgcore.restrictions.boolean module<a class="headerlink" href="#module-pkgcore.restrictions.boolean" title="Permalink to this headline">¶</a></h1>
+<p>Boolean combinations of restrictions.</p>
+<p>This module provides classes that can be used to combine arbitrary
+collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR style
+operations.</p>
+<dl class="py class">
+<dt id="pkgcore.restrictions.boolean.AndRestriction">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.restrictions.boolean.</code><code class="sig-name descname">AndRestriction</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.boolean.base</span></code></p>
+<p>Boolean AND grouping of restrictions.  negation is a NAND</p>
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.AndRestriction.cnf_solutions">
+<code class="sig-name descname">cnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction.cnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction.cnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns solutions in CNF (conjunctive normalized form) of this instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.AndRestriction.dnf_solutions">
+<code class="sig-name descname">dnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction.dnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction.dnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>list form of <a class="reference internal" href="#pkgcore.restrictions.boolean.AndRestriction.iter_dnf_solutions" title="pkgcore.restrictions.boolean.AndRestriction.iter_dnf_solutions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_dnf_solutions</span></code></a>, see iter_dnf_solutions for args</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.AndRestriction.force_False">
+<code class="sig-name descname">force_False</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction.force_False"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction.force_False" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.AndRestriction.force_True">
+<code class="sig-name descname">force_True</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction.force_True"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction.force_True" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.AndRestriction.iter_cnf_solutions">
+<code class="sig-name descname">iter_cnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction.iter_cnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction.iter_cnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns solutions in CNF (conjunctive normalized form) of this instance</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.AndRestriction.iter_dnf_solutions">
+<code class="sig-name descname">iter_dnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction.iter_dnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction.iter_dnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>generater yielding DNF (disjunctive normalized form) of this instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.AndRestriction.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#AndRestriction.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.AndRestriction.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.restrictions.boolean.OrRestriction">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.restrictions.boolean.</code><code class="sig-name descname">OrRestriction</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#OrRestriction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.OrRestriction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.boolean.base</span></code></p>
+<p>Boolean OR grouping of restrictions.</p>
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.OrRestriction.cnf_solutions">
+<code class="sig-name descname">cnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#OrRestriction.cnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.OrRestriction.cnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list in CNF (conjunctive normalized form) of this instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.OrRestriction.dnf_solutions">
+<code class="sig-name descname">dnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#OrRestriction.dnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.OrRestriction.dnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>see dnf_solutions, iterates yielding DNF solutions</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.OrRestriction.force_False">
+<code class="sig-name descname">force_False</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#OrRestriction.force_False"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.OrRestriction.force_False" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.OrRestriction.force_True">
+<code class="sig-name descname">force_True</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#OrRestriction.force_True"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.OrRestriction.force_True" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.OrRestriction.iter_dnf_solutions">
+<code class="sig-name descname">iter_dnf_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">full_solution_expansion</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#OrRestriction.iter_dnf_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.OrRestriction.iter_dnf_solutions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list in DNF (disjunctive normalized form) of this instance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>full_solution_expansion</strong> – controls whether to expand everything
+(break apart atoms for example); this isn’t likely what you want</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.restrictions.boolean.OrRestriction.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/restrictions/boolean.html#OrRestriction.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.restrictions.boolean.OrRestriction.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.boolean module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

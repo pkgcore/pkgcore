@@ -1,0 +1,994 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.resolver.plan &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.plan</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.resolver.plan</h1><div class="highlight"><pre>
+<span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;resolver_frame&quot;</span><span class="p">,</span> <span class="s2">&quot;resolver_stack&quot;</span><span class="p">,</span> <span class="s2">&quot;merge_plan&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">filterfalse</span><span class="p">,</span> <span class="n">islice</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">cmp</span><span class="p">,</span> <span class="n">sort_cmp</span>
+<span class="kn">from</span> <span class="nn">snakeoil.iterables</span> <span class="kn">import</span> <span class="n">caching_iter</span>
+
+<span class="c1"># XXX: hack; see insert_blockers</span>
+<span class="kn">from</span> <span class="nn">..ebuild</span> <span class="kn">import</span> <span class="n">atom</span> <span class="k">as</span> <span class="n">_atom</span>
+<span class="kn">from</span> <span class="nn">..repository</span> <span class="kn">import</span> <span class="n">filtered</span><span class="p">,</span> <span class="n">misc</span><span class="p">,</span> <span class="n">multiplex</span><span class="p">,</span> <span class="n">util</span>
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">packages</span><span class="p">,</span> <span class="n">restriction</span><span class="p">,</span> <span class="n">values</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">state</span>
+<span class="kn">from</span> <span class="nn">.choice_point</span> <span class="kn">import</span> <span class="n">choice_point</span>
+
+<span class="n">limiters</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;cycle&quot;</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">dprint</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">fmt</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="kc">None</span> <span class="ow">in</span> <span class="n">limiters</span> <span class="ow">or</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">limiters</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="n">fmt</span> <span class="o">%</span> <span class="n">args</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="c1"># iter/pkg sorting functions for selection strategy</span>
+<span class="n">pkg_sort_highest</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="nb">sorted</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">pkg_sort_lowest</span> <span class="o">=</span> <span class="nb">sorted</span>
+
+<span class="n">pkg_grabber</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">highest_iter_sort</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">pkg_grabber</span><span class="o">=</span><span class="n">pkg_grabber</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sort a list of packages from highest to lowest and prefer livefs.</span>
+
+<span class="sd">    :param l: list of packages</span>
+<span class="sd">    :param pkg_grabber: function to use as an attrgetter</span>
+<span class="sd">    :return: sorted list of packages</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">0</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">y</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="n">sort_cmp</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">pkg_grabber</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">l</span>
+
+
+<span class="k">def</span> <span class="nf">downgrade_iter_sort</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">pkg_grabber</span><span class="o">=</span><span class="n">pkg_grabber</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sort a list of packages from highest to lowest and prefer nonlivefs.</span>
+
+<span class="sd">    :param l: list of packages</span>
+<span class="sd">    :param pkg_grabber: function to use as an attrgetter</span>
+<span class="sd">    :return: sorted list of packages</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">c</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">y</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+                <span class="k">return</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">c</span>
+    <span class="n">sort_cmp</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">pkg_grabber</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">l</span>
+
+
+<span class="k">def</span> <span class="nf">lowest_iter_sort</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">pkg_grabber</span><span class="o">=</span><span class="n">pkg_grabber</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Sort a list of packages from lowest to highest.</span>
+
+<span class="sd">    :param l: list of packages</span>
+<span class="sd">    :param pkg_grabber: function to use as an attrgetter</span>
+<span class="sd">    :return: sorted list of packages</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">cmp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">c</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">c</span>
+        <span class="k">elif</span> <span class="n">x</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">y</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+                <span class="k">return</span> <span class="mi">0</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">y</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="mi">0</span>
+    <span class="n">sort_cmp</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">pkg_grabber</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">l</span>
+
+
+<span class="k">class</span> <span class="nc">MutableContainmentRestriction</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;_blacklist&#39;</span><span class="p">,</span> <span class="s1">&#39;match&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blacklist</span><span class="p">):</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_blacklist&#39;</span><span class="p">,</span> <span class="n">blacklist</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;match&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_blacklist</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="resolver_frame"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_frame">[docs]</a><span class="k">class</span> <span class="nc">resolver_frame</span><span class="p">:</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;parent&quot;</span><span class="p">,</span> <span class="s2">&quot;atom&quot;</span><span class="p">,</span> <span class="s2">&quot;choices&quot;</span><span class="p">,</span> <span class="s2">&quot;mode&quot;</span><span class="p">,</span> <span class="s2">&quot;start_point&quot;</span><span class="p">,</span> <span class="s2">&quot;dbs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;depth&quot;</span><span class="p">,</span> <span class="s2">&quot;drop_cycles&quot;</span><span class="p">,</span> <span class="s2">&quot;__weakref__&quot;</span><span class="p">,</span> <span class="s2">&quot;ignored&quot;</span><span class="p">,</span> <span class="s2">&quot;vdb_limited&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;events&quot;</span><span class="p">,</span> <span class="s2">&quot;succeeded&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">start_point</span><span class="p">,</span> <span class="n">depth</span><span class="p">,</span>
+                 <span class="n">drop_cycles</span><span class="p">,</span> <span class="n">ignored</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">vdb_limited</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dbs</span><span class="p">,</span> <span class="s1">&#39;itermatch&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">choices</span> <span class="o">=</span> <span class="n">choices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dbs</span> <span class="o">=</span> <span class="n">dbs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mode</span> <span class="o">=</span> <span class="n">mode</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_point</span> <span class="o">=</span> <span class="n">start_point</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="n">depth</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drop_cycles</span> <span class="o">=</span> <span class="n">drop_cycles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignored</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vdb_limited</span> <span class="o">=</span> <span class="n">vdb_limited</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">succeeded</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="resolver_frame.reduce_solutions"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_frame.reduce_solutions">[docs]</a>    <span class="k">def</span> <span class="nf">reduce_solutions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;reduce&quot;</span><span class="p">,</span> <span class="n">nodes</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;reduce&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">nodes</span><span class="p">,)))</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="o">.</span><span class="n">reduce_atoms</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_pkg</span>
+        <span class="k">if</span> <span class="n">pkg</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pkg</span> <span class="o">=</span> <span class="s2">&quot;exhausted&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">cpv</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span>
+            <span class="n">pkg</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;repo_id&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pkg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">pkg</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cpv</span><span class="si">}</span><span class="s2">::</span><span class="si">{</span><span class="n">pkg</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pkg</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">succeeded</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">succeeded</span> <span class="ow">and</span> <span class="s2">&quot;succeeded&quot;</span> <span class="ow">or</span> <span class="s2">&quot;failed&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;frame</span><span class="si">%s</span><span class="s2">: mode </span><span class="si">%r</span><span class="s2">: atom </span><span class="si">%s</span><span class="s2">: current </span><span class="si">%s%s%s%s</span><span class="s2">&quot;</span> <span class="o">%</span> \
+            <span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drop_cycles</span> <span class="ow">and</span> <span class="s2">&quot;: cycle dropping&quot;</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ignored</span> <span class="ow">and</span> <span class="s2">&quot;: ignored&quot;</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">vdb_limited</span> <span class="ow">and</span> <span class="s2">&quot;: vdb limited&quot;</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">current_pkg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the package related to the resolver frame.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="resolver_stack"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_stack">[docs]</a><span class="k">class</span> <span class="nc">resolver_stack</span><span class="p">(</span><span class="n">deque</span><span class="p">):</span>
+
+    <span class="n">frame_klass</span> <span class="o">=</span> <span class="n">resolver_frame</span>
+    <span class="n">depth</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="nb">len</span><span class="p">)</span>
+    <span class="n">current_frame</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">_filter_ignored</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span>
+        <span class="n">partial</span><span class="p">(</span><span class="n">filterfalse</span><span class="p">,</span> <span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s2">&quot;ignored&quot;</span><span class="p">)))</span>
+
+    <span class="c1"># this *has* to be a property, else it creates a cycle.</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="k">lambda</span> <span class="n">s</span><span class="p">:</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;resolver stack:</span><span class="se">\n</span><span class="s1">  </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1">: </span><span class="si">%r</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="nb">tuple</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">))</span>
+
+<div class="viewcode-block" id="resolver_stack.add_frame"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_stack.add_frame">[docs]</a>    <span class="k">def</span> <span class="nf">add_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">start_point</span><span class="p">,</span> <span class="n">drop_cycles</span><span class="p">,</span> <span class="n">vdb_limited</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">frame_klass</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">start_point</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">drop_cycles</span><span class="p">,</span> <span class="n">vdb_limited</span><span class="o">=</span><span class="n">vdb_limited</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">frame</span></div>
+
+<div class="viewcode-block" id="resolver_stack.add_event"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_stack.add_event">[docs]</a>    <span class="k">def</span> <span class="nf">add_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="resolver_stack.pop_frame"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_stack.pop_frame">[docs]</a>    <span class="k">def</span> <span class="nf">pop_frame</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="n">frame</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">succeeded</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="n">frame</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="resolver_stack.slot_cycles"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_stack.slot_cycles">[docs]</a>    <span class="k">def</span> <span class="nf">slot_cycles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trg_frame</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">trg_frame</span><span class="o">.</span><span class="n">current_pkg</span>
+        <span class="n">slot</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">slot</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">key</span>
+        <span class="n">kwds</span><span class="p">[</span><span class="s1">&#39;skip_trg_frame&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">frame</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cycles</span><span class="p">(</span><span class="n">trg_frame</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="n">frame</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">key</span> <span class="ow">and</span> <span class="n">slot</span> <span class="o">==</span> <span class="n">frame</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_cycles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trg_frame</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">skip_trg_frame</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">reverse</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_ignored</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filter_ignored</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">islice</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">skip_trg_frame</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">frame</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">i</span> <span class="k">if</span> <span class="n">frame</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">trg_frame</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">i</span>
+
+<div class="viewcode-block" id="resolver_stack.index"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.resolver_stack.index">[docs]</a>    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">frame</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stop</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="n">start</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="n">frame</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">idx</span> <span class="o">+</span> <span class="n">start</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div></div>
+
+
+<div class="viewcode-block" id="merge_plan"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan">[docs]</a><span class="k">class</span> <span class="nc">merge_plan</span><span class="p">:</span>
+
+    <span class="n">vdb_restrict</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;repo.livefs&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">EqualityMatch</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">per_repo_strategy</span><span class="p">,</span> <span class="n">global_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">depset_reorder_strategy</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">process_built_depends</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">drop_cycles</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">debug_handle</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">debug_handle</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">debug_handle</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">dprint</span><span class="p">,</span> <span class="n">debug_handle</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># don&#39;t run debug func when debugging is disabled</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span> <span class="o">=</span> <span class="k">lambda</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dbs</span><span class="p">,</span> <span class="p">(</span><span class="n">util</span><span class="o">.</span><span class="n">RepositoryGroup</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+            <span class="n">dbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">dbs</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">global_strategy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">global_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_global_strategy</span>
+
+        <span class="k">if</span> <span class="n">depset_reorder_strategy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">depset_reorder_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_depset_reorder_strategy</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">depset_reorder</span> <span class="o">=</span> <span class="n">depset_reorder_strategy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_raw_dbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">misc</span><span class="o">.</span><span class="n">caching_repo</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">per_repo_strategy</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dbs</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">all_dbs</span> <span class="o">=</span> <span class="n">global_strategy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">all_raw_dbs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_dbs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_dbs</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">plan_state</span><span class="p">()</span>
+        <span class="n">vdb_state_filter_restrict</span> <span class="o">=</span> <span class="n">MutableContainmentRestriction</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">vdb_filter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">livefs_dbs</span> <span class="o">=</span> <span class="n">multiplex</span><span class="o">.</span><span class="n">tree</span><span class="p">(</span>
+            <span class="o">*</span><span class="p">[</span><span class="n">filtered</span><span class="o">.</span><span class="n">tree</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">vdb_state_filter_restrict</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_raw_dbs</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">livefs</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">insoluble</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vdb_preloaded</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_livefs_is_loaded</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_livefs_is_loaded_nonpreloaded</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drop_cycles</span> <span class="o">=</span> <span class="n">drop_cycles</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">process_built_depends</span> <span class="o">=</span> <span class="n">process_built_depends</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_debugging</span> <span class="o">=</span> <span class="n">debug</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rec_add_atom</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_stack_debugging_rec_add_atom</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_rec_add_atom</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_depth</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_drop_cycles</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">forced_restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">forced_restrictions</span><span class="p">)</span>
+
+<div class="viewcode-block" id="merge_plan.reset"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">point</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">backtrack</span><span class="p">(</span><span class="n">point</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="merge_plan.notify_starting_mode"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.notify_starting_mode">[docs]</a>    <span class="k">def</span> <span class="nf">notify_starting_mode</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">stack</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;pdepend&quot;</span><span class="p">:</span>
+            <span class="n">mode</span> <span class="o">=</span> <span class="s1">&#39;prdepends&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">:</span><span class="si">%s%s</span><span class="s2">: started: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="s1">&#39; &#39;</span> <span class="o">*</span> <span class="p">((</span><span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="o">.</span><span class="n">depth</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">12</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">mode</span><span class="p">)),</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="o">.</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="merge_plan.notify_trying_choice"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.notify_trying_choice">[docs]</a>    <span class="k">def</span> <span class="nf">notify_trying_choice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+            <span class="s2">&quot;choose for </span><span class="si">%s%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">depth</span> <span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">))</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">add_event</span><span class="p">((</span><span class="s1">&#39;inspecting&#39;</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.notify_choice_failed"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.notify_choice_failed">[docs]</a>    <span class="k">def</span> <span class="nf">notify_choice_failed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="n">msg_args</span><span class="o">=</span><span class="p">()):</span>
+        <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;choice&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">),</span> <span class="kc">False</span><span class="p">,</span> <span class="n">msg</span> <span class="o">%</span> <span class="n">msg_args</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="n">msg_args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+            <span class="s2">&quot;choice for </span><span class="si">%s%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2"> failed</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">depth</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.notify_choice_succeeded"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.notify_choice_succeeded">[docs]</a>    <span class="k">def</span> <span class="nf">notify_choice_succeeded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">msg_args</span><span class="o">=</span><span class="p">()):</span>
+        <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;choice&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">),</span> <span class="kc">True</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">msg</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">msg</span> <span class="o">%</span> <span class="n">msg_args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+            <span class="s2">&quot;choice for </span><span class="si">%s%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2"> succeeded</span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">depth</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.notify_viable"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.notify_viable">[docs]</a>    <span class="k">def</span> <span class="nf">notify_viable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">viable</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">pre_solved</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">t_viable</span> <span class="o">=</span> <span class="n">viable</span> <span class="ow">and</span> <span class="s2">&quot;processing&quot;</span> <span class="ow">or</span> <span class="s2">&quot;not viable&quot;</span>
+        <span class="k">if</span> <span class="n">pre_solved</span> <span class="ow">and</span> <span class="n">viable</span><span class="p">:</span>
+            <span class="n">t_viable</span> <span class="o">=</span> <span class="s2">&quot;pre-solved&quot;</span>
+        <span class="n">t_msg</span> <span class="o">=</span> <span class="n">msg</span> <span class="ow">and</span> <span class="p">(</span><span class="s2">&quot; &quot;</span><span class="o">+</span><span class="n">msg</span><span class="p">)</span> <span class="ow">or</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">s</span><span class="o">=</span><span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">stack</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot; for </span><span class="si">%s</span><span class="s2"> &quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">atom</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">%s%s%s%s%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">(</span><span class="n">t_viable</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">13</span><span class="p">),</span> <span class="s2">&quot;  &quot;</span><span class="o">*</span><span class="n">stack</span><span class="o">.</span><span class="n">depth</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">t_msg</span><span class="p">))</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">add_event</span><span class="p">((</span><span class="s2">&quot;viable&quot;</span><span class="p">,</span> <span class="n">viable</span><span class="p">,</span> <span class="n">pre_solved</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">msg</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.load_vdb_state"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.load_vdb_state">[docs]</a>    <span class="k">def</span> <span class="nf">load_vdb_state</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">livefs_dbs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span><span class="s2">&quot;inserting </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">pkg</span><span class="p">,),</span> <span class="s2">&quot;vdb&quot;</span><span class="p">)</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_atom</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span><span class="s2">&quot;insertion of </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">ret</span><span class="p">),</span> <span class="s2">&quot;vdb&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="s2">&quot;couldn&#39;t load vdb state, </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">,</span> <span class="n">ret</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vdb_preloaded</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_livefs_is_loaded</span> <span class="o">=</span> \
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_livefs_is_loaded_preloaded</span></div>
+
+<div class="viewcode-block" id="merge_plan.add_atoms"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.add_atoms">[docs]</a>    <span class="k">def</span> <span class="nf">add_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restricts</span><span class="p">,</span> <span class="n">finalize</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">restricts</span><span class="p">:</span>
+            <span class="n">stack</span> <span class="o">=</span> <span class="n">resolver_stack</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="n">restricts</span><span class="p">:</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">add_hardref_op</span><span class="p">(</span><span class="n">restrict</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+            <span class="n">dbs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_dbs</span>
+            <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="n">restricts</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_add_atom</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">dbs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">ret</span>
+        <span class="k">if</span> <span class="n">finalize</span><span class="p">:</span>
+            <span class="c1"># note via this being outside the recursion, backtracking</span>
+            <span class="c1"># is excluded... inline it somehow.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">process_finalize</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">()</span></div>
+
+<div class="viewcode-block" id="merge_plan.process_finalize"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.process_finalize">[docs]</a>    <span class="k">def</span> <span class="nf">process_finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="merge_plan.add_atom"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.add_atom">[docs]</a>    <span class="k">def</span> <span class="nf">add_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;add an atom, recalculating as necessary.</span>
+
+<span class="sd">        :return: the last unresolvable atom stack if a solution can&#39;t be found,</span>
+<span class="sd">            else returns None if the atom was successfully added.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_atoms</span><span class="p">([</span><span class="n">atom</span><span class="p">])</span></div>
+
+    <span class="k">def</span> <span class="nf">_add_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">dbs</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_add_atom</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">dbs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span><span class="s2">&quot;failed- </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">ret</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ret</span><span class="p">,</span> <span class="n">stack</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_stack_debugging_rec_add_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span>
+        <span class="n">cycles</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;drop_cycles&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="n">reset_cycles</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="n">cycles</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_drop_cycles</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_drop_cycles</span> <span class="o">=</span> <span class="n">reset_cycles</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reset_cycles</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_depth</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">assert</span> <span class="n">current</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_depth</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">current</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">stack</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">current</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_depth</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">reset_cycles</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_depth</span> <span class="o">-=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_debugging_drop_cycles</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="nf">_rec_add_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">drop_cycles</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add an atom.</span>
+
+<span class="sd">        :return: False on no issues (inserted succesfully),</span>
+<span class="sd">            else a list of the stack that screwed it up.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">dbs</span><span class="p">,</span> <span class="s1">&#39;itermatch&#39;</span><span class="p">)</span>
+        <span class="n">limit_to_vdb</span> <span class="o">=</span> <span class="n">dbs</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">livefs_dbs</span>
+
+        <span class="n">matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_viable</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">drop_cycles</span><span class="p">,</span> <span class="n">limit_to_vdb</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">matches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">pop_frame</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">atom</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">matches</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">pop_frame</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">choices</span><span class="p">,</span> <span class="n">matches</span> <span class="o">=</span> <span class="n">matches</span>
+
+        <span class="n">depth</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">depth</span>
+
+        <span class="k">if</span> <span class="n">stack</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">limit_to_vdb</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                    <span class="s2">&quot;processing   </span><span class="si">%s%s</span><span class="s2">  [</span><span class="si">%s</span><span class="s2">]; mode </span><span class="si">%s</span><span class="s2"> vdb bound&quot;</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">depth</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">mode</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                    <span class="s2">&quot;processing   </span><span class="si">%s%s</span><span class="s2">  [</span><span class="si">%s</span><span class="s2">]; mode </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">depth</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">mode</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span><span class="s2">&quot;processing   </span><span class="si">%s%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">depth</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">atom</span><span class="p">))</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_for_cycles</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">pop_frame</span><span class="p">(</span><span class="n">ret</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ret</span>
+
+        <span class="n">failures</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">debugging</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_debugging</span>
+        <span class="n">last_state</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="n">choices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">debugging</span><span class="p">:</span>
+                <span class="n">new_state</span> <span class="o">=</span> <span class="n">choices</span><span class="o">.</span><span class="n">state</span>
+                <span class="k">if</span> <span class="n">last_state</span> <span class="o">==</span> <span class="n">new_state</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                        <span class="s2">&quot;no state change detected, &quot;</span>
+                        <span class="s2">&quot;old </span><span class="si">%r</span><span class="s2"> != new </span><span class="si">%r</span><span class="se">\n</span><span class="s2">choices(</span><span class="si">%r</span><span class="s2">)</span><span class="se">\n</span><span class="s2">current(</span><span class="si">%r</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;bdepend(</span><span class="si">%r</span><span class="s2">)</span><span class="se">\n</span><span class="s2">depend(</span><span class="si">%r</span><span class="s2">)</span><span class="se">\n</span><span class="s2">rdepend(</span><span class="si">%r</span><span class="s2">)</span><span class="se">\n</span><span class="s2">pdepend(</span><span class="si">%r</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span>
+                            <span class="n">last_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">choices</span><span class="o">.</span><span class="n">matches</span><span class="p">),</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">,</span>
+                            <span class="n">choices</span><span class="o">.</span><span class="n">bdepend</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">depend</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">rdepend</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">pdepend</span><span class="p">,</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="n">last_state</span> <span class="o">=</span> <span class="n">new_state</span>
+            <span class="n">additions</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify_trying_choice</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">built</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_built_depends</span><span class="p">:</span>
+                <span class="n">new_additions</span><span class="p">,</span> <span class="n">failures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_dependencies_and_blocks</span><span class="p">(</span>
+                    <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="s1">&#39;depend&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">failures</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">additions</span> <span class="o">+=</span> <span class="n">new_additions</span>
+
+                <span class="n">new_additions</span><span class="p">,</span> <span class="n">failures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_dependencies_and_blocks</span><span class="p">(</span>
+                    <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="s1">&#39;bdepend&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">failures</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">additions</span> <span class="o">+=</span> <span class="n">new_additions</span>
+
+            <span class="n">new_additions</span><span class="p">,</span> <span class="n">failures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_dependencies_and_blocks</span><span class="p">(</span>
+                <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="s1">&#39;rdepend&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">failures</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">additions</span> <span class="o">+=</span> <span class="n">new_additions</span>
+
+            <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_choice</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">l</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="c1"># this means somehow the node already slipped in.</span>
+                <span class="c1"># so we exit now, we are satisfied</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">notify_choice_succeeded</span><span class="p">(</span>
+                    <span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span>
+                    <span class="s2">&quot;already exists in the state plan&quot;</span><span class="p">)</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">pop_frame</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">elif</span> <span class="n">l</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># failure.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">notify_choice_failed</span><span class="p">(</span>
+                    <span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span>
+                    <span class="s2">&quot;failed inserting: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">l</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">backtrack</span><span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="o">.</span><span class="n">start_point</span><span class="p">)</span>
+                <span class="n">choices</span><span class="o">.</span><span class="n">force_next_pkg</span><span class="p">()</span>
+                <span class="k">continue</span>
+
+            <span class="n">new_additions</span><span class="p">,</span> <span class="n">failures</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_dependencies_and_blocks</span><span class="p">(</span>
+                <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="s1">&#39;pdepend&#39;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">failures</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">additions</span> <span class="o">+=</span> <span class="n">new_additions</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify_choice_succeeded</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">)</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">pop_frame</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span><span class="s2">&quot;no solution  </span><span class="si">%s%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">depth</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">atom</span><span class="p">))</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">add_event</span><span class="p">((</span><span class="s2">&quot;debug&quot;</span><span class="p">,</span> <span class="s2">&quot;ran out of choices&quot;</span><span class="p">,))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">backtrack</span><span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="o">.</span><span class="n">start_point</span><span class="p">)</span>
+        <span class="c1"># saving roll.  if we&#39;re allowed to drop cycles, try it again.</span>
+        <span class="c1"># this needs to be *far* more fine grained also. it&#39;ll try</span>
+        <span class="c1"># regardless of if it&#39;s a cycle issue</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">drop_cycles</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">drop_cycles</span><span class="p">:</span>
+            <span class="n">stack</span><span class="o">.</span><span class="n">add_event</span><span class="p">((</span><span class="s2">&quot;cycle&quot;</span><span class="p">,</span> <span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="p">,</span> <span class="s2">&quot;trying to drop any cycles&quot;</span><span class="p">),)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                <span class="s2">&quot;trying saving throw for </span><span class="si">%s</span><span class="s2"> ignoring cycles&quot;</span><span class="p">,</span>
+                <span class="n">atom</span><span class="p">,</span> <span class="s2">&quot;cycle&quot;</span><span class="p">)</span>
+            <span class="c1"># note everything is retored to a pristine state prior also.</span>
+            <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">ignored</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_add_atom</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span>
+                <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">drop_cycles</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">l</span><span class="p">:</span>
+                <span class="n">stack</span><span class="o">.</span><span class="n">pop_frame</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">pop_frame</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">atom</span><span class="p">]</span> <span class="o">+</span> <span class="n">failures</span>
+
+    <span class="k">def</span> <span class="nf">_viable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">drop_cycles</span><span class="p">,</span> <span class="n">limit_to_vdb</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        internal function to discern if an atom is viable, returning</span>
+<span class="sd">        the choicepoint/matches iterator if viable.</span>
+
+<span class="sd">        :param stack: current stack</span>
+<span class="sd">        :type stack: :obj:`resolver_stack`</span>
+<span class="sd">        :param mode: type of dependency (depend/rdepend)</span>
+<span class="sd">        :type mode: str</span>
+<span class="sd">        :param atom: atom for the current package</span>
+<span class="sd">        :type atom: :obj:`pkgcore.ebuild.atom.atom`</span>
+<span class="sd">        :param dbs: db list to walk</span>
+<span class="sd">        :param drop_cycles: boolean controlling whether to drop dep cycles</span>
+<span class="sd">        :param limit_to_vdb: boolean controlling considering pkgs only from the vdb</span>
+<span class="sd">        :return: 3 possible; None (not viable), True (presolved),</span>
+<span class="sd">          :obj:`caching_iter` (not solved, but viable), :obj:`choice_point`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">choices</span> <span class="o">=</span> <span class="n">ret</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">atom</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">insoluble</span><span class="p">:</span>
+            <span class="n">ret</span> <span class="o">=</span> <span class="p">((</span><span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;globally insoluble&quot;</span><span class="p">),{})</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">matches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">match_atom</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">=</span> <span class="p">((</span><span class="kc">True</span><span class="p">,),</span> <span class="p">{</span><span class="s2">&quot;pre_solved&quot;</span><span class="p">:</span><span class="kc">True</span><span class="p">})</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># not in the plan thus far.</span>
+                <span class="n">matches</span> <span class="o">=</span> <span class="n">caching_iter</span><span class="p">(</span><span class="n">dbs</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">atom</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+                    <span class="n">choices</span> <span class="o">=</span> <span class="n">choice_point</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">matches</span><span class="p">)</span>
+                    <span class="c1"># ignore what dropped out, at this juncture we don&#39;t care.</span>
+                    <span class="n">choices</span><span class="o">.</span><span class="n">reduce_atoms</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">insoluble</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">choices</span><span class="p">:</span>
+                        <span class="c1"># and was intractable because it has a hard dep on an</span>
+                        <span class="c1"># unsolvable atom.</span>
+                        <span class="n">ret</span> <span class="o">=</span> <span class="p">((</span><span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;pruning of insoluble deps &quot;</span>
+                            <span class="s2">&quot;left no choices&quot;</span><span class="p">),</span> <span class="p">{})</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ret</span> <span class="o">=</span> <span class="p">((</span><span class="kc">False</span><span class="p">,</span> <span class="s2">&quot;no matches&quot;</span><span class="p">),</span> <span class="p">{})</span>
+
+        <span class="k">if</span> <span class="n">choices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">choices</span> <span class="o">=</span> <span class="n">choice_point</span><span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">matches</span><span class="p">)</span>
+
+        <span class="n">stack</span><span class="o">.</span><span class="n">add_frame</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">current_state</span><span class="p">,</span> <span class="n">drop_cycles</span><span class="p">,</span> <span class="n">vdb_limited</span><span class="o">=</span><span class="n">limit_to_vdb</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">limit_to_vdb</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">insoluble</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">notify_viable</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="o">*</span><span class="n">ret</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">ret</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">ret</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">add_backref_op</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">choices</span><span class="p">,</span> <span class="n">matches</span>
+
+<div class="viewcode-block" id="merge_plan.check_for_cycles"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.check_for_cycles">[docs]</a>    <span class="k">def</span> <span class="nf">check_for_cycles</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">cur_frame</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check the current stack for cyclical issues.</span>
+
+<span class="sd">        :param stack: current stack, a :obj:`resolver_stack` instance</span>
+<span class="sd">        :param cur_frame: current frame, a :obj:`resolver_frame` instance</span>
+<span class="sd">        :return: True if no issues and resolution should continue, else the</span>
+<span class="sd">            value to return after collapsing the calling frame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">force_vdb</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">stack</span><span class="o">.</span><span class="n">slot_cycles</span><span class="p">(</span><span class="n">cur_frame</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;pdepend&#39;</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span>
+                <span class="n">islice</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">stack</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">frame</span><span class="p">),</span> <span class="n">stack</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">cur_frame</span><span class="p">))):</span>
+                <span class="c1"># exact same pkg.</span>
+                <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;bdepend&#39;</span><span class="p">,</span> <span class="s1">&#39;depend&#39;</span><span class="p">):</span>
+                    <span class="c1"># ok, we *must* go vdb if not already.</span>
+                    <span class="k">if</span> <span class="n">frame</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+                            <span class="k">return</span> <span class="kc">None</span>
+                        <span class="c1"># force it to vdb.</span>
+                    <span class="k">if</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+                    <span class="k">elif</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">current_pkg</span> <span class="o">==</span> <span class="n">frame</span><span class="o">.</span><span class="n">current_pkg</span> <span class="ow">and</span> \
+                        <span class="n">cur_frame</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;pdepend&#39;</span><span class="p">:</span>
+                        <span class="c1"># if non vdb and it&#39;s a post_rdeps cycle for the cur</span>
+                        <span class="c1"># node, exempt it; assuming the stack succeeds,</span>
+                        <span class="c1"># it&#39;s satisfied</span>
+                        <span class="k">return</span> <span class="kc">True</span>
+                    <span class="n">force_vdb</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># should be doing a full walk of the cycle here, seeing</span>
+                    <span class="c1"># if an rdep becomes a dep.</span>
+                    <span class="k">return</span> <span class="kc">None</span>
+                <span class="c1"># portage::gentoo -&gt; rysnc -&gt; portage::vdb; let it process it.</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="c1"># only need to look at the most recent match; reasoning is simple,</span>
+            <span class="c1"># logic above forces it to vdb if needed.</span>
+            <span class="k">break</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">force_vdb</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="c1"># we already know the current pkg isn&#39;t livefs; force livefs to</span>
+        <span class="c1"># sidestep this.</span>
+        <span class="n">cur_frame</span><span class="o">.</span><span class="n">parent</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="s2">&quot;cycle&quot;</span><span class="p">,</span> <span class="n">cur_frame</span><span class="p">,</span> <span class="s2">&quot;limiting to vdb&quot;</span><span class="p">))</span>
+        <span class="n">cur_frame</span><span class="o">.</span><span class="n">ignored</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_add_atom</span><span class="p">(</span><span class="n">cur_frame</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">livefs_dbs</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">cur_frame</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span>
+            <span class="n">drop_cycles</span> <span class="o">=</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">drop_cycles</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="merge_plan.process_dependencies_and_blocks"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.process_dependencies_and_blocks">[docs]</a>    <span class="k">def</span> <span class="nf">process_dependencies_and_blocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span>
+                                        <span class="n">atom</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">atom</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">atom</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="o">.</span><span class="n">atom</span>
+        <span class="k">if</span> <span class="n">depth</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">depth</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">depth</span>
+        <span class="n">depset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">depset_reorder</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">attr</span><span class="p">),</span> <span class="n">attr</span><span class="p">)</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_dependencies</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">depset</span><span class="p">,</span> <span class="n">atom</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                <span class="s2">&quot;resetting for </span><span class="si">%s%s</span><span class="s2"> because of </span><span class="si">%s</span><span class="s2">: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">depth</span><span class="o">*</span><span class="mi">2</span><span class="o">*</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">backtrack</span><span class="p">(</span><span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span><span class="o">.</span><span class="n">start_point</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">[],</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">additions</span> <span class="o">=</span> <span class="n">l</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">additions</span><span class="p">,</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="merge_plan.process_dependencies"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.process_dependencies">[docs]</a>    <span class="k">def</span> <span class="nf">process_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">depset</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+        <span class="n">failure</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">additions</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">cur_frame</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">current_frame</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notify_starting_mode</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">stack</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">potentials</span> <span class="ow">in</span> <span class="n">depset</span><span class="p">:</span>
+            <span class="n">failure</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">or_node</span> <span class="ow">in</span> <span class="n">potentials</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">or_node</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+                    <span class="n">failure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">process_blocker</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">or_node</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">failure</span><span class="p">:</span>
+                        <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">or_node</span><span class="p">)</span>
+                        <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">failure</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_add_atom</span><span class="p">(</span><span class="n">or_node</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span>
+                        <span class="n">cur_frame</span><span class="o">.</span><span class="n">dbs</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
+                        <span class="n">drop_cycles</span><span class="o">=</span><span class="n">cur_frame</span><span class="o">.</span><span class="n">drop_cycles</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">failure</span><span class="p">:</span>
+                        <span class="n">additions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">or_node</span><span class="p">)</span>
+                        <span class="k">break</span>
+                    <span class="c1"># XXX this is whacky tacky fantastically crappy</span>
+                    <span class="c1"># XXX kill it; purpose seems... questionable.</span>
+                    <span class="k">if</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">drop_cycles</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                            <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> level cycle: </span><span class="si">%s</span><span class="s2">: &quot;</span>
+                            <span class="s2">&quot;dropping cycle for </span><span class="si">%s</span><span class="s2"> from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                            <span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">or_node</span><span class="p">,</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">),</span>
+                            <span class="s2">&quot;cycle&quot;</span><span class="p">)</span>
+                        <span class="n">failure</span> <span class="o">=</span> <span class="kc">None</span>
+                        <span class="k">break</span>
+
+                <span class="k">if</span> <span class="n">cur_frame</span><span class="o">.</span><span class="n">reduce_solutions</span><span class="p">(</span><span class="n">or_node</span><span class="p">):</span>
+                    <span class="c1"># pkg changed.</span>
+                    <span class="k">return</span> <span class="p">[</span><span class="n">failure</span><span class="p">]</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span> <span class="c1"># didn&#39;t find any solutions to this or block.</span>
+                <span class="n">cur_frame</span><span class="o">.</span><span class="n">reduce_solutions</span><span class="p">(</span><span class="n">potentials</span><span class="p">)</span>
+                <span class="k">return</span> <span class="p">[</span><span class="n">potentials</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span> <span class="c1"># all potentials were usable.</span>
+            <span class="k">return</span> <span class="n">additions</span><span class="p">,</span> <span class="n">blocks</span></div>
+
+<div class="viewcode-block" id="merge_plan.process_blocker"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.process_blocker">[docs]</a>    <span class="k">def</span> <span class="nf">process_blocker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">blocker</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">insert_blockers</span><span class="p">(</span><span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="p">[</span><span class="n">blocker</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notify_choice_failed</span><span class="p">(</span>
+            <span class="n">stack</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span>
+            <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> blocker: </span><span class="si">%s</span><span class="s2"> conflicts w/ </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">ret</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ret</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">ret</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span></div>
+
+    <span class="k">def</span> <span class="nf">_ensure_livefs_is_loaded_preloaded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_ensure_livefs_is_loaded_nonpreloaded</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="c1"># do a trick to make the resolver now aware of vdb pkgs if needed</span>
+        <span class="c1"># check for any matches; none, try and insert vdb nodes.</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">match_atom</span><span class="p">(</span><span class="n">restrict</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">l</span><span class="p">:</span>
+            <span class="c1"># hmm. ok... no conflicts, so we insert in vdb matches</span>
+            <span class="c1"># to trigger a replace instead of an install</span>
+            <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">livefs_dbs</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span><span class="s2">&quot;inserting vdb node for </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">pkg</span><span class="p">))</span>
+                <span class="n">c</span> <span class="o">=</span> <span class="n">choice_point</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="p">[</span><span class="n">pkg</span><span class="p">])</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">add_op</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+
+<div class="viewcode-block" id="merge_plan.insert_choice"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.insert_choice">[docs]</a>    <span class="k">def</span> <span class="nf">insert_choice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">):</span>
+        <span class="c1"># first, check for conflicts.</span>
+        <span class="c1"># lil bit fugly, but works for the moment</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_livefs_is_loaded</span><span class="p">(</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">slotted_atom</span><span class="p">)</span>
+        <span class="n">conflicts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">add_op</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">conflicts</span><span class="p">:</span>
+            <span class="c1"># this means in this branch of resolution, someone slipped</span>
+            <span class="c1"># something in already. cycle, basically.</span>
+            <span class="c1"># hack.  see if what was inserted is enough for us.</span>
+
+            <span class="c1"># this is tricky... if it&#39;s the same node inserted</span>
+            <span class="c1"># (cycle), then we ignore it; this does *not* perfectly</span>
+            <span class="c1"># behave though, doesn&#39;t discern between repos.</span>
+
+            <span class="c1"># Note that virtual pkg conflicts are skipped since it&#39;s assumed</span>
+            <span class="c1"># they are injected.</span>
+            <span class="n">virtual</span> <span class="o">=</span> <span class="p">(</span><span class="nb">any</span><span class="p">(</span><span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;package_is_real&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">conflicts</span><span class="p">)</span>
+                       <span class="ow">or</span> <span class="ow">not</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">package_is_real</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">virtual</span> <span class="ow">or</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">conflicts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">conflicts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span> <span class="ow">and</span>
+                    <span class="p">(</span><span class="n">conflicts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span> <span class="o">==</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span> <span class="ow">and</span>
+                    <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">conflicts</span><span class="p">[</span><span class="mi">0</span><span class="p">])))):</span>
+                <span class="c1"># early exit. means that a cycle came about, but exact</span>
+                <span class="c1"># same result slipped through.</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                <span class="s2">&quot;was trying to insert atom &#39;</span><span class="si">%s</span><span class="s2">&#39; pkg &#39;</span><span class="si">%s</span><span class="s2">&#39;,</span><span class="se">\n</span><span class="s2">but &#39;[</span><span class="si">%s</span><span class="s2">]&#39; exists already&quot;</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">conflicts</span><span class="p">))))</span>
+
+            <span class="n">try_rematch</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="kc">True</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">conflicts</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">restriction</span><span class="o">.</span><span class="n">base</span><span class="p">)):</span>
+                <span class="c1"># blocker was caught</span>
+                <span class="n">try_rematch</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="kc">True</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">conflicts</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdb_restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+                <span class="c1"># vdb entry, replace.</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdb_restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">):</span>
+                    <span class="c1"># we&#39;re replacing a vdb entry with a vdb entry?  wtf.</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;internal weirdness spotted- vdb restrict matches, &quot;</span>
+                          <span class="s2">&quot;but current doesn&#39;t, bailing&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;internal weirdness- vdb restrict matches &quot;</span><span class="p">,</span>
+                                    <span class="s2">&quot;but current doesn&#39;t. bailing- run w/ --debug&quot;</span><span class="p">)</span>
+                <span class="n">conflicts</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">replace_op</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">conflicts</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                        <span class="s2">&quot;replacing vdb entry for &#39;</span><span class="si">%s</span><span class="s2">&#39; with pkg &#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span><span class="p">,</span>
+                        <span class="p">(</span><span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">try_rematch</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">if</span> <span class="n">try_rematch</span><span class="p">:</span>
+                <span class="c1"># XXX: this block looks whacked.  figure out what it&#39;s up to.</span>
+                <span class="n">l2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">match_atom</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">l2</span> <span class="o">==</span> <span class="p">[</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">]:</span>
+                    <span class="c1"># stop resolution.</span>
+                    <span class="n">conflicts</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">elif</span> <span class="n">l2</span><span class="p">:</span>
+                    <span class="c1"># potentially need to do some form of cleanup here.</span>
+                    <span class="n">conflicts</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">conflicts</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">conflicts</span></div>
+
+<div class="viewcode-block" id="merge_plan.generate_mangled_blocker"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.generate_mangled_blocker">[docs]</a>    <span class="k">def</span> <span class="nf">generate_mangled_blocker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">blocker</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;converts a blocker into a &quot;cannot block ourself&quot; block&quot;&quot;&quot;</span>
+        <span class="c1"># note the second Or clause is a bit loose; allows any version to</span>
+        <span class="c1"># slip through instead of blocking everything that isn&#39;t the</span>
+        <span class="c1"># parent pkg</span>
+        <span class="k">if</span> <span class="n">blocker</span><span class="o">.</span><span class="n">category</span> <span class="o">!=</span> <span class="s1">&#39;virtual&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">blocker</span>
+        <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="n">blocker</span><span class="p">,</span>
+            <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;provider.key&quot;</span><span class="p">,</span>
+                <span class="n">values</span><span class="o">.</span><span class="n">StrExactMatch</span><span class="p">(</span><span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">key</span><span class="p">),</span>
+                <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_missing</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.insert_blockers"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.insert_blockers">[docs]</a>    <span class="k">def</span> <span class="nf">insert_blockers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stack</span><span class="p">,</span> <span class="n">choices</span><span class="p">,</span> <span class="n">blocks</span><span class="p">):</span>
+        <span class="c1"># level blockers.</span>
+        <span class="n">was_livefs</span> <span class="o">=</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">livefs</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">was_livefs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_ensure_livefs_is_loaded</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+            <span class="n">rewrote_blocker</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_mangled_blocker</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">add_blocker</span><span class="p">(</span><span class="n">choices</span><span class="p">,</span> <span class="n">rewrote_blocker</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">l</span><span class="p">:</span>
+                <span class="c1"># blocker caught something. yay.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_dprint</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> blocker </span><span class="si">%s</span><span class="s2"> hit </span><span class="si">%s</span><span class="s2"> for atom </span><span class="si">%s</span><span class="s2"> pkg </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">stack</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">choices</span><span class="o">.</span><span class="n">current_pkg</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">weak_blocker</span><span class="p">:</span>
+                    <span class="c1"># note that we use the top frame of the stacks&#39; dbs; this</span>
+                    <span class="c1"># is to allow us to upgrade as needed.</span>
+                    <span class="c1"># For this to match, it&#39;s *only* possible if the blocker is resolved</span>
+                    <span class="c1"># since the limiter is already in place.</span>
+                    <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rec_add_atom</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span>
+                        <span class="n">restriction</span><span class="o">.</span><span class="n">Negate</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">_atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">key</span><span class="p">),</span> <span class="n">key</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">key</span><span class="p">),</span> <span class="n">stack</span><span class="p">,</span> <span class="n">stack</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dbs</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+                        <span class="c1"># ok, inserted a new version.  did it take care of the conflict?</span>
+                        <span class="c1"># it /may/ not have, via filling a different slot...</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">match_atom</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
+                            <span class="c1"># ignore the blocker, we resolved past it.</span>
+                            <span class="k">continue</span>
+                <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">l</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="merge_plan.free_caches"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.free_caches">[docs]</a>    <span class="k">def</span> <span class="nf">free_caches</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_raw_dbs</span><span class="p">:</span>
+            <span class="n">repo</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+    <span class="c1"># selection strategies for atom matches</span>
+
+<div class="viewcode-block" id="merge_plan.default_depset_reorder_strategy"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.default_depset_reorder_strategy">[docs]</a>    <span class="k">def</span> <span class="nf">default_depset_reorder_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depset</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">or_block</span> <span class="ow">in</span> <span class="n">depset</span><span class="p">:</span>
+            <span class="n">vdb</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">non_vdb</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">or_block</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">or_block</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">atom</span> <span class="ow">in</span> <span class="n">or_block</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+                    <span class="n">non_vdb</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">match_atom</span><span class="p">(</span><span class="n">atom</span><span class="p">):</span>
+                    <span class="n">vdb</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">atom</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">livefs_dbs</span><span class="p">:</span>
+                    <span class="n">vdb</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">non_vdb</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">vdb</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">vdb</span> <span class="o">+</span> <span class="n">non_vdb</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">or_block</span></div>
+
+<div class="viewcode-block" id="merge_plan.default_global_strategy"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.default_global_strategy">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">default_global_strategy</span><span class="p">(</span><span class="n">dbs</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span> <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">dbs</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="merge_plan.just_livefs_dbs"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.just_livefs_dbs">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">just_livefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dbs</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">livefs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="merge_plan.just_nonlivefs_dbs"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.just_nonlivefs_dbs">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">just_nonlivefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">r</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">dbs</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="o">.</span><span class="n">livefs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="merge_plan.prefer_livefs_dbs"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.prefer_livefs_dbs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">prefer_livefs_dbs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">just_vdb</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param dbs: db list to walk</span>
+<span class="sd">        :param just_vdb: if None, no filtering; if True, just vdb, if False,</span>
+<span class="sd">          non-vdb only</span>
+<span class="sd">        :return: yields repos in requested ordering</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">chain</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">just_livefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">),</span> <span class="bp">cls</span><span class="o">.</span><span class="n">just_nonlivefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.prefer_nonlivefs_dbs"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.prefer_nonlivefs_dbs">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">prefer_nonlivefs_dbs</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dbs</span><span class="p">,</span> <span class="n">just_vdb</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param dbs: db list to walk</span>
+<span class="sd">        :param just_vdb: if None, no filtering; if True, just vdb, if False,</span>
+<span class="sd">          non-vdb only</span>
+<span class="sd">        :return: yields repos in requested ordering</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">chain</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">just_nonlivefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">),</span> <span class="bp">cls</span><span class="o">.</span><span class="n">just_livefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.prefer_highest_version_strategy"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.prefer_highest_version_strategy">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">prefer_highest_version_strategy</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dbs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">misc</span><span class="o">.</span><span class="n">multiplex_sorting_repo</span><span class="p">(</span>
+            <span class="n">highest_iter_sort</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">prefer_livefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.prefer_lowest_version_strategy"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.prefer_lowest_version_strategy">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">prefer_lowest_version_strategy</span><span class="p">(</span><span class="n">dbs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">misc</span><span class="o">.</span><span class="n">multiplex_sorting_repo</span><span class="p">(</span><span class="n">lowest_iter_sort</span><span class="p">,</span> <span class="n">dbs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="merge_plan.prefer_downgrade_version_strategy"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.prefer_downgrade_version_strategy">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">prefer_downgrade_version_strategy</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">dbs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">misc</span><span class="o">.</span><span class="n">multiplex_sorting_repo</span><span class="p">(</span>
+            <span class="n">partial</span><span class="p">(</span><span class="n">downgrade_iter_sort</span><span class="p">,</span> <span class="n">restrict</span><span class="p">),</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">prefer_nonlivefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="merge_plan.prefer_reuse_strategy"><a class="viewcode-back" href="../../../api/pkgcore.resolver.plan.html#pkgcore.resolver.plan.merge_plan.prefer_reuse_strategy">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">prefer_reuse_strategy</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dbs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">multiplex</span><span class="o">.</span><span class="n">tree</span><span class="p">(</span>
+            <span class="n">misc</span><span class="o">.</span><span class="n">multiplex_sorting_repo</span><span class="p">(</span>
+                <span class="n">highest_iter_sort</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">just_livefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">)),</span>
+            <span class="n">misc</span><span class="o">.</span><span class="n">multiplex_sorting_repo</span><span class="p">(</span>
+                <span class="n">highest_iter_sort</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">just_nonlivefs_dbs</span><span class="p">(</span><span class="n">dbs</span><span class="p">)),</span>
+        <span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.plan</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

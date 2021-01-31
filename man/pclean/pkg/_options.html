@@ -1,0 +1,181 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Generic Cleaning Options &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Generic Cleaning Options</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="generic-cleaning-options">
+<h1>Generic Cleaning Options<a class="headerlink" href="#generic-cleaning-options" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>TARGET</dt><dd><p>packages to target for cleaning</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">-p</span>, <span class="option">--pretend</span></kbd></dt>
+<dd><p>dry run without performing any changes</p>
+</dd>
+<dt><kbd><span class="option">-x <var>EXCLUDE</var></span>, <span class="option">--exclude <var>EXCLUDE</var></span></kbd></dt>
+<dd><p>list of packages to exclude from removal</p>
+</dd>
+<dt><kbd><span class="option">-X <var>EXCLUDE_FILE</var></span>, <span class="option">--exclude-file <var>EXCLUDE_FILE</var></span></kbd></dt>
+<dd><p>path to exclusion file</p>
+</dd>
+<dt><kbd><span class="option">-S <var>PKGSET</var></span>, <span class="option">--pkgsets <var>PKGSET</var></span></kbd></dt>
+<dd><p>list of pkgsets to include or exclude from removal</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="file-cleaning-options">
+<h1>File Cleaning Options<a class="headerlink" href="#file-cleaning-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-m <var>TIME</var></span>, <span class="option">--modified <var>TIME</var></span></kbd></dt>
+<dd><p>Don't remove files that have been modified since a given time. For
+example, to skip files newer than a year use &quot;1y&quot; as an argument to this
+option.  this option.</p>
+<p>Supported units are y, m, w, and d, and s representing years, months,
+weeks, days, and seconds, respectively.</p>
+</dd>
+<dt><kbd><span class="option">-s <var>SIZE</var></span>, <span class="option">--size <var>SIZE</var></span></kbd></dt>
+<dd><p>Don't remove files bigger than a given size.  For example, to skip
+files larger than 100 megabytes use &quot;100M&quot; as an argument to this
+option.</p>
+<p>Supported units are B, K, M, and G representing bytes, kilobytes,
+megabytes, and gigabytes, respectively.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="repo-cleaning-options">
+<h1>Repo Cleaning Options<a class="headerlink" href="#repo-cleaning-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-I</span>, <span class="option">--installed</span></kbd></dt>
+<dd><p>skip files for packages that are currently installed</p>
+</dd>
+<dt><kbd><span class="option">-E</span>, <span class="option">--exists</span></kbd></dt>
+<dd><p>skip files for packages that relate to ebuilds in the tree</p>
+</dd>
+<dt><kbd><span class="option">-f</span>, <span class="option">--fetch-restricted</span></kbd></dt>
+<dd><p>skip fetch-restricted files</p>
+</dd>
+<dt><kbd><span class="option">-r <var>REPO</var></span>, <span class="option">--repo <var>REPO</var></span></kbd></dt>
+<dd><p>Target repository to search for matches. If no repo is specified all
+relevant repos are used.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="binpkg-cleaning-options">
+<h1>Binpkg Cleaning Options<a class="headerlink" href="#binpkg-cleaning-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--source-repo <var>REPO</var></span></kbd></dt>
+<dd><p>remove binpkgs with matching source repo</p>
+</dd>
+<dt><kbd><span class="option">-b</span>, <span class="option">--bindist</span></kbd></dt>
+<dd><p>only remove binpkgs that restrict distribution</p>
+</dd>
+<dt><kbd><span class="option">-c <var>CHANGED</var></span>, <span class="option">--changed <var>CHANGED</var></span></kbd></dt>
+<dd><p>comma separated list of package attributes to check for ebuild changes</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="base-options">
+<h1>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Generic Cleaning Options</a></li>
+<li><a class="reference internal" href="#file-cleaning-options">File Cleaning Options</a></li>
+<li><a class="reference internal" href="#repo-cleaning-options">Repo Cleaning Options</a></li>
+<li><a class="reference internal" href="#binpkg-cleaning-options">Binpkg Cleaning Options</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Generic Cleaning Options</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

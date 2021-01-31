@@ -1,0 +1,973 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pinspect profile - profile related querying &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pinspect profile - profile related querying</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pinspect-profile-profile-related-querying">
+<h1>pinspect profile - profile related querying<a class="headerlink" href="#pinspect-profile-profile-related-querying" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="synopsis">
+<h1>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h1>
+<p>pinspect profile [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-r REPO] {parent,eapi,status,deprecated,provided,system,use_expand,iuse_effective,masks,unmasks,bashrcs,keywords,accept_keywords,use,masked_use,stable_masked_use,forced_use,stable_forced_use,defaults,arch} ...</p>
+</div>
+<div class="section" id="base-options">
+<h1>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="subcommand-options">
+<h1>Subcommand Options<a class="headerlink" href="#subcommand-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-r <var>REPO</var></span>, <span class="option">--repo <var>REPO</var></span></kbd></dt>
+<dd><p>target repo</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="subcommands">
+<h1>Subcommands<a class="headerlink" href="#subcommands" title="Permalink to this headline">¶</a></h1>
+<p>profile commands</p>
+<div class="section" id="pinspect-profile-parent-output-the-linearized-tree-of-inherited-parents">
+<h2>pinspect profile parent - output the linearized tree of inherited parents<a class="headerlink" href="#pinspect-profile-parent-output-the-linearized-tree-of-inherited-parents" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id1">
+<h2>Synopsis<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile parent [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="positional-arguments">
+<h2>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id2">
+<h2>Base Options<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-eapi-output-eapi-support-required-for-reading-this-profile">
+<h2>pinspect profile eapi - output EAPI support required for reading this profile<a class="headerlink" href="#pinspect-profile-eapi-output-eapi-support-required-for-reading-this-profile" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id3">
+<h2>Synopsis<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile eapi [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id4">
+<h2>Positional Arguments<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id5">
+<h2>Base Options<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-status-output-profile-status">
+<h2>pinspect profile status - output profile status<a class="headerlink" href="#pinspect-profile-status-output-profile-status" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id6">
+<h2>Synopsis<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile status [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id7">
+<h2>Positional Arguments<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id8">
+<h2>Base Options<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-deprecated-dump-deprecation-notices-if-any">
+<h2>pinspect profile deprecated - dump deprecation notices, if any<a class="headerlink" href="#pinspect-profile-deprecated-dump-deprecation-notices-if-any" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id9">
+<h2>Synopsis<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile deprecated [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id10">
+<h2>Positional Arguments<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id11">
+<h2>Base Options<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-provided-list-all-package-provided-packages">
+<h2>pinspect profile provided - list all package.provided packages<a class="headerlink" href="#pinspect-profile-provided-list-all-package-provided-packages" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id12">
+<h2>Synopsis<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile provided [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id13">
+<h2>Positional Arguments<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id14">
+<h2>Base Options<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-system-output-the-system-package-set">
+<h2>pinspect profile system - output the system package set<a class="headerlink" href="#pinspect-profile-system-output-the-system-package-set" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id15">
+<h2>Synopsis<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile system [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id16">
+<h2>Positional Arguments<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id17">
+<h2>Base Options<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-use-expand-output-the-use-expand-configuration-for-this-profile">
+<h2>pinspect profile use_expand - output the USE_EXPAND configuration for this profile<a class="headerlink" href="#pinspect-profile-use-expand-output-the-use-expand-configuration-for-this-profile" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id18">
+<h2>Synopsis<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile use_expand [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id19">
+<h2>Positional Arguments<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id20">
+<h2>Base Options<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-iuse-effective-output-the-iuse-effective-value-for-this-profile">
+<h2>pinspect profile iuse_effective - output the IUSE_EFFECTIVE value for this profile<a class="headerlink" href="#pinspect-profile-iuse-effective-output-the-iuse-effective-value-for-this-profile" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id21">
+<h2>Synopsis<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile iuse_effective [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id22">
+<h2>Positional Arguments<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id23">
+<h2>Base Options<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-masks-inspect-package-masks">
+<h2>pinspect profile masks - inspect package masks<a class="headerlink" href="#pinspect-profile-masks-inspect-package-masks" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id24">
+<h2>Synopsis<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile masks [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id25">
+<h2>Positional Arguments<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id26">
+<h2>Base Options<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-unmasks-inspect-package-unmasks">
+<h2>pinspect profile unmasks - inspect package unmasks<a class="headerlink" href="#pinspect-profile-unmasks-inspect-package-unmasks" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id27">
+<h2>Synopsis<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile unmasks [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id28">
+<h2>Positional Arguments<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id29">
+<h2>Base Options<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-bashrcs-inspect-bashrcs">
+<h2>pinspect profile bashrcs - inspect bashrcs<a class="headerlink" href="#pinspect-profile-bashrcs-inspect-bashrcs" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id30">
+<h2>Synopsis<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile bashrcs [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id31">
+<h2>Positional Arguments<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id32">
+<h2>Base Options<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-keywords-inspect-package-keywords">
+<h2>pinspect profile keywords - inspect package.keywords<a class="headerlink" href="#pinspect-profile-keywords-inspect-package-keywords" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id33">
+<h2>Synopsis<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile keywords [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id34">
+<h2>Positional Arguments<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id35">
+<h2>Base Options<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-accept-keywords-inspect-package-accept-keywords">
+<h2>pinspect profile accept_keywords - inspect package.accept_keywords<a class="headerlink" href="#pinspect-profile-accept-keywords-inspect-package-accept-keywords" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id36">
+<h2>Synopsis<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile accept_keywords [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id37">
+<h2>Positional Arguments<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id38">
+<h2>Base Options<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-use-inspect-enabled-use-flags">
+<h2>pinspect profile use - inspect enabled USE flags<a class="headerlink" href="#pinspect-profile-use-inspect-enabled-use-flags" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id39">
+<h2>Synopsis<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id40">
+<h2>Positional Arguments<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id41">
+<h2>Base Options<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-masked-use-inspect-masked-use-flags">
+<h2>pinspect profile masked_use - inspect masked use flags<a class="headerlink" href="#pinspect-profile-masked-use-inspect-masked-use-flags" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id42">
+<h2>Synopsis<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile masked_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id43">
+<h2>Positional Arguments<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id44">
+<h2>Base Options<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-stable-masked-use-inspect-stable-masked-use-flags">
+<h2>pinspect profile stable_masked_use - inspect stable masked use flags<a class="headerlink" href="#pinspect-profile-stable-masked-use-inspect-stable-masked-use-flags" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id45">
+<h2>Synopsis<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile stable_masked_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id46">
+<h2>Positional Arguments<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id47">
+<h2>Base Options<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-forced-use-inspect-forced-use-flags">
+<h2>pinspect profile forced_use - inspect forced use flags<a class="headerlink" href="#pinspect-profile-forced-use-inspect-forced-use-flags" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id48">
+<h2>Synopsis<a class="headerlink" href="#id48" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile forced_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id49">
+<h2>Positional Arguments<a class="headerlink" href="#id49" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id50">
+<h2>Base Options<a class="headerlink" href="#id50" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-stable-forced-use-inspect-stable-forced-use-flags">
+<h2>pinspect profile stable_forced_use - inspect stable forced use flags<a class="headerlink" href="#pinspect-profile-stable-forced-use-inspect-stable-forced-use-flags" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id51">
+<h2>Synopsis<a class="headerlink" href="#id51" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile stable_forced_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id52">
+<h2>Positional Arguments<a class="headerlink" href="#id52" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id53">
+<h2>Base Options<a class="headerlink" href="#id53" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-defaults-inspect-defined-configuration-for-this-profile">
+<h2>pinspect profile defaults - inspect defined configuration for this profile<a class="headerlink" href="#pinspect-profile-defaults-inspect-defined-configuration-for-this-profile" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id54">
+<h2>Synopsis<a class="headerlink" href="#id54" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile defaults [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile [variables [variables ...]]</p>
+</div>
+<div class="section" id="id55">
+<h2>Positional Arguments<a class="headerlink" href="#id55" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+<dt class="field-even">variables</dt>
+<dd class="field-even"><p>if not specified, all settings are displayed. If given, output is limited to just those settings if they exist</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id56">
+<h2>Base Options<a class="headerlink" href="#id56" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-profile-arch-output-the-arch-defined-for-this-profile">
+<h2>pinspect profile arch - output the arch defined for this profile<a class="headerlink" href="#pinspect-profile-arch-output-the-arch-defined-for-this-profile" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="id57">
+<h2>Synopsis<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h2>
+<p>pinspect profile arch [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile</p>
+</div>
+<div class="section" id="id58">
+<h2>Positional Arguments<a class="headerlink" href="#id58" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list simple">
+<dt class="field-odd">profile</dt>
+<dd class="field-odd"><p>path to the profile to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id59">
+<h2>Base Options<a class="headerlink" href="#id59" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pinspect profile - profile related querying</a></li>
+<li><a class="reference internal" href="#synopsis">Synopsis</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#subcommand-options">Subcommand Options</a></li>
+<li><a class="reference internal" href="#subcommands">Subcommands</a><ul>
+<li><a class="reference internal" href="#pinspect-profile-parent-output-the-linearized-tree-of-inherited-parents">pinspect profile parent - output the linearized tree of inherited parents</a></li>
+<li><a class="reference internal" href="#id1">Synopsis</a></li>
+<li><a class="reference internal" href="#positional-arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id2">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-eapi-output-eapi-support-required-for-reading-this-profile">pinspect profile eapi - output EAPI support required for reading this profile</a></li>
+<li><a class="reference internal" href="#id3">Synopsis</a></li>
+<li><a class="reference internal" href="#id4">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id5">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-status-output-profile-status">pinspect profile status - output profile status</a></li>
+<li><a class="reference internal" href="#id6">Synopsis</a></li>
+<li><a class="reference internal" href="#id7">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id8">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-deprecated-dump-deprecation-notices-if-any">pinspect profile deprecated - dump deprecation notices, if any</a></li>
+<li><a class="reference internal" href="#id9">Synopsis</a></li>
+<li><a class="reference internal" href="#id10">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id11">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-provided-list-all-package-provided-packages">pinspect profile provided - list all package.provided packages</a></li>
+<li><a class="reference internal" href="#id12">Synopsis</a></li>
+<li><a class="reference internal" href="#id13">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id14">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-system-output-the-system-package-set">pinspect profile system - output the system package set</a></li>
+<li><a class="reference internal" href="#id15">Synopsis</a></li>
+<li><a class="reference internal" href="#id16">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id17">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-use-expand-output-the-use-expand-configuration-for-this-profile">pinspect profile use_expand - output the USE_EXPAND configuration for this profile</a></li>
+<li><a class="reference internal" href="#id18">Synopsis</a></li>
+<li><a class="reference internal" href="#id19">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id20">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-iuse-effective-output-the-iuse-effective-value-for-this-profile">pinspect profile iuse_effective - output the IUSE_EFFECTIVE value for this profile</a></li>
+<li><a class="reference internal" href="#id21">Synopsis</a></li>
+<li><a class="reference internal" href="#id22">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id23">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-masks-inspect-package-masks">pinspect profile masks - inspect package masks</a></li>
+<li><a class="reference internal" href="#id24">Synopsis</a></li>
+<li><a class="reference internal" href="#id25">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id26">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-unmasks-inspect-package-unmasks">pinspect profile unmasks - inspect package unmasks</a></li>
+<li><a class="reference internal" href="#id27">Synopsis</a></li>
+<li><a class="reference internal" href="#id28">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id29">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-bashrcs-inspect-bashrcs">pinspect profile bashrcs - inspect bashrcs</a></li>
+<li><a class="reference internal" href="#id30">Synopsis</a></li>
+<li><a class="reference internal" href="#id31">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id32">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-keywords-inspect-package-keywords">pinspect profile keywords - inspect package.keywords</a></li>
+<li><a class="reference internal" href="#id33">Synopsis</a></li>
+<li><a class="reference internal" href="#id34">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id35">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-accept-keywords-inspect-package-accept-keywords">pinspect profile accept_keywords - inspect package.accept_keywords</a></li>
+<li><a class="reference internal" href="#id36">Synopsis</a></li>
+<li><a class="reference internal" href="#id37">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id38">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-use-inspect-enabled-use-flags">pinspect profile use - inspect enabled USE flags</a></li>
+<li><a class="reference internal" href="#id39">Synopsis</a></li>
+<li><a class="reference internal" href="#id40">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id41">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-masked-use-inspect-masked-use-flags">pinspect profile masked_use - inspect masked use flags</a></li>
+<li><a class="reference internal" href="#id42">Synopsis</a></li>
+<li><a class="reference internal" href="#id43">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id44">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-stable-masked-use-inspect-stable-masked-use-flags">pinspect profile stable_masked_use - inspect stable masked use flags</a></li>
+<li><a class="reference internal" href="#id45">Synopsis</a></li>
+<li><a class="reference internal" href="#id46">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id47">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-forced-use-inspect-forced-use-flags">pinspect profile forced_use - inspect forced use flags</a></li>
+<li><a class="reference internal" href="#id48">Synopsis</a></li>
+<li><a class="reference internal" href="#id49">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id50">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-stable-forced-use-inspect-stable-forced-use-flags">pinspect profile stable_forced_use - inspect stable forced use flags</a></li>
+<li><a class="reference internal" href="#id51">Synopsis</a></li>
+<li><a class="reference internal" href="#id52">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id53">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-defaults-inspect-defined-configuration-for-this-profile">pinspect profile defaults - inspect defined configuration for this profile</a></li>
+<li><a class="reference internal" href="#id54">Synopsis</a></li>
+<li><a class="reference internal" href="#id55">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id56">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-profile-arch-output-the-arch-defined-for-this-profile">pinspect profile arch - output the arch defined for this profile</a></li>
+<li><a class="reference internal" href="#id57">Synopsis</a></li>
+<li><a class="reference internal" href="#id58">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id59">Base Options</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pinspect profile - profile related querying</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

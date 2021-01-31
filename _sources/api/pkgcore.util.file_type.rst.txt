@@ -1,0 +1,7 @@
+pkgcore.util.file\_type module
+==============================
+
+.. automodule:: pkgcore.util.file_type
+   :members:
+   :undoc-members:
+   :show-inheritance:

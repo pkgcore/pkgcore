@@ -1,0 +1,393 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.processor module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.processor module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.processor">
+<span id="pkgcore-ebuild-processor-module"></span><h1>pkgcore.ebuild.processor module<a class="headerlink" href="#module-pkgcore.ebuild.processor" title="Permalink to this headline">¶</a></h1>
+<p>low level ebuild processor.</p>
+<p>This basically is a coprocessor that controls a bash daemon for actual
+ebuild execution. Via this, the bash side can reach into the python
+side (and vice versa), enabling remote trees (piping data from python
+side into bash side for example).</p>
+<p>A couple of processors are left lingering while pkgcore is running for
+the purpose of avoiding spawning overhead, this (and the general
+design) reduces regen time by over 40% compared to portage-2.1</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.processor.</code><code class="sig-name descname">EbuildProcessor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">userpriv</span></em>, <em class="sig-param"><span class="n">sandbox</span></em>, <em class="sig-param"><span class="n">fd_pipes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Abstraction of a running ebd instance.</p>
+<p>Contains the env, functions, etc that ebuilds expect.</p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.allow_eclass_caching">
+<code class="sig-name descname">allow_eclass_caching</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.allow_eclass_caching"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.allow_eclass_caching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.clear_preloaded_eclasses">
+<code class="sig-name descname">clear_preloaded_eclasses</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.clear_preloaded_eclasses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.clear_preloaded_eclasses" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.disable_eclass_caching">
+<code class="sig-name descname">disable_eclass_caching</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.disable_eclass_caching"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.disable_eclass_caching" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.expect">
+<code class="sig-name descname">expect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">want</span></em>, <em class="sig-param"><span class="n">async_req</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">flush</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">timeout</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.expect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.expect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read from the daemon, check if the returned string is expected.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>want</strong> – string we’re expecting</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>boolean, was what was read == want?</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.generic_handler">
+<code class="sig-name descname">generic_handler</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">additional_commands</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.generic_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.generic_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal event handler responding to the running processor’s requests.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>additional_commands</strong> (<em>mapping from string to callable.</em>) – Extra command handlers.
+Command names cannot have spaces.
+The callable is called with the processor as first arg, and
+remaining string (None if no remaining fragment) as second arg.
+If you need to split the args to command, whitespace splitting
+falls to your func.</p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference internal" href="#pkgcore.ebuild.processor.UnhandledCommand" title="pkgcore.ebuild.processor.UnhandledCommand"><strong>UnhandledCommand</strong></a> – thrown when an unknown command is encountered.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.get_ebuild_environment">
+<code class="sig-name descname">get_ebuild_environment</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">package_inst</span></em>, <em class="sig-param"><span class="n">eclass_cache</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.get_ebuild_environment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.get_ebuild_environment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request a dump of the ebuild environ for a package.</p>
+<p>This dump is created from doing metadata sourcing.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>package_inst</strong> – <a class="reference internal" href="pkgcore.ebuild.ebuild_src.html#pkgcore.ebuild.ebuild_src.package" title="pkgcore.ebuild.ebuild_src.package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebuild_src.package</span></code></a> instance
+to regenerate</p></li>
+<li><p><strong>eclass_cache</strong> – <a class="reference internal" href="pkgcore.ebuild.eclass_cache.html#module-pkgcore.ebuild.eclass_cache" title="pkgcore.ebuild.eclass_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.ebuild.eclass_cache</span></code></a> instance to use
+for eclass access</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>string of the ebuild environment.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.get_keys">
+<code class="sig-name descname">get_keys</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">package_inst</span></em>, <em class="sig-param"><span class="n">eclass_cache</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.get_keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.get_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request the metadata be regenerated from an ebuild.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>package_inst</strong> – <a class="reference internal" href="pkgcore.ebuild.ebuild_src.html#pkgcore.ebuild.ebuild_src.package" title="pkgcore.ebuild.ebuild_src.package"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebuild_src.package</span></code></a> instance
+to regenerate</p></li>
+<li><p><strong>eclass_cache</strong> – <a class="reference internal" href="pkgcore.ebuild.eclass_cache.html#module-pkgcore.ebuild.eclass_cache" title="pkgcore.ebuild.eclass_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.ebuild.eclass_cache</span></code></a> instance to use
+for eclass access</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>dict when successful, None when failed</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.is_alive">
+<em class="property">property </em><code class="sig-name descname">is_alive</code><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.is_alive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether the processor is alive.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.is_locked">
+<em class="property">property </em><code class="sig-name descname">is_locked</code><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.is_locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to processing_lock</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.is_responsive">
+<em class="property">property </em><code class="sig-name descname">is_responsive</code><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.is_responsive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return where the processor is in main control loop and responsive.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.lock">
+<code class="sig-name descname">lock</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.lock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.lock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lock the processor.</p>
+<p>Currently doesn’t block any access, but will.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.preload_eclasses">
+<code class="sig-name descname">preload_eclasses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cache</span></em>, <em class="sig-param"><span class="n">async_req</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">limited_to</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.preload_eclasses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.preload_eclasses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Preload an eclass stack’s eclasses into bash functions.</p>
+<p>Avoids the cost of going to disk on inherit. Preloading eutils
+(which is heavily inherited) speeds up regen times for
+example.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ec_file</strong> – filepath of eclass to preload</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>boolean, True for success</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.read">
+<code class="sig-name descname">read</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">ignore_killed</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read data from the daemon.</p>
+<p>Shouldn’t be called except internally.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.readlines">
+<code class="sig-name descname">readlines</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">ignore_killed</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.readlines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.readlines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.run_phase">
+<code class="sig-name descname">run_phase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">phase</span></em>, <em class="sig-param"><span class="n">env</span></em>, <em class="sig-param"><span class="n">tmpdir</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">logging</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">additional_commands</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">sandbox</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.run_phase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.run_phase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Utility function, to initialize the processor for a phase.</p>
+<p>Used to combine multiple calls into one, leaving the processor
+in a state where all that remains is a call start_processing
+call, then generic_handler event loop.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>phase</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><em>str</em></a>) – phase to prep for</p></li>
+<li><p><strong>env</strong> – mapping of the environment to prep the processor with</p></li>
+<li><p><strong>sandbox</strong> – should the sandbox be enabled?</p></li>
+<li><p><strong>logging</strong> – None, or a filepath to log the output from the
+processor to</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True for success, False for everything else</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.sandbox_summary">
+<code class="sig-name descname">sandbox_summary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">move_log</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.sandbox_summary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.sandbox_summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>If the instance is sandboxed, print the sandbox access summary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>move_log</strong> – location to move the sandbox log to if a failure occurred</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.sandboxed">
+<code class="sig-name descname">sandboxed</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.sandboxed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.sandboxed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is this instance sandboxed?</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.send_env">
+<code class="sig-name descname">send_env</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">env_dict</span></em>, <em class="sig-param"><span class="n">async_req</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">tmpdir</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.send_env"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.send_env" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transfer the ebuild’s desired env (env_dict) to the running daemon.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>env_dict</strong> (<em>mapping with string keys and values.</em>) – the bash env.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.set_logfile">
+<code class="sig-name descname">set_logfile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logfile</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.set_logfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.set_logfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the logfile (location to log to).</p>
+<p>Relevant only when the daemon is sandboxed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>logfile</strong> – filepath to log to</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.shutdown_processor">
+<code class="sig-name descname">shutdown_processor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">ignore_keyboard_interrupt</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.shutdown_processor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.shutdown_processor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tell the daemon to shut itself down, and mark this instance as dead.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.unlock">
+<code class="sig-name descname">unlock</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.unlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.unlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unlock the processor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.userprived">
+<code class="sig-name descname">userprived</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.userprived"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.userprived" title="Permalink to this definition">¶</a></dt>
+<dd><p>Is this instance userprived?</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.processor.EbuildProcessor.write">
+<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">string</span></em>, <em class="sig-param"><span class="n">flush</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">disable_runtime_exceptions</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">append_newline</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#EbuildProcessor.write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.EbuildProcessor.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send something to the bash side.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>string</strong> – string to write to the bash processor.
+All strings written are automatically n terminated.</p></li>
+<li><p><strong>flush</strong> – boolean controlling whether the data is flushed
+immediately.  Disabling flush is useful when dumping large
+amounts of data.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.ebuild.processor.UnhandledCommand">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.ebuild.processor.</code><code class="sig-name descname">UnhandledCommand</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#UnhandledCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.UnhandledCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.processor.ProcessingInterruption</span></code></p>
+<p>Bash processor sent an unknown command.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.processor.expected_ebuild_env">
+<code class="sig-prename descclassname">pkgcore.ebuild.processor.</code><code class="sig-name descname">expected_ebuild_env</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">d</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">env_source_override</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">depends</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#expected_ebuild_env"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.expected_ebuild_env" title="Permalink to this definition">¶</a></dt>
+<dd><p>Setup expected ebuild vars.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>d</strong> – if None, generates a dict, else modifies a passed in mapping</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>mapping</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.processor.release_ebuild_processor">
+<code class="sig-prename descclassname">pkgcore.ebuild.processor.</code><code class="sig-name descname">release_ebuild_processor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ebp</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#release_ebuild_processor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.release_ebuild_processor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release a given processor instance and shut it down if necessary.</p>
+<p>Any processor requested via request_ebuild_processor() B{must} be released
+via this function once it’s no longer in use.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>ebp</strong> – <a class="reference internal" href="#pkgcore.ebuild.processor.EbuildProcessor" title="pkgcore.ebuild.processor.EbuildProcessor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EbuildProcessor</span></code></a> instance</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>boolean indicating release results- if the processor isn’t known
+as active, False is returned.
+If a processor isn’t known as active, this means either calling
+error or an internal error.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.processor.request_ebuild_processor">
+<code class="sig-prename descclassname">pkgcore.ebuild.processor.</code><code class="sig-name descname">request_ebuild_processor</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">userpriv</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">sandbox</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">fd_pipes</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/processor.html#request_ebuild_processor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.processor.request_ebuild_processor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Request a processor instance, creating a new one if needed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pkgcore.ebuild.processor.EbuildProcessor" title="pkgcore.ebuild.processor.EbuildProcessor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EbuildProcessor</span></code></a></p>
+</dd>
+<dt class="field-even">Parameters</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>userpriv</strong> – should the processor be deprived to
+<code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.os_data.portage_gid</span></code> and <code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.os_data.portage_uid</span></code>?</p></li>
+<li><p><strong>sandbox</strong> – should the processor be sandboxed?</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.processor module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcore.ebuild.ebd\_ipc module
+==============================
+
+.. automodule:: pkgcore.ebuild.ebd_ipc
+   :members:
+   :undoc-members:
+   :show-inheritance:

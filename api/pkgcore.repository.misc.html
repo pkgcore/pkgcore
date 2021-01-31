@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.repository.misc module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.misc module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.repository.misc">
+<span id="pkgcore-repository-misc-module"></span><h1>pkgcore.repository.misc module<a class="headerlink" href="#module-pkgcore.repository.misc" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.repository.misc.caching_repo">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.misc.</code><code class="sig-name descname">caching_repo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">db</span></em>, <em class="sig-param"><span class="n">strategy</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/misc.html#caching_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.misc.caching_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Repository wrapper that overrides match, returning <code class="xref py py-obj docutils literal notranslate"><span class="pre">caching_iter</span></code> instances.</p>
+<p>Itermatch is slaved to match, in other words iterating over the
+caching_iter.</p>
+<p>Main use for this is to cache results from query lookups;
+if matches restrict arg is in the cache, the caller gets a shared
+caching_iter sequence, which may already be fully loaded with pkg
+instances.</p>
+<p>This can boost random lookup time pretty nicely, while helping to
+hold instance in memory to avoid redoing work.</p>
+<p>Cost of this of course is that involved objects are forced to stay
+in memory till the cache is cleared.  General use, not usually what
+you want- if you’re making a lot of random queries that are duplicates
+(resolver does this for example), caching helps.</p>
+<dl class="py method">
+<dt id="pkgcore.repository.misc.caching_repo.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/misc.html#caching_repo.clear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.misc.caching_repo.clear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.misc.caching_repo.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/misc.html#caching_repo.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.misc.caching_repo.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.misc.caching_repo.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/misc.html#caching_repo.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.misc.caching_repo.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.misc.caching_repo.operations_kls">
+<code class="sig-name descname">operations_kls</code><a class="headerlink" href="#pkgcore.repository.misc.caching_repo.operations_kls" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="pkgcore.operations.repo.html#pkgcore.operations.repo.operations_proxy" title="pkgcore.operations.repo.operations_proxy"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.operations_proxy</span></code></a></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.repository.misc.nodeps_repo">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.misc.</code><code class="sig-name descname">nodeps_repo</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/misc.html#nodeps_repo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.misc.nodeps_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Repository wrapper that returns wrapped pkgs with deps wiped.</p>
+<dl class="py attribute">
+<dt id="pkgcore.repository.misc.nodeps_repo.default_bdepend">
+<code class="sig-name descname">default_bdepend</code><em class="property"> = &lt;DepSet negate=False type='package' finalized=False restrictions='' &#64;0x7f90caa4c0a0&gt;</em><a class="headerlink" href="#pkgcore.repository.misc.nodeps_repo.default_bdepend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.misc.nodeps_repo.default_depend">
+<code class="sig-name descname">default_depend</code><em class="property"> = &lt;DepSet negate=False type='package' finalized=False restrictions='' &#64;0x7f90caa4c0a0&gt;</em><a class="headerlink" href="#pkgcore.repository.misc.nodeps_repo.default_depend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.misc.nodeps_repo.default_pdepend">
+<code class="sig-name descname">default_pdepend</code><em class="property"> = &lt;DepSet negate=False type='package' finalized=False restrictions='' &#64;0x7f90caa4c0a0&gt;</em><a class="headerlink" href="#pkgcore.repository.misc.nodeps_repo.default_pdepend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.misc.nodeps_repo.default_rdepend">
+<code class="sig-name descname">default_rdepend</code><em class="property"> = &lt;DepSet negate=False type='package' finalized=False restrictions='' &#64;0x7f90caa4c0a0&gt;</em><a class="headerlink" href="#pkgcore.repository.misc.nodeps_repo.default_rdepend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.misc.nodeps_repo.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/misc.html#nodeps_repo.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.misc.nodeps_repo.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.misc.nodeps_repo.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/misc.html#nodeps_repo.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.misc.nodeps_repo.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.misc module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

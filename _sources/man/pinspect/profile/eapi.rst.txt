@@ -1,0 +1,7 @@
+pinspect profile eapi - output EAPI support required for reading this profile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: eapi/_synopsis.rst
+.. include:: eapi/_description.rst
+.. include:: eapi/_options.rst
+.. include:: eapi/_subcommands.rst

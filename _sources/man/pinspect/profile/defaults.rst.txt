@@ -1,0 +1,7 @@
+pinspect profile defaults - inspect defined configuration for this profile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: defaults/_synopsis.rst
+.. include:: defaults/_description.rst
+.. include:: defaults/_options.rst
+.. include:: defaults/_subcommands.rst

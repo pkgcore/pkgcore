@@ -1,0 +1,45 @@
+Generic Cleaning Options
+------------------------
+
+TARGET                                        
+                                              packages to target for cleaning
+
+-p, --pretend                                 
+                                              dry run without performing any changes
+
+-x EXCLUDE, --exclude EXCLUDE                 
+                                              list of packages to exclude from removal
+
+-X EXCLUDE_FILE, --exclude-file EXCLUDE_FILE  
+                                              path to exclusion file
+
+-S PKGSET, --pkgsets PKGSET                   
+                                              list of pkgsets to include or exclude from removal
+
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.
+
+Tmpfile Options
+---------------
+
+-a, --all  
+           Force the entire tmpdir to be wiped. Note that this overrides any
+           restrictions that have been specified.

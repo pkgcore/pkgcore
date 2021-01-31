@@ -1,0 +1,117 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.restrictions.util &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.util</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.restrictions.util</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">restriction related utilities</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_func</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">boolean</span><span class="p">,</span> <span class="n">packages</span><span class="p">,</span> <span class="n">restriction</span>
+
+
+<span class="k">def</span> <span class="nf">_is_package_instance</span><span class="p">(</span><span class="n">inst</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="o">==</span> <span class="n">restriction</span><span class="o">.</span><span class="n">package_type</span> <span class="ow">and</span> <span class="ow">not</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">boolean</span><span class="o">.</span><span class="n">base</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="collect_package_restrictions"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.util.html#pkgcore.restrictions.util.collect_package_restrictions">[docs]</a><span class="k">def</span> <span class="nf">collect_package_restrictions</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Collect PackageRestriction instances inside a restriction.</span>
+
+<span class="sd">    :param restrict: package instance to scan</span>
+<span class="sd">    :param attrs: None (return all package restrictions), or a sequence of</span>
+<span class="sd">        specific attrs the package restriction must work against.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="n">restrict</span> <span class="o">=</span> <span class="p">[</span><span class="n">restrict</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">restrict</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">restriction</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s1">&#39;restrict must be of a restriction.base, &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;not </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__class__</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">r</span><span class="si">!r}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">attrs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">iflatten_func</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">_is_package_instance</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">r</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">iflatten_func</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">_is_package_instance</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">invert</span> <span class="o">==</span> <span class="n">attrs</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s1">&#39;attrs&#39;</span><span class="p">,</span> <span class="p">())):</span>
+                <span class="k">yield</span> <span class="n">r</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.util</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

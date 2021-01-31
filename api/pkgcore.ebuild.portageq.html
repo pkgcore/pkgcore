@@ -1,0 +1,358 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.portageq module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.portageq module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.portageq">
+<span id="pkgcore-ebuild-portageq-module"></span><h1>pkgcore.ebuild.portageq module<a class="headerlink" href="#module-pkgcore.ebuild.portageq" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.BaseCommand">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">BaseCommand</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#BaseCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.BaseCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.ArgparseCommand</span></code></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.BaseCommand.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.ebuild.portageq.BaseCommand.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.BaseCommand.bind_to_parser">
+<code class="sig-name descname">bind_to_parser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em>, <em class="sig-param"><span class="n">compat</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#BaseCommand.bind_to_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.BaseCommand.bind_to_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.BaseCommand.has_optional_args">
+<code class="sig-name descname">has_optional_args</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.ebuild.portageq.BaseCommand.has_optional_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.BaseCommand.make_command">
+<em class="property">classmethod </em><code class="sig-name descname">make_command</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arg_spec</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">requires_root</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">bind</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">root_default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#BaseCommand.make_command"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.BaseCommand.make_command" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.BaseCommand.required_arg_count">
+<code class="sig-name descname">required_arg_count</code><em class="property"> = 0</em><a class="headerlink" href="#pkgcore.ebuild.portageq.BaseCommand.required_arg_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.best_version">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">best_version</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#best_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.best_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<p>Return the maximum visible version for a given atom.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.best_version.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('atom',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.best_version.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.best_version.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.best_version.function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the maximum visible version for a given atom.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.best_version.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.best_version.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.portageq.bind_parser">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">bind_parser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em>, <em class="sig-param"><span class="n">compat</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">name</span><span class="o">=</span><span class="default_value">'portageq'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#bind_parser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.bind_parser" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.portageq.default_portageq_args">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">default_portageq_args</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#default_portageq_args"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.default_portageq_args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.env_var">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">env_var</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#env_var"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.env_var" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<p>return configuration defined variables.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.env_var.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('variable+',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.env_var.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.env_var.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.env_var.function" title="Permalink to this definition">¶</a></dt>
+<dd><p>return configuration defined variables.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.env_var.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.env_var.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.portageq.find_profile_paths_by_repo_id">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">find_profile_paths_by_repo_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">config</span></em>, <em class="sig-param"><span class="n">repo_id</span></em>, <em class="sig-param"><span class="n">fullpath</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#find_profile_paths_by_repo_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.find_profile_paths_by_repo_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.portageq.get_atom_kls">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">get_atom_kls</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#get_atom_kls"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.get_atom_kls" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.get_profiles">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">get_profiles</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#get_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.get_profiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_profiles.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('repo_id',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_profiles.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.get_profiles.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.get_profiles.function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_profiles.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_profiles.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.get_repo_news_path">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">get_repo_news_path</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#get_repo_news_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_news_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_repo_news_path.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('repo_id',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_news_path.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.get_repo_news_path.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_news_path.function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_repo_news_path.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_news_path.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.get_repo_path">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">get_repo_path</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#get_repo_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_repo_path.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('repo_id',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_path.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.get_repo_path.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_path.function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_repo_path.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repo_path.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.get_repos">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">get_repos</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#get_repos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_repos.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repos.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.get_repos.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repos.function" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.get_repos.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.get_repos.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.has_version">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">has_version</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#has_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.has_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<p>Return 0 if an atom is merged, 1 if not.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.has_version.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('atom',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.has_version.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.has_version.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.has_version.function" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return 0 if an atom is merged, 1 if not.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.has_version.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.has_version.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.portageq.make_atom">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">make_atom</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">value</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#make_atom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.make_atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.mass_best_version">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">mass_best_version</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#mass_best_version"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.mass_best_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<p>multiple best_version calls.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.mass_best_version.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('atom+',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.mass_best_version.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.mass_best_version.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.mass_best_version.function" title="Permalink to this definition">¶</a></dt>
+<dd><p>multiple best_version calls.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.mass_best_version.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.mass_best_version.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.portageq.match">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">match</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.match" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.portageq.BaseCommand" title="pkgcore.ebuild.portageq.BaseCommand"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand</span></code></a></p>
+<p>shorthand for <cite>pquery –installed</cite></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.match.arg_spec">
+<code class="sig-name descname">arg_spec</code><em class="property"> = ('atom',)</em><a class="headerlink" href="#pkgcore.ebuild.portageq.match.arg_spec" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.portageq.match.function">
+<em class="property">static </em><code class="sig-name descname">function</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">out</span></em>, <em class="sig-param"><span class="n">err</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.portageq.match.function" title="Permalink to this definition">¶</a></dt>
+<dd><p>shorthand for <cite>pquery –installed</cite></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.match.requires_root">
+<code class="sig-name descname">requires_root</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.portageq.match.requires_root" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.portageq_envvar">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">portageq_envvar</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#portageq_envvar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.portageq_envvar" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand.make_command.&lt;locals&gt;.internal_function.&lt;locals&gt;.mycommand</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.portageq_envvar2">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">portageq_envvar2</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#portageq_envvar2"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.portageq_envvar2" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand.make_command.&lt;locals&gt;.internal_function.&lt;locals&gt;.mycommand</span></code></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.portageq.portageq_get_repo_news_path">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">portageq_get_repo_news_path</code><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#portageq_get_repo_news_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.portageq_get_repo_news_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.portageq.BaseCommand.make_command.&lt;locals&gt;.internal_function.&lt;locals&gt;.mycommand</span></code></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.portageq.str_pkg">
+<code class="sig-prename descclassname">pkgcore.ebuild.portageq.</code><code class="sig-name descname">str_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/portageq.html#str_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.portageq.str_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.portageq module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

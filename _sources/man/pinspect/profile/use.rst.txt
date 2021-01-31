@@ -1,0 +1,7 @@
+pinspect profile use - inspect enabled USE flags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: use/_synopsis.rst
+.. include:: use/_description.rst
+.. include:: use/_options.rst
+.. include:: use/_subcommands.rst

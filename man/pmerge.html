@@ -1,0 +1,385 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pmerge &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pplugincache - plugin cache update utility" href="pplugincache.html" />
+    <link rel="prev" title="pmaint - system/repository maintenance utility" href="pmaint.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pplugincache.html" title="pplugincache - plugin cache update utility"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pmaint.html" title="pmaint - system/repository maintenance utility"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" accesskey="U">Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pmerge</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pmerge">
+<h1>pmerge<a class="headerlink" href="#pmerge" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="synopsis">
+<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h2>
+<p>pmerge [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] [--domain DOMAIN] [-u | -d | -C | --clean | --list-sets] [-p] [-a] [-f] [-1] [-D] [-N] [-i] [--with-bdeps] [-O] [-o] [-n] [-b] [-k] [-K] [-S] [-e] [-x TARGET[,TARGET,...]] [--ignore-failures] [--force] [--preload-vdb-state] [--quiet-repo-display] [-F FORMATTER] [TARGET [TARGET ...]]</p>
+</div>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>pmerge is the main command-line utility for merging and unmerging packages on a
+system. It provides an interface to install, update, and uninstall ebuilds from
+source or binary packages.</p>
+</div>
+<div class="section" id="portage-compatibility">
+<h2>Portage Compatibility<a class="headerlink" href="#portage-compatibility" title="Permalink to this headline">¶</a></h2>
+<p>With regards to portage compatibility, pmerge provides much of the same
+functionality that <strong>emerge</strong>(1) does. In general, it should be possible to use
+both pmerge and emerge on the same system in a sane fashion. For example,
+pmerge can be used to install packages and then emerge should be able to
+upgrade or uninstall them, or vice versa. Also, binary packages created using
+pmerge should be able to be installed properly using emerge. Any major
+compatibility issue that arises when trying to use both package managers is
+probably a bug and should be reported.</p>
+<p>In terms of option naming, pmerge tries to remain somewhat compatible to
+portage so running <code class="docutils literal notranslate"><span class="pre">pmerge</span> <span class="pre">-1av</span></code> should work the same as <code class="docutils literal notranslate"><span class="pre">emerge</span> <span class="pre">-1av</span></code> when
+using portage. However, pmerge doesn't implement nearly the same amount of
+options that portage provides so many of the more obscure ones are missing. In
+addition, pmerge defaults to a portage compatible output format that closely
+matches the default colors and output structure that portage uses.</p>
+</div>
+<div class="section" id="positional-arguments">
+<h2>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permalink to this headline">¶</a></h2>
+<dl class="field-list">
+<dt class="field-odd">TARGET</dt>
+<dd class="field-odd"><p>Various target arguments are supported including the following:</p>
+<dl class="simple">
+<dt>atom</dt><dd><p>An extended atom syntax is supported, see the related section
+in pkgcore(5).</p>
+</dd>
+<dt>package set</dt><dd><p>Used to define lists of packages, the syntax used for these is
+&#64;pkgset. For example, the &#64;system and &#64;world package sets are
+supported.</p>
+</dd>
+<dt>extended globbing</dt><dd><p>Globbing package names or atoms allows for use cases such as
+<code class="docutils literal notranslate"><span class="pre">'far*'</span></code> (merge every package starting with 'far'),
+<code class="docutils literal notranslate"><span class="pre">'dev-python/*::gentoo'</span></code> (merge every package in the dev-python
+category from the gentoo repo), or even '*' (merge everything).</p>
+</dd>
+</dl>
+<p>Also, the target '-' allows targets to be read from standard input.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="base-options">
+<h2>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--version</span></kbd></dt>
+<dd><p>Show this program's version information and exit.</p>
+<p>When running from within a git repo or a version
+installed from git the latest commit hash and date will
+be shown.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="config-options">
+<h2>Config Options<a class="headerlink" href="#config-options" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>--add-config SECTION KEY VALUE</dt><dd><p>modify existing pkgcore config section</p>
+</dd>
+<dt>--new-config SECTION KEY VALUE</dt><dd><p>add new pkgcore config section</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--empty-config</span></kbd></dt>
+<dd><p>skip loading user/system pkgcore config</p>
+</dd>
+<dt><kbd><span class="option">--config <var>PATH</var></span></kbd></dt>
+<dd><p>use custom pkgcore config file</p>
+</dd>
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="operations">
+<h2>Operations<a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-u</span>, <span class="option">--upgrade</span></kbd></dt>
+<dd><p>Try to upgrade specified targets to the latest visible version. Note
+that altered package visibility due to keywording or masking can often
+hide the latest versions of packages, especially for stable
+configurations.</p>
+</dd>
+<dt><kbd><span class="option">-d</span>, <span class="option">--downgrade</span></kbd></dt>
+<dd><p>Try to downgrade specified targets to a lower visible version
+compared to what's currently installed.</p>
+<p>Useful for reverting to the previously installed package version;
+however, note that the -O/--nodeps option is generally used with this
+otherwise lots of downgrades will be pulled into the resolved deptree.</p>
+</dd>
+<dt><kbd><span class="option">-C</span>, <span class="option">--unmerge</span></kbd></dt>
+<dd><p>Target packages for unmerging from the system.</p>
+<p>WARNING: This does not ask for user confirmation for any targets so
+it's possible to quickly break a system.</p>
+</dd>
+<dt><kbd><span class="option">--clean</span></kbd></dt>
+<dd><p>Remove installed packages that aren't referenced by any target packages
+or sets. This defaults to using the world and system sets if no targets
+are specified.</p>
+<p>Use with <em>caution</em>, this option used incorrectly can render your system
+unusable. Note that this implies --deep.</p>
+</dd>
+<dt><kbd><span class="option">--list-sets</span></kbd></dt>
+<dd><p>display the list of available package sets</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="resolver-options">
+<h2>Resolver Options<a class="headerlink" href="#resolver-options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-p</span>, <span class="option">--pretend</span></kbd></dt>
+<dd><p>Resolve package dependencies and display the results without performing
+any merges.</p>
+</dd>
+<dt><kbd><span class="option">-a</span>, <span class="option">--ask</span></kbd></dt>
+<dd><p>Perform the dependency resolution, but ask for user confirmation before
+beginning the fetch/build/merge process. The choice defaults to yes so
+pressing the &quot;Enter&quot; key will trigger acceptance.</p>
+</dd>
+<dt><kbd><span class="option">-f</span>, <span class="option">--fetchonly</span></kbd></dt>
+<dd><p>Only perform fetching of all targets from SRC_URI based on the current
+USE configuration.</p>
+</dd>
+<dt><kbd><span class="option">-1</span>, <span class="option">--oneshot</span></kbd></dt>
+<dd><p>Build and merge packages normally, but do not add any targets to the
+world file. Note that this is forcibly enabled if a package set is
+specified.</p>
+</dd>
+<dt><kbd><span class="option">-D</span>, <span class="option">--deep</span></kbd></dt>
+<dd><p>Force dependency resolution across the entire dependency tree for all
+specified targets.</p>
+</dd>
+<dt><kbd><span class="option">-N</span>, <span class="option">--newuse</span></kbd></dt>
+<dd><p>Include installed packages with USE flag changes in the list of viable
+targets for rebuilding.</p>
+<p>USE flag changes include flags being added, removed, enabled, or
+disabled with regards to a package. USE flag changes can occur via
+ebuild alterations, profile updates, or local configuration
+modifications.</p>
+<p>Note that this option implies -1/--oneshot.</p>
+</dd>
+<dt><kbd><span class="option">-i</span>, <span class="option">--ignore-cycles</span></kbd></dt>
+<dd><p>Ignore dependency cycles if they're found to be unbreakable; for
+example: a depends on b, and b depends on a, with neither built.</p>
+</dd>
+<dt><kbd><span class="option">--with-bdeps</span></kbd></dt>
+<dd><p>Pull in build time dependencies for built packages during dependency
+resolution, by default they're ignored.</p>
+</dd>
+<dt><kbd><span class="option">-O</span>, <span class="option">--nodeps</span></kbd></dt>
+<dd><p>Build and merge packages without resolving any dependencies.</p>
+</dd>
+<dt><kbd><span class="option">-o</span>, <span class="option">--onlydeps</span></kbd></dt>
+<dd><p>Build and merge only the dependencies for the packages specified.</p>
+</dd>
+<dt><kbd><span class="option">-n</span>, <span class="option">--noreplace</span></kbd></dt>
+<dd><p>Skip packages that are already installed. By default when running
+without this option, any specified target packages will be remerged
+regardless of if they are already installed.</p>
+</dd>
+<dt><kbd><span class="option">-b</span>, <span class="option">--buildpkg</span></kbd></dt>
+<dd><p>Force binary packages to be built for all merged packages.</p>
+</dd>
+<dt><kbd><span class="option">-k</span>, <span class="option">--usepkg</span></kbd></dt>
+<dd><p>Binary packages are preferred over ebuilds when performing dependency
+resolution.</p>
+</dd>
+<dt><kbd><span class="option">-K</span>, <span class="option">--usepkgonly</span></kbd></dt>
+<dd><p>Only binary packages are considered when performing dependency
+resolution.</p>
+</dd>
+<dt><kbd><span class="option">-S</span>, <span class="option">--source-only</span></kbd></dt>
+<dd><p>Only ebuilds are considered when performing dependency
+resolution.</p>
+</dd>
+<dt><kbd><span class="option">-e</span>, <span class="option">--empty</span></kbd></dt>
+<dd><p>Force all targets and their dependencies to be rebuilt.</p>
+</dd>
+</dl>
+<dl>
+<dt>-x TARGET[,TARGET,...], --exclude TARGET[,TARGET,...]</dt><dd><p>Comma-separated list of targets to pretend are installed.</p>
+<p>This supports extended package globbing, e.g. <code class="docutils literal notranslate"><span class="pre">'dev-python/*'</span></code>
+equates to faking the entire dev-python category is installed.</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--ignore-failures</span></kbd></dt>
+<dd><p>Skip failures during the following phases: sanity checks
+(pkg_pretend), fetching, dep resolution, and (un)merging.</p>
+</dd>
+<dt><kbd><span class="option">--force</span></kbd></dt>
+<dd><p>Force (un)merging on the livefs (vdb), regardless of if it's frozen.</p>
+</dd>
+<dt><kbd><span class="option">--preload-vdb-state</span></kbd></dt>
+<dd><p>Preload the installed package database which causes the resolver to
+work with a complete graph, thus disallowing actions that conflict with
+installed packages. If disabled, it's possible for the requested action
+to conflict with already installed dependencies that aren't involved in
+the graph of the requested operation.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="output-options">
+<h2>Output Options<a class="headerlink" href="#output-options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">--quiet-repo-display</span></kbd></dt>
+<dd><p>In the package merge list display, suppress ::repo output and instead
+use index numbers to indicate which repos packages come from.</p>
+</dd>
+<dt><kbd><span class="option">-F <var>FORMATTER</var></span>, <span class="option">--formatter <var>FORMATTER</var></span></kbd></dt>
+<dd><p>Select an output formatter to use for text formatting of --pretend or
+--ask output, currently available formatters include the following:
+basic, pkgcore, portage, portage-verbose, and paludis.</p>
+<p>The basic formatter is the nearest to simple text output and is
+intended for scripting while the portage/portage-verbose formatter
+closely emulates portage output and is used by default.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="example-usage">
+<h2>Example Usage<a class="headerlink" href="#example-usage" title="Permalink to this headline">¶</a></h2>
+<p>Merge pkgcore from the gentoo repo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pmerge</span> <span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">pkgcore</span><span class="p">::</span><span class="n">gentoo</span>
+</pre></div>
+</div>
+<p>Output a simple list of package atoms that would be updated for a global
+update:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pmerge</span> <span class="o">-</span><span class="n">uDp</span> <span class="o">--</span><span class="n">formatter</span> <span class="n">basic</span> <span class="nd">@world</span>
+</pre></div>
+</div>
+<p>Force new binpkgs to be built for the entire system set using a custom
+configuration directory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pmerge</span> <span class="o">-</span><span class="n">uDSeb</span> <span class="o">--</span><span class="n">config</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">foo</span><span class="o">/</span><span class="n">portage</span> <span class="nd">@system</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this headline">¶</a></h2>
+<p><strong>emerge</strong>(1)</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pmerge</a><ul>
+<li><a class="reference internal" href="#synopsis">Synopsis</a></li>
+<li><a class="reference internal" href="#description">Description</a></li>
+<li><a class="reference internal" href="#portage-compatibility">Portage Compatibility</a></li>
+<li><a class="reference internal" href="#positional-arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#config-options">Config Options</a></li>
+<li><a class="reference internal" href="#operations">Operations</a></li>
+<li><a class="reference internal" href="#resolver-options">Resolver Options</a></li>
+<li><a class="reference internal" href="#output-options">Output Options</a></li>
+<li><a class="reference internal" href="#example-usage">Example Usage</a></li>
+<li><a class="reference internal" href="#see-also">See Also</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pmaint.html"
+                        title="previous chapter">pmaint - system/repository maintenance utility</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pplugincache.html"
+                        title="next chapter">pplugincache - plugin cache update utility</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pplugincache.html" title="pplugincache - plugin cache update utility"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pmaint.html" title="pmaint - system/repository maintenance utility"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" >Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pmerge</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,397 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.cache &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.cache</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.cache</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">cache subsystem, typically used for storing package metadata</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;bulk&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">get_handler</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ProtectedDict</span>
+
+<span class="kn">from</span> <span class="nn">..ebuild.const</span> <span class="kn">import</span> <span class="n">metadata_keys</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">errors</span>
+
+
+<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base">[docs]</a><span class="k">class</span> <span class="nc">base</span><span class="p">:</span>
+    <span class="c1"># this is for metadata/cache transfer.</span>
+    <span class="c1"># basically flags the cache needs be updated when transfered cache to cache.</span>
+    <span class="c1"># leave this.</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :ivar autocommits: Controls whether the template commits every update,</span>
+<span class="sd">        or queues up updates.</span>
+<span class="sd">    :ivar cleanse_keys: Boolean controlling whether the template should drop</span>
+<span class="sd">        empty keys for storing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">autocommits</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">cleanse_keys</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">default_sync_rate</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">chf_type</span> <span class="o">=</span> <span class="s1">&#39;mtime&#39;</span>
+    <span class="n">eclass_chf_types</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;mtime&#39;</span><span class="p">,)</span>
+    <span class="n">eclass_splitter</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span>
+
+    <span class="n">default_keys</span> <span class="o">=</span> <span class="n">metadata_keys</span>
+
+    <span class="n">frozen</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s1">&#39;readonly&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">auxdbkeys</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        initialize the derived class; specifically, store label/keys</span>
+
+<span class="sd">        :param auxdbkeys: sequence of allowed keys for each cache entry</span>
+<span class="sd">        :param readonly: defaults to False,</span>
+<span class="sd">            controls whether the cache is mutable.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">auxdbkeys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">auxdbkeys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_known_keys</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">auxdbkeys</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chf_key</span> <span class="o">=</span> <span class="s1">&#39;_</span><span class="si">%s</span><span class="s1">_&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">chf_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chf_serializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_chf_serializer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chf_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chf_deserializer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_chf_deserializer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chf_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_known_keys</span> <span class="o">|=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_chf_key</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cdict_kls</span> <span class="o">=</span> <span class="nb">dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">readonly</span> <span class="o">=</span> <span class="n">readonly</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_sync_rate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_sync_rate</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_eclassdir_serializer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_mtime_serializer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="si">%.0f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">mtime</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_default_serializer</span><span class="p">(</span><span class="n">chf</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># Skip the leading 0x...</span>
+        <span class="n">getter</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="n">chf</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">get_handler</span><span class="p">(</span><span class="n">chf</span><span class="p">)</span><span class="o">.</span><span class="n">long2str</span><span class="p">(</span><span class="n">getter</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_get_chf_serializer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chf</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">chf</span> <span class="o">==</span> <span class="s1">&#39;eclassdir&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eclassdir_serializer</span>
+        <span class="k">if</span> <span class="n">chf</span> <span class="o">==</span> <span class="s1">&#39;mtime&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mtime_serializer</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_default_serializer</span><span class="p">,</span> <span class="n">chf</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_mtime_deserializer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">data</span><span class="p">)))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_default_deserializer</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_chf_deserializer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">chf</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">chf</span> <span class="o">==</span> <span class="s1">&#39;eclassdir&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span>
+        <span class="k">elif</span> <span class="n">chf</span> <span class="o">==</span> <span class="s1">&#39;mtime&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mtime_deserializer</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_deserializer</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">eclass_chf_serializers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_chf_serializer</span><span class="p">(</span><span class="n">chf</span><span class="p">)</span> <span class="k">for</span> <span class="n">chf</span> <span class="ow">in</span>
+                     <span class="bp">self</span><span class="o">.</span><span class="n">eclass_chf_types</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">eclass_chf_deserializers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">chf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclass_chf_types</span><span class="p">:</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">chf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_chf_deserializer</span><span class="p">(</span><span class="n">chf</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sync_if_needed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">increment</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">autocommits</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">increment</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_rate</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;set a cpv to values</span>
+
+<span class="sd">        This shouldn&#39;t be overridden in derived classes since it</span>
+<span class="sd">        handles the __eclasses__ conversion. That said, if the class</span>
+<span class="sd">        handles it, they can override it.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_if_needed</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getitem</span><span class="p">(</span><span class="n">cpv</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;_eclasses_&quot;</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;_eclasses_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reconstruct_eclasses</span><span class="p">(</span><span class="n">cpv</span><span class="p">,</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;_eclasses_&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+    <span class="k">def</span> <span class="nf">_getitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get cpv&#39;s values.</span>
+
+<span class="sd">        override this in derived classess.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;set a cpv to values</span>
+
+<span class="sd">        This shouldn&#39;t be overridden in derived classes since it</span>
+<span class="sd">        handles the readonly checks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">readonly</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ReadOnly</span><span class="p">()</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">ProtectedDict</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleanse_keys</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span>
+                    <span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;_eclasses_&quot;</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="s2">&quot;_eclasses_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deconstruct_eclasses</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;_eclasses_&quot;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="s2">&quot;_eclasses_&quot;</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="s2">&quot;_eclasses_&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deconstruct_eclasses</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;_eclasses_&quot;</span><span class="p">])</span>
+
+        <span class="n">d</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_chf_key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chf_serializer</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;_chf_&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setitem</span><span class="p">(</span><span class="n">cpv</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_if_needed</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_setitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__setitem__ calls this after readonly checks.</span>
+
+<span class="sd">        override it in derived classes.</span>
+<span class="sd">        note _eclasses_ key *must* be handled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;delete a key from the cache.</span>
+
+<span class="sd">        This shouldn&#39;t be overridden in derived classes since it</span>
+<span class="sd">        handles the readonly checks.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">readonly</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ReadOnly</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delitem</span><span class="p">(</span><span class="n">cpv</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sync_if_needed</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_delitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;__delitem__ calls this after readonly checks.</span>
+
+<span class="sd">        override it in derived classes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="base.has_key"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.has_key">[docs]</a>    <span class="k">def</span> <span class="nf">has_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">cpv</span> <span class="ow">in</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="base.keys"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.keys">[docs]</a>    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+<div class="viewcode-block" id="base.items"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.items">[docs]</a>    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">x</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="base.clear"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="base.set_sync_rate"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.set_sync_rate">[docs]</a>    <span class="k">def</span> <span class="nf">set_sync_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_rate</span> <span class="o">=</span> <span class="n">rate</span>
+        <span class="k">if</span> <span class="n">rate</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="base.commit"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">autocommits</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="base.deconstruct_eclasses"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.deconstruct_eclasses">[docs]</a>    <span class="k">def</span> <span class="nf">deconstruct_eclasses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclass_dict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;takes a dict, returns a string representing said dict&quot;&quot;&quot;</span>
+        <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">converters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclass_chf_serializers</span>
+        <span class="k">for</span> <span class="n">eclass</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">eclass_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">eclass</span><span class="p">)</span>
+            <span class="n">l</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">converters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclass_splitter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">l</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_deserialize_eclass_chfs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass_chf_deserializers</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">chf</span><span class="p">,</span> <span class="n">convert</span><span class="p">),</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">chf</span><span class="p">,</span> <span class="n">convert</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+<div class="viewcode-block" id="base.reconstruct_eclasses"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.reconstruct_eclasses">[docs]</a>    <span class="k">def</span> <span class="nf">reconstruct_eclasses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cpv</span><span class="p">,</span> <span class="n">eclass_string</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Turn a string from :obj:`serialize_eclasses` into a dict.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">eclass_string</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;eclass_string must be basestring, got </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
+                <span class="n">eclass_string</span><span class="p">)</span>
+        <span class="n">eclass_data</span> <span class="o">=</span> <span class="n">eclass_string</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass_splitter</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eclass_data</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;&quot;</span><span class="p">]:</span>
+            <span class="c1"># occasionally this occurs in the fs backends.  they suck.</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">eclass_data</span><span class="p">)</span>
+        <span class="n">chf_funcs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclass_chf_deserializers</span>
+        <span class="n">tuple_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">chf_funcs</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eclass_data</span><span class="p">)</span> <span class="o">%</span> <span class="n">tuple_len</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">CacheCorruption</span><span class="p">(</span>
+                <span class="n">cpv</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;_eclasses_ was of invalid len </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">eclass_data</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;(must be mod </span><span class="si">{</span><span class="n">tuple_len</span><span class="si">}</span><span class="s1">)&#39;</span>
+            <span class="p">)</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">eclass_data</span><span class="p">)</span>
+        <span class="c1"># roughly; deserializer grabs the values it needs, resulting</span>
+        <span class="c1"># in a sequence of key/tuple pairs for each block of chfs;</span>
+        <span class="c1"># this is in turn fed into the dict kls which converts it</span>
+        <span class="c1"># to the dict.</span>
+        <span class="c1"># Finally, the first item, and that chain, is zipped into</span>
+        <span class="c1"># a dict; in effect, if 2 chfs, this results in a stream of-</span>
+        <span class="c1"># (eclass_name, ((chf1,chf1_val), (chf2, chf2_val))).</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">eclass</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_deserialize_eclass_chfs</span><span class="p">(</span><span class="n">i</span><span class="p">)))</span>
+                <span class="k">for</span> <span class="n">eclass</span> <span class="ow">in</span> <span class="n">i</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">CacheCorruption</span><span class="p">(</span>
+                <span class="n">cpv</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;ValueError reading </span><span class="si">{</span><span class="n">eclass_string</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span></div>
+
+<div class="viewcode-block" id="base.validate_entry"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.base.validate_entry">[docs]</a>    <span class="k">def</span> <span class="nf">validate_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_item</span><span class="p">,</span> <span class="n">ebuild_hash_item</span><span class="p">,</span> <span class="n">eclass_db</span><span class="p">):</span>
+        <span class="n">chf_hash</span> <span class="o">=</span> <span class="n">cache_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chf_key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">chf_hash</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span>
+            <span class="n">chf_hash</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ebuild_hash_item</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chf_type</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">eclass_data</span> <span class="o">=</span> <span class="n">cache_item</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_eclasses_&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eclass_data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="n">update</span> <span class="o">=</span> <span class="n">eclass_db</span><span class="o">.</span><span class="n">rebuild_cache_entry</span><span class="p">(</span><span class="n">eclass_data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">update</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">cache_item</span><span class="p">[</span><span class="s1">&#39;_eclasses_&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">update</span>
+        <span class="k">return</span> <span class="kc">True</span></div></div>
+
+
+<div class="viewcode-block" id="bulk"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.bulk">[docs]</a><span class="k">class</span> <span class="nc">bulk</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+
+    <span class="n">default_sync_rate</span> <span class="o">=</span> <span class="mi">100</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_updates</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_data</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_read_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_read_data&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_write_data&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_getitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_setitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_known_keys</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cdict_kls</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">val</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">known</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_updates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+    <span class="k">def</span> <span class="nf">_delitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pending_updates</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+<div class="viewcode-block" id="bulk.commit"><a class="viewcode-back" href="../../api/pkgcore.cache.html#pkgcore.cache.bulk.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pending_updates</span> <span class="ow">or</span> <span class="n">force</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_write_data</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pending_updates</span> <span class="o">=</span> <span class="p">[]</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.cache</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

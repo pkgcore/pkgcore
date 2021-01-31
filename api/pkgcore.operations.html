@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.operations package &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pkgcore-operations-package">
+<h1>pkgcore.operations package<a class="headerlink" href="#pkgcore-operations-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pkgcore.operations.domain.html">pkgcore.operations.domain module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcore.operations.format.html">pkgcore.operations.format module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcore.operations.observer.html">pkgcore.operations.observer module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcore.operations.regen.html">pkgcore.operations.regen module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcore.operations.repo.html">pkgcore.operations.repo module</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-pkgcore.operations">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pkgcore.operations" title="Permalink to this headline">¶</a></h2>
+<p>operation templates for package/repository/data source objects</p>
+<p>For new format implementations, new formats, and generally any new extension,
+an operation class will likely have to be defined.  While the implementations
+are a bit repetitive, the design of it is intentional to ensure that any
+derivative will be forced to adhere to the pkgcore internal api.</p>
+<p>Basically it’s a crappy form of zope interfaces; converting to zope.interfaces
+may occur down the line if dependencies can be kept as minimal as possible.</p>
+<dl class="py exception">
+<dt id="pkgcore.operations.OperationError">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.operations.</code><code class="sig-name descname">OperationError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">api</span></em>, <em class="sig-param"><span class="n">exc</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations.html#OperationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.OperationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreException" title="pkgcore.exceptions.PkgcoreException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreException</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.operations.base">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.operations.</code><code class="sig-name descname">base</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">disable_overrides</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">enable_overrides</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations.html#base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.operations.base.UNSUPPORTED">
+<code class="sig-name descname">UNSUPPORTED</code><em class="property"> = &lt;object object&gt;</em><a class="headerlink" href="#pkgcore.operations.base.UNSUPPORTED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.base.enabled_operations">
+<code class="sig-name descname">enabled_operations</code><a class="headerlink" href="#pkgcore.operations.base.enabled_operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.base.raw_operations">
+<code class="sig-name descname">raw_operations</code><a class="headerlink" href="#pkgcore.operations.base.raw_operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.base.run_if_supported">
+<code class="sig-name descname">run_if_supported</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">operation_name</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations.html#base.run_if_supported"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.base.run_if_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>invoke an operation if it’s supported</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>operation_name</strong> – operation to run if supported</p></li>
+<li><p><strong>args</strong> – positional args passed to the operation</p></li>
+<li><p><strong>kwds</strong> – optional args passed to the operation</p></li>
+<li><p><strong>or_return</strong> – if the operation isn’t supported, return this
+(if unspecified, it returns <a class="reference internal" href="#pkgcore.operations.base.UNSUPPORTED" title="pkgcore.operations.base.UNSUPPORTED"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base.UNSUPPORTED</span></code></a>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Either the value of or_return, or if the operation is
+supported, the return value from that operation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.base.supports">
+<code class="sig-name descname">supports</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">operation_name</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">raw</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations.html#base.supports"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.base.supports" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.operations.is_standalone">
+<code class="sig-prename descclassname">pkgcore.operations.</code><code class="sig-name descname">is_standalone</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">functor</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations.html#is_standalone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.is_standalone" title="Permalink to this definition">¶</a></dt>
+<dd><p>decorator to mark a api operation method as containing the implementation</p>
+<p>This is primarily useful for commands that can contain all of the logic in
+the template class itself, rather than requiring a glue method to be
+provided</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pkgcore.operations package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pkgcore.operations">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

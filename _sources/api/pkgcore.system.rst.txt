@@ -1,0 +1,18 @@
+pkgcore.system package
+======================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.system.libtool
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.system
+   :members:
+   :undoc-members:
+   :show-inheritance:

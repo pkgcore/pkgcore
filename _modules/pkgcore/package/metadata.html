@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.package.metadata &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.metadata</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.package.metadata</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;package with its metadata accessible (think &#39;no longer abstract&#39;)&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;DeriveMetadataKls&quot;</span><span class="p">,</span> <span class="s2">&quot;factory&quot;</span><span class="p">,</span> <span class="s2">&quot;package&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span><span class="p">,</span> <span class="n">weakrefs</span>
+
+<span class="kn">from</span> <span class="nn">..ebuild</span> <span class="kn">import</span> <span class="n">cpv</span>
+<span class="kn">from</span> <span class="nn">..ebuild.atom</span> <span class="kn">import</span> <span class="n">atom</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">base</span>
+
+
+<div class="viewcode-block" id="DeriveMetadataKls"><a class="viewcode-back" href="../../../api/pkgcore.package.metadata.html#pkgcore.package.metadata.DeriveMetadataKls">[docs]</a><span class="k">def</span> <span class="nf">DeriveMetadataKls</span><span class="p">(</span><span class="n">original_kls</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">original_kls</span><span class="p">,</span> <span class="s2">&quot;_derived_metadata_kls&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">original_kls</span>
+
+    <span class="k">class</span> <span class="nc">package</span><span class="p">(</span><span class="n">original_kls</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">base</span><span class="o">.</span><span class="n">DynamicGetattrSetter</span><span class="p">):</span>
+        <span class="n">_derived_metadata_kls</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">built</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_parent&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="s2">&quot;_domain&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="vm">__doc__</span> <span class="o">=</span> <span class="s2">&quot;package class with metadata bound to it for attribute &quot;</span> \
+                <span class="s2">&quot;generation</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> \
+                     <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span>
+                          <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">original_kls</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+                          <span class="k">if</span> <span class="s2">&quot;:ivar&quot;</span> <span class="ow">in</span> <span class="n">x</span> <span class="ow">or</span> <span class="s2">&quot;:cvar&quot;</span> <span class="ow">in</span> <span class="n">x</span><span class="p">)</span>
+            <span class="vm">__doc__</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">:ivar repo: parent repository&quot;</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c1"># wee, must be in -OO mode.</span>
+            <span class="vm">__doc__</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">immutable</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">package_is_real</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_repository</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+            <span class="sa">f</span><span class="s2">&quot;&quot;&quot;wrapper for </span><span class="si">{</span><span class="n">original_kls</span><span class="si">}</span><span class="s2">.__init__</span>
+<span class="s2">            </span>
+<span class="s2">            See </span><span class="si">{</span><span class="n">original_kls</span><span class="si">}</span><span class="s2">.__init__ for allowed args/kwds, they&#39;re passed</span>
+<span class="s2">            directly to it.</span>
+
+<span class="s2">            :param parent_repository: parent repository this package belongs to</span>
+<span class="s2">            :type parent_repository: :obj:`pkgcore.repository.prototype.tree`</span>
+<span class="s2">                instance</span>
+<span class="s2">            &quot;&quot;&quot;</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_parent&#39;</span><span class="p">,</span>  <span class="n">parent_repository</span><span class="p">)</span>
+
+        <span class="nd">@base</span><span class="o">.</span><span class="n">DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+        <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;internal hook func to get the packages metadata&quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fetch_metadata</span><span class="p">()</span>
+
+        <span class="n">repo</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;_parent._parent_repo&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">release_cached_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">all</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_attr</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="nb">object</span><span class="o">.</span><span class="fm">__delattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+            <span class="k">if</span> <span class="nb">all</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="nb">object</span><span class="o">.</span><span class="fm">__delattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="k">pass</span>
+
+        <span class="nd">@property</span>
+        <span class="k">def</span> <span class="nf">slotted_atom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">atom</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s1">:</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_fetch_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Pull the metadata for this package.</span>
+
+<span class="sd">            Must be overridden in derivatives.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+        <span class="k">def</span> <span class="nf">add_format_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op_inst</span><span class="p">,</span> <span class="n">format_op_inst</span><span class="p">,</span> <span class="n">engine_inst</span><span class="p">):</span>
+            <span class="k">pass</span>
+
+    <span class="k">return</span> <span class="n">package</span></div>
+
+<span class="n">package</span> <span class="o">=</span> <span class="n">DeriveMetadataKls</span><span class="p">(</span><span class="n">cpv</span><span class="o">.</span><span class="n">VersionedCPV</span><span class="p">)</span>
+
+<div class="viewcode-block" id="factory"><a class="viewcode-back" href="../../../api/pkgcore.package.metadata.html#pkgcore.package.metadata.factory">[docs]</a><span class="k">class</span> <span class="nc">factory</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;package generator</span>
+
+<span class="sd">    does weakref caching per repository</span>
+
+<span class="sd">    :cvar child_class: callable to generate packages</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">child_class</span> <span class="o">=</span> <span class="n">package</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent_repo</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parent_repo</span> <span class="o">=</span> <span class="n">parent_repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_instances</span> <span class="o">=</span> <span class="n">weakrefs</span><span class="o">.</span><span class="n">WeakValCache</span><span class="p">()</span>
+
+<div class="viewcode-block" id="factory.new_package"><a class="viewcode-back" href="../../../api/pkgcore.package.metadata.html#pkgcore.package.metadata.factory.new_package">[docs]</a>    <span class="k">def</span> <span class="nf">new_package</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generate a new package instance&quot;&quot;&quot;</span>
+        <span class="n">inst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_instances</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inst</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_instances</span><span class="p">[</span><span class="n">args</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inst</span></div>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">new_package</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+<div class="viewcode-block" id="factory.clear"><a class="viewcode-back" href="../../../api/pkgcore.package.metadata.html#pkgcore.package.metadata.factory.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;wipe the weakref cache of packages instances&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cached_instances</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Pulls metadata from the repo/cache/wherever.</span>
+
+<span class="sd">        Must be overridden in derivatives.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">_update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Updates metadata in the repo/cache/wherever.</span>
+
+<span class="sd">        Must be overridden in derivatives.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;_cached_instances&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;_cached_instances&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">weakrefs</span><span class="o">.</span><span class="n">WeakValCache</span><span class="p">()</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.package.metadata</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

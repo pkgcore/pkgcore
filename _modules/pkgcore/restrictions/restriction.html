@@ -1,0 +1,268 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.restrictions.restriction &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.restriction</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.restrictions.restriction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">base restriction class</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">caching</span><span class="p">,</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.currying</span> <span class="kn">import</span> <span class="n">pretty_docs</span>
+
+
+<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.base">[docs]</a><span class="k">class</span> <span class="nc">base</span><span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">SlotsPicklingMixin</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">caching</span><span class="o">.</span><span class="n">WeakInstMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;base restriction matching object.</span>
+
+<span class="sd">    all derivatives *should* be __slots__ based (lot of instances may</span>
+<span class="sd">    wind up in memory).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># __weakref__ here is implicit via the metaclass</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">package_matching</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">klass</span><span class="o">.</span><span class="n">inject_immutable_instance</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
+
+<div class="viewcode-block" id="base.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.base.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="base.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.base.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="base.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.base.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">arg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="AlwaysBool"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.AlwaysBool">[docs]</a><span class="k">class</span> <span class="nc">AlwaysBool</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;restriction that always yields a specific boolean&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">)</span>
+
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node_type: the restriction type the instance should be,</span>
+<span class="sd">            typically :obj:`pkgcore.restrictions.restriction.package_type` or</span>
+<span class="sd">            :obj:`pkgcore.restrictions.restriction.value_type`</span>
+<span class="sd">        :param negate: boolean to return for the match</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">node_type</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AlwaysBool.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.AlwaysBool.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+<div class="viewcode-block" id="AlwaysBool.force_True"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.AlwaysBool.force_True">[docs]</a>    <span class="k">def</span> <span class="nf">force_True</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+<div class="viewcode-block" id="AlwaysBool.force_False"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.AlwaysBool.force_False">[docs]</a>    <span class="k">def</span> <span class="nf">force_False</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(())</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;always &#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> always </span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">type</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">negate</span><span class="p">,</span> <span class="n">node_type</span> <span class="o">=</span> <span class="n">state</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">node_type</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Negate"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.Negate">[docs]</a><span class="k">class</span> <span class="nc">Negate</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;wrap and negate a restriction instance&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;_restrict&quot;</span><span class="p">)</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param restrict: :obj:`pkgcore.restrictions.restriction.base` instance</span>
+<span class="sd">            to negate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">restrict</span><span class="o">.</span><span class="n">type</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_restrict&quot;</span><span class="p">,</span> <span class="n">restrict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Negate.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.Negate.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;not (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrict</span></div>
+
+
+<div class="viewcode-block" id="FakeType"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.FakeType">[docs]</a><span class="k">class</span> <span class="nc">FakeType</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;wrapper to wrap and fake a node_type&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;_restrict&quot;</span><span class="p">)</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">new_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param restrict: :obj:`pkgcore.restrictions.restriction.base` instance</span>
+<span class="sd">            to wrap</span>
+<span class="sd">        :param new_type: new node_type</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">new_type</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_restrict&quot;</span><span class="p">,</span> <span class="n">restrict</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FakeType.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.FakeType.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Faked type(</span><span class="si">%s</span><span class="s2">): </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrict</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AnyMatch"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.AnyMatch">[docs]</a><span class="k">class</span> <span class="nc">AnyMatch</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Apply a nested restriction to every item in a sequence.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;restriction&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">childrestriction</span><span class="p">,</span> <span class="n">node_type</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize.</span>
+
+<span class="sd">        :type childrestriction: restriction</span>
+<span class="sd">        :param childrestriction: child restriction applied to every value.</span>
+<span class="sd">        :type node_type: string</span>
+<span class="sd">        :param node_type: type of this restriction.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;negate&quot;</span><span class="p">,</span> <span class="n">negate</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;restriction&quot;</span><span class="p">,</span> <span class="n">childrestriction</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="n">node_type</span><span class="p">)</span>
+
+<div class="viewcode-block" id="AnyMatch.match"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.AnyMatch.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">val</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">negate</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;any: </span><span class="si">%s</span><span class="s2"> match&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restriction</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1"> restriction=</span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">restriction</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="curry_node_type"><a class="viewcode-back" href="../../../api/pkgcore.restrictions.restriction.html#pkgcore.restrictions.restriction.curry_node_type">[docs]</a><span class="k">def</span> <span class="nf">curry_node_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node_type</span><span class="p">,</span> <span class="n">extradoc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper function for creating restrictions of a certain type.</span>
+
+<span class="sd">    This uses :obj:`partial` to pass a node_type to the wrapped class,</span>
+<span class="sd">    and extends the docstring.</span>
+
+<span class="sd">    :param cls: callable (usually a class) that is wrapped.</span>
+<span class="sd">    :param node_type: value passed as node_type.</span>
+<span class="sd">    :param extradoc: addition to the docstring. Defaults to</span>
+<span class="sd">        &quot;Automatically set to %s type.&quot; % node_type</span>
+
+<span class="sd">    :return: a wrapped callable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">extradoc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">extradoc</span> <span class="o">=</span> <span class="s2">&quot;Automatically set to </span><span class="si">%s</span><span class="s2"> type.&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">node_type</span><span class="p">,)</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__doc__</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="n">node_type</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">doc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># do this so indentation on pydoc __doc__ is sane</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="n">doc</span> <span class="o">+=</span> <span class="n">extradoc</span>
+    <span class="k">return</span> <span class="n">pretty_docs</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span></div>
+
+
+<span class="n">value_type</span> <span class="o">=</span> <span class="s2">&quot;values&quot;</span>
+<span class="n">package_type</span> <span class="o">=</span> <span class="s2">&quot;package&quot;</span>
+<span class="n">valid_types</span> <span class="o">=</span> <span class="p">(</span><span class="n">value_type</span><span class="p">,</span> <span class="n">package_type</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.restrictions.restriction</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.binpkg.repository module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.repository module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.binpkg.repository">
+<span id="pkgcore-binpkg-repository-module"></span><h1>pkgcore.binpkg.repository module<a class="headerlink" href="#module-pkgcore.binpkg.repository" title="Permalink to this headline">¶</a></h1>
+<p>binpkg ebuild repository</p>
+<dl class="py class">
+<dt id="pkgcore.binpkg.repository.ConfiguredTree">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.repository.</code><code class="sig-name descname">ConfiguredTree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">domain_settings</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repository.html#ConfiguredTree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repository.ConfiguredTree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.repository.wrapper.html#pkgcore.repository.wrapper.tree" title="pkgcore.repository.wrapper.tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.repository.wrapper.tree</span></code></a></p>
+<p>Configured repository for portage-compatible binary packages.</p>
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.ConfiguredTree.configured">
+<code class="sig-name descname">configured</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.binpkg.repository.ConfiguredTree.configured" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.binpkg.repository.force_unpacking">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.repository.</code><code class="sig-name descname">force_unpacking</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format_op</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repository.html#force_unpacking"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repository.force_unpacking" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.force_unpacking.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 5</em><a class="headerlink" href="#pkgcore.binpkg.repository.force_unpacking.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.force_unpacking.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.binpkg.repository.force_unpacking.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repository.force_unpacking.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repository.html#force_unpacking.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repository.force_unpacking.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.binpkg.repository.tree">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.repository.</code><code class="sig-name descname">tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">location</span></em>, <em class="sig-param"><span class="n">repo_id</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">cache_version</span><span class="o">=</span><span class="default_value">'0'</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repository.html#tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repository.tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.repository.prototype.html#pkgcore.repository.prototype.tree" title="pkgcore.repository.prototype.tree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.tree</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.tree.cache_name">
+<code class="sig-name descname">cache_name</code><em class="property"> = 'Packages'</em><a class="headerlink" href="#pkgcore.binpkg.repository.tree.cache_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.tree.configurables">
+<code class="sig-name descname">configurables</code><em class="property"> = ('settings',)</em><a class="headerlink" href="#pkgcore.binpkg.repository.tree.configurables" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.tree.configure">
+<code class="sig-name descname">configure</code><a class="headerlink" href="#pkgcore.binpkg.repository.tree.configure" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcore.binpkg.repository.ConfiguredTree" title="pkgcore.binpkg.repository.ConfiguredTree"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.binpkg.repository.ConfiguredTree</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.tree.configured">
+<code class="sig-name descname">configured</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.binpkg.repository.tree.configured" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.tree.extension">
+<code class="sig-name descname">extension</code><em class="property"> = '.tbz2'</em><a class="headerlink" href="#pkgcore.binpkg.repository.tree.extension" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repository.tree.notify_add_package">
+<code class="sig-name descname">notify_add_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repository.html#tree.notify_add_package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repository.tree.notify_add_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>internal function</p>
+<p>notify the repository that a pkg is being added to it</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repository.tree.notify_remove_package">
+<code class="sig-name descname">notify_remove_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repository.html#tree.notify_remove_package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repository.tree.notify_remove_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>internal function</p>
+<p>notify the repository that a pkg it provides is being removed</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.tree.operations_kls">
+<code class="sig-name descname">operations_kls</code><a class="headerlink" href="#pkgcore.binpkg.repository.tree.operations_kls" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="pkgcore.binpkg.repo_ops.html#pkgcore.binpkg.repo_ops.operations" title="pkgcore.binpkg.repo_ops.operations"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.binpkg.repo_ops.operations</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.repository.tree.pkgcore_config_type">
+<code class="sig-name descname">pkgcore_config_type</code><em class="property"> = &lt;pkgcore.config.hint.ConfigHint object&gt;</em><a class="headerlink" href="#pkgcore.binpkg.repository.tree.pkgcore_config_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.repository module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

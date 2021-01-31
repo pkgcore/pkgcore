@@ -1,0 +1,7 @@
+pinspect profile parent - output the linearized tree of inherited parents
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: parent/_synopsis.rst
+.. include:: parent/_description.rst
+.. include:: parent/_options.rst
+.. include:: parent/_subcommands.rst

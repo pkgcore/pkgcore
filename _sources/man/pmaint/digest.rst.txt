@@ -1,0 +1,7 @@
+pmaint digest - update package manifests
+----------------------------------------
+
+.. include:: digest/_synopsis.rst
+.. include:: digest/_description.rst
+.. include:: digest/_options.rst
+.. include:: digest/_subcommands.rst

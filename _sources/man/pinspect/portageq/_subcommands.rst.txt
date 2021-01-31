@@ -1,0 +1,9 @@
+.. include:: best_version.rst
+.. include:: envvar.rst
+.. include:: envvar2.rst
+.. include:: get_repo_news_path.rst
+.. include:: get_repo_path.rst
+.. include:: get_repos.rst
+.. include:: has_version.rst
+.. include:: mass_best_version.rst
+.. include:: match.rst

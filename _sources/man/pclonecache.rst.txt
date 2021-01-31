@@ -1,0 +1,8 @@
+============================================
+pclonecache - repository cache clone utility
+============================================
+
+.. include:: pclonecache/_synopsis.rst
+.. include:: pclonecache/_description.rst
+.. include:: pclonecache/_options.rst
+.. include:: pclonecache/_subcommands.rst

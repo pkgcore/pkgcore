@@ -1,0 +1,7 @@
+pinspect profile system - output the system package set
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: system/_synopsis.rst
+.. include:: system/_description.rst
+.. include:: system/_options.rst
+.. include:: system/_subcommands.rst

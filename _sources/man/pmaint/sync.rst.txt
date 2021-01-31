@@ -1,0 +1,7 @@
+pmaint sync - synchronize a local repository with its defined remote
+--------------------------------------------------------------------
+
+.. include:: sync/_synopsis.rst
+.. include:: sync/_description.rst
+.. include:: sync/_options.rst
+.. include:: sync/_subcommands.rst

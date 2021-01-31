@@ -1,0 +1,379 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.ebuild_built &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebuild_built</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.ebuild_built</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">built ebuild packages (vdb packages and binpkgs are derivatives of this)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;package&quot;</span><span class="p">,</span> <span class="s2">&quot;package_factory&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.currying</span> <span class="kn">import</span> <span class="n">post_curry</span>
+<span class="kn">from</span> <span class="nn">snakeoil.data_source</span> <span class="kn">import</span> <span class="n">local_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">IndeterminantDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.obj</span> <span class="kn">import</span> <span class="n">DelayedInstantiation</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">fetch</span>
+<span class="kn">from</span> <span class="nn">..fs.livefs</span> <span class="kn">import</span> <span class="n">scan</span>
+<span class="kn">from</span> <span class="nn">..merge</span> <span class="kn">import</span> <span class="n">engine</span>
+<span class="kn">from</span> <span class="nn">..package</span> <span class="kn">import</span> <span class="n">metadata</span>
+<span class="kn">from</span> <span class="nn">..package.base</span> <span class="kn">import</span> <span class="n">DynamicGetattrSetter</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">conditionals</span><span class="p">,</span> <span class="n">ebd</span><span class="p">,</span> <span class="n">ebuild_src</span><span class="p">,</span> <span class="n">triggers</span>
+<span class="kn">from</span> <span class="nn">.eapi</span> <span class="kn">import</span> <span class="n">get_eapi</span>
+
+
+<span class="k">def</span> <span class="nf">_passthrough</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">inst</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_chost_fallback</span><span class="p">(</span><span class="n">initial</span><span class="p">,</span> <span class="bp">self</span><span class="p">):</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">initial</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CHOST&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">o</span>
+    <span class="k">return</span> <span class="n">o</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">_render_and_evaluate_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr_func</span><span class="p">,</span> <span class="n">render_func</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">render_func</span><span class="p">(</span><span class="n">attr_func</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="package"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebuild_built.html#pkgcore.ebuild.ebuild_built.package">[docs]</a><span class="k">class</span> <span class="nc">package</span><span class="p">(</span><span class="n">ebuild_src</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Built form of an ebuild.&quot;&quot;&quot;</span>
+
+    <span class="n">immutable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">allow_regen</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="c1"># Data in a &#39;built&#39; ebuild may not be stored in finalized/rendered form, thus</span>
+    <span class="c1"># for all configurables, for it to be rendered if accessed.</span>
+    <span class="c1"># Note that since _get_attr doesn&#39;t  vary across EAPI, we can ignore tracked_attributes-</span>
+    <span class="c1"># we render either way (because the underlying API irregardless of EAPI must be usable, even</span>
+    <span class="c1"># if returned data is effectively empty).  Finally, note that this just maps the list across;</span>
+    <span class="c1"># it&#39;s expected that certain attributes that are known to have no meaning for a &#39;built&#39; package</span>
+    <span class="c1"># are nulled (for example, fetchables: nothing to fetch).</span>
+    <span class="nb">locals</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+        <span class="n">attr_name</span><span class="p">:</span> <span class="n">DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+            <span class="n">post_curry</span><span class="p">(</span>
+                <span class="n">_render_and_evaluate_attr</span><span class="p">,</span>
+                <span class="n">ebuild_src</span><span class="o">.</span><span class="n">package</span><span class="o">.</span><span class="n">_get_attr</span><span class="p">[</span><span class="n">attr_name</span><span class="p">],</span>
+                <span class="n">render_func</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">render_func</span> <span class="ow">in</span> <span class="n">ebuild_src</span><span class="o">.</span><span class="n">package</span><span class="o">.</span><span class="n">_config_wrappables</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">})</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_operations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ebd</span><span class="o">.</span><span class="n">built_operations</span>
+
+    <span class="c1"># hack, not for consumer usage</span>
+    <span class="n">_is_from_source</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">built</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="n">cbuild</span> <span class="o">=</span> <span class="n">DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_chost_fallback</span><span class="p">,</span> <span class="s1">&#39;CBUILD&#39;</span><span class="p">))</span>
+    <span class="n">chost</span> <span class="o">=</span> <span class="n">DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_chost_fallback</span><span class="p">,</span> <span class="s1">&#39;CHOST&#39;</span><span class="p">))</span>
+    <span class="n">ctarget</span> <span class="o">=</span> <span class="n">DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_chost_fallback</span><span class="p">,</span> <span class="s1">&#39;CTARGET&#39;</span><span class="p">))</span>
+    <span class="n">contents</span> <span class="o">=</span> <span class="n">DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">post_curry</span><span class="p">(</span><span class="n">_passthrough</span><span class="p">,</span> <span class="s1">&#39;contents&#39;</span><span class="p">))</span>
+    <span class="n">environment</span> <span class="o">=</span> <span class="n">DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">post_curry</span><span class="p">(</span><span class="n">_passthrough</span><span class="p">,</span> <span class="s1">&#39;environment&#39;</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tracked_attributes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># tracked attributes varies depending on EAPI, thus this has to be runtime computed</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">tracked_attributes</span><span class="p">,</span> <span class="p">(</span><span class="s1">&#39;contents&#39;</span><span class="p">,</span> <span class="s1">&#39;use&#39;</span><span class="p">,</span> <span class="s1">&#39;environment&#39;</span><span class="p">)</span>
+        <span class="p">))</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">cflags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CFLAGS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">cxxflags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;CXXFLAGS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">ldflags</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;LDFLAGS&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">distfiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DISTFILES&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">iuse_effective</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;IUSE_EFFECTIVE&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">inherited</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;INHERITED&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">inherit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;INHERIT&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">source_repository</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;source_repository&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">repo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;repository&#39;</span><span class="p">)</span>
+            <span class="c1"># work around managers storing this in different places.</span>
+            <span class="k">if</span> <span class="n">repo</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># finally, do the strip ourselves since this can come</span>
+                <span class="c1"># back as &#39;\n&#39; from binpkg Packages caches...</span>
+                <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;REPO&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">repo</span><span class="p">:</span>
+                    <span class="n">repo</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">repo</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">repo</span> <span class="k">if</span> <span class="n">repo</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">fetchables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ret</span><span class="o">=</span><span class="n">conditionals</span><span class="o">.</span><span class="n">DepSet</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">fetch</span><span class="o">.</span><span class="n">fetchable</span><span class="p">,</span> <span class="n">operators</span><span class="o">=</span><span class="p">{})):</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DelayedInstantiation</span><span class="p">(</span>
+            <span class="nb">frozenset</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;USE&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="p">)</span>
+
+    <span class="nd">@DynamicGetattrSetter</span><span class="o">.</span><span class="n">register</span>
+    <span class="k">def</span> <span class="nf">eapi</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">eapi_magic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;EAPI&quot;</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">eapi_magic</span><span class="p">:</span>
+            <span class="c1"># &quot;&quot; means EAPI 0</span>
+            <span class="n">eapi_magic</span> <span class="o">=</span> <span class="s1">&#39;0&#39;</span>
+        <span class="n">eapi</span> <span class="o">=</span> <span class="n">get_eapi</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">eapi_magic</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="c1"># This can return None... definitely the wrong thing right now</span>
+        <span class="c1"># for an unsupported eapi. Fix it later.</span>
+        <span class="k">return</span> <span class="n">eapi</span>
+
+    <span class="k">def</span> <span class="nf">_update_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_repo_install_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_generate_format_install_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_repo_uninstall_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_generate_format_uninstall_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_repo_replace_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">old_pkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_generate_format_replace_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">old_pkg</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_fetch_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;built ebuild: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">)</span>
+
+<div class="viewcode-block" id="package.build"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebuild_built.html#pkgcore.ebuild.ebuild_built.package.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">_generate_buildop</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="package.add_format_triggers"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebuild_built.html#pkgcore.ebuild.ebuild_built.package.add_format_triggers">[docs]</a>    <span class="k">def</span> <span class="nf">add_format_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_add_format_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ebuild</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ebuild&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">o</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span><span class="o">.</span><span class="n">_get_ebuild_src</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_mtime_</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_mtime_&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">fresh_built_package</span><span class="p">(</span><span class="n">package</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">_is_from_source</span> <span class="o">=</span> <span class="kc">True</span>
+
+
+<span class="k">def</span> <span class="nf">generic_format_triggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">op_inst</span><span class="p">,</span> <span class="n">format_op_inst</span><span class="p">,</span> <span class="n">engine_inst</span><span class="p">):</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">engine_inst</span><span class="o">.</span><span class="n">mode</span> <span class="ow">in</span> <span class="p">(</span><span class="n">engine</span><span class="o">.</span><span class="n">REPLACE_MODE</span><span class="p">,</span> <span class="n">engine</span><span class="o">.</span><span class="n">INSTALL_MODE</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">pkg</span> <span class="o">==</span> <span class="n">engine_inst</span><span class="o">.</span><span class="n">new</span> <span class="ow">and</span> <span class="n">pkg</span><span class="o">.</span><span class="n">repo</span> <span class="ow">is</span> <span class="n">engine_inst</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">repo</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s1">&#39;preinst&#39;</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">mandatory_phases</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">triggers</span><span class="o">.</span><span class="n">preinst_contents_reset</span><span class="p">(</span><span class="n">format_op_inst</span><span class="p">)</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">engine_inst</span><span class="p">)</span>
+        <span class="c1"># for ebuild format, always check the syms.</span>
+        <span class="c1"># this isn&#39;t perfect for binpkgs since if the binpkg is already</span>
+        <span class="c1"># screwed, the target is in place already</span>
+        <span class="n">triggers</span><span class="o">.</span><span class="n">FixImageSymlinks</span><span class="p">(</span><span class="n">format_op_inst</span><span class="p">)</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">engine_inst</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_generic_format_install_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">newpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ebd</span><span class="o">.</span><span class="n">install_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">newpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_generic_format_uninstall_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">oldpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ebd</span><span class="o">.</span><span class="n">uninstall_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">oldpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_generic_format_replace_op</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">oldpkg</span><span class="p">,</span> <span class="n">newpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ebd</span><span class="o">.</span><span class="n">replace_op</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">oldpkg</span><span class="p">,</span> <span class="n">newpkg</span><span class="p">,</span> <span class="n">observer</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="package_factory"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebuild_built.html#pkgcore.ebuild.ebuild_built.package_factory">[docs]</a><span class="k">class</span> <span class="nc">package_factory</span><span class="p">(</span><span class="n">metadata</span><span class="o">.</span><span class="n">factory</span><span class="p">):</span>
+    <span class="n">child_class</span> <span class="o">=</span> <span class="n">package</span>
+
+    <span class="c1"># For the plugin system.</span>
+    <span class="n">priority</span> <span class="o">=</span> <span class="mi">5</span>
+
+    <span class="k">def</span> <span class="nf">_get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent_repo</span><span class="o">.</span><span class="n">_get_metadata</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+
+<div class="viewcode-block" id="package_factory.new_package"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.ebuild_built.html#pkgcore.ebuild.ebuild_built.package_factory.new_package">[docs]</a>    <span class="k">def</span> <span class="nf">new_package</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">inst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_instances</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inst</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cached_instances</span><span class="p">[</span><span class="n">args</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inst</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_ebuild_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent_repo</span><span class="o">.</span><span class="n">_get_path</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+
+    <span class="n">_generate_format_install_op</span> <span class="o">=</span> <span class="n">_generic_format_install_op</span>
+    <span class="n">_generate_format_uninstall_op</span> <span class="o">=</span> <span class="n">_generic_format_uninstall_op</span>
+    <span class="n">_generate_format_replace_op</span> <span class="o">=</span> <span class="n">_generic_format_replace_op</span>
+    <span class="n">_add_format_triggers</span> <span class="o">=</span> <span class="n">generic_format_triggers</span></div>
+
+
+<span class="k">class</span> <span class="nc">fake_package_factory</span><span class="p">(</span><span class="n">package_factory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A fake package_factory, so that we can reuse the normal get_metadata hooks.</span>
+
+<span class="sd">    A factory is generated per package instance, rather then one</span>
+<span class="sd">    factory, N packages.</span>
+
+<span class="sd">    Do not use this unless you know it&#39;s what your after; this is</span>
+<span class="sd">    strictly for transitioning a built ebuild (still in the builddir)</span>
+<span class="sd">    over to an actual repo. It literally is a mapping of original</span>
+<span class="sd">    package data to the new generated instances data store.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">child_class</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">child_class</span> <span class="o">=</span> <span class="n">child_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parent_repo</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">new_package</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">image_root</span><span class="p">,</span> <span class="n">environment_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">image_root</span> <span class="o">=</span> <span class="n">image_root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">environment_path</span> <span class="o">=</span> <span class="n">environment_path</span>
+        <span class="c1"># lambda redirects path to environment path</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">child_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">tracked_attributes</span><span class="p">:</span>
+            <span class="c1"># bypass setattr restrictions.</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;use&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="s2">&quot;_domain&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">_domain</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="k">def</span> <span class="nf">get_ebuild_src</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">ebuild</span>
+
+    <span class="k">def</span> <span class="nf">scan_contents</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">scan</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">location</span><span class="p">,</span> <span class="n">mutable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">IndeterminantDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__pull_metadata</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__pull_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;contents&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_contents</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">image_root</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="o">==</span> <span class="s2">&quot;environment&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">local_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">environment_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="n">_generate_format_install_op</span> <span class="o">=</span> <span class="n">_generic_format_install_op</span>
+    <span class="n">_generate_format_uninstall_op</span> <span class="o">=</span> <span class="n">_generic_format_uninstall_op</span>
+    <span class="n">_generate_format_replace_op</span> <span class="o">=</span> <span class="n">_generic_format_replace_op</span>
+    <span class="n">_add_format_triggers</span> <span class="o">=</span> <span class="n">generic_format_triggers</span>
+
+
+<span class="n">generate_new_factory</span> <span class="o">=</span> <span class="n">package_factory</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebuild_built</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

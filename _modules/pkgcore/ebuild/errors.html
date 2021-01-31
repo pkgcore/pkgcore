@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.errors &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.errors</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.errors</h1><div class="highlight"><pre>
+<span></span><span class="c1"># &quot;More than one statement on a single line&quot;</span>
+<span class="c1"># pylint: disable-msg=C0321</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">atom exceptions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;MalformedAtom&quot;</span><span class="p">,</span> <span class="s2">&quot;InvalidVersion&quot;</span><span class="p">,</span> <span class="s2">&quot;InvalidCPV&quot;</span><span class="p">,</span> <span class="s2">&quot;DepsetParseError&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">textwrap</span>
+
+<span class="kn">from</span> <span class="nn">..exceptions</span> <span class="kn">import</span> <span class="n">PkgcoreException</span>
+<span class="kn">from</span> <span class="nn">..package</span> <span class="kn">import</span> <span class="n">errors</span>
+
+
+<div class="viewcode-block" id="MalformedAtom"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.errors.html#pkgcore.ebuild.errors.MalformedAtom">[docs]</a><span class="k">class</span> <span class="nc">MalformedAtom</span><span class="p">(</span><span class="n">errors</span><span class="o">.</span><span class="n">InvalidDependency</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package atom doesn&#39;t follow required specifications.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">err</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom</span> <span class="o">=</span> <span class="n">atom</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err</span> <span class="o">=</span> <span class="n">err</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;invalid package atom: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">atom</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">err</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">err</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">msg</span></div>
+
+
+<div class="viewcode-block" id="InvalidVersion"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.errors.html#pkgcore.ebuild.errors.InvalidVersion">[docs]</a><span class="k">class</span> <span class="nc">InvalidVersion</span><span class="p">(</span><span class="n">errors</span><span class="o">.</span><span class="n">InvalidDependency</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package version doesn&#39;t follow required specifications.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ver</span><span class="p">,</span> <span class="n">rev</span><span class="p">,</span> <span class="n">err</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Version restriction ver=&#39;</span><span class="si">{</span><span class="n">ver</span><span class="si">}</span><span class="s2">&#39;, rev=&#39;</span><span class="si">{</span><span class="n">rev</span><span class="si">}</span><span class="s2">&#39;, is malformed: error </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rev</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">err</span> <span class="o">=</span> <span class="n">ver</span><span class="p">,</span> <span class="n">rev</span><span class="p">,</span> <span class="n">err</span></div>
+
+
+<div class="viewcode-block" id="InvalidCPV"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.errors.html#pkgcore.ebuild.errors.InvalidCPV">[docs]</a><span class="k">class</span> <span class="nc">InvalidCPV</span><span class="p">(</span><span class="n">errors</span><span class="o">.</span><span class="n">InvalidPackageName</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;CPV with unsupported characters or format.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="DepsetParseError"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.errors.html#pkgcore.ebuild.errors.DepsetParseError">[docs]</a><span class="k">class</span> <span class="nc">DepsetParseError</span><span class="p">(</span><span class="n">errors</span><span class="o">.</span><span class="n">InvalidDependency</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">token</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dep_str</span> <span class="o">=</span> <span class="n">s</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="o">=</span> <span class="n">token</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;failed parsing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dep_str</span><span class="si">!r}</span><span class="s1"> is unparseable&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">token</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;flagged token- </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">token</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;: &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">SanityCheckError</span><span class="p">(</span><span class="n">PkgcoreException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic error for sanity check failures.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbosity</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;  &#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose_msg</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="bp">self</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">PkgPretendError</span><span class="p">(</span><span class="n">SanityCheckError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The pkg_pretend phase check failed for a package.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+
+    <span class="k">def</span> <span class="nf">msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39; &#39;</span><span class="p">):</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&gt;&gt;&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s1">: failed pkg_pretend&#39;</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">error_msg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">msg</span><span class="p">(</span><span class="n">verbosity</span><span class="o">=</span><span class="n">verbosity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">error_msg</span><span class="o">.</span><span class="n">splitlines</span><span class="p">())</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">l</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">error_msg</span><span class="p">:</span>
+            <span class="n">header</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;: </span><span class="si">{</span><span class="n">error_msg</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">header</span><span class="p">]</span> <span class="o">+</span> <span class="n">msg</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">RequiredUseError</span><span class="p">(</span><span class="n">SanityCheckError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;REQUIRED_USE check(s) for a package failed.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">unmatched</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unmatched</span> <span class="o">=</span> <span class="n">unmatched</span>
+
+    <span class="k">def</span> <span class="nf">msg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;  &#39;</span><span class="p">):</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&gt;&gt;&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s1">: failed REQUIRED_USE&#39;</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unmatched</span><span class="p">:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                Failed to match: </span><span class="si">{</span><span class="n">node</span><span class="si">}</span><span class="s2"></span>
+<span class="s2">                from: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">required_use</span><span class="si">}</span><span class="s2"></span>
+<span class="s2">                for USE: </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="o">.</span><span class="n">use</span><span class="p">))</span><span class="si">}</span><span class="s2"></span>
+<span class="s2">                &quot;&quot;&quot;</span>
+            <span class="p">))</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">line</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">errors</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">header</span><span class="p">]</span> <span class="o">+</span> <span class="n">msg</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.errors</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

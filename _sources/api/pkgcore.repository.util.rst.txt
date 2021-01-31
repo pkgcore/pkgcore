@@ -1,0 +1,7 @@
+pkgcore.repository.util module
+==============================
+
+.. automodule:: pkgcore.repository.util
+   :members:
+   :undoc-members:
+   :show-inheritance:

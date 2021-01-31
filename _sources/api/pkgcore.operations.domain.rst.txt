@@ -1,0 +1,7 @@
+pkgcore.operations.domain module
+================================
+
+.. automodule:: pkgcore.operations.domain
+   :members:
+   :undoc-members:
+   :show-inheritance:

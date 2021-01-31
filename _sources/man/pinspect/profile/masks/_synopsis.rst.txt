@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile masks [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

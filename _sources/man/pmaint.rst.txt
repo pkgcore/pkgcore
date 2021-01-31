@@ -1,0 +1,8 @@
+==============================================
+pmaint - system/repository maintenance utility
+==============================================
+
+.. include:: pmaint/_synopsis.rst
+.. include:: pmaint/_description.rst
+.. include:: pmaint/_options.rst
+.. include:: pmaint/_subcommands.rst

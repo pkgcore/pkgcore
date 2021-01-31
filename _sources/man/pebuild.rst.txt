@@ -1,0 +1,8 @@
+==================================
+pebuild - low-level ebuild utility
+==================================
+
+.. include:: pebuild/_synopsis.rst
+.. include:: pebuild/_description.rst
+.. include:: pebuild/_options.rst
+.. include:: pebuild/_subcommands.rst

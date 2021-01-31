@@ -1,0 +1,7 @@
+pkgcore.ebuild.profiles module
+==============================
+
+.. automodule:: pkgcore.ebuild.profiles
+   :members:
+   :undoc-members:
+   :show-inheritance:

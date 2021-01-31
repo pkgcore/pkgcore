@@ -1,0 +1,45 @@
+pkgcore.ebuild package
+======================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.ebuild.atom
+   pkgcore.ebuild.conditionals
+   pkgcore.ebuild.const
+   pkgcore.ebuild.cpv
+   pkgcore.ebuild.digest
+   pkgcore.ebuild.domain
+   pkgcore.ebuild.eapi
+   pkgcore.ebuild.ebd
+   pkgcore.ebuild.ebd_ipc
+   pkgcore.ebuild.ebuild_built
+   pkgcore.ebuild.ebuild_src
+   pkgcore.ebuild.eclass
+   pkgcore.ebuild.eclass_cache
+   pkgcore.ebuild.errors
+   pkgcore.ebuild.filter_env
+   pkgcore.ebuild.formatter
+   pkgcore.ebuild.inspect_profile
+   pkgcore.ebuild.misc
+   pkgcore.ebuild.pkg_updates
+   pkgcore.ebuild.portage_conf
+   pkgcore.ebuild.portageq
+   pkgcore.ebuild.processor
+   pkgcore.ebuild.profiles
+   pkgcore.ebuild.repo_objs
+   pkgcore.ebuild.repository
+   pkgcore.ebuild.resolver
+   pkgcore.ebuild.restricts
+   pkgcore.ebuild.triggers
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.ebuild
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.eclass_cache &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eclass_cache</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.eclass_cache</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">in memory representation of on disk eclass stacking order</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;base&quot;</span><span class="p">,</span> <span class="s2">&quot;cache&quot;</span><span class="p">,</span> <span class="s2">&quot;StackedCaches&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">intern</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">LazilyHashedPath</span>
+<span class="kn">from</span> <span class="nn">snakeoil.data_source</span> <span class="kn">import</span> <span class="n">local_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">jit_attr_ext_method</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ImmutableDict</span><span class="p">,</span> <span class="n">OrderedFrozenSet</span><span class="p">,</span> <span class="n">StackedDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">listdir_files</span><span class="p">,</span> <span class="n">normpath</span><span class="p">,</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.weakrefs</span> <span class="kn">import</span> <span class="n">WeakValCache</span>
+
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+
+
+<div class="viewcode-block" id="base"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass_cache.html#pkgcore.ebuild.eclass_cache.base">[docs]</a><span class="k">class</span> <span class="nc">base</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Maintains the cache information about eclasses available to an ebuild.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">eclassdir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eclass_data_inst_cache</span> <span class="o">=</span> <span class="n">WeakValCache</span><span class="p">()</span>
+        <span class="c1"># generate this.</span>
+        <span class="c1"># self.eclasses = {} # {&quot;Name&quot;: (&quot;location&quot;, &quot;_mtime_&quot;)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclassdir</span> <span class="o">=</span> <span class="n">eclassdir</span>
+
+<div class="viewcode-block" id="base.get_eclass_data"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass_cache.html#pkgcore.ebuild.eclass_cache.base.get_eclass_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_eclass_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inherits</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the cachable entries from a list of inherited eclasses.</span>
+
+<span class="sd">        Only make get_eclass_data calls for data you know came from</span>
+<span class="sd">        this eclass_cache, otherwise be ready to catch a KeyError</span>
+<span class="sd">        exception for any eclass that was requested, but not known to</span>
+<span class="sd">        this cache.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">OrderedFrozenSet</span><span class="p">(</span><span class="n">inherits</span><span class="p">)</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eclass_data_inst_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="n">ImmutableDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_eclass_data_inst_cache</span><span class="p">[</span><span class="n">keys</span><span class="p">]</span> <span class="o">=</span> <span class="n">o</span>
+        <span class="k">return</span> <span class="n">o</span></div>
+
+<div class="viewcode-block" id="base.get_eclass"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass_cache.html#pkgcore.ebuild.eclass_cache.base.get_eclass">[docs]</a>    <span class="k">def</span> <span class="nf">get_eclass</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclass</span><span class="p">):</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">eclass</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">local_source</span><span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">path</span><span class="p">)</span></div>
+
+    <span class="n">eclasses</span> <span class="o">=</span> <span class="n">jit_attr_ext_method</span><span class="p">(</span><span class="s2">&quot;_load_eclasses&quot;</span><span class="p">,</span> <span class="s2">&quot;_eclasses&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="base.rebuild_cache_entry"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass_cache.html#pkgcore.ebuild.eclass_cache.base.rebuild_cache_entry">[docs]</a>    <span class="k">def</span> <span class="nf">rebuild_cache_entry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry_eclasses</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check if eclass data is still valid.</span>
+
+<span class="sd">        Given a dict as returned by get_eclass_data, walk it comparing</span>
+<span class="sd">        it to internal eclass view.</span>
+
+<span class="sd">        :return: a boolean representing whether that eclass data is still</span>
+<span class="sd">            up to date, or not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ec</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">eclass</span><span class="p">,</span> <span class="n">chksums</span> <span class="ow">in</span> <span class="n">entry_eclasses</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">ec</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">eclass</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">val</span> <span class="o">!=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">chf</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">chf</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">chksums</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">eclass</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+
+        <span class="k">return</span> <span class="n">d</span></div>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">d</span><span class="p">[</span><span class="s1">&#39;_eclass_data_inst_cache&#39;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">[</span><span class="s1">&#39;_eclass_data_inst_cache&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">WeakValCache</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="cache"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass_cache.html#pkgcore.ebuild.eclass_cache.cache">[docs]</a><span class="k">class</span> <span class="nc">cache</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">({</span><span class="s2">&quot;path&quot;</span><span class="p">:</span><span class="s2">&quot;str&quot;</span><span class="p">,</span> <span class="s2">&quot;location&quot;</span><span class="p">:</span><span class="s2">&quot;str&quot;</span><span class="p">},</span>
+                                     <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;eclass_cache&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param location: ondisk location of the tree we&#39;re working with</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">base</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="n">location</span><span class="p">,</span> <span class="n">eclassdir</span><span class="o">=</span><span class="n">normpath</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_load_eclasses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Force an update of the internal view of on disk/remote eclasses.&quot;&quot;&quot;</span>
+        <span class="n">ec</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">eclass_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="s2">&quot;.eclass&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">files</span> <span class="o">=</span> <span class="n">listdir_files</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclassdir</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">FileNotFoundError</span><span class="p">,</span> <span class="ne">NotADirectoryError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ImmutableDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">y</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.eclass&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">ys</span> <span class="o">=</span> <span class="n">y</span><span class="p">[:</span><span class="o">-</span><span class="n">eclass_len</span><span class="p">]</span>
+            <span class="n">ec</span><span class="p">[</span><span class="n">intern</span><span class="p">(</span><span class="n">ys</span><span class="p">)]</span> <span class="o">=</span> <span class="n">LazilyHashedPath</span><span class="p">(</span>
+                <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclassdir</span><span class="p">,</span> <span class="n">y</span><span class="p">),</span> <span class="n">eclassdir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">eclassdir</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ImmutableDict</span><span class="p">(</span><span class="n">ec</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StackedCaches"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass_cache.html#pkgcore.ebuild.eclass_cache.StackedCaches">[docs]</a><span class="k">class</span> <span class="nc">StackedCaches</span><span class="p">(</span><span class="n">base</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    collapse multiple eclass caches into one.</span>
+
+<span class="sd">    Does L-&gt;R searching for eclass matches.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span>
+        <span class="p">{</span><span class="s1">&#39;caches&#39;</span><span class="p">:</span> <span class="s1">&#39;refs:eclass_cache&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span> <span class="s1">&#39;eclassdir&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">},</span>
+        <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;eclass_cache&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">caches</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param caches: :obj:`cache` instances to stack;</span>
+<span class="sd">            ordering should be desired lookup order</span>
+<span class="sd">        :keyword eclassdir: override for the master eclass dir, required for</span>
+<span class="sd">            eapi0 and idiot eclass usage.  defaults to pulling from the first</span>
+<span class="sd">            cache.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">caches</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> requires at least two eclass_caches&quot;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+
+        <span class="n">kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;eclassdir&quot;</span><span class="p">,</span> <span class="n">caches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">eclassdir</span><span class="p">)</span>
+        <span class="n">kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;location&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;eclassdir&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span> <span class="o">=</span> <span class="n">caches</span>
+        <span class="n">base</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_load_eclasses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">StackedDict</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="n">ec</span><span class="o">.</span><span class="n">eclasses</span> <span class="k">for</span> <span class="n">ec</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caches</span><span class="p">])</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eclass_cache</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

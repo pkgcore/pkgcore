@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fetch.custom module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.custom module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.fetch.custom">
+<span id="pkgcore-fetch-custom-module"></span><h1>pkgcore.fetch.custom module<a class="headerlink" href="#module-pkgcore.fetch.custom" title="Permalink to this headline">¶</a></h1>
+<p>fetcher class that pulls files via executing another program to do the fetching</p>
+<dl class="py exception">
+<dt id="pkgcore.fetch.custom.MalformedCommand">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.fetch.custom.</code><code class="sig-name descname">MalformedCommand</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">command</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/custom.html#MalformedCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.custom.MalformedCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.fetch.errors.html#pkgcore.fetch.errors.FetchError" title="pkgcore.fetch.errors.FetchError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.errors.FetchError</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.fetch.custom.fetcher">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.fetch.custom.</code><code class="sig-name descname">fetcher</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">distdir</span></em>, <em class="sig-param"><span class="n">command</span></em>, <em class="sig-param"><span class="n">resume_command</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required_chksums</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">userpriv</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">attempts</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">readonly</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">extra_env</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/custom.html#fetcher"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.custom.fetcher" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.fetch.base.html#pkgcore.fetch.base.fetcher" title="pkgcore.fetch.base.fetcher"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.fetch.base.fetcher</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.fetch.custom.fetcher.fetch">
+<code class="sig-name descname">fetch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/custom.html#fetcher.fetch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.custom.fetcher.fetch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch a file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None if fetching failed,
+else on disk location of the copied file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.fetch.custom.fetcher.get_path">
+<code class="sig-name descname">get_path</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">fetchable</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/custom.html#fetcher.get_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.custom.fetcher.get_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the on disk path to a fetchable if it’s available, and fully
+fetched.</p>
+<p>If it isn’t, return None</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.fetch.custom.fetcher.get_storage_path">
+<code class="sig-name descname">get_storage_path</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/fetch/custom.html#fetcher.get_storage_path"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.fetch.custom.fetcher.get_storage_path" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the directory files are stored in
+returns None if not applicable</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.fetch.custom.fetcher.pkgcore_config_type">
+<code class="sig-name descname">pkgcore_config_type</code><em class="property"> = &lt;pkgcore.config.hint.ConfigHint object&gt;</em><a class="headerlink" href="#pkgcore.fetch.custom.fetcher.pkgcore_config_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.custom module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

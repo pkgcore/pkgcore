@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pinspect portageq [-h] [--debug] [-q] [-v] [--color BOOLEAN] {best_version,envvar,envvar2,get_repo_news_path,get_repo_path,get_repos,has_version,mass_best_version,match} ...

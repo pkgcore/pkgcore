@@ -1,0 +1,298 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.util.parserestrict &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.util.parserestrict</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.util.parserestrict</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Functions that turn a string into a restriction or raise ParseError.</span>
+
+<span class="sd">__all__ = (&quot;parse_match&quot;, &quot;ParseError&quot;,)</span>
+
+<span class="sd">@var parse_funcs: dict of the functions that are available.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">..ebuild</span> <span class="kn">import</span> <span class="n">atom</span><span class="p">,</span> <span class="n">cpv</span><span class="p">,</span> <span class="n">errors</span><span class="p">,</span> <span class="n">restricts</span>
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">packages</span><span class="p">,</span> <span class="n">values</span>
+<span class="kn">from</span> <span class="nn">..restrictions.util</span> <span class="kn">import</span> <span class="n">collect_package_restrictions</span>
+
+<span class="n">valid_globbing</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^(?:[\w+-.]+|(?&lt;!\*)\*)+$&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">match</span>
+
+
+<div class="viewcode-block" id="ParseError"><a class="viewcode-back" href="../../../api/pkgcore.util.parserestrict.html#pkgcore.util.parserestrict.ParseError">[docs]</a><span class="k">class</span> <span class="nc">ParseError</span><span class="p">(</span><span class="ne">ValueError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raised if parsing a restriction expression failed.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="comma_separated_containment"><a class="viewcode-back" href="../../../api/pkgcore.util.parserestrict.html#pkgcore.util.parserestrict.comma_separated_containment">[docs]</a><span class="k">def</span> <span class="nf">comma_separated_containment</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">values_kls</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">,</span> <span class="n">token_kls</span><span class="o">=</span><span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Helper for parsing comma-separated strings to a ContainmentMatch2.</span>
+
+<span class="sd">    :param attr: name of the attribute.</span>
+<span class="sd">    :return: a parse function: takes a string of comma-separated values,</span>
+<span class="sd">        returns a :obj:`packages.PackageRestriction` matching packages that</span>
+<span class="sd">        have any of those values in the attribute passed to this function.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_parse</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+            <span class="n">attr</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">ContainmentMatch2</span><span class="p">(</span>
+                <span class="n">values_kls</span><span class="p">(</span><span class="n">token_kls</span><span class="p">(</span><span class="n">piece</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="k">for</span> <span class="n">piece</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">))</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_parse</span></div>
+
+
+<div class="viewcode-block" id="convert_glob"><a class="viewcode-back" href="../../../api/pkgcore.util.parserestrict.html#pkgcore.util.parserestrict.convert_glob">[docs]</a><span class="k">def</span> <span class="nf">convert_glob</span><span class="p">(</span><span class="n">token</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">token</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="s1">&#39;*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">StrExactMatch</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">valid_globbing</span><span class="p">(</span><span class="n">token</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span>
+            <span class="s2">&quot;globs must be composed of [</span><span class="se">\\</span><span class="s2">w-.+], with optional &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;*&#39;- </span><span class="si">{</span><span class="n">token</span><span class="si">!r}</span><span class="s2"> is disallowed however&quot;</span><span class="p">)</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">*&#39;</span><span class="p">,</span> <span class="s1">&#39;.*&#39;</span><span class="p">)</span>
+    <span class="n">pattern</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;^</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s2">$&quot;</span>
+    <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">StrRegex</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="collect_ops"><a class="viewcode-back" href="../../../api/pkgcore.util.parserestrict.html#pkgcore.util.parserestrict.collect_ops">[docs]</a><span class="k">def</span> <span class="nf">collect_ops</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span> <span class="ow">and</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;~&quot;</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">i</span><span class="p">],</span> <span class="n">text</span><span class="p">[</span><span class="n">i</span><span class="p">:]</span></div>
+
+
+<div class="viewcode-block" id="parse_match"><a class="viewcode-back" href="../../../api/pkgcore.util.parserestrict.html#pkgcore.util.parserestrict.parse_match">[docs]</a><span class="k">def</span> <span class="nf">parse_match</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;generate appropriate restriction for text</span>
+
+<span class="sd">    Parsing basically breaks it down into chunks split by /, with each</span>
+<span class="sd">    chunk allowing for prefix/postfix globbing- note that a postfixed</span>
+<span class="sd">    glob on package token is treated as package attribute matching,</span>
+<span class="sd">    not as necessarily a version match.</span>
+
+<span class="sd">    If only one chunk is found, it&#39;s treated as a package chunk.</span>
+<span class="sd">    Finally, it supports a nonstandard variation of atom syntax where</span>
+<span class="sd">    the category can be dropped.</span>
+
+<span class="sd">    Examples:</span>
+
+<span class="sd">    - `*`: match all</span>
+<span class="sd">    - `dev-*/*`: category must start with &#39;dev-&#39;</span>
+<span class="sd">    - `dev-*`: package must start with &#39;dev-&#39;</span>
+<span class="sd">    - `*-apps/portage*`: category must end in &#39;-apps&#39;, package must start with</span>
+<span class="sd">      &#39;portage&#39;</span>
+<span class="sd">    - `&gt;=portage-2.1`: atom syntax, package &#39;portage&#39;, version greater then or</span>
+<span class="sd">      equal to &#39;2.1&#39;</span>
+<span class="sd">    - dev-qt/*:5: all Qt 5 libs</span>
+<span class="sd">    - boost:0/1.60: all packages named boost with a slot/subslot of 0/1.60.0</span>
+
+<span class="sd">    :param text: string to attempt to parse</span>
+<span class="sd">    :type text: string</span>
+<span class="sd">    :return: :obj:`pkgcore.restrictions.packages` derivative</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">orig_text</span> <span class="o">=</span> <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="s2">&quot;!&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;&#39;!&#39; or any form of blockers make no sense in this usage: </span><span class="si">{</span><span class="n">text</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="n">restrictions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="s1">&#39;::&#39;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+        <span class="n">text</span><span class="p">,</span> <span class="n">repo_id</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;::&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">RepositoryDep</span><span class="p">(</span><span class="n">repo_id</span><span class="p">))</span>
+    <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+        <span class="n">text</span><span class="p">,</span> <span class="n">slot</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">slot</span><span class="p">,</span> <span class="n">_sep</span><span class="p">,</span> <span class="n">subslot</span> <span class="o">=</span> <span class="n">slot</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">slot</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">slot</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">convert_glob</span><span class="p">(</span><span class="n">slot</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">SlotDep</span><span class="p">(</span><span class="n">slot</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">subslot</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">subslot</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;subslot&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">SubSlotDep</span><span class="p">(</span><span class="n">subslot</span><span class="p">))</span>
+
+    <span class="n">tsplit</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tsplit</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">ops</span><span class="p">,</span> <span class="n">text</span> <span class="o">=</span> <span class="n">collect_ops</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">ops</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;*&quot;</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">convert_glob</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">r</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;package&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">))</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">restrictions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">restrictions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">restrictions</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;cannot do prefix glob matches with version ops: </span><span class="si">{</span><span class="n">orig_text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="c1"># ok... fake category.  whee.</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">collect_package_restrictions</span><span class="p">(</span>
+                     <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">ops</span><span class="si">}</span><span class="s2">category/</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span>
+                     <span class="n">attrs</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">,),</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">e</span><span class="o">.</span><span class="n">atom</span> <span class="o">=</span> <span class="n">orig_text</span>
+            <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">restrictions</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">restrictions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">restrictions</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">text</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">atom</span><span class="o">.</span><span class="n">valid_ops</span> <span class="ow">or</span> <span class="s1">&#39;*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+        <span class="c1"># possibly a valid atom object</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">orig_text</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">MalformedAtom</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">text</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="c1"># support globbed targets with version restrictions</span>
+            <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">parse_globbed_version</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">orig_text</span><span class="p">))</span>
+
+    <span class="n">r</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">convert_glob</span><span class="p">,</span> <span class="n">tsplit</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+        <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;package&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">restrictions</span><span class="o">.</span><span class="n">extend</span><span class="p">((</span>
+            <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;category&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+            <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span><span class="s2">&quot;package&quot;</span><span class="p">,</span> <span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+        <span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">restrictions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">restrictions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">restrictions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="parse_globbed_version"><a class="viewcode-back" href="../../../api/pkgcore.util.parserestrict.html#pkgcore.util.parserestrict.parse_globbed_version">[docs]</a><span class="k">def</span> <span class="nf">parse_globbed_version</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">orig_text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Support parsing globbed targets with limited version restrictions.</span>
+
+<span class="sd">    For example, &#39;&gt;=*/alsa-*-1.1.7&#39; would match all packages named &#39;alsa-*&#39;</span>
+<span class="sd">    that are version 1.1.7 or greater.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">restrictions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># find longest matching op</span>
+    <span class="n">op</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">atom</span><span class="o">.</span><span class="n">valid_ops</span> <span class="k">if</span> <span class="n">text</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">text</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">op</span><span class="p">):]</span>
+    <span class="c1"># determine pkg version</span>
+    <span class="n">chunks</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">chunks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;missing valid package version: </span><span class="si">{</span><span class="n">orig_text</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">version_txt</span> <span class="o">=</span> <span class="n">chunks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">version</span> <span class="o">=</span> <span class="n">cpv</span><span class="o">.</span><span class="n">isvalid_version_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">version_txt</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">version</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;*&#39;</span> <span class="ow">in</span> <span class="n">version_txt</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;operator </span><span class="si">{</span><span class="n">op</span><span class="si">!r}</span><span class="s1"> invalid with globbed version: </span><span class="si">{</span><span class="n">version_txt</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;missing valid package version: </span><span class="si">{</span><span class="n">orig_text</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="n">version</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">0</span><span class="p">)))</span>
+    <span class="c1"># parse the remaining chunk</span>
+    <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parse_match</span><span class="p">(</span><span class="n">chunks</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">restrictions</span></div>
+
+
+<div class="viewcode-block" id="parse_pv"><a class="viewcode-back" href="../../../api/pkgcore.util.parserestrict.html#pkgcore.util.parserestrict.parse_pv">[docs]</a><span class="k">def</span> <span class="nf">parse_pv</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a CPV instance from either a cpv or a pv string.</span>
+
+<span class="sd">    If a pv is passed it needs to match a single cpv in repo.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cpv</span><span class="o">.</span><span class="n">CPV</span><span class="o">.</span><span class="n">versioned</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">InvalidCPV</span><span class="p">:</span>
+        <span class="n">restrict</span> <span class="o">=</span> <span class="n">parse_match</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;=</span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;multiple matches for </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">match</span><span class="o">.</span><span class="n">cpvstr</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">match</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ParseError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no matches for </span><span class="si">{</span><span class="n">text</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cpv</span><span class="o">.</span><span class="n">CPV</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">package</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">version</span><span class="p">)</span></div>
+
+
+<span class="n">parse_funcs</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;match&#39;</span><span class="p">:</span> <span class="n">parse_match</span><span class="p">,</span>
+<span class="p">}</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.util.parserestrict</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

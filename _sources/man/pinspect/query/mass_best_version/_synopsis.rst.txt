@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect query mass_best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [--domain DOMAIN | --domain-at-root DOMAIN] atom [atom ...]

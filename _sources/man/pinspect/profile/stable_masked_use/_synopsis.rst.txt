@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect profile stable_masked_use [-h] [--debug] [-q] [-v] [--color BOOLEAN] profile

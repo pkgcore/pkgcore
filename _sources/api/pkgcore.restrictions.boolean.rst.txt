@@ -1,0 +1,7 @@
+pkgcore.restrictions.boolean module
+===================================
+
+.. automodule:: pkgcore.restrictions.boolean
+   :members:
+   :undoc-members:
+   :show-inheritance:

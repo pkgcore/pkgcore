@@ -1,0 +1,7 @@
+pclean tmp - remove tmpdir entries
+----------------------------------
+
+.. include:: tmp/_synopsis.rst
+.. include:: tmp/_description.rst
+.. include:: tmp/_options.rst
+.. include:: tmp/_subcommands.rst

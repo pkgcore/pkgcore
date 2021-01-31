@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.binpkg.repo_ops module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.repo_ops module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.binpkg.repo_ops">
+<span id="pkgcore-binpkg-repo-ops-module"></span><h1>pkgcore.binpkg.repo_ops module<a class="headerlink" href="#module-pkgcore.binpkg.repo_ops" title="Permalink to this headline">¶</a></h1>
+<p>Binpkg repository operations for modification, maintenance, etc.</p>
+<p>This modules specific operation implementations- said operations are
+derivatives of <a class="reference internal" href="pkgcore.operations.repo.html#module-pkgcore.operations.repo" title="pkgcore.operations.repo"><code class="xref py py-mod docutils literal notranslate"><span class="pre">pkgcore.operations.repo</span></code></a> classes.</p>
+<p>Generally speaking you only need to dig through this module if you’re trying to
+modify a binpkg repository operation- changing how it installs, or changing how
+it uninstalls, or adding a new operation (cleaning/cache regen for example).</p>
+<dl class="py class">
+<dt id="pkgcore.binpkg.repo_ops.install">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.repo_ops.</code><code class="sig-name descname">install</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repo_ops.html#install"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repo_ops.install" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.operations.repo.html#pkgcore.operations.repo.install" title="pkgcore.operations.repo.install"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.install</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.install.add_data">
+<code class="sig-name descname">add_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.install.add_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.install.finalize_data">
+<code class="sig-name descname">finalize_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.install.finalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.install.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.install.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.install.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.install.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.binpkg.repo_ops.operations">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.repo_ops.</code><code class="sig-name descname">operations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repository</span></em>, <em class="sig-param"><span class="n">disable_overrides</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">enable_overrides</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repo_ops.html#operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repo_ops.operations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.operations.repo.html#pkgcore.operations.repo.operations" title="pkgcore.operations.repo.operations"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.operations</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.binpkg.repo_ops.replace">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.repo_ops.</code><code class="sig-name descname">replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">oldpkg</span></em>, <em class="sig-param"><span class="n">newpkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repo_ops.html#replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repo_ops.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.binpkg.repo_ops.install" title="pkgcore.binpkg.repo_ops.install"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.binpkg.repo_ops.install</span></code></a>, <a class="reference internal" href="#pkgcore.binpkg.repo_ops.uninstall" title="pkgcore.binpkg.repo_ops.uninstall"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.binpkg.repo_ops.uninstall</span></code></a>, <a class="reference internal" href="pkgcore.operations.repo.html#pkgcore.operations.repo.replace" title="pkgcore.operations.repo.replace"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.replace</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.replace.add_data">
+<code class="sig-name descname">add_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.replace.add_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.replace.finalize_data">
+<code class="sig-name descname">finalize_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.replace.finalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.replace.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.replace.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.replace.remove_data">
+<code class="sig-name descname">remove_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.replace.remove_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.replace.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.replace.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.binpkg.repo_ops.uninstall">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.repo_ops.</code><code class="sig-name descname">uninstall</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/repo_ops.html#uninstall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.repo_ops.uninstall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.operations.repo.html#pkgcore.operations.repo.uninstall" title="pkgcore.operations.repo.uninstall"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.uninstall</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.uninstall.finalize_data">
+<code class="sig-name descname">finalize_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.uninstall.finalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.uninstall.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.uninstall.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.uninstall.remove_data">
+<code class="sig-name descname">remove_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.uninstall.remove_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.repo_ops.uninstall.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.binpkg.repo_ops.uninstall.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.repo_ops module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

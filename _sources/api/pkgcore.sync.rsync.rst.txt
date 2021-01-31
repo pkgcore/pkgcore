@@ -1,0 +1,7 @@
+pkgcore.sync.rsync module
+=========================
+
+.. automodule:: pkgcore.sync.rsync
+   :members:
+   :undoc-members:
+   :show-inheritance:

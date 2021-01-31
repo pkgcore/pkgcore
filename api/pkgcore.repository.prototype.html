@@ -1,0 +1,278 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.repository.prototype module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.prototype module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.repository.prototype">
+<span id="pkgcore-repository-prototype-module"></span><h1>pkgcore.repository.prototype module<a class="headerlink" href="#module-pkgcore.repository.prototype" title="Permalink to this headline">¶</a></h1>
+<p>base repository template</p>
+<dl class="py class">
+<dt id="pkgcore.repository.prototype.CategoryIterValLazyDict">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.prototype.</code><code class="sig-name descname">CategoryIterValLazyDict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">get_keys_func</span></em>, <em class="sig-param"><span class="n">get_val_func</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#CategoryIterValLazyDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.CategoryIterValLazyDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.repository.prototype.IterValLazyDict</span></code></p>
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.CategoryIterValLazyDict.force_add">
+<code class="sig-name descname">force_add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#CategoryIterValLazyDict.force_add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.CategoryIterValLazyDict.force_add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.CategoryIterValLazyDict.force_remove">
+<code class="sig-name descname">force_remove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#CategoryIterValLazyDict.force_remove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.CategoryIterValLazyDict.force_remove" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.repository.prototype.PackageMapping">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.prototype.</code><code class="sig-name descname">PackageMapping</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_mapping</span></em>, <em class="sig-param"><span class="n">pull_vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#PackageMapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.PackageMapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.mappings.DictMixin</span></code></p>
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.PackageMapping.force_regen">
+<code class="sig-name descname">force_regen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cat</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#PackageMapping.force_regen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.PackageMapping.force_regen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.PackageMapping.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; a set-like object providing a view on D’s keys<a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#PackageMapping.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.PackageMapping.keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.repository.prototype.VersionMapping">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.prototype.</code><code class="sig-name descname">VersionMapping</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_mapping</span></em>, <em class="sig-param"><span class="n">pull_vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#VersionMapping"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.VersionMapping" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.mappings.DictMixin</span></code></p>
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.VersionMapping.force_regen">
+<code class="sig-name descname">force_regen</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">val</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#VersionMapping.force_regen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.VersionMapping.force_regen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.VersionMapping.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; a set-like object providing a view on D’s keys<a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#VersionMapping.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.VersionMapping.keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.repository.prototype.tree">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.repository.prototype.</code><code class="sig-name descname">tree</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">frozen</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#tree"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Template for all repository variants.</p>
+<dl>
+<dt>Args:</dt><dd><p>frozen (bool): controls whether the repository is mutable or immutable</p>
+</dd>
+<dt>Attributes:</dt><dd><p>raw_repo: if wrapping a repo, set raw_repo per instance to it
+livefs (bool): set it to True if it’s a repository representing a livefs
+package_class: callable to generate a package instance, must override
+configured (bool): if a repo is unusable for merging/unmerging</p>
+<blockquote>
+<div><p>without being configured, set it to False</p>
+</div></blockquote>
+<dl class="simple">
+<dt>configure: if the repository isn’t configured, must be a callable</dt><dd><p>yielding a configured form of the repository</p>
+</dd>
+<dt>frozen_settable (bool): controls whether frozen is able to be set</dt><dd><p>on initialization</p>
+</dd>
+</dl>
+<p>operations_kls: callable to generate a repo operations instance</p>
+<p>categories (dict): available categories in the repo
+packages (dict): mapping of packages to categories in the repo
+versions (dict): mapping of versions to packages in the repo
+frozen (bool): repository mutability status
+lock: TODO</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.aliases">
+<em class="property">property </em><code class="sig-name descname">aliases</code><a class="headerlink" href="#pkgcore.repository.prototype.tree.aliases" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.configure">
+<code class="sig-name descname">configure</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.configure" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.configured">
+<code class="sig-name descname">configured</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.configured" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.frozen_settable">
+<code class="sig-name descname">frozen_settable</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.frozen_settable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.get_operations">
+<code class="sig-name descname">get_operations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#tree.get_operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.tree.get_operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.has_match">
+<code class="sig-name descname">has_match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#tree.has_match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.tree.has_match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.is_supported">
+<code class="sig-name descname">is_supported</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.is_supported" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="n">sorter</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">pkg_filter</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">versioned</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">raw_pkg_cls</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">pkg_cls</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">yield_none</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#tree.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.tree.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generator that yields packages match a restriction.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>restrict</strong> (<a class="reference internal" href="pkgcore.restrictions.packages.html#pkgcore.restrictions.packages.PackageRestriction" title="pkgcore.restrictions.packages.PackageRestriction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pkgcore.restrictions.packages.PackageRestriction</span></code></a>
+instance.) – restriction to search via</p></li>
+<li><p><strong>sorter</strong> – callable to do sorting during searching-
+if sorting the results, use this instead of sorting externally.</p></li>
+<li><p><strong>pkg_filter</strong> – callable to do package filtering</p></li>
+<li><p><strong>versioned</strong> – boolean controlling returning versioned or unversioned pkgs</p></li>
+<li><p><strong>raw_pkg_cls</strong> – custom package class to use for generating raw pkg instances</p></li>
+<li><p><strong>pkg_cls</strong> – custom package class to override raw pkg instances with</p></li>
+<li><p><strong>yield_none</strong> – if True then itermatch will yield None for every
+non-matching package. This is meant for use in combination with
+C{twisted.task.cooperate} or other async uses where itermatch
+should not wait many (wallclock) seconds between yielding
+packages. If you override this method you should yield
+None in long-running loops, strictly calling it for every package
+is not necessary.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.livefs">
+<code class="sig-name descname">livefs</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.livefs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.masked">
+<code class="sig-name descname">masked</code><a class="headerlink" href="#pkgcore.repository.prototype.tree.masked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base package mask restriction.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#tree.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.tree.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.notify_add_package">
+<code class="sig-name descname">notify_add_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#tree.notify_add_package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.tree.notify_add_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>internal function</p>
+<p>notify the repository that a pkg is being added to it</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.notify_remove_package">
+<code class="sig-name descname">notify_remove_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/repository/prototype.html#tree.notify_remove_package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.repository.prototype.tree.notify_remove_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>internal function</p>
+<p>notify the repository that a pkg it provides is being removed</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.repository.prototype.tree.operations">
+<em class="property">property </em><code class="sig-name descname">operations</code><a class="headerlink" href="#pkgcore.repository.prototype.tree.operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.operations_kls">
+<code class="sig-name descname">operations_kls</code><a class="headerlink" href="#pkgcore.repository.prototype.tree.operations_kls" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="pkgcore.operations.repo.html#pkgcore.operations.repo.operations" title="pkgcore.operations.repo.operations"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.operations</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.package_class">
+<code class="sig-name descname">package_class</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.package_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.pkg_masks">
+<code class="sig-name descname">pkg_masks</code><em class="property"> = frozenset({})</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.pkg_masks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.repository.prototype.tree.raw_repo">
+<code class="sig-name descname">raw_repo</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.repository.prototype.tree.raw_repo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.prototype module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

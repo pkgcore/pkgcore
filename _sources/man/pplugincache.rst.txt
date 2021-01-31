@@ -1,0 +1,8 @@
+==========================================
+pplugincache - plugin cache update utility
+==========================================
+
+.. include:: pplugincache/_synopsis.rst
+.. include:: pplugincache/_description.rst
+.. include:: pplugincache/_options.rst
+.. include:: pplugincache/_subcommands.rst

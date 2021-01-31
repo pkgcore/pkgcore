@@ -1,0 +1,7 @@
+pinspect profile iuse_effective - output the IUSE_EFFECTIVE value for this profile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: iuse_effective/_synopsis.rst
+.. include:: iuse_effective/_description.rst
+.. include:: iuse_effective/_options.rst
+.. include:: iuse_effective/_subcommands.rst

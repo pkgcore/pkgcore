@@ -1,0 +1,507 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pconfig - configuration querying utility &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="pebuild - low-level ebuild utility" href="pebuild.html" />
+    <link rel="prev" title="pclonecache - repository cache clone utility" href="pclonecache.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pebuild.html" title="pebuild - low-level ebuild utility"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pclonecache.html" title="pclonecache - repository cache clone utility"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" accesskey="U">Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pconfig - configuration querying utility</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pconfig-configuration-querying-utility">
+<h1>pconfig - configuration querying utility<a class="headerlink" href="#pconfig-configuration-querying-utility" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="synopsis">
+<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h2>
+<p>pconfig [-h] [--version] [--debug] [-q] [-v] [--color BOOLEAN] [--add-config SECTION KEY VALUE] [--new-config SECTION KEY VALUE] [--empty-config] [--config PATH] {classes,describe_class,uncollapsable,dump,configurables,dump-uncollapsed,package,world} ...</p>
+</div>
+<div class="section" id="base-options">
+<h2>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h2>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--version</span></kbd></dt>
+<dd><p>Show this program's version information and exit.</p>
+<p>When running from within a git repo or a version
+installed from git the latest commit hash and date will
+be shown.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="config-options">
+<h2>Config Options<a class="headerlink" href="#config-options" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>--add-config SECTION KEY VALUE</dt><dd><p>modify existing pkgcore config section</p>
+</dd>
+<dt>--new-config SECTION KEY VALUE</dt><dd><p>add new pkgcore config section</p>
+</dd>
+</dl>
+<dl class="option-list">
+<dt><kbd><span class="option">--empty-config</span></kbd></dt>
+<dd><p>skip loading user/system pkgcore config</p>
+</dd>
+<dt><kbd><span class="option">--config <var>PATH</var></span></kbd></dt>
+<dd><p>use custom pkgcore config file</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="subcommands">
+<h2>Subcommands<a class="headerlink" href="#subcommands" title="Permalink to this headline">¶</a></h2>
+<p>configuration related subcommands</p>
+<div class="section" id="pconfig-classes-list-all-classes-referenced-by-the-config">
+<h3>pconfig classes - list all classes referenced by the config<a class="headerlink" href="#pconfig-classes-list-all-classes-referenced-by-the-config" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id1">
+<h3>Synopsis<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>pconfig classes [-h] [--debug] [-q] [-v] [--color BOOLEAN]</p>
+</div>
+<div class="section" id="id2">
+<h3>Base Options<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pconfig-describe-class-describe-the-arguments-a-class-needs-how-to-use-it-in-a-config">
+<h3>pconfig describe_class - describe the arguments a class needs, how to use it in a config<a class="headerlink" href="#pconfig-describe-class-describe-the-arguments-a-class-needs-how-to-use-it-in-a-config" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id3">
+<h3>Synopsis<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>pconfig describe_class [-h] [--debug] [-q] [-v] [--color BOOLEAN] target_class</p>
+</div>
+<div class="section" id="positional-arguments">
+<h3>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">target_class</dt>
+<dd class="field-odd"><p>The class to inspect and output details about</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id4">
+<h3>Base Options<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pconfig-uncollapsable-show-configuration-objects-that-could-not-be-collapsed-instantiated">
+<h3>pconfig uncollapsable - show configuration objects that could not be collapsed/instantiated<a class="headerlink" href="#pconfig-uncollapsable-show-configuration-objects-that-could-not-be-collapsed-instantiated" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id5">
+<h3>Synopsis<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<p>pconfig uncollapsable [-h] [--debug] [-q] [-v] [--color BOOLEAN]</p>
+</div>
+<div class="section" id="id6">
+<h3>Base Options<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pconfig-dump-dump-the-entire-configuration">
+<h3>pconfig dump - dump the entire configuration<a class="headerlink" href="#pconfig-dump-dump-the-entire-configuration" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id7">
+<h3>Synopsis<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<p>pconfig dump [-h] [--debug] [-q] [-v] [--color BOOLEAN] [typename]</p>
+</div>
+<div class="section" id="id8">
+<h3>Positional Arguments<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">typename</dt>
+<dd class="field-odd"><p>if specified, limit output to just config directives of this type (defaults to showing all types)</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id9">
+<h3>Base Options<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pconfig-configurables-list-registered-configurables-may-not-be-complete">
+<h3>pconfig configurables - list registered configurables (may not be complete)<a class="headerlink" href="#pconfig-configurables-list-registered-configurables-may-not-be-complete" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id10">
+<h3>Synopsis<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<p>pconfig configurables [-h] [--debug] [-q] [-v] [--color BOOLEAN] [typename]</p>
+</div>
+<div class="section" id="id11">
+<h3>Positional Arguments<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">typename</dt>
+<dd class="field-odd"><p>if specified, only output configurables of that type; else output all configurables</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id12">
+<h3>Base Options<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pconfig-dump-uncollapsed-dump-the-configuration-in-a-raw-uncollapsed-form">
+<h3>pconfig dump-uncollapsed - dump the configuration in a raw, uncollapsed form<a class="headerlink" href="#pconfig-dump-uncollapsed-dump-the-configuration-in-a-raw-uncollapsed-form" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id13">
+<h3>Synopsis<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<p>pconfig dump-uncollapsed [-h] [--debug] [-q] [-v] [--color BOOLEAN]</p>
+</div>
+<div class="section" id="id14">
+<h3>Base Options<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pconfig-package-invoke-a-packages-custom-configuration-scripts">
+<h3>pconfig package - invoke a packages custom configuration scripts<a class="headerlink" href="#pconfig-package-invoke-a-packages-custom-configuration-scripts" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id15">
+<h3>Synopsis<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<p>pconfig package [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] query [query ...]</p>
+</div>
+<div class="section" id="id16">
+<h3>Positional Arguments<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<dl class="field-list simple">
+<dt class="field-odd">query</dt>
+<dd class="field-odd"><p>restrictions/atoms; matching installed packages will be configured</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id17">
+<h3>Config Options<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id18">
+<h3>Base Options<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pconfig-world-inspect-and-modify-the-world-file">
+<h3>pconfig world - inspect and modify the world file<a class="headerlink" href="#pconfig-world-inspect-and-modify-the-world-file" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="id19">
+<h3>Synopsis<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
+<p>pconfig world [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-l] [-r REMOVE] [-a ADD]</p>
+</div>
+<div class="section" id="id20">
+<h3>Config Options<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">--domain <var>DOMAIN</var></span></kbd></dt>
+<dd><p>custom pkgcore domain to use for this operation</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id21">
+<h3>Base Options<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="command-modes">
+<h3>Command Modes<a class="headerlink" href="#command-modes" title="Permalink to this headline">¶</a></h3>
+<p>These options are directives for what to do with the world file. You
+can do multiple operations in a single invocation.  For example, you
+can have <cite>--add x11-wm/fluxbox --remove gnome-base/gnome -l</cite> to add
+fluxbox, remove gnome, and list the world file contents all in one
+call.</p>
+<dl class="option-list">
+<dt><kbd><span class="option">-l</span>, <span class="option">--list</span></kbd></dt>
+<dd><p>List the current world file contents for this domain.</p>
+</dd>
+<dt><kbd><span class="option">-r <var>REMOVE</var></span>, <span class="option">--remove <var>REMOVE</var></span></kbd></dt>
+<dd><p>Remove an entry from the world file.  Can be specified multiple times.</p>
+</dd>
+<dt><kbd><span class="option">-a <var>ADD</var></span>, <span class="option">--add <var>ADD</var></span></kbd></dt>
+<dd><p>Add an entry to the world file.  Can be specified multiple times.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pconfig - configuration querying utility</a><ul>
+<li><a class="reference internal" href="#synopsis">Synopsis</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#config-options">Config Options</a></li>
+<li><a class="reference internal" href="#subcommands">Subcommands</a><ul>
+<li><a class="reference internal" href="#pconfig-classes-list-all-classes-referenced-by-the-config">pconfig classes - list all classes referenced by the config</a></li>
+<li><a class="reference internal" href="#id1">Synopsis</a></li>
+<li><a class="reference internal" href="#id2">Base Options</a></li>
+<li><a class="reference internal" href="#pconfig-describe-class-describe-the-arguments-a-class-needs-how-to-use-it-in-a-config">pconfig describe_class - describe the arguments a class needs, how to use it in a config</a></li>
+<li><a class="reference internal" href="#id3">Synopsis</a></li>
+<li><a class="reference internal" href="#positional-arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id4">Base Options</a></li>
+<li><a class="reference internal" href="#pconfig-uncollapsable-show-configuration-objects-that-could-not-be-collapsed-instantiated">pconfig uncollapsable - show configuration objects that could not be collapsed/instantiated</a></li>
+<li><a class="reference internal" href="#id5">Synopsis</a></li>
+<li><a class="reference internal" href="#id6">Base Options</a></li>
+<li><a class="reference internal" href="#pconfig-dump-dump-the-entire-configuration">pconfig dump - dump the entire configuration</a></li>
+<li><a class="reference internal" href="#id7">Synopsis</a></li>
+<li><a class="reference internal" href="#id8">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id9">Base Options</a></li>
+<li><a class="reference internal" href="#pconfig-configurables-list-registered-configurables-may-not-be-complete">pconfig configurables - list registered configurables (may not be complete)</a></li>
+<li><a class="reference internal" href="#id10">Synopsis</a></li>
+<li><a class="reference internal" href="#id11">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id12">Base Options</a></li>
+<li><a class="reference internal" href="#pconfig-dump-uncollapsed-dump-the-configuration-in-a-raw-uncollapsed-form">pconfig dump-uncollapsed - dump the configuration in a raw, uncollapsed form</a></li>
+<li><a class="reference internal" href="#id13">Synopsis</a></li>
+<li><a class="reference internal" href="#id14">Base Options</a></li>
+<li><a class="reference internal" href="#pconfig-package-invoke-a-packages-custom-configuration-scripts">pconfig package - invoke a packages custom configuration scripts</a></li>
+<li><a class="reference internal" href="#id15">Synopsis</a></li>
+<li><a class="reference internal" href="#id16">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id17">Config Options</a></li>
+<li><a class="reference internal" href="#id18">Base Options</a></li>
+<li><a class="reference internal" href="#pconfig-world-inspect-and-modify-the-world-file">pconfig world - inspect and modify the world file</a></li>
+<li><a class="reference internal" href="#id19">Synopsis</a></li>
+<li><a class="reference internal" href="#id20">Config Options</a></li>
+<li><a class="reference internal" href="#id21">Base Options</a></li>
+<li><a class="reference internal" href="#command-modes">Command Modes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pclonecache.html"
+                        title="previous chapter">pclonecache - repository cache clone utility</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pebuild.html"
+                        title="next chapter">pebuild - low-level ebuild utility</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pebuild.html" title="pebuild - low-level ebuild utility"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pclonecache.html" title="pclonecache - repository cache clone utility"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../man.html" >Man Pages</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pconfig - configuration querying utility</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

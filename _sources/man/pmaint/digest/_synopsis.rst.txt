@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pmaint digest [--domain DOMAIN] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-f] [-m] [-r REPO] [target [target ...]]

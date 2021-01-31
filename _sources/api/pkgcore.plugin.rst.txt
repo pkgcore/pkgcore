@@ -1,0 +1,7 @@
+pkgcore.plugin module
+=====================
+
+.. automodule:: pkgcore.plugin
+   :members:
+   :undoc-members:
+   :show-inheritance:

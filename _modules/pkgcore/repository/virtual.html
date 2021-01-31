@@ -1,0 +1,260 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.repository.virtual &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.virtual</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.repository.virtual</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">virtual repository, pkgs generated via callable</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;tree&quot;</span><span class="p">,</span> <span class="s2">&quot;RestrictionRepo&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">cmp</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">stable_unique</span>
+
+<span class="kn">from</span> <span class="nn">..ebuild</span> <span class="kn">import</span> <span class="n">atom</span>
+<span class="kn">from</span> <span class="nn">..ebuild.conditionals</span> <span class="kn">import</span> <span class="n">DepSet</span>
+<span class="kn">from</span> <span class="nn">..package</span> <span class="kn">import</span> <span class="n">base</span> <span class="k">as</span> <span class="n">pkg_base</span>
+<span class="kn">from</span> <span class="nn">..package</span> <span class="kn">import</span> <span class="n">virtual</span>
+<span class="kn">from</span> <span class="nn">..restrictions.boolean</span> <span class="kn">import</span> <span class="n">OrRestriction</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">prototype</span>
+
+
+<div class="viewcode-block" id="tree"><a class="viewcode-back" href="../../../api/pkgcore.repository.virtual.html#pkgcore.repository.virtual.tree">[docs]</a><span class="k">class</span> <span class="nc">tree</span><span class="p">(</span><span class="n">prototype</span><span class="o">.</span><span class="n">tree</span><span class="p">):</span>
+
+    <span class="n">factory_kls</span> <span class="o">=</span> <span class="nb">staticmethod</span><span class="p">(</span><span class="n">virtual</span><span class="o">.</span><span class="n">factory</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">livefs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param grab_virtuals_func: callable to get a package -&gt; versions mapping</span>
+<span class="sd">        :param livefs: is this a livefs repository?</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">frozen</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">livefs</span> <span class="o">=</span> <span class="n">livefs</span>
+        <span class="n">vf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">factory_kls</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">package_class</span> <span class="o">=</span> <span class="n">vf</span><span class="o">.</span><span class="n">new_package</span>
+
+    <span class="k">def</span> <span class="nf">_expand_vers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cp</span><span class="p">,</span> <span class="n">ver</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_expand_vers&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_internal_gen_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">sorter</span><span class="p">):</span>
+        <span class="n">pkls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_class</span>
+        <span class="k">for</span> <span class="n">cp</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">sorter</span><span class="p">(</span>
+                    <span class="n">pkls</span><span class="p">(</span><span class="n">provider</span><span class="p">,</span> <span class="n">cp</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">cp</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">ver</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">ver</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">versions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="p">())</span>
+                    <span class="k">for</span> <span class="n">provider</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expand_vers</span><span class="p">(</span><span class="n">cp</span><span class="p">,</span> <span class="n">ver</span><span class="p">)):</span>
+                <span class="k">yield</span> <span class="n">pkg</span>
+
+    <span class="k">def</span> <span class="nf">_get_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">optional_category</span><span class="p">):</span>
+        <span class="c1"># return if optional_category is passed... cause it&#39;s not yet supported</span>
+        <span class="k">if</span> <span class="n">optional_category</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;virtual&quot;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="nf">_load_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_load_data&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">category</span> <span class="o">!=</span> <span class="s1">&#39;virtual&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;no </span><span class="si">{</span><span class="n">category</span><span class="si">}</span><span class="s1"> category for this repository&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_load_data</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">packages</span><span class="p">[</span><span class="n">category</span><span class="p">]</span></div>
+
+
+<span class="k">class</span> <span class="nc">InjectedPkg</span><span class="p">(</span><span class="n">pkg_base</span><span class="o">.</span><span class="n">wrapper</span><span class="p">):</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;bdepend&quot;</span><span class="p">,</span> <span class="s2">&quot;depend&quot;</span><span class="p">,</span> <span class="s2">&quot;rdepend&quot;</span><span class="p">,</span> <span class="s2">&quot;pdepend&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="s2">&quot;built&quot;</span><span class="p">,</span> <span class="s2">&quot;versioned_atom&quot;</span><span class="p">,</span> <span class="s2">&quot;unversioned_atom&quot;</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">default_bdepend</span> <span class="o">=</span> <span class="n">default_depend</span> <span class="o">=</span> <span class="n">default_rdepend</span> <span class="o">=</span> <span class="n">default_pdepend</span> <span class="o">=</span> <span class="n">DepSet</span><span class="p">()</span>
+    <span class="n">package_is_real</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">is_supported</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_pkg</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">pkg_base</span><span class="o">.</span><span class="n">wrapper</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_pkg</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;repo&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;repo_id&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;built&quot;</span><span class="p">,</span> <span class="n">repo</span><span class="o">.</span><span class="n">livefs</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;versioned_atom&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;unversioned_atom&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;bdepend&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_bdepend</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;depend&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_depend</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;rdepend&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_rdepend</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;pdepend&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_pdepend</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">use</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">use</span>
+
+    <span class="k">def</span> <span class="nf">__cmp__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">InjectedPkg</span><span class="p">):</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_raw_pkg</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">pkg_base</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">versioned_atom</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="n">cmp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">InjectedPkg</span><span class="p">):</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_raw_pkg</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">pkg_base</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">versioned_atom</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">InjectedPkg</span><span class="p">):</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">_raw_pkg</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">pkg_base</span><span class="o">.</span><span class="n">base</span><span class="p">):</span>
+            <span class="n">other</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">versioned_atom</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;injected restriction pkg: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;</span><span class="si">%s</span><span class="s2"> cpv=</span><span class="si">%r</span><span class="s2"> @</span><span class="si">%#8x</span><span class="s2">&gt;&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">,</span> <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RestrictionRepo"><a class="viewcode-back" href="../../../api/pkgcore.repository.virtual.html#pkgcore.repository.virtual.RestrictionRepo">[docs]</a><span class="k">class</span> <span class="nc">RestrictionRepo</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fake repo populated by packages matching a given restriction.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo_id</span><span class="p">,</span> <span class="n">restrictions</span><span class="o">=</span><span class="p">(),</span> <span class="n">frozen</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">livefs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_id</span> <span class="o">=</span> <span class="n">repo_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">restrictions</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">livefs</span><span class="o">=</span><span class="n">livefs</span><span class="p">,</span> <span class="n">frozen</span><span class="o">=</span><span class="n">frozen</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="p">[</span><span class="n">InjectedPkg</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">val</span><span class="p">)]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">restriction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">OrRestriction</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_get_categories</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">category</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_packages</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">category</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">package</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_versions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">package</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">version</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RestrictionRepo.itermatch"><a class="viewcode-back" href="../../../api/pkgcore.repository.virtual.html#pkgcore.repository.virtual.RestrictionRepo.itermatch">[docs]</a>    <span class="k">def</span> <span class="nf">itermatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">sorter</span><span class="o">=</span><span class="nb">iter</span><span class="p">,</span> <span class="n">pkg_cls</span><span class="o">=</span><span class="n">InjectedPkg</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">):</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">restrict</span><span class="o">.</span><span class="n">intersects</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span>
+
+        <span class="c1"># yield any matching pkgs already injected into the repo</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">func</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">_raw_pkg</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">pkg</span>
+
+        <span class="c1"># inject/yield any matching atoms into the repo that aren&#39;t blockers</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">restrict</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">restrict</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+                <span class="n">p</span> <span class="o">=</span> <span class="n">pkg_cls</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_injected_pkgs</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">yield</span> <span class="n">p</span></div>
+
+<div class="viewcode-block" id="RestrictionRepo.match"><a class="viewcode-back" href="../../../api/pkgcore.repository.virtual.html#pkgcore.repository.virtual.RestrictionRepo.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">))</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.virtual</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

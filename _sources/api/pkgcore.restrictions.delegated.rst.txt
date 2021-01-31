@@ -1,0 +1,7 @@
+pkgcore.restrictions.delegated module
+=====================================
+
+.. automodule:: pkgcore.restrictions.delegated
+   :members:
+   :undoc-members:
+   :show-inheritance:

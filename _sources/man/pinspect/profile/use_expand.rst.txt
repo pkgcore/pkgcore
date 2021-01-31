@@ -1,0 +1,7 @@
+pinspect profile use_expand - output the USE_EXPAND configuration for this profile
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: use_expand/_synopsis.rst
+.. include:: use_expand/_description.rst
+.. include:: use_expand/_options.rst
+.. include:: use_expand/_subcommands.rst

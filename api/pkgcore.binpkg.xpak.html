@@ -1,0 +1,170 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.binpkg.xpak module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.xpak module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.binpkg.xpak">
+<span id="pkgcore-binpkg-xpak-module"></span><h1>pkgcore.binpkg.xpak module<a class="headerlink" href="#module-pkgcore.binpkg.xpak" title="Permalink to this headline">¶</a></h1>
+<p>XPAK container support</p>
+<dl class="py exception">
+<dt id="pkgcore.binpkg.xpak.MalformedXpak">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.binpkg.xpak.</code><code class="sig-name descname">MalformedXpak</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#MalformedXpak"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.MalformedXpak" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreException" title="pkgcore.exceptions.PkgcoreException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreException</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.binpkg.xpak.Xpak">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.binpkg.xpak.</code><code class="sig-name descname">Xpak</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#Xpak"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.binpkg.xpak.Xpak.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#Xpak.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.xpak.Xpak.header">
+<code class="sig-name descname">header</code><em class="property"> = &lt;snakeoil.struct_compat.Struct object&gt;</em><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.header" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.xpak.Xpak.header_pre_magic">
+<code class="sig-name descname">header_pre_magic</code><em class="property"> = b'XPAKPACK'</em><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.header_pre_magic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.xpak.Xpak.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#Xpak.items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.xpak.Xpak.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#Xpak.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.keys" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.xpak.Xpak.keys_dict">
+<code class="sig-name descname">keys_dict</code><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.keys_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.xpak.Xpak.pop">
+<code class="sig-name descname">pop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">a</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#Xpak.pop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.pop" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.xpak.Xpak.trailer">
+<code class="sig-name descname">trailer</code><em class="property"> = &lt;snakeoil.struct_compat.Struct object&gt;</em><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.trailer" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.xpak.Xpak.trailer_post_magic">
+<code class="sig-name descname">trailer_post_magic</code><em class="property"> = b'STOP'</em><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.trailer_post_magic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.xpak.Xpak.trailer_pre_magic">
+<code class="sig-name descname">trailer_pre_magic</code><em class="property"> = b'XPAKSTOP'</em><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.trailer_pre_magic" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.xpak.Xpak.values">
+<code class="sig-name descname">values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#Xpak.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.binpkg.xpak.Xpak.write_xpak">
+<em class="property">classmethod </em><code class="sig-name descname">write_xpak</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">target_source</span></em>, <em class="sig-param"><span class="n">data</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/binpkg/xpak.html#Xpak.write_xpak"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.write_xpak" title="Permalink to this definition">¶</a></dt>
+<dd><p>write an xpak dict to disk; overwriting an xpak if it exists</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_source</strong> – string path, or           <code class="xref py py-obj docutils literal notranslate"><span class="pre">snakeoil.data_source.base</span></code> derivative</p></li>
+<li><p><strong>data</strong> – mapping instance to write into the xpak.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>xpak instance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.binpkg.xpak.Xpak.xpak_start">
+<code class="sig-name descname">xpak_start</code><a class="headerlink" href="#pkgcore.binpkg.xpak.Xpak.xpak_start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.binpkg.xpak module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

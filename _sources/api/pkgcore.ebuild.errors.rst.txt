@@ -1,0 +1,7 @@
+pkgcore.ebuild.errors module
+============================
+
+.. automodule:: pkgcore.ebuild.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:

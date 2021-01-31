@@ -1,0 +1,953 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.domain &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.domain</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.domain</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">gentoo configuration domain</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;domain&quot;</span><span class="p">,)</span>
+
+<span class="c1"># XXX doc this up better...</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">multiprocessing</span> <span class="kn">import</span> <span class="n">cpu_count</span>
+<span class="kn">from</span> <span class="nn">operator</span> <span class="kn">import</span> <span class="n">itemgetter</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.bash</span> <span class="kn">import</span> <span class="n">iter_read_bash</span><span class="p">,</span> <span class="n">read_bash_dict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.cli.exceptions</span> <span class="kn">import</span> <span class="n">find_user_exception</span>
+<span class="kn">from</span> <span class="nn">snakeoil.data_source</span> <span class="kn">import</span> <span class="n">local_source</span>
+<span class="kn">from</span> <span class="nn">snakeoil.log</span> <span class="kn">import</span> <span class="n">suppress_logging</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ImmutableDict</span><span class="p">,</span> <span class="n">ProtectedDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.process.spawn</span> <span class="kn">import</span> <span class="n">spawn_get_output</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">predicate_split</span><span class="p">,</span> <span class="n">split_negations</span><span class="p">,</span> <span class="n">stable_unique</span>
+
+<span class="kn">from</span> <span class="nn">..binpkg</span> <span class="kn">import</span> <span class="n">repository</span> <span class="k">as</span> <span class="n">binary_repo</span>
+<span class="kn">from</span> <span class="nn">..cache.flat_hash</span> <span class="kn">import</span> <span class="n">md5_cache</span>
+<span class="kn">from</span> <span class="nn">..config</span> <span class="kn">import</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">config_errors</span>
+<span class="kn">from</span> <span class="nn">..config.domain</span> <span class="kn">import</span> <span class="n">Failure</span>
+<span class="kn">from</span> <span class="nn">..config.domain</span> <span class="kn">import</span> <span class="n">domain</span> <span class="k">as</span> <span class="n">config_domain</span>
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+<span class="kn">from</span> <span class="nn">..fs.livefs</span> <span class="kn">import</span> <span class="n">iter_scan</span><span class="p">,</span> <span class="n">sorted_scan</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..repository</span> <span class="kn">import</span> <span class="n">errors</span> <span class="k">as</span> <span class="n">repo_errors</span>
+<span class="kn">from</span> <span class="nn">..repository</span> <span class="kn">import</span> <span class="n">filtered</span>
+<span class="kn">from</span> <span class="nn">..repository.util</span> <span class="kn">import</span> <span class="n">RepositoryGroup</span>
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">packages</span><span class="p">,</span> <span class="n">values</span>
+<span class="kn">from</span> <span class="nn">..restrictions.delegated</span> <span class="kn">import</span> <span class="n">delegate</span>
+<span class="kn">from</span> <span class="nn">..util.parserestrict</span> <span class="kn">import</span> <span class="n">ParseError</span><span class="p">,</span> <span class="n">parse_match</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">const</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">repository</span> <span class="k">as</span> <span class="n">ebuild_repo</span>
+<span class="kn">from</span> <span class="nn">.atom</span> <span class="kn">import</span> <span class="n">atom</span> <span class="k">as</span> <span class="n">_atom</span>
+<span class="kn">from</span> <span class="nn">.misc</span> <span class="kn">import</span> <span class="p">(</span><span class="n">ChunkedDataDict</span><span class="p">,</span> <span class="n">chunked_data</span><span class="p">,</span> <span class="n">collapsed_restrict_to_data</span><span class="p">,</span>
+                   <span class="n">incremental_expansion</span><span class="p">,</span> <span class="n">incremental_expansion_license</span><span class="p">,</span>
+                   <span class="n">non_incremental_collapsed_restrict_to_data</span><span class="p">,</span>
+                   <span class="n">optimize_incrementals</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">.portage_conf</span> <span class="kn">import</span> <span class="n">PortageConfig</span>
+<span class="kn">from</span> <span class="nn">.repo_objs</span> <span class="kn">import</span> <span class="n">OverlayedLicenses</span><span class="p">,</span> <span class="n">RepoConfig</span>
+<span class="kn">from</span> <span class="nn">.triggers</span> <span class="kn">import</span> <span class="n">GenerateTriggers</span>
+
+
+<span class="k">def</span> <span class="nf">package_masks</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">parse_match</span><span class="p">(</span><span class="n">line</span><span class="p">),</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">path</span>
+        <span class="k">except</span> <span class="n">ParseError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: parsing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">package_keywords_splitter</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">parse_match</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">:]),</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">path</span>
+        <span class="k">except</span> <span class="n">ParseError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: parsing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">package_env_splitter</span><span class="p">(</span><span class="n">basedir</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s2">: missing file reference: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">env_file</span> <span class="ow">in</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">basedir</span><span class="p">,</span> <span class="n">env_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fp</span><span class="p">):</span>
+                <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s2">: nonexistent file: </span><span class="si">{</span><span class="n">fp</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">parse_match</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">paths</span><span class="p">),</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">path</span>
+        <span class="k">except</span> <span class="n">ParseError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: parsing error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">apply_mask_filter</span><span class="p">(</span><span class="n">globs</span><span class="p">,</span> <span class="n">atoms</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+    <span class="c1"># mode is ignored; non applicable.</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="n">globs</span><span class="p">,</span> <span class="n">atoms</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">())):</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<span class="k">def</span> <span class="nf">make_mask_filter</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">atoms</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">globs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">_atom</span><span class="p">):</span>
+            <span class="n">atoms</span><span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">globs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">delegate</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">apply_mask_filter</span><span class="p">,</span> <span class="n">globs</span><span class="p">,</span> <span class="n">atoms</span><span class="p">),</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">generate_filter</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">unmasks</span><span class="p">,</span> <span class="o">*</span><span class="n">extra</span><span class="p">):</span>
+    <span class="c1"># note that we ignore unmasking if masking isn&#39;t specified.</span>
+    <span class="c1"># no point, mainly</span>
+    <span class="n">masking</span> <span class="o">=</span> <span class="n">make_mask_filter</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">unmasking</span> <span class="o">=</span> <span class="n">make_mask_filter</span><span class="p">(</span><span class="n">unmasks</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="k">if</span> <span class="n">masking</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">unmasking</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">(</span><span class="n">masking</span><span class="p">,</span> <span class="n">unmasking</span><span class="p">,</span> <span class="n">disable_inst_caching</span><span class="o">=</span><span class="kc">True</span><span class="p">),)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="p">(</span><span class="n">masking</span><span class="p">,)</span>
+    <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="n">disable_inst_caching</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">finalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">r</span> <span class="o">+</span> <span class="n">extra</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_read_config_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read all the data files under a given path.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">fs_obj</span> <span class="ow">in</span> <span class="n">iter_scan</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">follow_symlinks</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fs_obj</span><span class="o">.</span><span class="n">is_reg</span> <span class="ow">or</span> <span class="s1">&#39;/.&#39;</span> <span class="ow">in</span> <span class="n">fs_obj</span><span class="o">.</span><span class="n">location</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">iter_read_bash</span><span class="p">(</span>
+                    <span class="n">fs_obj</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">allow_line_cont</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">enum_line</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">fs_obj</span><span class="o">.</span><span class="n">location</span>
+    <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Failure</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed reading </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+
+<span class="k">def</span> <span class="nf">load_property</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">read_func</span><span class="o">=</span><span class="n">_read_config_file</span><span class="p">,</span>
+                  <span class="n">parse_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">fallback</span><span class="o">=</span><span class="p">()):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator for parsing files using specified read/parse methods.</span>
+
+<span class="sd">    :param filename: The filename to parse within the config directory.</span>
+<span class="sd">    :keyword read_func: An invokable used to read the specified file.</span>
+<span class="sd">    :keyword parse_func: An invokable used to parse the data.</span>
+<span class="sd">    :keyword fallback: What to return if the file does not exist.</span>
+<span class="sd">    :return: A :py:`klass.jit.attr_named` property instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_load_and_invoke</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">fallback</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">):</span>
+                <span class="c1"># translate root fs calls to prefixed root fs</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># assume relative files are inside the config dir</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">parse_func</span><span class="p">(</span><span class="n">read_func</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">fallback</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">doc</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s1">&#39;__doc__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="n">jit_attr_named</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;_jit_</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="n">doc</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jit_attr_named</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">_load_and_invoke</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">fallback</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">f</span>
+
+
+<span class="c1"># ow ow ow ow ow ow....</span>
+<span class="c1"># this manages a *lot* of crap.  so... this is fun.</span>
+<span class="c1">#</span>
+<span class="c1"># note also, that this is rather ebuild centric. it shouldn&#39;t be, and</span>
+<span class="c1"># should be redesigned to be a seperation of configuration</span>
+<span class="c1"># instantiation manglers, and then the ebuild specific chunk (which is</span>
+<span class="c1"># selected by config)</span>
+<div class="viewcode-block" id="domain"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.domain.html#pkgcore.ebuild.domain.domain">[docs]</a><span class="k">class</span> <span class="nc">domain</span><span class="p">(</span><span class="n">config_domain</span><span class="p">):</span>
+
+    <span class="c1"># XXX ouch, verify this crap and add defaults and stuff</span>
+    <span class="n">_types</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;profile&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:profile&#39;</span><span class="p">,</span> <span class="s1">&#39;fetcher&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:fetcher&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;repos&#39;</span><span class="p">:</span> <span class="s1">&#39;lazy_refs:repo&#39;</span><span class="p">,</span> <span class="s1">&#39;vdb&#39;</span><span class="p">:</span> <span class="s1">&#39;lazy_refs:repo&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;str&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">for</span> <span class="n">_thing</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;root&#39;</span><span class="p">,</span> <span class="s1">&#39;config_dir&#39;</span><span class="p">,</span> <span class="s1">&#39;CHOST&#39;</span><span class="p">,</span> <span class="s1">&#39;CBUILD&#39;</span><span class="p">,</span> <span class="s1">&#39;CTARGET&#39;</span><span class="p">,</span> <span class="s1">&#39;CFLAGS&#39;</span><span class="p">,</span> <span class="s1">&#39;PATH&#39;</span><span class="p">,</span>
+                   <span class="s1">&#39;PORTAGE_TMPDIR&#39;</span><span class="p">,</span> <span class="s1">&#39;DISTCC_PATH&#39;</span><span class="p">,</span> <span class="s1">&#39;DISTCC_DIR&#39;</span><span class="p">,</span> <span class="s1">&#39;CCACHE_DIR&#39;</span><span class="p">):</span>
+        <span class="n">_types</span><span class="p">[</span><span class="n">_thing</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;str&#39;</span>
+
+    <span class="c1"># TODO this is missing defaults</span>
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span>
+        <span class="n">_types</span><span class="p">,</span> <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;domain&#39;</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;repos&#39;</span><span class="p">,</span> <span class="s1">&#39;profile&#39;</span><span class="p">,</span> <span class="s1">&#39;vdb&#39;</span><span class="p">,</span> <span class="s1">&#39;fetcher&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">],</span>
+        <span class="n">allow_unknowns</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">del</span> <span class="n">_types</span><span class="p">,</span> <span class="n">_thing</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">repos</span><span class="p">,</span> <span class="n">vdb</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">root</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">config_dir</span><span class="o">=</span><span class="s1">&#39;/etc/portage&#39;</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span>
+                 <span class="n">fetcher</span><span class="p">,</span> <span class="o">**</span><span class="n">settings</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s2">&quot;ROOT&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">root</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config_dir</span> <span class="o">=</span> <span class="n">config_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prefix</span> <span class="o">=</span> <span class="n">prefix</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ebuild_hook_dir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;env&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetcher</span> <span class="o">=</span> <span class="n">fetcher</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__repos</span> <span class="o">=</span> <span class="n">repos</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__vdb</span> <span class="o">=</span> <span class="n">vdb</span>
+
+        <span class="c1"># prevent critical variables from being changed in make.conf</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">profile_only_variables</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">del</span> <span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="c1"># Protect original settings from being overridden so matching</span>
+        <span class="c1"># package.env settings can be overlaid properly.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_settings</span> <span class="o">=</span> <span class="n">ProtectedDict</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;/etc/profile.env&quot;</span><span class="p">,</span> <span class="n">read_func</span><span class="o">=</span><span class="n">read_bash_dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">system_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="c1"># prepend system profile $PATH if it exists</span>
+        <span class="k">if</span> <span class="s1">&#39;PATH&#39;</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">stable_unique</span><span class="p">(</span>
+                <span class="n">data</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">)</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="p">))</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">pathsep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ImmutableDict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_reset_settings&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">settings</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_settings</span>
+        <span class="k">if</span> <span class="s1">&#39;CHOST&#39;</span> <span class="ow">in</span> <span class="n">settings</span> <span class="ow">and</span> <span class="s1">&#39;CBUILD&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+            <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;CBUILD&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;CHOST&#39;</span><span class="p">]</span>
+
+        <span class="c1"># if unset, MAKEOPTS defaults to CPU thread count</span>
+        <span class="k">if</span> <span class="s1">&#39;MAKEOPTS&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+            <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;MAKEOPTS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;-j</span><span class="si">%i</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">cpu_count</span><span class="p">()</span>
+
+        <span class="c1"># reformat env.d and make.conf incrementals</span>
+        <span class="n">system_profile_settings</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="n">system_profile_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_profile</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">())</span>
+            <span class="n">make_conf_val</span> <span class="o">=</span> <span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">())</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">system_profile_val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">system_profile_val</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">system_profile_val</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">make_conf_val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="n">make_conf_val</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">make_conf_val</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="n">system_profile_settings</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">system_profile_val</span>
+            <span class="n">settings</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">make_conf_val</span>
+
+        <span class="c1"># roughly... all incremental stacks should be interpreted left -&gt; right</span>
+        <span class="c1"># as such we start with the env.d settings, append profile settings,</span>
+        <span class="c1"># and finally append make.conf settings onto that.</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">default_env</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+                <span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+                <span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">system_profile_settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">+</span> <span class="n">v</span> <span class="o">+</span> <span class="n">settings</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+        <span class="c1"># next we finalize incrementals.</span>
+        <span class="k">for</span> <span class="n">incremental</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">:</span>
+            <span class="c1"># Skip USE/ACCEPT_LICENSE for the time being; hack; we need the</span>
+            <span class="c1"># negations currently so that pkg iuse induced enablings can be</span>
+            <span class="c1"># disabled by negations. For example, think of the profile doing</span>
+            <span class="c1"># USE=-cdr for brasero w/ IUSE=+cdr. Similarly, ACCEPT_LICENSE is</span>
+            <span class="c1"># skipped because negations are required for license filtering.</span>
+            <span class="k">if</span> <span class="n">incremental</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">settings</span> <span class="ow">or</span> <span class="n">incremental</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;USE&quot;</span><span class="p">,</span> <span class="s2">&quot;ACCEPT_LICENSE&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">settings</span><span class="p">[</span><span class="n">incremental</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">incremental_expansion</span><span class="p">(</span>
+                <span class="n">settings</span><span class="p">[</span><span class="n">incremental</span><span class="p">],</span>
+                <span class="n">msg_prefix</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;while expanding </span><span class="si">{</span><span class="n">incremental</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="s1">&#39;ACCEPT_KEYWORDS&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">settings</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Failure</span><span class="p">(</span><span class="s2">&quot;No ACCEPT_KEYWORDS setting detected from profile, &quot;</span>
+                          <span class="s2">&quot;or user config&quot;</span><span class="p">)</span>
+        <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;ACCEPT_KEYWORDS&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">incremental_expansion</span><span class="p">(</span>
+            <span class="n">settings</span><span class="p">[</span><span class="s1">&#39;ACCEPT_KEYWORDS&#39;</span><span class="p">],</span>
+            <span class="n">msg_prefix</span><span class="o">=</span><span class="s1">&#39;while expanding ACCEPT_KEYWORDS&#39;</span><span class="p">)</span>
+
+        <span class="c1"># pull trigger options from the env</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_triggers</span> <span class="o">=</span> <span class="n">GenerateTriggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ImmutableDict</span><span class="p">(</span><span class="n">settings</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">arch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;ARCH&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">Failure</span><span class="p">(</span><span class="s2">&quot;No ARCH setting detected from profile, or user config&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;ARCH&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stable_arch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">arch</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">unstable_arch</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;~</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">arch</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_reset_features&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">features</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">conf_features</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;FEATURES&#39;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="n">env_features</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;FEATURES&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">optimize_incrementals</span><span class="p">(</span><span class="n">conf_features</span> <span class="o">+</span> <span class="n">env_features</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_reset_use&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># append expanded use, FEATURES, and environment defined USE flags</span>
+        <span class="n">use</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;USE&#39;</span><span class="p">,</span> <span class="p">()))</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">expand_use</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">))</span>
+
+        <span class="c1"># hackish implementation; if test is on, flip on the flag</span>
+        <span class="k">if</span> <span class="s2">&quot;test&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
+            <span class="n">use</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;prefix&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
+            <span class="n">use</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;prefix&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">optimize_incrementals</span><span class="p">(</span><span class="n">use</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;USE&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_reset_enabled_use&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">enabled_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">use</span> <span class="o">=</span> <span class="n">ChunkedDataDict</span><span class="p">()</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">add_bare_global</span><span class="p">(</span><span class="o">*</span><span class="n">split_negations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use</span><span class="p">))</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">pkg_use</span><span class="p">)</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">update_from_stream</span><span class="p">(</span><span class="n">chunked_data</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="o">*</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_use</span><span class="p">)</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">use</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_none</span>
+    <span class="k">def</span> <span class="nf">forced_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">use</span> <span class="o">=</span> <span class="n">ChunkedDataDict</span><span class="p">()</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="s1">&#39;forced_use&#39;</span><span class="p">))</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">add_bare_global</span><span class="p">((),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arch</span><span class="p">,))</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">use</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_none</span>
+    <span class="k">def</span> <span class="nf">stable_forced_use</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">use</span> <span class="o">=</span> <span class="n">ChunkedDataDict</span><span class="p">()</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="s1">&#39;stable_forced_use&#39;</span><span class="p">))</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">add_bare_global</span><span class="p">((),</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arch</span><span class="p">,))</span>
+        <span class="n">use</span><span class="o">.</span><span class="n">freeze</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">use</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.mask&quot;</span><span class="p">,</span> <span class="n">parse_func</span><span class="o">=</span><span class="n">package_masks</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.unmask&quot;</span><span class="p">,</span> <span class="n">parse_func</span><span class="o">=</span><span class="n">package_masks</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_unmasks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="c1"># TODO: deprecated, remove in 0.11</span>
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.keywords&quot;</span><span class="p">,</span> <span class="n">parse_func</span><span class="o">=</span><span class="n">package_keywords_splitter</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stable_unique</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.accept_keywords&quot;</span><span class="p">,</span> <span class="n">parse_func</span><span class="o">=</span><span class="n">package_keywords_splitter</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_accept_keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stable_unique</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.license&quot;</span><span class="p">,</span> <span class="n">parse_func</span><span class="o">=</span><span class="n">package_keywords_splitter</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_licenses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">stable_unique</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.use&quot;</span><span class="p">,</span> <span class="n">parse_func</span><span class="o">=</span><span class="n">package_keywords_splitter</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">split_negations</span><span class="p">(</span><span class="n">stable_unique</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@load_property</span><span class="p">(</span><span class="s2">&quot;package.env&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pkg_env</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">package_env_splitter</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ebuild_hook_dir</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">debug</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">((</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bashrcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">sorted_scan</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">config_dir</span><span class="p">,</span> <span class="s1">&#39;bashrc&#39;</span><span class="p">),</span> <span class="n">follow_symlinks</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">local_source</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">files</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_pkg_filters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg_accept_keywords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pkg_keywords</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pkg_accept_keywords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pkg_accept_keywords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_accept_keywords</span>
+        <span class="k">if</span> <span class="n">pkg_keywords</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pkg_keywords</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_keywords</span>
+
+        <span class="c1"># ~amd64 -&gt; [amd64, ~amd64]</span>
+        <span class="n">default_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">arch</span><span class="p">])</span>
+        <span class="n">default_keywords</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;ACCEPT_KEYWORDS&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;ACCEPT_KEYWORDS&#39;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">):</span>
+                <span class="n">default_keywords</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">))</span>
+
+        <span class="c1"># create keyword filters</span>
+        <span class="n">accept_keywords</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">pkg_keywords</span> <span class="o">+</span> <span class="n">pkg_accept_keywords</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">accept_keywords</span><span class="p">)</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_make_keywords_filter</span><span class="p">(</span>
+            <span class="n">default_keywords</span><span class="p">,</span> <span class="n">accept_keywords</span><span class="p">,</span>
+            <span class="n">incremental</span><span class="o">=</span><span class="s2">&quot;package.keywords&quot;</span> <span class="ow">in</span> <span class="n">const</span><span class="o">.</span><span class="n">incrementals</span><span class="p">)]</span>
+
+        <span class="c1"># add license filters</span>
+        <span class="n">master_license</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">master_license</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;ACCEPT_LICENSE&#39;</span><span class="p">,</span> <span class="p">()))</span>
+        <span class="k">if</span> <span class="n">master_license</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_licenses</span><span class="p">:</span>
+            <span class="c1"># restrict that matches iff the licenses are allowed</span>
+            <span class="n">restrict</span> <span class="o">=</span> <span class="n">delegate</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_apply_license_filter</span><span class="p">,</span> <span class="n">master_license</span><span class="p">))</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">restrict</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_none</span>
+    <span class="k">def</span> <span class="nf">_default_licenses_manager</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">OverlayedLicenses</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">source_repos_raw</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_apply_license_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">master_licenses</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine if a package&#39;s license is allowed.&quot;&quot;&quot;</span>
+        <span class="c1"># note we&#39;re not honoring mode; it&#39;s always match.</span>
+        <span class="c1"># reason is that of not turning on use flags to get acceptable license</span>
+        <span class="c1"># pairs, maybe change this down the line?</span>
+
+        <span class="n">matched_pkg_licenses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">licenses</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_licenses</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="n">matched_pkg_licenses</span> <span class="o">+=</span> <span class="n">licenses</span>
+
+        <span class="n">raw_accepted_licenses</span> <span class="o">=</span> <span class="n">master_licenses</span> <span class="o">+</span> <span class="n">matched_pkg_licenses</span>
+        <span class="n">license_manager</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;licenses&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_default_licenses_manager</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">and_pair</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">license</span><span class="o">.</span><span class="n">dnf_solutions</span><span class="p">():</span>
+            <span class="n">accepted</span> <span class="o">=</span> <span class="n">incremental_expansion_license</span><span class="p">(</span>
+                <span class="n">pkg</span><span class="p">,</span> <span class="n">and_pair</span><span class="p">,</span> <span class="n">license_manager</span><span class="o">.</span><span class="n">groups</span><span class="p">,</span> <span class="n">raw_accepted_licenses</span><span class="p">,</span>
+                <span class="n">msg_prefix</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;while checking ACCEPT_LICENSE &quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">accepted</span><span class="o">.</span><span class="n">issuperset</span><span class="p">(</span><span class="n">and_pair</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_make_keywords_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_keys</span><span class="p">,</span> <span class="n">accept_keywords</span><span class="p">,</span> <span class="n">incremental</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generates a restrict that matches iff the keywords are allowed.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">accept_keywords</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+                <span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">ContainmentMatch2</span><span class="p">(</span><span class="nb">frozenset</span><span class="p">(</span><span class="n">default_keys</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unstable_arch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">default_keys</span><span class="p">:</span>
+            <span class="c1"># stable; thus empty entries == ~arch</span>
+            <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">unstable_arch</span>
+                <span class="k">return</span> <span class="n">r</span><span class="p">,</span> <span class="n">v</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">collapsed_restrict_to_data</span><span class="p">(</span>
+                <span class="p">((</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">,</span> <span class="n">default_keys</span><span class="p">),),</span>
+                <span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">accept_keywords</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">incremental</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">collapsed_restrict_to_data</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">f</span> <span class="o">=</span> <span class="n">non_incremental_collapsed_restrict_to_data</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="p">(((</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">,</span> <span class="n">default_keys</span><span class="p">),),</span> <span class="n">accept_keywords</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">incremental</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_incremental_apply_keywords_filter</span><span class="p">)</span>
+            <span class="c1">#f = self._incremental_apply_keywords_filter</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_apply_keywords_filter</span>
+        <span class="k">return</span> <span class="n">delegate</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_incremental_apply_keywords_filter</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="c1"># note we ignore mode; keywords aren&#39;t influenced by conditionals.</span>
+        <span class="c1"># note also, we&#39;re not using a restriction here.  this is faster.</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pull_data</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="kc">True</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_apply_keywords_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+        <span class="c1"># note we ignore mode; keywords aren&#39;t influenced by conditionals.</span>
+        <span class="c1"># note also, we&#39;re not using a restriction here.  this is faster.</span>
+        <span class="n">pkg_keywords</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span>
+        <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">keywords</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">keywords</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="n">pkg_keywords</span> <span class="o">+=</span> <span class="n">keywords</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">pull_data</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s1">&#39;**&#39;</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="s2">&quot;*&quot;</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">pkg_keywords</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s2">&quot;-~&quot;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="s2">&quot;~*&quot;</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">pkg_keywords</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;~&quot;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="kc">True</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg_keywords</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_none</span>
+    <span class="k">def</span> <span class="nf">use_expand_re</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="s2">&quot;^(?:[+-])?(</span><span class="si">%s</span><span class="s2">)_(.*)$&quot;</span> <span class="o">%</span>
+            <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">use_expand</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_split_use_expand_flags</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">use_stream</span><span class="p">):</span>
+        <span class="n">stream</span> <span class="o">=</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">use_expand_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">use_stream</span><span class="p">)</span>
+        <span class="n">flags</span><span class="p">,</span> <span class="n">ue_flags</span> <span class="o">=</span> <span class="n">predicate_split</span><span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">stream</span><span class="p">,</span> <span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">flags</span><span class="p">)),</span> <span class="p">[(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">groups</span><span class="p">(),</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ue_flags</span><span class="p">]</span>
+
+<div class="viewcode-block" id="domain.get_package_use_unconfigured"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.domain.html#pkgcore.ebuild.domain.domain.get_package_use_unconfigured">[docs]</a>    <span class="k">def</span> <span class="nf">get_package_use_unconfigured</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">for_metadata</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine use flags for a given package.</span>
+
+<span class="sd">        Roughly, this should result in the following, evaluated l-&gt;r: non</span>
+<span class="sd">        USE_EXPAND; profiles, pkg iuse, global configuration, package.use</span>
+<span class="sd">        configuration, commandline?  stack profiles + pkg iuse; split it into</span>
+<span class="sd">        use and use_expanded use; do global configuration + package.use</span>
+<span class="sd">        configuration overriding of non-use_expand use if global configuration</span>
+<span class="sd">        has a setting for use_expand.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            pkg: package object</span>
+<span class="sd">            for_metadata (bool): if True, we&#39;re doing use flag retrieval for</span>
+<span class="sd">                metadata generation; otherwise, we&#39;re just requesting the raw use flags</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Three groups of use flags for the package in the following order:</span>
+<span class="sd">            immutable flags, enabled flags, and disabled flags.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">pre_defaults</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;+&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">pre_defaults</span><span class="p">:</span>
+            <span class="n">pre_defaults</span><span class="p">,</span> <span class="n">ue_flags</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_use_expand_flags</span><span class="p">(</span><span class="n">pre_defaults</span><span class="p">)</span>
+            <span class="n">pre_defaults</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">ue_flags</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+
+        <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;stable_&#39;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stable_arch</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span> \
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">unstable_arch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">[</span><span class="s1">&#39;ACCEPT_KEYWORDS&#39;</span><span class="p">]</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">disabled</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">,</span> <span class="n">attr</span> <span class="o">+</span> <span class="s1">&#39;masked_use&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">pull_data</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="n">immutable</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span> <span class="o">+</span> <span class="s1">&#39;forced_use&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">pull_data</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="c1"># lock the configurable use flags to only what&#39;s in IUSE, and what&#39;s forced</span>
+        <span class="c1"># from the profiles (things like userland_GNU and arch)</span>
+        <span class="n">enabled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">enabled_use</span><span class="o">.</span><span class="n">pull_data</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">pre_defaults</span><span class="o">=</span><span class="n">pre_defaults</span><span class="p">)</span>
+
+        <span class="c1"># support globs for USE_EXPAND vars</span>
+        <span class="n">use_globs</span> <span class="o">=</span> <span class="p">[</span><span class="n">u</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">enabled</span> <span class="k">if</span> <span class="n">u</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)]</span>
+        <span class="n">enabled_use_globs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">glob</span> <span class="ow">in</span> <span class="n">use_globs</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">u</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">glob</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="n">enabled_use_globs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">u</span><span class="p">)</span>
+        <span class="n">enabled</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">use_globs</span><span class="p">)</span>
+        <span class="n">enabled</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">enabled_use_globs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">for_metadata</span><span class="p">:</span>
+            <span class="n">preserves</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span>
+            <span class="n">enabled</span><span class="o">.</span><span class="n">intersection_update</span><span class="p">(</span><span class="n">preserves</span><span class="p">)</span>
+            <span class="n">enabled</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">immutable</span><span class="p">)</span>
+            <span class="n">enabled</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">disabled</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">immutable</span><span class="p">,</span> <span class="n">enabled</span><span class="p">,</span> <span class="n">disabled</span></div>
+
+<div class="viewcode-block" id="domain.get_package_domain"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.domain.html#pkgcore.ebuild.domain.domain.get_package_domain">[docs]</a>    <span class="k">def</span> <span class="nf">get_package_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get domain object with altered settings from matching package.env entries.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;_domain&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pkg</span><span class="o">.</span><span class="n">_domain</span>
+
+        <span class="n">files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">paths</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_env</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="n">files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">paths</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">files</span><span class="p">:</span>
+            <span class="n">pkg_settings</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_settings</span><span class="o">.</span><span class="n">orig</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+            <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">PortageConfig</span><span class="o">.</span><span class="n">load_make_conf</span><span class="p">(</span>
+                    <span class="n">pkg_settings</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">allow_sourcing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">allow_recurse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">incrementals</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="c1"># TODO: Improve pkg domain vs main domain proxying, e.g. static</span>
+            <span class="c1"># jitted attrs should always be generated and pulled from the main</span>
+            <span class="c1"># domain obj; however, currently each pkg domain instance gets its</span>
+            <span class="c1"># own copy so values collapsed on the pkg domain instance aren&#39;t</span>
+            <span class="c1"># propagated back to the main domain leading to regen per pkg if</span>
+            <span class="c1"># requested.</span>
+            <span class="n">pkg_domain</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="n">pkg_domain</span><span class="o">.</span><span class="n">_settings</span> <span class="o">=</span> <span class="n">ProtectedDict</span><span class="p">(</span><span class="n">pkg_settings</span><span class="p">)</span>
+            <span class="c1"># reset jitted attrs that can pull updated settings</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_jit_reset_&#39;</span><span class="p">)):</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">pkg_domain</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="c1"># store altered domain on the pkg obj to avoid recreating pkg domain</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;_domain&quot;</span><span class="p">,</span> <span class="n">pkg_domain</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">pkg_domain</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="domain.get_package_bashrcs"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.domain.html#pkgcore.ebuild.domain.domain.get_package_bashrcs">[docs]</a>    <span class="k">def</span> <span class="nf">get_package_bashrcs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">bashrcs</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">source</span>
+        <span class="k">for</span> <span class="n">source</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bashrcs</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">source</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ebuild_hook_dir</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="c1"># matching portage behavior... it&#39;s whacked.</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ebuild_hook_dir</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">)</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;P&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s2">&quot;PF&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">fp</span> <span class="ow">in</span> <span class="nb">filter</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">dirs</span><span class="p">):</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">base</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fp</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">local_source</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_wrap_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">filtered</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a filtered, wrapped repo object for the domain.&quot;&quot;&quot;</span>
+        <span class="n">wrapped_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_configure_repo</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">filtered</span><span class="p">:</span>
+            <span class="n">wrapped_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filter_repo</span><span class="p">(</span><span class="n">wrapped_repo</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wrapped_repo</span>
+
+<div class="viewcode-block" id="domain.add_repo"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.domain.html#pkgcore.ebuild.domain.domain.add_repo">[docs]</a>    <span class="k">def</span> <span class="nf">add_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">configure</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add an external repo to the domain.&quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="c1"># don&#39;t recreate existing repos</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_repos_raw</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">repo</span><span class="o">.</span><span class="n">location</span> <span class="o">==</span> <span class="n">path</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">repo</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># forcibly create repo_config object, otherwise cached version might be used</span>
+            <span class="n">repo_config</span> <span class="o">=</span> <span class="n">RepoConfig</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">disable_inst_caching</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">repo_errors</span><span class="o">.</span><span class="n">InvalidRepo</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">repo_config</span><span class="o">.</span><span class="n">cache_format</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># default to using md5 cache</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;cache&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">md5_cache</span><span class="p">(</span><span class="n">path</span><span class="p">),)</span>
+        <span class="n">repo_obj</span> <span class="o">=</span> <span class="n">ebuild_repo</span><span class="o">.</span><span class="n">tree</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">repo_config</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_repos_raw</span> <span class="o">+=</span> <span class="n">repo_obj</span>
+
+        <span class="c1"># reset repo-related jit attrs</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_jit_repo_&#39;</span><span class="p">)):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">configure</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_repo</span><span class="p">(</span><span class="n">repo_obj</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">repo_obj</span></div>
+
+<div class="viewcode-block" id="domain.find_repo"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.domain.html#pkgcore.ebuild.domain.domain.find_repo">[docs]</a>    <span class="k">def</span> <span class="nf">find_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">configure</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find and add an external repo to the domain given a path.&quot;&quot;&quot;</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">suppress_logging</span><span class="p">():</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_repo</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">configure</span><span class="o">=</span><span class="n">configure</span><span class="p">)</span>
+                    <span class="k">break</span>
+                <span class="k">except</span> <span class="n">repo_errors</span><span class="o">.</span><span class="n">InvalidRepo</span><span class="p">:</span>
+                    <span class="n">parent</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">parent</span> <span class="o">==</span> <span class="n">path</span><span class="p">:</span>
+                        <span class="k">break</span>
+                    <span class="n">path</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="k">return</span> <span class="n">repo</span></div>
+
+    <span class="k">def</span> <span class="nf">_configure_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Configure a raw repo.&quot;&quot;&quot;</span>
+        <span class="n">configured_repo</span> <span class="o">=</span> <span class="n">repo</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">repo</span><span class="o">.</span><span class="n">configured</span><span class="p">:</span>
+            <span class="n">pargs</span> <span class="o">=</span> <span class="p">[</span><span class="n">repo</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">configurables</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">&quot;domain&quot;</span><span class="p">:</span>
+                        <span class="n">pargs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">&quot;settings&quot;</span><span class="p">:</span>
+                        <span class="n">pargs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">x</span> <span class="o">==</span> <span class="s2">&quot;profile&quot;</span><span class="p">:</span>
+                        <span class="n">pargs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">pargs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">Failure</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;failed configuring repo </span><span class="si">{</span><span class="n">repo</span><span class="si">!r}</span><span class="s2">: &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;configurable missing: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="n">configured_repo</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="o">*</span><span class="n">pargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">configured_repo</span>
+
+<div class="viewcode-block" id="domain.filter_repo"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.domain.html#pkgcore.ebuild.domain.domain.filter_repo">[docs]</a>    <span class="k">def</span> <span class="nf">filter_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">pkg_masks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pkg_unmasks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pkg_filters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="n">pkg_accept_keywords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pkg_keywords</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Filter a configured repo.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">pkg_masks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pkg_masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_masks</span>
+        <span class="k">if</span> <span class="n">pkg_unmasks</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pkg_unmasks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkg_unmasks</span>
+        <span class="k">if</span> <span class="n">pkg_filters</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pkg_filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pkg_filters</span><span class="p">(</span><span class="n">pkg_accept_keywords</span><span class="p">,</span> <span class="n">pkg_keywords</span><span class="p">)</span>
+
+        <span class="n">global_masks</span> <span class="o">=</span> <span class="p">[((),</span> <span class="n">repo</span><span class="o">.</span><span class="n">pkg_masks</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">profile</span><span class="p">:</span>
+            <span class="n">global_masks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">_incremental_masks</span><span class="p">)</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">global_masks</span><span class="p">:</span>
+            <span class="n">masks</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">neg</span><span class="p">)</span>
+            <span class="n">masks</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="n">masks</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pkg_masks</span><span class="p">)</span>
+        <span class="n">unmasks</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">profile</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">neg</span><span class="p">,</span> <span class="n">pos</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">_incremental_unmasks</span><span class="p">:</span>
+                <span class="n">unmasks</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">neg</span><span class="p">)</span>
+                <span class="n">unmasks</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>
+        <span class="n">unmasks</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pkg_unmasks</span><span class="p">)</span>
+
+        <span class="n">filters</span> <span class="o">=</span> <span class="n">generate_filter</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">unmasks</span><span class="p">,</span> <span class="o">*</span><span class="n">pkg_filters</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filtered</span><span class="o">.</span><span class="n">tree</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span></div>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_reset_tmpdir&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">tmpdir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Temporary directory for the system.</span>
+
+<span class="sd">        Uses PORTAGE_TMPDIR setting and falls back to using the system&#39;s TMPDIR if unset.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;PORTAGE_TMPDIR&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">EnvironmentError</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;nonexistent PORTAGE_TMPDIR path, defaulting to </span><span class="si">{</span><span class="n">path</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pm_tmpdir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Temporary directory for the package manager.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tmpdir</span><span class="p">,</span> <span class="s1">&#39;portage&#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">repo_configs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;All defined repo configs.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">config</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repos</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="s1">&#39;config&#39;</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">KV</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The version of the running kernel.&quot;&quot;&quot;</span>
+        <span class="n">ret</span><span class="p">,</span> <span class="n">version</span> <span class="o">=</span> <span class="n">spawn_get_output</span><span class="p">([</span><span class="s1">&#39;uname&#39;</span><span class="p">,</span> <span class="s1">&#39;-r&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">version</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;unknown kernel version&#39;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_source_repos_raw&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">source_repos_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of package repos without filtering.&quot;&quot;&quot;</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__repos</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">repo</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">repo</span><span class="o">.</span><span class="n">is_supported</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;skipping </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s1"> repo: unsupported EAPI </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">eapi</span><span class="p">)</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">repos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">config_errors</span><span class="o">.</span><span class="n">InstantiationError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="c1"># roll back the exception chain to a meaningful error message</span>
+                <span class="n">exc</span> <span class="o">=</span> <span class="n">find_user_exception</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">exc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">exc</span> <span class="o">=</span> <span class="n">e</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;skipping </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s1"> repo: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span><span class="n">repos</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_installed_repos_raw&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">installed_repos_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of installed repos without filtering.&quot;&quot;&quot;</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">instantiate</span><span class="p">()</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__vdb</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">provides_repo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">repos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="o">.</span><span class="n">provides_repo</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span><span class="n">repos</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_repos_raw&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">repos_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all repos without filtering.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_repos_raw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">installed_repos_raw</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_source_repos&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">source_repos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of configured, filtered package repos.&quot;&quot;&quot;</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_repos_raw</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">repos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wrap_repo</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">filtered</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">repo_errors</span><span class="o">.</span><span class="n">RepoError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;skipping </span><span class="si">{</span><span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s1"> repo: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span><span class="n">repos</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_installed_repos&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">installed_repos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of configured, installed package repos.&quot;&quot;&quot;</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">installed_repos_raw</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">repos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wrap_repo</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="n">filtered</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">repo_errors</span><span class="o">.</span><span class="n">RepoError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;skipping </span><span class="si">{</span><span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="si">!r}</span><span class="s1"> repo: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span><span class="n">repos</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_unfiltered_repos&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">unfiltered_repos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all configured repos without filtering.&quot;&quot;&quot;</span>
+        <span class="n">repos</span> <span class="o">=</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_repos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">installed_repos</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">raw_repo</span> <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">raw_repo</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">r</span><span class="p">)</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">repos</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_repos&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">repos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all repos.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_repos</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">installed_repos</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_ebuild_repos&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">ebuild_repos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all ebuild repos bound with configuration data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_repos</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">raw_repo</span><span class="p">,</span> <span class="n">ebuild_repo</span><span class="o">.</span><span class="n">ConfiguredTree</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_ebuild_repos_unfiltered&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">ebuild_repos_unfiltered</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all ebuild repos without package filtering.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unfiltered_repos</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ebuild_repo</span><span class="o">.</span><span class="n">ConfiguredTree</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_ebuild_repos_raw&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">ebuild_repos_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all ebuild repos without filtering.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_repos_raw</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ebuild_repo</span><span class="o">.</span><span class="n">UnconfiguredTree</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_binary_repos&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">binary_repos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all binary repos bound with configuration data.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_repos</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">raw_repo</span><span class="p">,</span> <span class="n">binary_repo</span><span class="o">.</span><span class="n">ConfiguredTree</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_binary_repos_unfiltered&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">binary_repos_unfiltered</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all binary repos without package filtering.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">unfiltered_repos</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">binary_repo</span><span class="o">.</span><span class="n">ConfiguredTree</span><span class="p">))</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_named</span><span class="p">(</span><span class="s1">&#39;_jit_repo_binary_repos_raw&#39;</span><span class="p">,</span> <span class="n">uncached_val</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">binary_repos_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Group of all binary repos without filtering.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">RepositoryGroup</span><span class="p">(</span>
+            <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_repos_raw</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">binary_repo</span><span class="o">.</span><span class="n">tree</span><span class="p">))</span>
+
+    <span class="c1"># multiplexed repos</span>
+    <span class="n">all_repos</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;repos.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_repos_raw</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;repos_raw.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_source_repos</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;source_repos.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_source_repos_raw</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;source_repos_raw.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_installed_repos</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;installed_repos.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_installed_repos_raw</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;installed_repos_raw.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_unfiltered_repos</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;unfiltered_repos.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_ebuild_repos</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;ebuild_repos.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_ebuild_repos_unfiltered</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;ebuild_repos_unfiltered.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_ebuild_repos_raw</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;ebuild_repos_raw.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_binary_repos</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;binary_repos.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_binary_repos_unfiltered</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;binary_repos_unfiltered.combined&quot;</span><span class="p">)</span>
+    <span class="n">all_binary_repos_raw</span> <span class="o">=</span> <span class="n">klass</span><span class="o">.</span><span class="n">alias_attr</span><span class="p">(</span><span class="s2">&quot;binary_repos_raw.combined&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.domain</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

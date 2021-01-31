@@ -1,0 +1,264 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.digest &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.digest</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.digest</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ebuild tree manifest/digest support</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;parse_manifest&quot;</span><span class="p">,</span> <span class="s2">&quot;Manifest&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">get_handler</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ImmutableDict</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">gpg</span>
+<span class="kn">from</span> <span class="nn">..fs.livefs</span> <span class="kn">import</span> <span class="n">iter_scan</span>
+<span class="kn">from</span> <span class="nn">..package</span> <span class="kn">import</span> <span class="n">errors</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">cpv</span>
+
+
+<span class="k">def</span> <span class="nf">_write_manifest</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">chf</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">chksums</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convenient, internal method for writing manifests&quot;&quot;&quot;</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">chksums</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+    <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2"> </span><span class="si">%i</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">chf</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">filename</span><span class="p">,</span> <span class="n">size</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">chf</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">chksums</span><span class="p">):</span>
+        <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot; </span><span class="si">%s</span><span class="s2"> </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">chf</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">get_handler</span><span class="p">(</span><span class="n">chf</span><span class="p">)</span><span class="o">.</span><span class="n">long2str</span><span class="p">(</span><span class="n">chksums</span><span class="p">[</span><span class="n">chf</span><span class="p">])))</span>
+    <span class="n">handle</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">convert_chksums</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">chf</span><span class="p">,</span> <span class="nb">sum</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="n">chf</span> <span class="o">=</span> <span class="n">chf</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">chf</span> <span class="o">==</span> <span class="s1">&#39;size&#39;</span><span class="p">:</span>
+            <span class="c1"># explicit size entries are stupid, format has implicit size</span>
+            <span class="k">continue</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">chf</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="parse_manifest"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.digest.html#pkgcore.ebuild.digest.parse_manifest">[docs]</a><span class="k">def</span> <span class="nf">parse_manifest</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">ignore_gpg</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">types</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;DIST&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;AUX&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;EBUILD&quot;</span><span class="p">:</span> <span class="p">{},</span> <span class="s2">&quot;MISC&quot;</span><span class="p">:</span> <span class="p">{}}</span>
+    <span class="c1"># manifest v2 format: (see glep 44 for exact rules)</span>
+    <span class="c1"># TYPE filename size (CHF sum)+</span>
+    <span class="c1"># example &#39;type&#39; entry, all one line</span>
+    <span class="c1"># MISC metadata.xml 219 RMD160 613195ece366b33606e71ff1753be048f2507841 SHA1 d162fb909241ef50b95a3539bdfcde95429bdf81 SHA256 cbd3a20e5c89a48a842f7132fe705bf39959f02c1025052efce8aad8a8baa8dc</span>
+    <span class="c1"># manifest v1 format is</span>
+    <span class="c1"># CHF sum filename size</span>
+    <span class="c1"># note that we do _not_ support manifest1</span>
+    <span class="n">chf_types</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;size&quot;</span><span class="p">])</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">,</span> <span class="mi">32768</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">f</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">text_fileobj</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">ignore_gpg</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">gpg</span><span class="o">.</span><span class="n">skip_signatures</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ParseChksumError</span><span class="p">(</span>
+                    <span class="n">source</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;unknown manifest type: </span><span class="si">{</span><span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ParseChksumError</span><span class="p">(</span>
+                    <span class="n">source</span><span class="p">,</span>
+                    <span class="s2">&quot;manifest 2 entry doesn&#39;t have right &quot;</span>
+                    <span class="s2">&quot;number of tokens, </span><span class="si">%i</span><span class="s2">: </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span>
+                    <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">),</span> <span class="n">line</span><span class="p">))</span>
+            <span class="n">chf_types</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">3</span><span class="p">::</span><span class="mi">2</span><span class="p">])</span>
+            <span class="c1"># this is a trick to do pairwise collapsing;</span>
+            <span class="c1"># [size, 1] becomes [(size, 1)]</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">3</span><span class="p">:])</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">line</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">&quot;size&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">]))]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="n">convert_chksums</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">)))</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">IndexError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ParseChksumError</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;invalid data format&#39;</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">t</span><span class="p">,</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">types</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">types</span><span class="p">[</span><span class="n">t</span><span class="p">]</span> <span class="o">=</span> <span class="n">ImmutableDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="c1"># ordering annoyingly matters. bad api.</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">types</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;DIST&quot;</span><span class="p">,</span> <span class="s2">&quot;AUX&quot;</span><span class="p">,</span> <span class="s2">&quot;EBUILD&quot;</span><span class="p">,</span> <span class="s2">&quot;MISC&quot;</span><span class="p">)]</span></div>
+
+
+<div class="viewcode-block" id="Manifest"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.digest.html#pkgcore.ebuild.digest.Manifest">[docs]</a><span class="k">class</span> <span class="nc">Manifest</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">enforce_gpg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">thin</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_missing</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thin</span> <span class="o">=</span> <span class="n">thin</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allow_missing</span> <span class="o">=</span> <span class="n">allow_missing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gpg</span> <span class="o">=</span> <span class="n">enforce_gpg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sourced</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_pull_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sourced</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">parse_manifest</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">ignore_gpg</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_gpg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thin</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_missing</span><span class="p">)</span> <span class="ow">or</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ParseChksumError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
+        <span class="k">except</span> <span class="n">errors</span><span class="o">.</span><span class="n">ChksumError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># recreate cpv from manifest path</span>
+            <span class="n">catpn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="mi">3</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">pkg</span> <span class="o">=</span> <span class="n">cpv</span><span class="o">.</span><span class="n">UnversionedCPV</span><span class="p">(</span><span class="n">catpn</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MetadataException</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="s1">&#39;manifest&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dist</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aux</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ebuild</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_misc</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sourced</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="Manifest.update"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.digest.html#pkgcore.ebuild.digest.Manifest.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchables</span><span class="p">,</span> <span class="n">chfs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the related Manifest file.</span>
+
+<span class="sd">        :param fetchables: fetchables of the package</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">thin</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">fetchables</span><span class="p">:</span>
+            <span class="c1"># Manifest files aren&#39;t necessary with thin manifests and no distfiles</span>
+            <span class="k">return</span>
+
+        <span class="n">_key_sort</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">excludes</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;CVS&quot;</span><span class="p">,</span> <span class="s2">&quot;.svn&quot;</span><span class="p">,</span> <span class="s2">&quot;Manifest&quot;</span><span class="p">])</span>
+        <span class="n">aux</span><span class="p">,</span> <span class="n">ebuild</span><span class="p">,</span> <span class="n">misc</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">{},</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">thin</span><span class="p">:</span>
+            <span class="n">filesdir</span> <span class="o">=</span> <span class="s1">&#39;/files/&#39;</span>
+            <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">iter_scan</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">),</span> <span class="n">chksum_types</span><span class="o">=</span><span class="n">chfs</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">pathname</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span>
+                <span class="k">if</span> <span class="n">excludes</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pathname</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">pathname</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">filesdir</span><span class="p">):</span>
+                    <span class="n">d</span> <span class="o">=</span> <span class="n">aux</span>
+                    <span class="n">pathname</span> <span class="o">=</span> <span class="n">pathname</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">filesdir</span><span class="p">):]</span>
+                <span class="k">elif</span> <span class="n">obj</span><span class="o">.</span><span class="n">dirname</span> <span class="o">==</span> <span class="s1">&#39;/&#39;</span><span class="p">:</span>
+                    <span class="n">pathname</span> <span class="o">=</span> <span class="n">pathname</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+                    <span class="k">if</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span><span class="p">[</span><span class="o">-</span><span class="mi">7</span><span class="p">:]</span> <span class="o">==</span> <span class="s1">&#39;.ebuild&#39;</span><span class="p">:</span>
+                        <span class="n">d</span> <span class="o">=</span> <span class="n">ebuild</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">d</span> <span class="o">=</span> <span class="n">misc</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Unexpected directory found in </span><span class="si">%r</span><span class="s2">; </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">dirname</span><span class="p">))</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">pathname</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span>
+
+        <span class="n">handle</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+
+        <span class="c1"># write it in alphabetical order; aux gets flushed now.</span>
+        <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">chksums</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">aux</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">_key_sort</span><span class="p">):</span>
+            <span class="n">_write_manifest</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="s1">&#39;AUX&#39;</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">chksums</span><span class="p">)</span>
+
+        <span class="c1"># next dist...</span>
+        <span class="k">for</span> <span class="n">fetchable</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fetchables</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">attrgetter</span><span class="p">(</span><span class="s1">&#39;filename&#39;</span><span class="p">)):</span>
+            <span class="n">_write_manifest</span><span class="p">(</span>
+                <span class="n">handle</span><span class="p">,</span> <span class="s1">&#39;DIST&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fetchable</span><span class="o">.</span><span class="n">filename</span><span class="p">),</span>
+                <span class="nb">dict</span><span class="p">(</span><span class="n">fetchable</span><span class="o">.</span><span class="n">chksums</span><span class="p">))</span>
+
+        <span class="c1"># then ebuild and misc</span>
+        <span class="k">for</span> <span class="n">mtype</span><span class="p">,</span> <span class="n">inst</span> <span class="ow">in</span> <span class="p">((</span><span class="s2">&quot;EBUILD&quot;</span><span class="p">,</span> <span class="n">ebuild</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;MISC&quot;</span><span class="p">,</span> <span class="n">misc</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">path</span><span class="p">,</span> <span class="n">chksum</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">_key_sort</span><span class="p">):</span>
+                <span class="n">_write_manifest</span><span class="p">(</span><span class="n">handle</span><span class="p">,</span> <span class="n">mtype</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">chksum</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">aux_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pull_manifest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aux</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">distfiles</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pull_manifest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dist</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ebuilds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pull_manifest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ebuild</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">misc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pull_manifest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_misc</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.digest</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

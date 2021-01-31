@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.eclass module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eclass module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.eclass">
+<span id="pkgcore-ebuild-eclass-module"></span><h1>pkgcore.ebuild.eclass module<a class="headerlink" href="#module-pkgcore.ebuild.eclass" title="Permalink to this headline">¶</a></h1>
+<p>Eclass parsing support.</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.eclass.AttrDict">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eclass.</code><code class="sig-name descname">AttrDict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#AttrDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.AttrDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.mappings.ImmutableDict</span></code></p>
+<p>Support accessing dict keys as attributes.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.eclass.EclassBlock">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eclass.</code><code class="sig-name descname">EclassBlock</code><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.eclass.ParseEclassDoc" title="pkgcore.ebuild.eclass.ParseEclassDoc"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.eclass.ParseEclassDoc</span></code></a></p>
+<p>ECLASS doc block.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassBlock.tag">
+<code class="sig-name descname">tag</code><em class="property"> = '&#64;ECLASS:'</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassBlock.tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.eclass.EclassDoc">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eclass.</code><code class="sig-name descname">EclassDoc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="o">/</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">sourced</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassDoc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.eclass.AttrDict" title="pkgcore.ebuild.eclass.AttrDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.eclass.AttrDict</span></code></a></p>
+<p>Support parsing eclass docs for a given eclass path.</p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.exported_function_names">
+<em class="property">property </em><code class="sig-name descname">exported_function_names</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.exported_function_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of all exported function names in the eclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.exported_variable_names">
+<em class="property">property </em><code class="sig-name descname">exported_variable_names</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.exported_variable_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of all exported variable names in the eclass.</p>
+<p>Ignores variables that start with underscores since
+it’s assumed they are private.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.function_names">
+<em class="property">property </em><code class="sig-name descname">function_names</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.function_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of documented function names in the eclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.function_variable_names">
+<em class="property">property </em><code class="sig-name descname">function_variable_names</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.function_variable_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of documented function variable names in the eclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.internal_function_names">
+<em class="property">property </em><code class="sig-name descname">internal_function_names</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.internal_function_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of internal function names in the eclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.internal_variable_names">
+<em class="property">property </em><code class="sig-name descname">internal_variable_names</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.internal_variable_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of internal variable names in the eclass.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.live">
+<em class="property">property </em><code class="sig-name descname">live</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.live" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eclass implements functionality to support a version control system.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.parse">
+<em class="property">static </em><code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassDoc.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse eclass docs.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.to_html">
+<code class="sig-name descname">to_html</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassDoc.to_html"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.to_html" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert eclassdoc object to an HTML 5 document.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.to_man">
+<code class="sig-name descname">to_man</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassDoc.to_man"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.to_man" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert eclassdoc object to a man page.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.to_rst">
+<code class="sig-name descname">to_rst</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassDoc.to_rst"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.to_rst" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert eclassdoc object to reStructuredText.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassDoc.variable_names">
+<em class="property">property </em><code class="sig-name descname">variable_names</code><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassDoc.variable_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of documented variable names in the eclass.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.eclass.EclassFuncBlock">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eclass.</code><code class="sig-name descname">EclassFuncBlock</code><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassFuncBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.eclass.ParseEclassDoc" title="pkgcore.ebuild.eclass.ParseEclassDoc"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.eclass.ParseEclassDoc</span></code></a></p>
+<p>FUNCTION doc block.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassFuncBlock.default">
+<code class="sig-name descname">default</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncBlock.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassFuncBlock.key">
+<code class="sig-name descname">key</code><em class="property"> = 'functions'</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncBlock.key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.EclassFuncBlock.parse">
+<code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassFuncBlock.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncBlock.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse an eclass block.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassFuncBlock.tag">
+<code class="sig-name descname">tag</code><em class="property"> = '&#64;FUNCTION:'</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncBlock.tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.eclass.EclassFuncVarBlock">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eclass.</code><code class="sig-name descname">EclassFuncVarBlock</code><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassFuncVarBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncVarBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.eclass.ParseEclassDoc" title="pkgcore.ebuild.eclass.ParseEclassDoc"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.eclass.ParseEclassDoc</span></code></a></p>
+<p>VARIABLE doc block.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassFuncVarBlock.default">
+<code class="sig-name descname">default</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncVarBlock.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassFuncVarBlock.key">
+<code class="sig-name descname">key</code><em class="property"> = 'function_variables'</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncVarBlock.key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassFuncVarBlock.tag">
+<code class="sig-name descname">tag</code><em class="property"> = '&#64;VARIABLE:'</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassFuncVarBlock.tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.eclass.EclassVarBlock">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eclass.</code><code class="sig-name descname">EclassVarBlock</code><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#EclassVarBlock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassVarBlock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.eclass.ParseEclassDoc" title="pkgcore.ebuild.eclass.ParseEclassDoc"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.eclass.ParseEclassDoc</span></code></a></p>
+<p>ECLASS-VARIABLE doc block.</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassVarBlock.default">
+<code class="sig-name descname">default</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassVarBlock.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassVarBlock.key">
+<code class="sig-name descname">key</code><em class="property"> = 'variables'</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassVarBlock.key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.EclassVarBlock.tag">
+<code class="sig-name descname">tag</code><em class="property"> = '&#64;ECLASS-VARIABLE:'</em><a class="headerlink" href="#pkgcore.ebuild.eclass.EclassVarBlock.tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.eclass.</code><code class="sig-name descname">ParseEclassDoc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tags</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#ParseEclassDoc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Generic block for eclass docs.</p>
+<p>See the devmanual <a class="footnote-reference brackets" href="#id2" id="id1">1</a> for the eclass docs specification.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses">https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses</a></p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc.bash_env_vars">
+<code class="sig-name descname">bash_env_vars</code><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc.bash_env_vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>The set of all bash variables defined in the default environment.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc.blocks">
+<code class="sig-name descname">blocks</code><em class="property"> = {'&#64;ECLASS-VARIABLE:': &lt;pkgcore.ebuild.eclass.EclassVarBlock object&gt;, '&#64;ECLASS:': &lt;pkgcore.ebuild.eclass.EclassBlock object&gt;, '&#64;FUNCTION:': &lt;pkgcore.ebuild.eclass.EclassFuncBlock object&gt;, '&#64;VARIABLE:': &lt;pkgcore.ebuild.eclass.EclassFuncVarBlock object&gt;}</em><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc.blocks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc.default">
+<code class="sig-name descname">default</code><em class="property"> = False</em><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc.default" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc.defaults">
+<em class="property">property </em><code class="sig-name descname">defaults</code><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc.defaults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return default field mapping for the block.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc.key">
+<code class="sig-name descname">key</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc.key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc.parse">
+<code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="n">line_ind</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/eclass.html#ParseEclassDoc.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc.parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse an eclass block.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.eclass.ParseEclassDoc.tag">
+<code class="sig-name descname">tag</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.ebuild.eclass.ParseEclassDoc.tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eclass module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

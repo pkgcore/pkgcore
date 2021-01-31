@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.config.errors &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../config.html" accesskey="U">pkgcore.config</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.errors</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.config.errors</h1><div class="highlight"><pre>
+<span></span><span class="c1"># potentially use an intermediate base for user config errors,</span>
+<span class="c1"># separate base for instantiation?</span>
+
+<span class="sd">&quot;&quot;&quot;Exceptions raised by the config code.&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;TypeDefinitionError&quot;</span><span class="p">,</span> <span class="s2">&quot;ConfigurationError&quot;</span><span class="p">,</span> <span class="s2">&quot;ParsingError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CollapseInheritOnly&quot;</span><span class="p">,</span> <span class="s2">&quot;ComplexInstantiationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;QuoteInterpretationError&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">..exceptions</span> <span class="kn">import</span> <span class="n">PkgcoreException</span><span class="p">,</span> <span class="n">PkgcoreUserException</span>
+
+
+<span class="k">def</span> <span class="nf">_identify_functor_source</span><span class="p">(</span><span class="n">functor</span><span class="p">):</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">functor</span><span class="p">,</span> <span class="s1">&#39;__module__&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">module</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">functor</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">module</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="n">functor</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">ConfigError</span><span class="p">(</span><span class="n">PkgcoreException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic config exception.&quot;&quot;&quot;</span>
+
+
+<span class="k">class</span> <span class="nc">UserConfigError</span><span class="p">(</span><span class="n">ConfigError</span><span class="p">,</span> <span class="n">PkgcoreUserException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic config exception with user relevant error.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="TypeDefinitionError"><a class="viewcode-back" href="../../../api/pkgcore.config.errors.html#pkgcore.config.errors.TypeDefinitionError">[docs]</a><span class="k">class</span> <span class="nc">TypeDefinitionError</span><span class="p">(</span><span class="n">ConfigError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fatal error in type construction.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ConfigurationError"><a class="viewcode-back" href="../../../api/pkgcore.config.errors.html#pkgcore.config.errors.ConfigurationError">[docs]</a><span class="k">class</span> <span class="nc">ConfigurationError</span><span class="p">(</span><span class="n">ConfigError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fatal error in parsing a config section.</span>
+
+<span class="sd">    :type stack: sequence of strings.</span>
+<span class="sd">    :ivar stack: messages describing where this ConfigurationError originated.</span>
+<span class="sd">        configuration-related code catching ConfigurationError that wants to</span>
+<span class="sd">        raise its own ConfigurationError should modify (usually append to)</span>
+<span class="sd">        the stack and then re-raise the original exception (this makes sure</span>
+<span class="sd">        the traceback is preserved).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stack</span> <span class="o">=</span> <span class="p">[</span><span class="n">message</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="ParsingError"><a class="viewcode-back" href="../../../api/pkgcore.config.errors.html#pkgcore.config.errors.ParsingError">[docs]</a><span class="k">class</span> <span class="nc">ParsingError</span><span class="p">(</span><span class="n">ConfigurationError</span><span class="p">,</span> <span class="n">PkgcoreUserException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic file parsing exception.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">exception</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exception</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;specify at least one of message and exception&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exc</span> <span class="o">=</span> <span class="n">exception</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;parsing failed: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">exc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">exc</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">msg</span></div>
+
+
+<div class="viewcode-block" id="CollapseInheritOnly"><a class="viewcode-back" href="../../../api/pkgcore.config.errors.html#pkgcore.config.errors.CollapseInheritOnly">[docs]</a><span class="k">class</span> <span class="nc">CollapseInheritOnly</span><span class="p">(</span><span class="n">ConfigurationError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Attempt was made to collapse an uncollapsable section.</span>
+
+<span class="sd">    Separate exception because pconfig catches it separately.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">InstantiationError</span><span class="p">(</span><span class="n">ConfigurationError</span><span class="p">):</span>
+
+    <span class="n">_txt</span> <span class="o">=</span> <span class="s2">&quot;Failed instantiating section </span><span class="si">%r%s</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">section_name</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">section_name</span> <span class="o">=</span> <span class="n">section_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+        <span class="k">if</span> <span class="n">s</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">s</span><span class="p">,)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_txt</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">section_name</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">AutoloadInstantiationError</span><span class="p">(</span><span class="n">InstantiationError</span><span class="p">):</span>
+
+    <span class="n">_txt</span> <span class="o">=</span> <span class="s2">&quot;Failed loading autoload section </span><span class="si">%r%s</span><span class="s2">&quot;</span>
+
+
+<div class="viewcode-block" id="ComplexInstantiationError"><a class="viewcode-back" href="../../../api/pkgcore.config.errors.html#pkgcore.config.errors.ComplexInstantiationError">[docs]</a><span class="k">class</span> <span class="nc">ComplexInstantiationError</span><span class="p">(</span><span class="n">ConfigurationError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception occurred during instantiation.</span>
+
+<span class="sd">    :ivar callable: callable object which failed during instantiation.</span>
+<span class="sd">    :ivar pargs: positional args passed to callable.</span>
+<span class="sd">    :ivar kwargs: keyword args passed to callable.</span>
+<span class="sd">    :ivar exc: original exception object or None.</span>
+
+<span class="sd">    A well-behaved configurable callable should raise this exception</span>
+<span class="sd">    if instantiation failed, providing one or both of message and</span>
+<span class="sd">    exception. The other fields will be filled in by central.</span>
+
+<span class="sd">    If the callable raises something else central will wrap it in</span>
+<span class="sd">    this, but that will lose the traceback.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exception</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callable_obj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">pargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">exception</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">exception</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;specify at least one of message and exception&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">callable</span> <span class="o">=</span> <span class="n">callable_obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pargs</span> <span class="o">=</span> <span class="n">pargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span> <span class="o">=</span> <span class="n">kwargs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exc</span> <span class="o">=</span> <span class="n">exception</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># self.callable should be set here (nothing should try to catch</span>
+        <span class="c1"># and str() this before central had a chance to fill it in)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">!r}</span><span class="s1">, callable unset!&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">!r}</span><span class="s1"> instantiating &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="p">)</span>
+        <span class="c1"># The weird repr(str(exc)) used here quotes the message nicely.</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">callable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;Caught exception </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exc</span><span class="p">)</span><span class="si">!r}</span><span class="s1"> &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;instantiating </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s1">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">callable</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;Caught exception </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exc</span><span class="p">)</span><span class="si">!r}</span><span class="s1">, callable unset!&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;:</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">reversed</span><span class="p">([</span><span class="n">message</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stack</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span></div>
+
+
+<div class="viewcode-block" id="QuoteInterpretationError"><a class="viewcode-back" href="../../../api/pkgcore.config.errors.html#pkgcore.config.errors.QuoteInterpretationError">[docs]</a><span class="k">class</span> <span class="nc">QuoteInterpretationError</span><span class="p">(</span><span class="n">ConfigurationError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Quoting of a var was screwed up.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;parsing of </span><span class="si">{</span><span class="n">string</span><span class="si">!r}</span><span class="s1"> failed&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">str</span> <span class="o">=</span> <span class="n">string</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../config.html" >pkgcore.config</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.errors</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

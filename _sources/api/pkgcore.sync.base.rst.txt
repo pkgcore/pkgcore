@@ -1,0 +1,7 @@
+pkgcore.sync.base module
+========================
+
+.. automodule:: pkgcore.sync.base
+   :members:
+   :undoc-members:
+   :show-inheritance:

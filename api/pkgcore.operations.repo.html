@@ -1,0 +1,248 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.operations.repo module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.repo module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.operations.repo">
+<span id="pkgcore-operations-repo-module"></span><h1>pkgcore.operations.repo module<a class="headerlink" href="#module-pkgcore.operations.repo" title="Permalink to this headline">¶</a></h1>
+<p>repository modifications (installing, removing, replacing)</p>
+<dl class="py exception">
+<dt id="pkgcore.operations.repo.Failure">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.operations.repo.</code><code class="sig-name descname">Failure</code><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#Failure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.Failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreException" title="pkgcore.exceptions.PkgcoreException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreException</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.operations.repo.base">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.operations.repo.</code><code class="sig-name descname">base</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.operations.repo.base.finalize_data">
+<code class="sig-name descname">finalize_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#base.finalize_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.base.finalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.base.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#base.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.base.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.base.stage_depends">
+<code class="sig-name descname">stage_depends</code><em class="property"> = {}</em><a class="headerlink" href="#pkgcore.operations.repo.base.stage_depends" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.base.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#base.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.base.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.operations.repo.install">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.operations.repo.</code><code class="sig-name descname">install</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#install"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.install" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.operations.repo.base" title="pkgcore.operations.repo.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.base</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.operations.repo.install.add_data">
+<code class="sig-name descname">add_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.install.add_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.install.description">
+<code class="sig-name descname">description</code><em class="property"> = 'install'</em><a class="headerlink" href="#pkgcore.operations.repo.install.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.install.finalize_data">
+<code class="sig-name descname">finalize_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.install.finalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.install.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.install.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.install.stage_depends">
+<code class="sig-name descname">stage_depends</code><em class="property"> = {'_notify_repo_add': 'finalize_data', 'add_data': 'start', 'finalize_data': 'add_data', 'finish': '_notify_repo_add'}</em><a class="headerlink" href="#pkgcore.operations.repo.install.stage_depends" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.install.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.install.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.operations.repo.operations">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.operations.repo.</code><code class="sig-name descname">operations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repository</span></em>, <em class="sig-param"><span class="n">disable_overrides</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">enable_overrides</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.operations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.sync_operations</span></code></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.operations.repo.operations_proxy">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.operations.repo.</code><code class="sig-name descname">operations_proxy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repository</span></em>, <em class="sig-param"><span class="n">disable_overrides</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">enable_overrides</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#operations_proxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.operations_proxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.operations.repo.operations" title="pkgcore.operations.repo.operations"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.operations</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.operations_proxy.enabled_operations">
+<code class="sig-name descname">enabled_operations</code><a class="headerlink" href="#pkgcore.operations.repo.operations_proxy.enabled_operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.operations_proxy.raw_operations">
+<code class="sig-name descname">raw_operations</code><a class="headerlink" href="#pkgcore.operations.repo.operations_proxy.raw_operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.operations.repo.replace">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.operations.repo.</code><code class="sig-name descname">replace</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">oldpkg</span></em>, <em class="sig-param"><span class="n">newpkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#replace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.replace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.operations.repo.install" title="pkgcore.operations.repo.install"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.install</span></code></a>, <a class="reference internal" href="#pkgcore.operations.repo.uninstall" title="pkgcore.operations.repo.uninstall"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.uninstall</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.operations.repo.replace.add_data">
+<code class="sig-name descname">add_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.replace.add_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.replace.description">
+<code class="sig-name descname">description</code><em class="property"> = 'replace'</em><a class="headerlink" href="#pkgcore.operations.repo.replace.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.replace.finalize_data">
+<code class="sig-name descname">finalize_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.replace.finalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.replace.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.replace.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.replace.remove_data">
+<code class="sig-name descname">remove_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.replace.remove_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.replace.stage_depends">
+<code class="sig-name descname">stage_depends</code><em class="property"> = {'_notify_repo_add': 'finalize_data', '_notify_repo_remove': 'remove_data', 'add_data': 'start', 'finalize_data': ('add_data', '_notify_repo_remove'), 'finish': '_notify_repo_add', 'remove_data': 'start'}</em><a class="headerlink" href="#pkgcore.operations.repo.replace.stage_depends" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.replace.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.replace.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.operations.repo.uninstall">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.operations.repo.</code><code class="sig-name descname">uninstall</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/operations/repo.html#uninstall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.operations.repo.uninstall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.operations.repo.base" title="pkgcore.operations.repo.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.operations.repo.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.uninstall.description">
+<code class="sig-name descname">description</code><em class="property"> = 'uninstall'</em><a class="headerlink" href="#pkgcore.operations.repo.uninstall.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.uninstall.finalize_data">
+<code class="sig-name descname">finalize_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.uninstall.finalize_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.uninstall.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.uninstall.finish" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.uninstall.remove_data">
+<code class="sig-name descname">remove_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.uninstall.remove_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.operations.repo.uninstall.stage_depends">
+<code class="sig-name descname">stage_depends</code><em class="property"> = {'_notify_repo_remove': 'finalize_data', 'finalize_data': 'remove_data', 'finish': '_notify_repo_remove', 'remove_data': 'start'}</em><a class="headerlink" href="#pkgcore.operations.repo.uninstall.stage_depends" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.operations.repo.uninstall.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">**</span><span class="n">morekwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.operations.repo.uninstall.start" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.operations.repo module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

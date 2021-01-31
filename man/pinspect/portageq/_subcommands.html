@@ -1,0 +1,591 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pinspect portageq best_version - Return the maximum visible version for a given atom. &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pinspect portageq best_version - Return the maximum visible version for a given atom.</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pinspect-portageq-best-version-return-the-maximum-visible-version-for-a-given-atom">
+<h1>pinspect portageq best_version - Return the maximum visible version for a given atom.<a class="headerlink" href="#pinspect-portageq-best-version-return-the-maximum-visible-version-for-a-given-atom" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="synopsis">
+<h1>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom</p>
+</div>
+<div class="section" id="positional-arguments">
+<h1>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="optional-arguments">
+<h1>Optional Arguments<a class="headerlink" href="#optional-arguments" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="base-options">
+<h1>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-envvar-return-configuration-defined-variables-use-envvar2-instead-this-will-be-removed">
+<h1>pinspect portageq envvar - return configuration defined variables.  Use envvar2 instead, this will be removed.<a class="headerlink" href="#pinspect-portageq-envvar-return-configuration-defined-variables-use-envvar2-instead-this-will-be-removed" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id1">
+<h1>Synopsis<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq envvar [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [root] variable [variable ...]</p>
+</div>
+<div class="section" id="id2">
+<h1>Positional Arguments<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">variable</dt>
+<dd class="field-even"><p>variable to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id3">
+<h1>Optional Arguments<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id4">
+<h1>Base Options<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-envvar2-return-configuration-defined-variables">
+<h1>pinspect portageq envvar2 - return configuration defined variables.<a class="headerlink" href="#pinspect-portageq-envvar2-return-configuration-defined-variables" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id5">
+<h1>Synopsis<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq envvar2 [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root variable [variable ...]</p>
+</div>
+<div class="section" id="id6">
+<h1>Positional Arguments<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">variable</dt>
+<dd class="field-even"><p>variable to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id7">
+<h1>Optional Arguments<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id8">
+<h1>Base Options<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-get-repo-news-path">
+<h1>pinspect portageq get_repo_news_path<a class="headerlink" href="#pinspect-portageq-get-repo-news-path" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id9">
+<h1>Synopsis<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq get_repo_news_path [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [root] repo_id</p>
+</div>
+<div class="section" id="id10">
+<h1>Positional Arguments<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>root to inspect</p>
+</dd>
+<dt class="field-even">repo_id</dt>
+<dd class="field-even"><p>repo_id to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id11">
+<h1>Optional Arguments<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id12">
+<h1>Base Options<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-get-repo-path">
+<h1>pinspect portageq get_repo_path<a class="headerlink" href="#pinspect-portageq-get-repo-path" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id13">
+<h1>Synopsis<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq get_repo_path [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root repo_id</p>
+</div>
+<div class="section" id="id14">
+<h1>Positional Arguments<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">repo_id</dt>
+<dd class="field-even"><p>repo_id to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id15">
+<h1>Optional Arguments<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id16">
+<h1>Base Options<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-get-repos">
+<h1>pinspect portageq get_repos<a class="headerlink" href="#pinspect-portageq-get-repos" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id17">
+<h1>Synopsis<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq get_repos [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] [root]</p>
+</div>
+<div class="section" id="id18">
+<h1>Positional Arguments<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id19">
+<h1>Optional Arguments<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id20">
+<h1>Base Options<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-has-version-return-0-if-an-atom-is-merged-1-if-not">
+<h1>pinspect portageq has_version - Return 0 if an atom is merged, 1 if not.<a class="headerlink" href="#pinspect-portageq-has-version-return-0-if-an-atom-is-merged-1-if-not" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id21">
+<h1>Synopsis<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq has_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom</p>
+</div>
+<div class="section" id="id22">
+<h1>Positional Arguments<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id23">
+<h1>Optional Arguments<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id24">
+<h1>Base Options<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-mass-best-version-multiple-best-version-calls">
+<h1>pinspect portageq mass_best_version - multiple best_version calls.<a class="headerlink" href="#pinspect-portageq-mass-best-version-multiple-best-version-calls" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id25">
+<h1>Synopsis<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq mass_best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom [atom ...]</p>
+</div>
+<div class="section" id="id26">
+<h1>Positional Arguments<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id27">
+<h1>Optional Arguments<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id28">
+<h1>Base Options<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pinspect-portageq-match-shorthand-for-pquery-installed">
+<h1>pinspect portageq match - shorthand for <cite>pquery --installed</cite><a class="headerlink" href="#pinspect-portageq-match-shorthand-for-pquery-installed" title="Permalink to this headline">¶</a></h1>
+</div>
+<div class="section" id="id29">
+<h1>Synopsis<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h1>
+<p>pinspect portageq match [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom</p>
+</div>
+<div class="section" id="id30">
+<h1>Positional Arguments<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">root</dt>
+<dd class="field-odd"><p>the domain that lives at root will be used</p>
+</dd>
+<dt class="field-even">atom</dt>
+<dd class="field-even"><p>atom to inspect</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id31">
+<h1>Optional Arguments<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--eapi <var>ATOM_KLS</var></span></kbd></dt>
+<dd><p>limit all operations to just what the given EAPI supports.</p>
+</dd>
+<dt><kbd><span class="option">--use <var>USE</var></span></kbd></dt>
+<dd><p>override the use flags used for transititive USE deps- dev-lang/python[threads=] for example</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="id32">
+<h1>Base Options<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pinspect portageq best_version - Return the maximum visible version for a given atom.</a></li>
+<li><a class="reference internal" href="#synopsis">Synopsis</a></li>
+<li><a class="reference internal" href="#positional-arguments">Positional Arguments</a></li>
+<li><a class="reference internal" href="#optional-arguments">Optional Arguments</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-envvar-return-configuration-defined-variables-use-envvar2-instead-this-will-be-removed">pinspect portageq envvar - return configuration defined variables.  Use envvar2 instead, this will be removed.</a></li>
+<li><a class="reference internal" href="#id1">Synopsis</a></li>
+<li><a class="reference internal" href="#id2">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id3">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id4">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-envvar2-return-configuration-defined-variables">pinspect portageq envvar2 - return configuration defined variables.</a></li>
+<li><a class="reference internal" href="#id5">Synopsis</a></li>
+<li><a class="reference internal" href="#id6">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id7">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id8">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-get-repo-news-path">pinspect portageq get_repo_news_path</a></li>
+<li><a class="reference internal" href="#id9">Synopsis</a></li>
+<li><a class="reference internal" href="#id10">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id11">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id12">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-get-repo-path">pinspect portageq get_repo_path</a></li>
+<li><a class="reference internal" href="#id13">Synopsis</a></li>
+<li><a class="reference internal" href="#id14">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id15">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id16">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-get-repos">pinspect portageq get_repos</a></li>
+<li><a class="reference internal" href="#id17">Synopsis</a></li>
+<li><a class="reference internal" href="#id18">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id19">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id20">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-has-version-return-0-if-an-atom-is-merged-1-if-not">pinspect portageq has_version - Return 0 if an atom is merged, 1 if not.</a></li>
+<li><a class="reference internal" href="#id21">Synopsis</a></li>
+<li><a class="reference internal" href="#id22">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id23">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id24">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-mass-best-version-multiple-best-version-calls">pinspect portageq mass_best_version - multiple best_version calls.</a></li>
+<li><a class="reference internal" href="#id25">Synopsis</a></li>
+<li><a class="reference internal" href="#id26">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id27">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id28">Base Options</a></li>
+<li><a class="reference internal" href="#pinspect-portageq-match-shorthand-for-pquery-installed">pinspect portageq match - shorthand for <cite>pquery --installed</cite></a></li>
+<li><a class="reference internal" href="#id29">Synopsis</a></li>
+<li><a class="reference internal" href="#id30">Positional Arguments</a></li>
+<li><a class="reference internal" href="#id31">Optional Arguments</a></li>
+<li><a class="reference internal" href="#id32">Base Options</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pinspect portageq best_version - Return the maximum visible version for a given atom.</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

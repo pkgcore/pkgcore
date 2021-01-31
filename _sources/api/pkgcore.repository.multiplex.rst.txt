@@ -1,0 +1,7 @@
+pkgcore.repository.multiplex module
+===================================
+
+.. automodule:: pkgcore.repository.multiplex
+   :members:
+   :undoc-members:
+   :show-inheritance:

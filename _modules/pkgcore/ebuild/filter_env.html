@@ -1,0 +1,494 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.filter_env &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.filter_env</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.filter_env</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Filter a bash environment dump.&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;run&quot;</span><span class="p">,)</span>
+
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+
+<span class="n">COMMAND_PARSING</span><span class="p">,</span> <span class="n">SPACE_PARSING</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="run"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.filter_env.html#pkgcore.ebuild.filter_env.run">[docs]</a><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">file_buff</span><span class="p">,</span> <span class="n">var_match</span><span class="p">,</span> <span class="n">func_match</span><span class="p">,</span>
+               <span class="n">global_envvar_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">func_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Print a filtered environment.</span>
+
+<span class="sd">    :param out: file-like object to write to.</span>
+<span class="sd">    :param file_buff: string containing the environment to filter.</span>
+<span class="sd">        Should end in &#39;\0&#39;.</span>
+<span class="sd">    :param var_match: result of build_regex_string or C{None}, for variables.</span>
+<span class="sd">    :param func_match: result of build_regex_string or C{None}, for functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">process_scope</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">file_buff</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">var_match</span><span class="p">,</span> <span class="n">func_match</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span><span class="p">,</span>
+        <span class="n">global_envvar_callback</span><span class="p">,</span> <span class="n">func_callback</span><span class="o">=</span><span class="n">func_callback</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">build_regex_string</span><span class="p">(</span><span class="n">tokens</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">_f</span> <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="n">tokens</span> <span class="k">if</span> <span class="n">_f</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tokens</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(?:</span><span class="si">{</span><span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;^</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">$&#39;</span>
+    <span class="k">if</span> <span class="n">invert</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;(?!</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">)&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">re</span><span class="o">.</span><span class="n">error</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed compiling </span><span class="si">{</span><span class="n">s</span><span class="si">!r}</span><span class="s2">:</span><span class="se">\n\n</span><span class="s2">error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="n">FUNC_LEN</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="s1">&#39;function&#39;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">is_function</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;:return: start, end, pos or None, None, None tuple.&quot;&quot;&quot;</span>
+    <span class="n">isspace</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">isspace</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39; </span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">:</span><span class="n">pos</span> <span class="o">+</span> <span class="n">FUNC_LEN</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;function&#39;</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">isspace</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="n">FUNC_LEN</span><span class="p">]):</span>
+                    <span class="n">pos</span> <span class="o">+=</span> <span class="n">FUNC_LEN</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="c1"># insane, but it could still be a function-</span>
+                <span class="c1"># len(&#39;f(){:;}&#39;) &lt;= FUNC_LEN.</span>
+                <span class="k">pass</span>
+        <span class="k">while</span> <span class="n">isspace</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]):</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="k">while</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1"> </span><span class="se">\t\n</span><span class="s1">=&quot;</span><span class="se">\&#39;</span><span class="s1">()&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="k">if</span> <span class="n">end</span> <span class="o">==</span> <span class="n">start</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39; </span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;(&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39; </span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;)&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">isspace</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]):</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+        <span class="c1"># can&#39;t be a function, ran off the end</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">is_envvar</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;:return: start, end, pos or None, None, None tuple.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">while</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39; </span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&quot;</span><span class="se">\&#39;</span><span class="s1">()- </span><span class="se">\t\n</span><span class="s1">&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="n">start</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+                <span class="k">return</span> <span class="n">start</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+<span class="k">def</span> <span class="nf">process_scope</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">var_match</span><span class="p">,</span> <span class="n">func_match</span><span class="p">,</span> <span class="n">endchar</span><span class="p">,</span>
+                  <span class="n">envvar_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                  <span class="n">func_level</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">window_start</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="n">window_end</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">isspace</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">isspace</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="n">endchar</span><span class="p">:</span>
+        <span class="c1"># Wander forward to the next non space.</span>
+        <span class="k">if</span> <span class="n">window_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">window_start</span><span class="p">:</span><span class="n">window_end</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+            <span class="n">window_start</span> <span class="o">=</span> <span class="n">pos</span>
+            <span class="n">window_end</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">com_start</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">isspace</span><span class="p">(</span><span class="n">ch</span><span class="p">):</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Ignore comments.</span>
+        <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;#&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_statement_pound</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">new_start</span><span class="p">,</span> <span class="n">new_end</span><span class="p">,</span> <span class="n">new_p</span> <span class="o">=</span> <span class="n">is_function</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new_p</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">func_name</span> <span class="o">=</span> <span class="n">buff</span><span class="p">[</span><span class="n">new_start</span><span class="p">:</span><span class="n">new_end</span><span class="p">]</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;matched func name </span><span class="si">{</span><span class="n">func_name</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">new_p</span> <span class="o">=</span> <span class="n">process_scope</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">new_p</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;}&#39;</span><span class="p">,</span>
+                                  <span class="n">func_callback</span><span class="o">=</span><span class="n">func_callback</span><span class="p">,</span>
+                                  <span class="n">func_level</span><span class="o">=</span><span class="n">func_level</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;ended processing </span><span class="si">{</span><span class="n">func_name</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">func_callback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">func_callback</span><span class="p">(</span><span class="n">func_level</span><span class="p">,</span> <span class="n">func_name</span><span class="p">,</span> <span class="n">buff</span><span class="p">[</span><span class="n">new_start</span><span class="p">:</span><span class="n">new_p</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">func_match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">func_match</span><span class="p">(</span><span class="n">func_name</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;filtering func </span><span class="si">{</span><span class="n">func_name</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">window_end</span> <span class="o">=</span> <span class="n">com_start</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">new_p</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">continue</span>
+        <span class="c1"># Check for env assignment.</span>
+        <span class="n">new_start</span><span class="p">,</span> <span class="n">new_end</span><span class="p">,</span> <span class="n">new_p</span> <span class="o">=</span> <span class="n">is_envvar</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">new_p</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Non env assignment.</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_command_complex</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="p">,</span> <span class="n">COMMAND_PARSING</span><span class="p">)</span>
+            <span class="c1"># icky icky icky icky</span>
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="n">endchar</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Env assignment.</span>
+            <span class="n">var_name</span> <span class="o">=</span> <span class="n">buff</span><span class="p">[</span><span class="n">new_start</span><span class="p">:</span><span class="n">new_end</span><span class="p">]</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">new_p</span>
+            <span class="k">if</span> <span class="n">envvar_callback</span><span class="p">:</span>
+                <span class="n">envvar_callback</span><span class="p">(</span><span class="n">var_name</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;matched env assign </span><span class="si">{</span><span class="n">var_name</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">var_match</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">var_match</span><span class="p">(</span><span class="n">var_name</span><span class="p">):</span>
+                <span class="c1"># This would be filtered.</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;filtering var </span><span class="si">{</span><span class="n">var_name</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">window_end</span> <span class="o">=</span> <span class="n">com_start</span>
+
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pos</span>
+
+            <span class="k">while</span> <span class="p">(</span><span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">isspace</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">])</span>
+                   <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;;&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">:</span>
+                    <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_statement_no_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;&quot;`&#39;</span><span class="p">:</span>
+                    <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_command_escaped_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                                                       <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span><span class="p">:</span>
+                    <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_command_escaped_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">elif</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+                    <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">if</span> <span class="n">pos</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_dollar_expansion</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">endchar</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># blah=cah ; single word</span>
+                    <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_command_complex</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">SPACE_PARSING</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">window_end</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">window_end</span> <span class="o">=</span> <span class="n">pos</span>
+        <span class="k">if</span> <span class="n">window_end</span> <span class="o">&gt;</span> <span class="n">end</span><span class="p">:</span>
+            <span class="n">window_end</span> <span class="o">=</span> <span class="n">end</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">window_start</span><span class="p">:</span><span class="n">window_end</span><span class="p">]</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">pos</span>
+
+
+<span class="k">def</span> <span class="nf">walk_statement_no_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">buff</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">endchar</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">pos</span>
+
+
+<span class="k">def</span> <span class="nf">walk_statement_dollared_quote_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="p">):</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="n">endchar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pos</span>
+        <span class="k">elif</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">pos</span>
+
+
+<span class="k">def</span> <span class="nf">walk_here_statement</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+    <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;starting here processing for COMMAND for level 2 at p == </span><span class="si">%.10s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&lt;&#39;</span><span class="p">:</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;correction, it&#39;s a third level here. Handing back to command parsing&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">isspace</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">isspace</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">and</span> <span class="p">(</span><span class="n">isspace</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">])</span> <span class="ow">or</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;-&#39;</span><span class="p">):</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;&#39;</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="p">:</span>
+        <span class="n">end_here</span> <span class="o">=</span> <span class="n">walk_statement_no_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">])</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">end_here</span> <span class="o">=</span> <span class="n">walk_command_complex</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="p">,</span> <span class="n">SPACE_PARSING</span><span class="p">)</span>
+    <span class="n">here_word</span> <span class="o">=</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">:</span><span class="n">end_here</span><span class="p">]</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;matched len(</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">here_word</span><span class="p">)</span><span class="si">}</span><span class="s1">)/</span><span class="si">{</span><span class="n">here_word</span><span class="si">!r}</span><span class="s1"> for a here word&#39;</span><span class="p">)</span>
+    <span class="c1"># XXX watch this. Potential for horkage. Need to do the quote</span>
+    <span class="c1"># removal thing. This sucks.</span>
+    <span class="n">end_here</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">end_here</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">end_here</span>
+
+    <span class="n">here_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">here_word</span><span class="p">)</span>
+    <span class="n">end_here</span> <span class="o">=</span> <span class="n">buff</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">here_word</span><span class="p">,</span> <span class="n">end_here</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">end_here</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">here_len</span> <span class="o">+</span> <span class="n">end_here</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;;</span><span class="se">\n\r</span><span class="s1">})&#39;</span><span class="p">:</span>
+            <span class="n">i</span> <span class="o">=</span> <span class="n">end_here</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">while</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">in</span> <span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> &#39;</span><span class="p">:</span>
+                <span class="n">i</span> <span class="o">-=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="n">end_here</span> <span class="o">=</span> <span class="n">buff</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">here_word</span><span class="p">,</span> <span class="n">end_here</span> <span class="o">+</span> <span class="n">here_len</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">end_here</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">end</span>
+    <span class="k">return</span> <span class="n">end_here</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">here_word</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">walk_statement_pound</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">pos</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">isspace</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">endchar</span> <span class="o">==</span> <span class="s1">&#39;`&#39;</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">buff</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="n">i2</span> <span class="o">=</span> <span class="n">buff</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">endchar</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i2</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">i2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">i2</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">i2</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">i</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">pos</span> <span class="o">=</span> <span class="n">buff</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">pos</span>
+
+
+<span class="k">def</span> <span class="nf">walk_command_complex</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="p">,</span> <span class="n">interpret_level</span><span class="p">):</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">pos</span>
+    <span class="n">isspace</span> <span class="o">=</span> <span class="nb">str</span><span class="o">.</span><span class="n">isspace</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">endchar</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">endchar</span> <span class="o">!=</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pos</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="n">pos</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pos</span>
+            <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="s2">&quot;;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">pos</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">interpret_level</span> <span class="o">==</span> <span class="n">COMMAND_PARSING</span> <span class="ow">and</span> <span class="n">ch</span> <span class="ow">in</span> <span class="s1">&#39;;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span> <span class="ow">or</span> \
+            <span class="p">(</span><span class="n">interpret_level</span> <span class="o">==</span> <span class="n">SPACE_PARSING</span> <span class="ow">and</span> <span class="n">isspace</span><span class="p">(</span><span class="n">ch</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="n">pos</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;&lt;&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;&lt;&#39;</span> <span class="ow">and</span>
+                <span class="n">interpret_level</span> <span class="o">==</span> <span class="n">COMMAND_PARSING</span><span class="p">):</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_here_statement</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="c1"># we continue immediately; walk_here deposits us at the end</span>
+                <span class="c1"># of the here op, not consuming the final delimiting char</span>
+                <span class="c1"># since it may be an endchar</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;noticed &lt;, interpret_level=</span><span class="si">{</span><span class="n">interpret_level</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;#&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">start</span> <span class="o">==</span> <span class="n">pos</span> <span class="ow">or</span> <span class="n">isspace</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="n">pos</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span> <span class="ow">or</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;;&#39;</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_statement_pound</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">)</span>
+                <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_dollar_expansion</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">endchar</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_command_escaped_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;}&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span> <span class="ow">and</span> <span class="n">interpret_level</span> <span class="o">==</span> <span class="n">COMMAND_PARSING</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_command_escaped_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="ow">in</span> <span class="s1">&#39;`&quot;&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_command_escaped_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ch</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">and</span> <span class="n">endchar</span> <span class="o">!=</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_statement_no_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">pos</span>
+
+<span class="k">def</span> <span class="nf">raw_walk_command_escaped_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="p">):</span>
+    <span class="n">end</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span><span class="p">:</span>
+        <span class="n">ch</span> <span class="o">=</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ch</span> <span class="o">==</span> <span class="n">endchar</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pos</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">endchar</span> <span class="o">!=</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">raw_walk_command_escaped_parsing</span><span class="p">(</span>
+                    <span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;}&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">endchar</span> <span class="o">!=</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+                <span class="n">pos</span> <span class="o">=</span> <span class="n">raw_walk_command_escaped_parsing</span><span class="p">(</span>
+                    <span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="ow">in</span> <span class="s1">&#39;`&quot;&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">raw_walk_command_escaped_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ch</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">and</span> <span class="n">endchar</span> <span class="o">!=</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_statement_no_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_dollar_expansion</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">endchar</span><span class="p">,</span>
+                <span class="n">disable_quote</span> <span class="o">=</span> <span class="n">endchar</span> <span class="o">==</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="k">elif</span> <span class="n">ch</span> <span class="o">==</span> <span class="s1">&#39;#&#39;</span> <span class="ow">and</span> <span class="n">endchar</span> <span class="o">!=</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_statement_pound</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">endchar</span><span class="p">)</span>
+            <span class="k">continue</span>
+        <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">pos</span>
+
+<span class="n">walk_command_escaped_parsing</span> <span class="o">=</span> <span class="n">raw_walk_command_escaped_parsing</span>
+
+<span class="k">def</span> <span class="nf">walk_dollar_expansion</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">endchar</span><span class="p">,</span> <span class="n">disable_quote</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;(&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">process_scope</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;)&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&#39;&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">disable_quote</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">walk_statement_dollared_quote_parsing</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;{&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+            <span class="c1"># short circuit it.</span>
+            <span class="k">return</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="n">endchar</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span><span class="o">.</span><span class="n">isspace</span><span class="p">():</span>
+                <span class="k">return</span> <span class="n">pos</span>
+            <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+                <span class="c1"># shouldn&#39;t this be passing disable_quote ?</span>
+                <span class="k">return</span> <span class="n">walk_dollar_expansion</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">endchar</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span><span class="o">.</span><span class="n">isalnum</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;_&#39;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">pos</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">pos</span> <span class="o">&gt;=</span> <span class="n">end</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">end</span>
+        <span class="k">return</span> <span class="n">pos</span>
+
+    <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="c1"># shortcut ${$} to avoid going too deep. ${$a} isn&#39;t valid, so no concern</span>
+    <span class="k">if</span> <span class="n">pos</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">while</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="ow">and</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;}&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">buff</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;$&#39;</span><span class="p">:</span>
+            <span class="c1"># disable_quote?</span>
+            <span class="n">pos</span> <span class="o">=</span> <span class="n">walk_dollar_expansion</span><span class="p">(</span><span class="n">buff</span><span class="p">,</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">endchar</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">pos</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="k">def</span> <span class="nf">main_run</span><span class="p">(</span><span class="n">out_handle</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">vars_to_filter</span><span class="o">=</span><span class="p">(),</span> <span class="n">funcs_to_filter</span><span class="o">=</span><span class="p">(),</span> <span class="n">vars_is_whitelist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">funcs_is_whitelist</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+             <span class="n">global_envvar_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">func_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="nb">vars</span> <span class="o">=</span> <span class="n">funcs</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">vars_to_filter</span><span class="p">:</span>
+        <span class="nb">vars</span> <span class="o">=</span> <span class="n">build_regex_string</span><span class="p">(</span><span class="n">vars_to_filter</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="n">vars_is_whitelist</span><span class="p">)</span><span class="o">.</span><span class="n">match</span>
+
+    <span class="k">if</span> <span class="n">funcs_to_filter</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">funcs_to_filter</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;funcs_str should not be a string; should be a sequence.&quot;</span><span class="p">)</span>
+        <span class="n">funcs</span> <span class="o">=</span> <span class="n">build_regex_string</span><span class="p">(</span><span class="n">funcs_to_filter</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="n">funcs_is_whitelist</span><span class="p">)</span><span class="o">.</span><span class="n">match</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\0</span><span class="s1">&#39;</span>
+    <span class="n">kwds</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;global_envvar_callback&#39;</span><span class="p">:</span> <span class="n">global_envvar_callback</span><span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">func_callback</span><span class="p">:</span>
+        <span class="n">kwds</span><span class="p">[</span><span class="s1">&#39;func_callback&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">func_callback</span>
+    <span class="k">if</span> <span class="n">out_handle</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">out_handle</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">BytesIO</span><span class="p">()</span>
+
+    <span class="n">run</span><span class="p">(</span><span class="n">out_handle</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="nb">vars</span><span class="p">,</span> <span class="n">funcs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.filter_env</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

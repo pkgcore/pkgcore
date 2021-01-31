@@ -1,0 +1,7 @@
+pinspect portageq - portageq compatible interface to query commands
+-------------------------------------------------------------------
+
+.. include:: portageq/_synopsis.rst
+.. include:: portageq/_description.rst
+.. include:: portageq/_options.rst
+.. include:: portageq/_subcommands.rst

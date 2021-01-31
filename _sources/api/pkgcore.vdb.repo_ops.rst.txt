@@ -1,0 +1,7 @@
+pkgcore.vdb.repo\_ops module
+============================
+
+.. automodule:: pkgcore.vdb.repo_ops
+   :members:
+   :undoc-members:
+   :show-inheritance:

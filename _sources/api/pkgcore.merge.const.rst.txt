@@ -1,0 +1,7 @@
+pkgcore.merge.const module
+==========================
+
+.. automodule:: pkgcore.merge.const
+   :members:
+   :undoc-members:
+   :show-inheritance:

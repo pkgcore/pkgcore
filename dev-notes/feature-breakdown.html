@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Feature (FEATURES) categories &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Filesystem Operations" href="fs-ops.html" />
+    <link rel="prev" title="Ebuild EAPI" href="eapi.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fs-ops.html" title="Filesystem Operations"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="eapi.html" title="Ebuild EAPI"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Feature (FEATURES) categories</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="feature-features-categories">
+<h1>Feature (FEATURES) categories<a class="headerlink" href="#feature-features-categories" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="relevant-list-of-features">
+<h2>relevant list of features<a class="headerlink" href="#relevant-list-of-features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>autoaddcvs</p></li>
+<li><p>buildpkg</p></li>
+<li><p>ccache</p></li>
+<li><p>collision-protect</p></li>
+<li><p>confcache</p></li>
+<li><p>cvs</p></li>
+<li><p>digest</p></li>
+<li><p>distcc</p></li>
+<li><p>distlocks</p></li>
+<li><p>fixpackages</p></li>
+<li><p>getbinpkg</p></li>
+<li><p>gpg</p></li>
+<li><p>keeptemp</p></li>
+<li><p>keepwork</p></li>
+<li><p>mirror</p></li>
+<li><p>noclean (keeptemp, keepwork)</p></li>
+<li><p>nodoc</p></li>
+<li><p>noinfo</p></li>
+<li><p>noman</p></li>
+<li><p>nostrip</p></li>
+<li><p>notitles</p></li>
+<li><p>sandbox</p></li>
+<li><p>severe</p></li>
+<li><p>severer (dumb spanky)</p></li>
+<li><p>sfperms</p></li>
+<li><p>sign</p></li>
+<li><p>strict</p></li>
+<li><p>suidctl</p></li>
+<li><p>test</p></li>
+<li><p>userpriv</p></li>
+<li><p>usersandbox</p></li>
+</ul>
+<div class="section" id="undefined">
+<h3>Undefined<a class="headerlink" href="#undefined" title="Permalink to this headline">¶</a></h3>
+<p>fixpackages</p>
+</div>
+<div class="section" id="dead">
+<h3>Dead<a class="headerlink" href="#dead" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>usersandbox</p></li>
+<li><p>noclean</p></li>
+<li><p>getbinpkg (it's a repo type, not a global feature)</p></li>
+<li><p>buildpkg  (again, repo thing.  moreso ui/buildplan execution)</p></li>
+</ul>
+</div>
+<div class="section" id="build">
+<h3>Build<a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>keeptemp, keepwork, noclean, ccache, distcc</p></li>
+<li><p>sandbox, userpriv</p></li>
+<li><p>confcache</p></li>
+<li><p>noauto (fun one)</p></li>
+<li><p>test</p></li>
+</ul>
+</div>
+<div class="section" id="repos-or-wrappers">
+<h3>repos or wrappers<a class="headerlink" href="#repos-or-wrappers" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="mutables">
+<h4>Mutables<a class="headerlink" href="#mutables" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>autoaddcvs</p></li>
+<li><p>cvs</p></li>
+<li><p>digest</p></li>
+<li><p>gpg</p></li>
+<li><p>no{doc,info,man,strip}</p></li>
+<li><p>sign</p></li>
+<li><p>sfperms</p></li>
+<li><p>collision-protect (vdb only)</p></li>
+</ul>
+</div>
+<div class="section" id="immutables">
+<h4>Immutables<a class="headerlink" href="#immutables" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>strict</p></li>
+<li><p>severe ; these two are repository opts on gpg repo class</p></li>
+</ul>
+</div>
+<div class="section" id="fetchers">
+<h4>Fetchers<a class="headerlink" href="#fetchers" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><p>distlocks, sort of.</p></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Feature (FEATURES) categories</a><ul>
+<li><a class="reference internal" href="#relevant-list-of-features">relevant list of features</a><ul>
+<li><a class="reference internal" href="#undefined">Undefined</a></li>
+<li><a class="reference internal" href="#dead">Dead</a></li>
+<li><a class="reference internal" href="#build">Build</a></li>
+<li><a class="reference internal" href="#repos-or-wrappers">repos or wrappers</a><ul>
+<li><a class="reference internal" href="#mutables">Mutables</a></li>
+<li><a class="reference internal" href="#immutables">Immutables</a></li>
+<li><a class="reference internal" href="#fetchers">Fetchers</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="eapi.html"
+                        title="previous chapter">Ebuild EAPI</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="fs-ops.html"
+                        title="next chapter">Filesystem Operations</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fs-ops.html" title="Filesystem Operations"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="eapi.html" title="Ebuild EAPI"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Feature (FEATURES) categories</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

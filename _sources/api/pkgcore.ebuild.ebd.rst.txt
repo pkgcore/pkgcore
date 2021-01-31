@@ -1,0 +1,7 @@
+pkgcore.ebuild.ebd module
+=========================
+
+.. automodule:: pkgcore.ebuild.ebd
+   :members:
+   :undoc-members:
+   :show-inheritance:

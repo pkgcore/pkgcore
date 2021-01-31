@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.repository.configured &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.configured</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.repository.configured</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">wrap a repository, binding configuration to pkgs returned from the repository</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;tree&quot;</span><span class="p">,)</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">DirProxy</span><span class="p">,</span> <span class="n">GetAttrProxy</span>
+
+<span class="kn">from</span> <span class="nn">..operations.repo</span> <span class="kn">import</span> <span class="n">operations_proxy</span>
+<span class="kn">from</span> <span class="nn">..package.conditionals</span> <span class="kn">import</span> <span class="n">make_wrapper</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">prototype</span>
+
+
+<div class="viewcode-block" id="tree"><a class="viewcode-back" href="../../../api/pkgcore.repository.configured.html#pkgcore.repository.configured.tree">[docs]</a><span class="k">class</span> <span class="nc">tree</span><span class="p">(</span><span class="n">prototype</span><span class="o">.</span><span class="n">tree</span><span class="p">):</span>
+
+    <span class="n">configured</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">operations_kls</span> <span class="o">=</span> <span class="n">operations_proxy</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_repo</span><span class="p">,</span> <span class="n">wrapped_attrs</span><span class="p">,</span> <span class="n">pkg_kls_injections</span><span class="o">=</span><span class="p">()):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param raw_repo: repo to wrap</span>
+<span class="sd">        :type raw_repo: :obj:`pkgcore.repository.prototype.tree`</span>
+<span class="sd">        :param wrapped_attrs: sequence of attrs to wrap for each pkg</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># yes, we&#39;re intentionally not using tree&#39;s init.</span>
+        <span class="c1"># not perfect I know.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span> <span class="o">=</span> <span class="n">raw_repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wrapped_attrs</span> <span class="o">=</span> <span class="n">wrapped_attrs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pkg_klass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mk_kls</span><span class="p">(</span><span class="n">pkg_kls_injections</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_mk_kls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg_kls_injections</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">make_wrapper</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">configurable</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">wrapped_attrs</span><span class="p">,</span>
+            <span class="n">kls_injections</span><span class="o">=</span><span class="n">pkg_kls_injections</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_pkg_kwds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+<div class="viewcode-block" id="tree.package_class"><a class="viewcode-back" href="../../../api/pkgcore.repository.configured.html#pkgcore.repository.configured.tree.package_class">[docs]</a>    <span class="k">def</span> <span class="nf">package_class</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pkg_klass</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_pkg_kwds</span><span class="p">(</span><span class="n">pkg</span><span class="p">))</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pkg_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># required to override empty pkg_masks inherited from prototype.tree</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span><span class="o">.</span><span class="n">pkg_masks</span>
+
+    <span class="fm">__getattr__</span> <span class="o">=</span> <span class="n">GetAttrProxy</span><span class="p">(</span><span class="s2">&quot;raw_repo&quot;</span><span class="p">)</span>
+    <span class="fm">__dir__</span> <span class="o">=</span> <span class="n">DirProxy</span><span class="p">(</span><span class="s2">&quot;raw_repo&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="tree.itermatch"><a class="viewcode-back" href="../../../api/pkgcore.repository.configured.html#pkgcore.repository.configured.tree.itermatch">[docs]</a>    <span class="k">def</span> <span class="nf">itermatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">kwds</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;force&quot;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;pkg_cls&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;pkg_cls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">package_class</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">kwds</span><span class="p">[</span><span class="s2">&quot;pkg_cls&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_class</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span></div>
+
+    <span class="n">itermatch</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">prototype</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">itermatch</span><span class="o">.</span><span class="vm">__doc__</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+        <span class="s2">&quot;@param&quot;</span><span class="p">,</span> <span class="s2">&quot;@keyword&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;:keyword restrict:&quot;</span><span class="p">,</span> <span class="s2">&quot;:param restrict:&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">package_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_repo</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">obj</span><span class="o">.</span><span class="n">is_supported</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;</span><span class="si">%s</span><span class="s1">.</span><span class="si">%s</span><span class="s1"> raw_repo=</span><span class="si">%r</span><span class="s1"> wrapped=</span><span class="si">%r</span><span class="s1"> @</span><span class="si">%#8x</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__module__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;raw_repo&#39;</span><span class="p">,</span> <span class="s1">&#39;unset&#39;</span><span class="p">),</span>
+            <span class="nb">list</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;wrapped_attrs&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+            <span class="nb">id</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.repository.configured</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

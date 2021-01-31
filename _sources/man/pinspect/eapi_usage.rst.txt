@@ -1,0 +1,7 @@
+pinspect eapi_usage - report of eapi usage for targeted repos
+-------------------------------------------------------------
+
+.. include:: eapi_usage/_synopsis.rst
+.. include:: eapi_usage/_description.rst
+.. include:: eapi_usage/_options.rst
+.. include:: eapi_usage/_subcommands.rst

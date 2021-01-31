@@ -1,0 +1,20 @@
+pkgcore.vdb package
+===================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.vdb.contents
+   pkgcore.vdb.ondisk
+   pkgcore.vdb.repo_ops
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.vdb
+   :members:
+   :undoc-members:
+   :show-inheritance:

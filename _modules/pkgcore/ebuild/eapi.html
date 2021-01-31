@@ -1,0 +1,759 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.eapi &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eapi</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.eapi</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span><span class="p">,</span> <span class="n">mappings</span><span class="p">,</span> <span class="n">weakrefs</span>
+<span class="kn">from</span> <span class="nn">snakeoil.demandload</span> <span class="kn">import</span> <span class="n">demand_compile_regexp</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.process.spawn</span> <span class="kn">import</span> <span class="n">bash_version</span>
+
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">atom</span><span class="p">,</span> <span class="n">const</span>
+
+<span class="n">demand_compile_regexp</span><span class="p">(</span>
+    <span class="s1">&#39;_valid_EAPI_regex&#39;</span><span class="p">,</span> <span class="sa">r</span><span class="s2">&quot;^[A-Za-z0-9_][A-Za-z0-9+_.-]*$&quot;</span>
+<span class="p">)</span>
+
+
+<span class="n">eapi_optionals</span> <span class="o">=</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">({</span>
+    <span class="c1"># Controls what version of bash compatibility to force; see PMS.</span>
+    <span class="s2">&quot;bash_compat&quot;</span><span class="p">:</span> <span class="s1">&#39;3.2&#39;</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether -r is allowed for dodoc.</span>
+    <span class="s2">&quot;dodoc_allow_recursive&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls the language awareness of doman; see PMS.</span>
+    <span class="s2">&quot;doman_language_detect&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether -i18n option is allowed.</span>
+    <span class="s2">&quot;doman_language_override&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether an ebuild_phase function exists for ebuild consumption.</span>
+    <span class="s1">&#39;ebuild_phase_func&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether REPLACING vars are exported to ebuilds; see PMS.</span>
+    <span class="s2">&quot;exports_replacing&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls of whether failglob is enabled globally; see PMS.</span>
+    <span class="s2">&quot;global_failglob&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether MERGE vars are exported to ebuilds; see PMS.</span>
+    <span class="s2">&quot;has_merge_type&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether PORTDIR and ECLASSDIR are exported to ebuilds; see PMS.</span>
+    <span class="s2">&quot;has_portdir&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether DESTTREE and INSDESTTREE are exported during src_install; see PMS.</span>
+    <span class="s2">&quot;has_desttree&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether ROOT, EROOT, D, and ED end with a trailing slash; see PMS.</span>
+    <span class="s2">&quot;trailing_slash&quot;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether SYSROOT, ESYSROOT, and BROOT are defined; see PMS.</span>
+    <span class="s2">&quot;has_sysroot&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether package.provided files in profiles are supported; see PMS.</span>
+    <span class="s2">&quot;profile_pkg_provided&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether package.mask and other files in profiles can</span>
+    <span class="c1"># be directories; see PMS.</span>
+    <span class="s2">&quot;has_profile_data_dirs&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether REQUIRED_USE is supported, enforcing constraints on</span>
+    <span class="c1"># allowed use configuration states.</span>
+    <span class="s2">&quot;has_required_use&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether USE dependency defaults are supported, see PMS.</span>
+    <span class="s2">&quot;has_use_dep_defaults&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether ENV_UNSET is supported, see PMS.</span>
+    <span class="s2">&quot;has_env_unset&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether AA env var is exported to ebuilds; this is a flattened</span>
+    <span class="c1"># listing of each filename in SRC_URI.</span>
+    <span class="s2">&quot;has_AA&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether KV (kernel version; see PMS for details) is exported.</span>
+    <span class="s2">&quot;has_KV&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether or not pkgcore, or extensions loaded, actually fully</span>
+    <span class="c1"># support this EAPI.</span>
+    <span class="s1">&#39;is_supported&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether IUSE defaults are supported; see PMS.</span>
+    <span class="s1">&#39;iuse_defaults&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether new* style bash functions can take their content input</span>
+    <span class="c1"># from stdin, rather than an explicit ondisk file.</span>
+    <span class="s1">&#39;new_reads_stdin&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether utilities die on failure; see PMS.</span>
+    <span class="s1">&#39;nonfatal&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether die supports a nonfatal option; see PMS.</span>
+    <span class="s2">&quot;nonfatal_die&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether this EAPI supports prefix related variables/settings;</span>
+    <span class="c1"># prefix awareness basically. See PMS for full details.</span>
+    <span class="s2">&quot;prefix_capable&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether profile-defined IUSE injection is supported.</span>
+    <span class="s2">&quot;profile_iuse_injection&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether profiles support package.use.stable.* and use.stable.* files.</span>
+    <span class="s2">&quot;profile_stable_use&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether has_version/best_version supports --host-root option; see PMS.</span>
+    <span class="s1">&#39;query_host_root&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether has_version/best_version supports -b/-d/-r options; see PMS.</span>
+    <span class="s1">&#39;query_deps&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether SLOT values can actually be multi-part; see PMS EAPI 5.</span>
+    <span class="c1"># This is related to ABI breakage detection.</span>
+    <span class="s1">&#39;sub_slotting&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether REQUIRED_USE supports the ?? operator.</span>
+    <span class="s1">&#39;required_use_one_of&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether SRC_URI supports the &#39;-&gt;&#39; operator for url filename renaming.</span>
+    <span class="s2">&quot;src_uri_renames&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether or not use dependency atoms are able to control their enforced</span>
+    <span class="c1"># value relative to another; standard use deps just enforce either on or off; EAPIs</span>
+    <span class="c1"># supporting this allow syntax that can enforce (for example) X to be on if Y is on.</span>
+    <span class="c1"># See PMS EAPI 4 for full details.</span>
+    <span class="s2">&quot;transitive_use_atoms&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether or DEFINED_PHASES is mandated for this EAPI; if so, then we can</span>
+    <span class="c1"># trust the cache definition and skip invoking those phases if they&#39;re not defined.</span>
+    <span class="c1"># If the EAPI didn&#39;t mandate this var, then we can do our inference, but generally will</span>
+    <span class="c1"># invoke the phase in the absense of that metadata var since we have no other choice.</span>
+    <span class="s2">&quot;trust_defined_phases_cache&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether unpack supports absolute paths; see PMS.</span>
+    <span class="s2">&quot;unpack_absolute_paths&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether unpack supports absolute paths; see PMS.</span>
+    <span class="s2">&quot;unpack_case_insensitive&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+
+    <span class="c1"># Controls whether user patches are supported.</span>
+    <span class="s2">&quot;user_patches&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">})</span>
+
+
+<span class="k">class</span> <span class="nc">_optionals_cls</span><span class="p">(</span><span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">):</span>
+
+    <span class="n">mappings</span><span class="o">.</span><span class="n">inject_getitem_as_getattr</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
+
+
+<div class="viewcode-block" id="EAPI"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eapi.html#pkgcore.ebuild.eapi.EAPI">[docs]</a><span class="k">class</span> <span class="nc">EAPI</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">klass</span><span class="o">.</span><span class="n">immutable_instance</span><span class="p">):</span>
+
+    <span class="n">known_eapis</span> <span class="o">=</span> <span class="n">weakrefs</span><span class="o">.</span><span class="n">WeakValCache</span><span class="p">()</span>
+    <span class="n">unknown_eapis</span> <span class="o">=</span> <span class="n">weakrefs</span><span class="o">.</span><span class="n">WeakValCache</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">magic</span><span class="p">,</span> <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">phases</span><span class="o">=</span><span class="p">(),</span> <span class="n">default_phases</span><span class="o">=</span><span class="p">(),</span>
+                 <span class="n">mandatory_keys</span><span class="o">=</span><span class="p">(),</span> <span class="n">dep_keys</span><span class="o">=</span><span class="p">(),</span> <span class="n">metadata_keys</span><span class="o">=</span><span class="p">(),</span>
+                 <span class="n">eclass_keys</span><span class="o">=</span><span class="p">(),</span> <span class="n">tracked_attributes</span><span class="o">=</span><span class="p">(),</span> <span class="n">archive_exts</span><span class="o">=</span><span class="p">(),</span>
+                 <span class="n">optionals</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ebd_env_options</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_magic&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">magic</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_parent&quot;</span><span class="p">,</span> <span class="n">parent</span><span class="p">)</span>
+
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;phases&quot;</span><span class="p">,</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">(</span><span class="n">phases</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;phases_rev&quot;</span><span class="p">,</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">((</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+        <span class="c1"># We track the phases that have a default implementation- this is</span>
+        <span class="c1"># primarily due to DEFINED_PHASES cache values not including it.</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;default_phases&quot;</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">default_phases</span><span class="p">))</span>
+
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;mandatory_keys&quot;</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">mandatory_keys</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;dep_keys&quot;</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">dep_keys</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;metadata_keys&quot;</span><span class="p">,</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mandatory_keys</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">dep_keys</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">metadata_keys</span><span class="p">)))</span>
+        <span class="c1"># variables that eclasses have access to (used by pkgcheck eclass inherit checks)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;eclass_keys&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mandatory_keys</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">dep_keys</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">eclass_keys</span><span class="p">))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;tracked_attributes&quot;</span><span class="p">,</span> <span class="p">(</span>
+            <span class="nb">frozenset</span><span class="p">(</span><span class="n">tracked_attributes</span><span class="p">)</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dep_keys</span><span class="p">)))</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;archive_exts&quot;</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">archive_exts</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">optionals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">optionals</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;options&#39;</span><span class="p">,</span> <span class="n">_optionals_cls</span><span class="p">(</span><span class="n">optionals</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">ebd_env_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ebd_env_options</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_ebd_env_options&quot;</span><span class="p">,</span> <span class="n">ebd_env_options</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EAPI.register"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eapi.html#pkgcore.ebuild.eapi.EAPI.register">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">register</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">eapi</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">)</span>
+        <span class="n">pre_existing</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">known_eapis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">eapi</span><span class="o">.</span><span class="n">_magic</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pre_existing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;EAPI &#39;</span><span class="si">{</span><span class="n">eapi</span><span class="si">}</span><span class="s2">&#39; is already known/instantiated- </span><span class="si">{</span><span class="n">pre_existing</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="s1">&#39;bash_compat&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">and</span>
+                <span class="n">bash_version</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">bash_compat</span><span class="p">):</span>
+            <span class="c1"># hard exit if the system doesn&#39;t have an adequate bash installed</span>
+            <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;EAPI &#39;</span><span class="si">{</span><span class="n">eapi</span><span class="si">}</span><span class="s2">&#39; requires &gt;=bash-</span><span class="si">{</span><span class="n">eapi</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">bash_compat</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;system version: </span><span class="si">{</span><span class="n">bash_version</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">cls</span><span class="o">.</span><span class="n">known_eapis</span><span class="p">[</span><span class="n">eapi</span><span class="o">.</span><span class="n">_magic</span><span class="p">]</span> <span class="o">=</span> <span class="n">eapi</span>
+        <span class="c1"># generate EAPI bash libs when running from git repo</span>
+        <span class="n">eapi</span><span class="o">.</span><span class="n">bash_libs</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">eapi</span></div>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">is_supported</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check if an EAPI is supported.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">known_eapis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">is_supported</span><span class="p">:</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;EAPI &#39;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&#39; isn&#39;t fully supported&quot;</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bash_funcs_global</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Internally implemented global EAPI specific functions to skip when exporting.&quot;&quot;&quot;</span>
+        <span class="c1"># TODO: This is currently duplicated across EAPI objs, but</span>
+        <span class="c1"># instead could be cached to a class attr.</span>
+        <span class="n">funcs</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;.generated&#39;</span><span class="p">,</span> <span class="s1">&#39;funcs&#39;</span><span class="p">,</span> <span class="s1">&#39;global&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">funcs</span><span class="p">):</span>
+            <span class="c1"># we&#39;re probably running in a cacheless git repo, so generate a cached version</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">funcs</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;generate_global_func_list&#39;</span><span class="p">)],</span>
+                        <span class="n">cwd</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;failed to generate list of global EAPI &#39;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&#39; specific functions: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bash_funcs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Internally implemented EAPI specific functions to skip when exporting.&quot;&quot;&quot;</span>
+        <span class="n">funcs</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;.generated&#39;</span><span class="p">,</span> <span class="s1">&#39;funcs&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">funcs</span><span class="p">):</span>
+            <span class="c1"># we&#39;re probably running in a cacheless git repo, so generate a cached version</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">funcs</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;generate_eapi_func_list&#39;</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">],</span>
+                        <span class="n">cwd</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;failed to generate list of EAPI &#39;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&#39; specific functions: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">funcs</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bash_cmds_internal</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;EAPI specific commands for this EAPI.&quot;&quot;&quot;</span>
+        <span class="n">cmds</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;.generated&#39;</span><span class="p">,</span> <span class="s1">&#39;cmds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">,</span> <span class="s1">&#39;internal&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cmds</span><span class="p">):</span>
+            <span class="c1"># we&#39;re probably running in a cacheless git repo, so generate a cached version</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cmds</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cmds</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;generate_eapi_cmd_list&#39;</span><span class="p">),</span> <span class="s1">&#39;-i&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">],</span>
+                        <span class="n">cwd</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;failed to generate list of EAPI </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s1"> internal commands: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cmds</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bash_cmds_deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;EAPI specific commands deprecated for this EAPI.&quot;&quot;&quot;</span>
+        <span class="n">cmds</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;.generated&#39;</span><span class="p">,</span> <span class="s1">&#39;cmds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">,</span> <span class="s1">&#39;deprecated&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cmds</span><span class="p">):</span>
+            <span class="c1"># we&#39;re probably running in a cacheless git repo, so generate a cached version</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cmds</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cmds</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;generate_eapi_cmd_list&#39;</span><span class="p">),</span> <span class="s1">&#39;-d&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">],</span>
+                        <span class="n">cwd</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;failed to generate list of EAPI </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s1"> deprecated commands: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cmds</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bash_cmds_banned</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;EAPI specific commands banned for this EAPI.&quot;&quot;&quot;</span>
+        <span class="n">cmds</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;.generated&#39;</span><span class="p">,</span> <span class="s1">&#39;cmds&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">,</span> <span class="s1">&#39;banned&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">cmds</span><span class="p">):</span>
+            <span class="c1"># we&#39;re probably running in a cacheless git repo, so generate a cached version</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">cmds</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cmds</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;generate_eapi_cmd_list&#39;</span><span class="p">),</span> <span class="s1">&#39;-b&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">],</span>
+                        <span class="n">cwd</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;failed to generate list of EAPI </span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s1"> banned commands: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">cmds</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EAPI.bash_libs"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eapi.html#pkgcore.ebuild.eapi.EAPI.bash_libs">[docs]</a>    <span class="k">def</span> <span class="nf">bash_libs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate internally implemented EAPI specific bash libs required by the ebd.&quot;&quot;&quot;</span>
+        <span class="n">eapi_global_lib</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;.generated&#39;</span><span class="p">,</span> <span class="s1">&#39;libs&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">,</span> <span class="s1">&#39;global&#39;</span><span class="p">)</span>
+        <span class="n">script</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;generate_eapi_lib&#39;</span><span class="p">)</span>
+        <span class="c1"># skip generation when installing as the install process takes care of it</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">script</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">eapi_global_lib</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">eapi_global_lib</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">eapi_global_lib</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                    <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">script</span><span class="p">,</span> <span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="s1">&#39;global&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">],</span>
+                        <span class="n">cwd</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;failed to generate EAPI &#39;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&#39; global lib: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">eapi_lib</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="s1">&#39;.generated&#39;</span><span class="p">,</span> <span class="s1">&#39;libs&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">,</span> <span class="n">phase</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">eapi_lib</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">eapi_lib</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">eapi_lib</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                            <span class="p">[</span><span class="n">script</span><span class="p">,</span> <span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="n">phase</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">],</span>
+                            <span class="n">cwd</span><span class="o">=</span><span class="n">const</span><span class="o">.</span><span class="n">EBD_PATH</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+                <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;failed to generate EAPI &#39;</span><span class="si">{</span><span class="bp">self</span><span class="si">}</span><span class="s2">&#39; phase </span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s2"> lib: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">archive_exts_regex_pattern</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Regex pattern for supported archive extensions.&quot;&quot;&quot;</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">archive_exts</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">unpack_case_insensitive</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;(?i:(</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s1">))&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">pattern</span><span class="si">}</span><span class="s1">)&#39;</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">archive_exts_regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Regex matching strings ending with supported archive extensions.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">archive_exts_regex_pattern</span><span class="si">}</span><span class="s1">$&#39;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">valid_slot_regex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Regex matching valid SLOT values.&quot;&quot;&quot;</span>
+        <span class="n">valid_slot</span> <span class="o">=</span> <span class="sa">r</span><span class="s1">&#39;[A-Za-z0-9_][A-Za-z0-9+_.-]*&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">sub_slotting</span><span class="p">:</span>
+            <span class="n">valid_slot</span> <span class="o">+=</span> <span class="sa">rf</span><span class="s1">&#39;(/</span><span class="si">{</span><span class="n">valid_slot</span><span class="si">}</span><span class="s1">)?&#39;</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;^</span><span class="si">{</span><span class="n">valid_slot</span><span class="si">}</span><span class="s1">$&#39;</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">atom_kls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">,</span> <span class="n">eapi</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_magic</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EAPI.interpret_cache_defined_phases"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eapi.html#pkgcore.ebuild.eapi.EAPI.interpret_cache_defined_phases">[docs]</a>    <span class="k">def</span> <span class="nf">interpret_cache_defined_phases</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sequence</span><span class="p">):</span>
+        <span class="n">phases</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">sequence</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">trust_defined_phases_cache</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">phases</span><span class="p">:</span>
+                <span class="c1"># run them all; cache was generated</span>
+                <span class="c1"># by a pm that didn&#39;t support DEFINED_PHASES</span>
+                <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">phases</span><span class="p">)</span>
+
+        <span class="n">phases</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">phases</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inherits</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Yield an EAPI&#39;s inheritance tree.</span>
+
+<span class="sd">        Note that this assumes a simple, linear inheritance tree.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">yield</span> <span class="bp">self</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent</span>
+        <span class="k">while</span> <span class="n">parent</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">parent</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="n">_parent</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">helpers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Phase to directory mapping for EAPI specific helpers to add to $PATH.&quot;&quot;&quot;</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">eapi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inherits</span><span class="p">:</span>
+            <span class="n">paths</span><span class="p">[</span><span class="s1">&#39;global&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBUILD_HELPERS_PATH</span><span class="p">,</span> <span class="s1">&#39;common&#39;</span><span class="p">))</span>
+            <span class="n">helper_dir</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">EBUILD_HELPERS_PATH</span><span class="p">,</span> <span class="n">eapi</span><span class="o">.</span><span class="n">_magic</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">dirpath</span><span class="p">,</span> <span class="n">dirnames</span><span class="p">,</span> <span class="n">filenames</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">helper_dir</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">filenames</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">dirpath</span> <span class="o">==</span> <span class="n">helper_dir</span><span class="p">:</span>
+                    <span class="n">paths</span><span class="p">[</span><span class="s1">&#39;global&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">phase</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">phases_rev</span><span class="p">:</span>
+                        <span class="n">paths</span><span class="p">[</span><span class="n">phase</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dirpath</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown phase: </span><span class="si">{</span><span class="n">phase</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">paths</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">ebd_env</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dictionary of EAPI options passed to the ebd environment.&quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;PKGCORE_</span><span class="si">{</span><span class="n">k</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;PKGCORE_EAPI_INHERITS&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">_magic</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inherits</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">[</span><span class="s2">&quot;EAPI&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_magic</span>
+        <span class="k">return</span> <span class="n">mappings</span><span class="o">.</span><span class="n">ImmutableDict</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_eapi"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eapi.html#pkgcore.ebuild.eapi.get_eapi">[docs]</a><span class="k">def</span> <span class="nf">get_eapi</span><span class="p">(</span><span class="n">magic</span><span class="p">,</span> <span class="n">suppress_unsupported</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return EAPI object for a given identifier.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_valid_EAPI_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">magic</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">eapi_str</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="n">magic</span><span class="si">!r}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">magic</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;invalid EAPI</span><span class="si">{</span><span class="n">eapi_str</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="n">eapi</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">known_eapis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">magic</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">eapi</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">suppress_unsupported</span><span class="p">:</span>
+        <span class="n">eapi</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">unknown_eapis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">magic</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eapi</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">eapi</span> <span class="o">=</span> <span class="n">EAPI</span><span class="p">(</span><span class="n">magic</span><span class="o">=</span><span class="n">magic</span><span class="p">,</span> <span class="n">optionals</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;is_supported&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+            <span class="n">EAPI</span><span class="o">.</span><span class="n">unknown_eapis</span><span class="p">[</span><span class="n">eapi</span><span class="o">.</span><span class="n">_magic</span><span class="p">]</span> <span class="o">=</span> <span class="n">eapi</span>
+    <span class="k">return</span> <span class="n">eapi</span></div>
+
+
+<span class="k">def</span> <span class="nf">_shorten_phase_name</span><span class="p">(</span><span class="n">func_name</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">func_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s1">&#39;src_&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg_&#39;</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">func_name</span><span class="p">[</span><span class="mi">4</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">func_name</span>
+
+
+<span class="k">def</span> <span class="nf">_mk_phase_func_map</span><span class="p">(</span><span class="o">*</span><span class="n">sequence</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">_shorten_phase_name</span><span class="p">(</span><span class="n">x</span><span class="p">):</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">sequence</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_combine_dicts</span><span class="p">(</span><span class="o">*</span><span class="n">mappings</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">mappings</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+
+<span class="c1"># Note that pkg_setup is forced by default since this is how our env setup occurs.</span>
+<span class="n">common_default_phases</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+    <span class="n">_shorten_phase_name</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+    <span class="p">(</span><span class="s2">&quot;pkg_setup&quot;</span><span class="p">,</span> <span class="s2">&quot;src_unpack&quot;</span><span class="p">,</span> <span class="s2">&quot;src_compile&quot;</span><span class="p">,</span> <span class="s2">&quot;src_test&quot;</span><span class="p">,</span> <span class="s2">&quot;pkg_nofetch&quot;</span><span class="p">))</span>
+
+<span class="n">common_phases</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;pkg_setup&quot;</span><span class="p">,</span> <span class="s2">&quot;pkg_config&quot;</span><span class="p">,</span> <span class="s2">&quot;pkg_info&quot;</span><span class="p">,</span> <span class="s2">&quot;pkg_nofetch&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pkg_prerm&quot;</span><span class="p">,</span> <span class="s2">&quot;pkg_postrm&quot;</span><span class="p">,</span> <span class="s2">&quot;pkg_preinst&quot;</span><span class="p">,</span> <span class="s2">&quot;pkg_postinst&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;src_unpack&quot;</span><span class="p">,</span> <span class="s2">&quot;src_compile&quot;</span><span class="p">,</span> <span class="s2">&quot;src_test&quot;</span><span class="p">,</span> <span class="s2">&quot;src_install&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">common_mandatory_metadata_keys</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;DESCRIPTION&quot;</span><span class="p">,</span> <span class="s2">&quot;HOMEPAGE&quot;</span><span class="p">,</span> <span class="s2">&quot;IUSE&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;KEYWORDS&quot;</span><span class="p">,</span> <span class="s2">&quot;LICENSE&quot;</span><span class="p">,</span> <span class="s2">&quot;SLOT&quot;</span><span class="p">,</span> <span class="s2">&quot;SRC_URI&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">common_dep_keys</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;DEPEND&quot;</span><span class="p">,</span> <span class="s2">&quot;RDEPEND&quot;</span><span class="p">,</span> <span class="s2">&quot;PDEPEND&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">common_metadata_keys</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;RESTRICT&quot;</span><span class="p">,</span> <span class="s2">&quot;PROPERTIES&quot;</span><span class="p">,</span> <span class="s2">&quot;DEFINED_PHASES&quot;</span><span class="p">,</span> <span class="s2">&quot;INHERIT&quot;</span><span class="p">,</span> <span class="s2">&quot;INHERITED&quot;</span><span class="p">,</span> <span class="s2">&quot;EAPI&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">common_eclass_keys</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;S&quot;</span><span class="p">,</span> <span class="s2">&quot;RESTRICT&quot;</span><span class="p">,</span> <span class="s2">&quot;PROPERTIES&quot;</span><span class="p">,</span> <span class="s2">&quot;ECONF_SOURCE&quot;</span><span class="p">)</span>
+
+<span class="n">common_tracked_attributes</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;cflags&quot;</span><span class="p">,</span> <span class="s2">&quot;cbuild&quot;</span><span class="p">,</span> <span class="s2">&quot;chost&quot;</span><span class="p">,</span> <span class="s2">&quot;ctarget&quot;</span><span class="p">,</span> <span class="s2">&quot;cxxflags&quot;</span><span class="p">,</span> <span class="s2">&quot;defined_phases&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">,</span> <span class="s2">&quot;eapi&quot;</span><span class="p">,</span> <span class="s2">&quot;distfiles&quot;</span><span class="p">,</span> <span class="s2">&quot;fullslot&quot;</span><span class="p">,</span> <span class="s2">&quot;homepage&quot;</span><span class="p">,</span> <span class="s2">&quot;inherited&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;iuse&quot;</span><span class="p">,</span> <span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="s2">&quot;ldflags&quot;</span><span class="p">,</span> <span class="s2">&quot;license&quot;</span><span class="p">,</span> <span class="s2">&quot;properties&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;restrict&quot;</span><span class="p">,</span> <span class="s2">&quot;source_repository&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">common_archive_exts</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;.tar&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.tar.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;.tgz&quot;</span><span class="p">,</span> <span class="s2">&quot;.tar.Z&quot;</span><span class="p">,</span> <span class="s2">&quot;.tar.z&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.tar.bz2&quot;</span><span class="p">,</span> <span class="s2">&quot;.tbz2&quot;</span><span class="p">,</span> <span class="s2">&quot;.tbz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.zip&quot;</span><span class="p">,</span> <span class="s2">&quot;.ZIP&quot;</span><span class="p">,</span> <span class="s2">&quot;.jar&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.gz&quot;</span><span class="p">,</span> <span class="s2">&quot;.Z&quot;</span><span class="p">,</span> <span class="s2">&quot;.z&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.bz2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.rar&quot;</span><span class="p">,</span> <span class="s2">&quot;.RAR&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.lha&quot;</span><span class="p">,</span> <span class="s2">&quot;.LHa&quot;</span><span class="p">,</span> <span class="s2">&quot;.LHA&quot;</span><span class="p">,</span> <span class="s2">&quot;.lzh&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.a&quot;</span><span class="p">,</span> <span class="s2">&quot;.deb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.tar.lzma&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.lzma&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;.7z&quot;</span><span class="p">,</span> <span class="s2">&quot;.7Z&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Boolean variables exported to the bash side, e.g. ebuild_phase_func is</span>
+<span class="c1"># exported as PKGCORE_EBUILD_PHASE_FUNC.</span>
+<span class="n">common_env_optionals</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;bash_compat&quot;</span><span class="p">,</span> <span class="s2">&quot;ebuild_phase_func&quot;</span><span class="p">,</span> <span class="s2">&quot;global_failglob&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;new_reads_stdin&quot;</span><span class="p">,</span> <span class="s2">&quot;nonfatal&quot;</span><span class="p">,</span> <span class="s2">&quot;nonfatal_die&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;has_desttree&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi0</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">_mk_phase_func_map</span><span class="p">(</span><span class="o">*</span><span class="n">common_phases</span><span class="p">),</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">_mk_phase_func_map</span><span class="p">(</span><span class="o">*</span><span class="n">common_default_phases</span><span class="p">),</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">common_mandatory_metadata_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">common_dep_keys</span><span class="p">,</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">common_metadata_keys</span><span class="p">,</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">common_eclass_keys</span><span class="p">,</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">common_tracked_attributes</span><span class="p">,</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">common_archive_exts</span><span class="p">,</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">eapi_optionals</span><span class="p">,</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">common_env_optionals</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi1</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;1&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="n">eapi0</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">default_phases</span><span class="p">,</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">mandatory_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">dep_keys</span><span class="p">,</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">metadata_keys</span><span class="p">,</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">eclass_keys</span><span class="p">,</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">tracked_attributes</span><span class="p">,</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">archive_exts</span><span class="p">,</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi0</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">iuse_defaults</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)),</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">eapi0</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi2</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;2&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="n">eapi1</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span>
+        <span class="n">eapi1</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span> <span class="n">_mk_phase_func_map</span><span class="p">(</span><span class="s2">&quot;src_prepare&quot;</span><span class="p">,</span> <span class="s2">&quot;src_configure&quot;</span><span class="p">)),</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">default_phases</span><span class="o">.</span><span class="n">union</span><span class="p">(</span>
+        <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">_shorten_phase_name</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;src_prepare&quot;</span><span class="p">,</span> <span class="s2">&quot;src_configure&quot;</span><span class="p">]))),</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">mandatory_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">dep_keys</span><span class="p">,</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">metadata_keys</span><span class="p">,</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">eclass_keys</span><span class="p">,</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">tracked_attributes</span><span class="p">,</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">archive_exts</span><span class="p">,</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi1</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">doman_language_detect</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">transitive_use_atoms</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">src_uri_renames</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)),</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">eapi1</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi3</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;3&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="n">eapi2</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">default_phases</span><span class="p">,</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">mandatory_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">dep_keys</span><span class="p">,</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">metadata_keys</span><span class="p">,</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">eclass_keys</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;EPREFIX&#39;</span><span class="p">,</span> <span class="s1">&#39;ED&#39;</span><span class="p">,</span> <span class="s1">&#39;EROOT&#39;</span><span class="p">]),</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">tracked_attributes</span><span class="p">,</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">archive_exts</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;.tar.xz&quot;</span><span class="p">,</span> <span class="s2">&quot;.xz&quot;</span><span class="p">]),</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi2</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">prefix_capable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)),</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">eapi2</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi4</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="n">eapi3</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi3</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span> <span class="n">_mk_phase_func_map</span><span class="p">(</span><span class="s2">&quot;pkg_pretend&quot;</span><span class="p">)),</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">default_phases</span><span class="o">.</span><span class="n">union</span><span class="p">([</span><span class="n">_shorten_phase_name</span><span class="p">(</span><span class="s1">&#39;src_install&#39;</span><span class="p">)]),</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">mandatory_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">dep_keys</span><span class="p">,</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">metadata_keys</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;REQUIRED_USE&quot;</span><span class="p">]),</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">eclass_keys</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;DOCS&quot;</span><span class="p">,</span> <span class="s2">&quot;REQUIRED_USE&quot;</span><span class="p">]),</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">tracked_attributes</span><span class="p">,</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">archive_exts</span><span class="p">,</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi3</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">dodoc_allow_recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">doman_language_override</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">nonfatal</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">exports_replacing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">has_AA</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">has_KV</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">has_merge_type</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">has_required_use</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">has_use_dep_defaults</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">trust_defined_phases_cache</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)),</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">eapi3</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi5</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;5&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="n">eapi4</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">default_phases</span><span class="p">,</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">mandatory_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">dep_keys</span><span class="p">,</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">metadata_keys</span><span class="p">,</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">eclass_keys</span><span class="p">,</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">tracked_attributes</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;iuse_effective&quot;</span><span class="p">]),</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">archive_exts</span><span class="p">,</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi4</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">ebuild_phase_func</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">profile_iuse_injection</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">profile_stable_use</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">query_host_root</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">new_reads_stdin</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">required_use_one_of</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">sub_slotting</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)),</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">eapi4</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi6</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;6&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="n">eapi5</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">default_phases</span><span class="p">,</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">mandatory_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">dep_keys</span><span class="p">,</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">metadata_keys</span><span class="p">,</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">eclass_keys</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;HTML_DOCS&quot;</span><span class="p">,</span> <span class="s2">&quot;PATCHES&quot;</span><span class="p">]),</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">tracked_attributes</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;user_patches&quot;</span><span class="p">]),</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">archive_exts</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;.txz&quot;</span><span class="p">]),</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi5</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">global_failglob</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">nonfatal_die</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">unpack_absolute_paths</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">unpack_case_insensitive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">user_patches</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">bash_compat</span><span class="o">=</span><span class="s1">&#39;4.2&#39;</span><span class="p">,</span>
+    <span class="p">)),</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">eapi5</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">eapi7</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">magic</span><span class="o">=</span><span class="s2">&quot;7&quot;</span><span class="p">,</span>
+    <span class="n">parent</span><span class="o">=</span><span class="n">eapi6</span><span class="p">,</span>
+    <span class="n">phases</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">phases</span><span class="p">,</span>
+    <span class="n">default_phases</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">default_phases</span><span class="p">,</span>
+    <span class="n">mandatory_keys</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">mandatory_keys</span><span class="p">,</span>
+    <span class="n">dep_keys</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">dep_keys</span> <span class="o">|</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;BDEPEND&quot;</span><span class="p">]),</span>
+    <span class="n">metadata_keys</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">metadata_keys</span><span class="p">,</span>
+    <span class="n">eclass_keys</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">eclass_keys</span><span class="p">,</span>
+    <span class="n">tracked_attributes</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">tracked_attributes</span><span class="p">,</span>
+    <span class="n">archive_exts</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">archive_exts</span><span class="p">,</span>
+    <span class="n">optionals</span><span class="o">=</span><span class="n">_combine_dicts</span><span class="p">(</span><span class="n">eapi6</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">has_profile_data_dirs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">has_portdir</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">has_desttree</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">profile_pkg_provided</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">query_host_root</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">query_deps</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">has_sysroot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">has_env_unset</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">trailing_slash</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">)),</span>
+    <span class="n">ebd_env_options</span><span class="o">=</span><span class="n">eapi6</span><span class="o">.</span><span class="n">_ebd_env_options</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eapi</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

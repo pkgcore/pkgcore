@@ -1,0 +1,7 @@
+pkgcore.repository.configured module
+====================================
+
+.. automodule:: pkgcore.repository.configured
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,125 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.config.hint &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../config.html" accesskey="U">pkgcore.config</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.hint</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.config.hint</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Config introspection support.&quot;&quot;&quot;</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;ConfigHint&#39;</span><span class="p">,</span> <span class="s1">&#39;configurable&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ConfigHint"><a class="viewcode-back" href="../../../api/pkgcore.config.hint.html#pkgcore.binpkg.repository.ConfigHint">[docs]</a><span class="k">class</span> <span class="nc">ConfigHint</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Hint for introspection supplying overrides.&quot;&quot;&quot;</span>
+
+    <span class="c1"># be aware this is used in clone</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;types&quot;</span><span class="p">,</span> <span class="s2">&quot;positional&quot;</span><span class="p">,</span> <span class="s2">&quot;required&quot;</span><span class="p">,</span> <span class="s2">&quot;typename&quot;</span><span class="p">,</span> <span class="s2">&quot;allow_unknowns&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;doc&quot;</span><span class="p">,</span> <span class="s2">&quot;authorative&quot;</span><span class="p">,</span> <span class="s2">&quot;requires_config&quot;</span><span class="p">,</span> <span class="s2">&quot;raw_class&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">positional</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">doc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">typename</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">allow_unknowns</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">authorative</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">requires_config</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">raw_class</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">types</span> <span class="o">=</span> <span class="n">types</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">positional</span> <span class="o">=</span> <span class="n">positional</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required</span> <span class="o">=</span> <span class="n">required</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">typename</span> <span class="o">=</span> <span class="n">typename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">allow_unknowns</span> <span class="o">=</span> <span class="n">allow_unknowns</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">doc</span> <span class="o">=</span> <span class="n">doc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authorative</span> <span class="o">=</span> <span class="n">authorative</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">requires_config</span> <span class="o">=</span> <span class="n">requires_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_class</span> <span class="o">=</span> <span class="n">raw_class</span>
+
+<div class="viewcode-block" id="ConfigHint.clone"><a class="viewcode-back" href="../../../api/pkgcore.config.hint.html#pkgcore.binpkg.repository.ConfigHint.clone">[docs]</a>    <span class="k">def</span> <span class="nf">clone</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwds</span><span class="p">):</span>
+        <span class="n">new_kwds</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__slots__</span><span class="p">:</span>
+            <span class="n">new_kwds</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwds</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">kwds</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;unknown type overrides: </span><span class="si">%r</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">kwds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="o">**</span><span class="n">new_kwds</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="configurable"><a class="viewcode-back" href="../../../api/pkgcore.config.hint.html#pkgcore.binpkg.repository.configurable">[docs]</a><span class="k">def</span> <span class="nf">configurable</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator version of ConfigHint.&quot;&quot;&quot;</span>
+    <span class="n">hint</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">original</span><span class="p">):</span>
+        <span class="n">original</span><span class="o">.</span><span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">hint</span>
+        <span class="k">return</span> <span class="n">original</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../config.html" >pkgcore.config</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.hint</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

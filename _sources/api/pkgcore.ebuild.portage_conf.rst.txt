@@ -1,0 +1,7 @@
+pkgcore.ebuild.portage\_conf module
+===================================
+
+.. automodule:: pkgcore.ebuild.portage_conf
+   :members:
+   :undoc-members:
+   :show-inheritance:

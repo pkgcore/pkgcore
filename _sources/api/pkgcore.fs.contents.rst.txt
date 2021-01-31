@@ -1,0 +1,7 @@
+pkgcore.fs.contents module
+==========================
+
+.. automodule:: pkgcore.fs.contents
+   :members:
+   :undoc-members:
+   :show-inheritance:

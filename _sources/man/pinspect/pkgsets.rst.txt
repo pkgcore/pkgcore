@@ -1,0 +1,7 @@
+pinspect pkgsets - pkgset related introspection
+-----------------------------------------------
+
+.. include:: pkgsets/_synopsis.rst
+.. include:: pkgsets/_description.rst
+.. include:: pkgsets/_options.rst
+.. include:: pkgsets/_subcommands.rst

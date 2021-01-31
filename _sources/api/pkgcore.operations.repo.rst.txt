@@ -1,0 +1,7 @@
+pkgcore.operations.repo module
+==============================
+
+.. automodule:: pkgcore.operations.repo
+   :members:
+   :undoc-members:
+   :show-inheritance:

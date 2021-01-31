@@ -1,0 +1,7 @@
+pconfig configurables - list registered configurables (may not be complete)
+---------------------------------------------------------------------------
+
+.. include:: configurables/_synopsis.rst
+.. include:: configurables/_description.rst
+.. include:: configurables/_options.rst
+.. include:: configurables/_subcommands.rst

@@ -1,0 +1,217 @@
+Base Options
+============
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--version        
+                 Show this program's version information and exit.
+                 
+                 When running from within a git repo or a version
+                 installed from git the latest commit hash and date will
+                 be shown.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.
+
+Config Options
+==============
+
+--add-config SECTION KEY VALUE  
+                                modify existing pkgcore config section
+
+--new-config SECTION KEY VALUE  
+                                add new pkgcore config section
+
+--empty-config                  
+                                skip loading user/system pkgcore config
+
+--config PATH                   
+                                use custom pkgcore config file
+
+--domain DOMAIN                 
+                                custom pkgcore domain to use for this operation
+
+Repository Matching Options
+===========================
+
+options controlling which repos to inspect
+
+--raw                      
+                           Disable configuration filtering that forces raw dependencies to be
+                           used, rather than the dependencies rendered via your USE configuration.
+                           Primarily useful for people who need to look under the hood- ebuild
+                           devs, PM tool authors, etc. Note this option ignores --domain if is
+                           specified.
+
+--unfiltered               
+                           Disable all package filtering mechanisms such as ACCEPT_KEYWORDS,
+                           ACCEPT_LICENSE, and package.mask.
+
+--virtuals {only,disable}  
+                           This option requires one of two arguments, either 'only' or 'disable',
+                           which causes only virtuals to be matched or disables virtuals matching
+                           entirely, respectively.
+                           
+                           By default, virtuals are included during matching.
+
+-r REPO, --repo REPO       
+                           Select the repo to search in for matches. This includes all the
+                           configured repos in repos.conf as well as the special keywords binpkg,
+                           provided, and vdb that search the configured binary package repo,
+                           package.provided, and installed packages, respectively.
+                           
+                           By default, all configured repos except the vdb will be searched when
+                           this option isn't specified.
+
+-E, --ebuild-repos         
+                           Search within all ebuild repos, all non-ebuild repos are skipped.
+
+-B, --binary-repos         
+                           Search within all binary repos, all non-binary repos are skipped.
+
+-I, --installed            
+                           Search within installed packages (alias for '--repo vdb').
+
+-A, --all-repos            
+                           Search all available repos including the vdb.
+
+Package Matching Options
+========================
+
+Each option specifies a restriction packages must match. Specifying
+the same option twice means "or" unless stated otherwise. Specifying
+multiple types of restrictions means "and" unless stated otherwise.
+
+TARGET                                       
+                                             extended atom matching of pkgs
+
+--all                                        
+                                             Match all packages which is equivalent to "pquery *". Note that if no
+                                             query options are specified, this option is enabled.
+
+--has-use has_use                            
+                                             exact string match on a USE flag
+
+--license license                            
+                                             exact match on a license
+
+--revdep REVDEP                              
+                                             An alias for '--restrict-revdep atom --print-revdep atom', but note
+                                             that --print-revdep is slow so use --restrict-revdep if you just need a
+                                             list.
+
+--revdep-pkgs REVDEP_PKGS                    
+                                             An alias for '--restrict-revdep-pkgs atom --print-revdep atom', but
+                                             note that --print-revdep is slow so use --restrict-revdep if you just
+                                             need a list.
+
+--restrict-revdep restrict_revdep            
+                                             dependency on an atom
+
+--restrict-revdep-pkgs restrict_revdep_pkgs  
+                                             dependency on pkgs that match a specific atom
+
+-S description, --description description    
+                                             regexp search on description and longdescription
+
+--eapi eapi                                  
+                                             match packages using a given EAPI
+
+--owns owns                                  
+                                             exact match on an owned file/dir
+
+--owns-re owns_re                            
+                                             like "owns" but using a regexp for matching
+
+--maintainer maintainer                      
+                                             comma-separated list of regexes to search for maintainers
+
+--maintainer-name maintainer_name            
+                                             comma-separated list of maintainer name regexes to search for
+
+--maintainer-email maintainer_email          
+                                             comma-separated list of maintainer email regexes to search for
+
+--environment environment                    
+                                             regexp search in environment.bz2
+
+--pkgset pkgset                              
+                                             find packages that match the given package set (world for example)
+
+-u, --upgrade                                
+                                             match installed packages without best slotted version
+
+Output Options
+==============
+
+-1, --first                    
+                               stop when first match is found
+
+-a, --atom                     
+                               Output valid package atoms, e.g. =cat/pkg-3 instead of cat/pkg-3.
+                               
+                               Note that this option implies --cpv and has no effect if used with
+                               --no-version.
+
+--cpv                          
+                               Display output in the format of 'category/package-version' which is
+                               done by default, this option forces the output format if another output
+                               option (such as --contents) alters it.
+
+-R                             
+                               print the repo of the package
+
+--slot                         
+                               print the slot of the package
+
+-n, --no-version               
+                               collapse multiple matching versions together
+
+--min                          
+                               show only the lowest version for each package
+
+--max                          
+                               show only the highest version for each package
+
+--blame                        
+                               shorthand for --attr maintainers
+
+--size                         
+                               display size of all files owned by the package
+
+--contents                     
+                               list files owned by the package
+
+--highlight-dep HIGHLIGHT_DEP  
+                               highlight dependencies matching this atom
+
+--print-revdep PRINT_REVDEP    
+                               print what condition(s) trigger a dep
+
+--attr attribute               
+                               Print the given attribute's value. This option can be specified
+                               multiple times.
+                               
+                               Valid attributes: all, alldepends, allmetadata, bdepend, category, cbuild, chost, ctarget, defined_phases, depend, description, distfiles, eapi, environment, fetchables, files, fullver, homepage, inherited, iuse, keywords, license, longdescription, maintainers, package, path, pdepend, properties, raw_alldepends, raw_bdepend, raw_depend, raw_pdepend, raw_rdepend, rdepend, repo, required_use, restrict, revision, slot, source_repository, subslot, uris, use, version
+
+--force-attr attribute         
+                               like --attr but accepts any string as attribute name instead of only explicitly supported names
+
+--one-attr attribute           
+                               print one attribute, suppresses other output
+
+--force-one-attr attribute     
+                               like --one-attr but accepts any string as attribute name instead of only explicitly supported names

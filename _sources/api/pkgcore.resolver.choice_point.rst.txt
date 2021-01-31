@@ -1,0 +1,7 @@
+pkgcore.resolver.choice\_point module
+=====================================
+
+.. automodule:: pkgcore.resolver.choice_point
+   :members:
+   :undoc-members:
+   :show-inheritance:

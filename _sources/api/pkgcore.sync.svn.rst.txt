@@ -1,0 +1,7 @@
+pkgcore.sync.svn module
+=======================
+
+.. automodule:: pkgcore.sync.svn
+   :members:
+   :undoc-members:
+   :show-inheritance:

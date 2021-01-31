@@ -1,0 +1,177 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fetch.base &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../fetch.html" accesskey="U">pkgcore.fetch</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.base</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fetch.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">prototype fetcher class, all fetchers should derive from this</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;fetcher&quot;</span><span class="p">,)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">MissingChksumHandler</span><span class="p">,</span> <span class="n">get_chksums</span><span class="p">,</span> <span class="n">get_handlers</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">errors</span>
+
+
+<div class="viewcode-block" id="fetcher"><a class="viewcode-back" href="../../../api/pkgcore.fetch.base.html#pkgcore.fetch.base.fetcher">[docs]</a><span class="k">class</span> <span class="nc">fetcher</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">_verify</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_location</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">all_chksums</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">handlers</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Internal function for derivatives.</span>
+
+<span class="sd">        Digs through chksums, and either returns None, or throws an</span>
+<span class="sd">        errors.FetchFailed exception.</span>
+<span class="sd">          - -2: file doesn&#39;t exist.</span>
+<span class="sd">          - -1: if (size chksum is available, and</span>
+<span class="sd">                file is smaller than stated chksum)</span>
+<span class="sd">          - 0:  if all chksums match</span>
+<span class="sd">          - 1:  if file is too large (if size chksums are available)</span>
+<span class="sd">                or else size is right but a chksum didn&#39;t match.</span>
+
+<span class="sd">        if all_chksums is True, all chksums must be verified; if false, all</span>
+<span class="sd">        a handler can be found for are used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">nondefault_handlers</span> <span class="o">=</span> <span class="n">handlers</span>
+        <span class="k">if</span> <span class="n">handlers</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">handlers</span> <span class="o">=</span> <span class="n">get_handlers</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">MissingChksumHandler</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingChksumHandler</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;missing required checksum handler: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">all_chksums</span><span class="p">:</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">handlers</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">RequiredChksumDataMissing</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="o">*</span><span class="nb">sorted</span><span class="p">(</span><span class="n">missing</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="s2">&quot;size&quot;</span> <span class="ow">in</span> <span class="n">handlers</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">handlers</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">](</span><span class="n">file_location</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingDistfile</span><span class="p">(</span><span class="n">file_location</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">val</span> <span class="o">&lt;</span> <span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">FetchFailed</span><span class="p">(</span>
+                        <span class="n">file_location</span><span class="p">,</span> <span class="s1">&#39;file is too small&#39;</span><span class="p">,</span> <span class="n">resumable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ChksumFailure</span><span class="p">(</span>
+                    <span class="n">file_location</span><span class="p">,</span> <span class="n">chksum</span><span class="o">=</span><span class="s1">&#39;size&#39;</span><span class="p">,</span> <span class="n">expected</span><span class="o">=</span><span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="s2">&quot;size&quot;</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">file_location</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingDistfile</span><span class="p">(</span><span class="n">file_location</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">file_location</span><span class="p">)</span><span class="o">.</span><span class="n">st_size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">FetchFailed</span><span class="p">(</span>
+                <span class="n">file_location</span><span class="p">,</span> <span class="s1">&#39;file is empty&#39;</span><span class="p">,</span> <span class="n">resumable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="n">chfs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">handlers</span><span class="p">)</span>
+        <span class="n">chfs</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">)</span>
+        <span class="n">chfs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">chfs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">nondefault_handlers</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">chfs</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">handlers</span><span class="p">[</span><span class="n">x</span><span class="p">](</span><span class="n">file_location</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">val</span> <span class="o">!=</span> <span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="n">x</span><span class="p">]:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ChksumFailure</span><span class="p">(</span>
+                        <span class="n">file_location</span><span class="p">,</span> <span class="n">chksum</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">expected</span><span class="o">=</span><span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="n">x</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">desired_vals</span> <span class="o">=</span> <span class="p">[</span><span class="n">target</span><span class="o">.</span><span class="n">chksums</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">chfs</span><span class="p">]</span>
+            <span class="n">calced</span> <span class="o">=</span> <span class="n">get_chksums</span><span class="p">(</span><span class="n">file_location</span><span class="p">,</span> <span class="o">*</span><span class="n">chfs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">desired</span><span class="p">,</span> <span class="n">got</span><span class="p">,</span> <span class="n">chf</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">desired_vals</span><span class="p">,</span> <span class="n">calced</span><span class="p">,</span> <span class="n">chfs</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">desired</span> <span class="o">!=</span> <span class="n">got</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">ChksumFailure</span><span class="p">(</span>
+                        <span class="n">file_location</span><span class="p">,</span> <span class="n">chksum</span><span class="o">=</span><span class="n">chf</span><span class="p">,</span> <span class="n">expected</span><span class="o">=</span><span class="n">desired</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">got</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchable</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fetchable</span><span class="o">.</span><span class="n">uri</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_path</span><span class="p">(</span><span class="n">fetchable</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch</span><span class="p">(</span><span class="n">fetchable</span><span class="p">)</span>
+
+<div class="viewcode-block" id="fetcher.get_path"><a class="viewcode-back" href="../../../api/pkgcore.fetch.base.html#pkgcore.fetch.base.fetcher.get_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fetchable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        return the on disk path to a fetchable if it&#39;s available, and fully</span>
+<span class="sd">        fetched.</span>
+
+<span class="sd">        If it isn&#39;t, return None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="fetcher.get_storage_path"><a class="viewcode-back" href="../../../api/pkgcore.fetch.base.html#pkgcore.fetch.base.fetcher.get_storage_path">[docs]</a>    <span class="k">def</span> <span class="nf">get_storage_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return the directory files are stored in</span>
+<span class="sd">        returns None if not applicable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../fetch.html" >pkgcore.fetch</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fetch.base</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

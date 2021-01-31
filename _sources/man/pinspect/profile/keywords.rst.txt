@@ -1,0 +1,7 @@
+pinspect profile keywords - inspect package.keywords
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: keywords/_synopsis.rst
+.. include:: keywords/_description.rst
+.. include:: keywords/_options.rst
+.. include:: keywords/_subcommands.rst

@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig describe_class [-h] [--debug] [-q] [-v] [--color BOOLEAN] target_class

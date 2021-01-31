@@ -1,0 +1,7 @@
+pkgcore.fs.tar module
+=====================
+
+.. automodule:: pkgcore.fs.tar
+   :members:
+   :undoc-members:
+   :show-inheritance:

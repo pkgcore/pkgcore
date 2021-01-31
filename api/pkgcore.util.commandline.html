@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.util.commandline module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.util.commandline module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.util.commandline">
+<span id="pkgcore-util-commandline-module"></span><h1>pkgcore.util.commandline module<a class="headerlink" href="#module-pkgcore.util.commandline" title="Permalink to this headline">¶</a></h1>
+<p>Utilities for writing commandline utilities.</p>
+<p>pkgcore scripts should use the <code class="xref py py-obj docutils literal notranslate"><span class="pre">ArgumentParser</span></code> subclass here for a
+consistent commandline “look and feel” (and it tries to make life a
+bit easier too). They will probably want to use <a class="reference internal" href="#pkgcore.util.commandline.main" title="pkgcore.util.commandline.main"><code class="xref py py-obj docutils literal notranslate"><span class="pre">main</span></code></a> from an C{if
+__name__ == ‘__main__’} block too: it will take care of things like
+consistent exception handling.</p>
+<p>See dev-notes/commandline.rst for more complete documentation.</p>
+<dl class="py class">
+<dt id="pkgcore.util.commandline.Tool">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.util.commandline.</code><code class="sig-name descname">Tool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em>, <em class="sig-param"><span class="n">outfile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">errfile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/commandline.html#Tool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.commandline.Tool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.tool.Tool</span></code></p>
+<p>pkgcore-specific commandline utility functionality.</p>
+<dl class="py method">
+<dt id="pkgcore.util.commandline.Tool.post_parse">
+<code class="sig-name descname">post_parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/commandline.html#Tool.post_parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.commandline.Tool.post_parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pass down pkgcore-specific settings to the bash side.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.util.commandline.Tool.pre_parse">
+<code class="sig-name descname">pre_parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/commandline.html#Tool.pre_parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.commandline.Tool.pre_parse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pass down pkgcore-specific settings to the bash side.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.util.commandline.main">
+<code class="sig-prename descclassname">pkgcore.util.commandline.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em>, <em class="sig-param"><span class="n">args</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">outfile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">errfile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/util/commandline.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.util.commandline.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to use in an “if __name__ == ‘__main__’” block in a script.</p>
+<p>Takes an argparser instance and runs it against available args, them,
+taking care of exception handling and some other things.</p>
+<p>Any ConfigurationErrors raised from your function (by the config
+manager) are handled. Other exceptions are not (trigger a traceback).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parser</strong> (<em>ArgumentParser instance</em>) – Argument parser for external commands or scripts.</p></li>
+<li><p><strong>args</strong> (<em>sequence of strings</em>) – arguments to parse, defaulting to C{sys.argv[1:]}.</p></li>
+<li><p><strong>outfile</strong> (<em>file-like object</em>) – File to use for stdout, defaults to C{sys.stdout}.</p></li>
+<li><p><strong>errfile</strong> (<em>file-like object</em>) – File to use for stderr, defaults to C{sys.stderr}.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.util.commandline module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

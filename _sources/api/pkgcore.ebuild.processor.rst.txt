@@ -1,0 +1,7 @@
+pkgcore.ebuild.processor module
+===============================
+
+.. automodule:: pkgcore.ebuild.processor
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pkgcore.ebuild.eapi module
+==========================
+
+.. automodule:: pkgcore.ebuild.eapi
+   :members:
+   :undoc-members:
+   :show-inheritance:

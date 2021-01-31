@@ -1,0 +1,7 @@
+pkgcore.resolver.util module
+============================
+
+.. automodule:: pkgcore.resolver.util
+   :members:
+   :undoc-members:
+   :show-inheritance:

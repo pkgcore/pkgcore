@@ -1,0 +1,372 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.ebuild_src module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebuild_src module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.ebuild_src">
+<span id="pkgcore-ebuild-ebuild-src-module"></span><h1>pkgcore.ebuild.ebuild_src module<a class="headerlink" href="#module-pkgcore.ebuild.ebuild_src" title="Permalink to this headline">¶</a></h1>
+<p>package class for buildable ebuilds</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebuild_src.base">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebuild_src.</code><code class="sig-name descname">base</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent_repository</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebuild_src.html#base"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.metadata.DeriveMetadataKls.&lt;locals&gt;.package</span></code></p>
+<p>ebuild package</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><strong>_config_wrappables</strong> – mapping of attribute to callable for
+re-evaluating attributes dependent on configuration</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.P">
+<em class="property">property </em><code class="sig-name descname">P</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.P" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.PF">
+<em class="property">property </em><code class="sig-name descname">PF</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.PF" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.PN">
+<em class="property">property </em><code class="sig-name descname">PN</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.PN" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to package</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.PR">
+<em class="property">property </em><code class="sig-name descname">PR</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.PR" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.PV">
+<em class="property">property </em><code class="sig-name descname">PV</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.PV" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to version</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.PVR">
+<em class="property">property </em><code class="sig-name descname">PVR</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.PVR" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to fullver</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.bdepend">
+<code class="sig-name descname">bdepend</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.bdepend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.create_fetchable_from_uri">
+<code class="sig-name descname">create_fetchable_from_uri</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">chksums</span></em>, <em class="sig-param"><span class="n">ignore_missing_chksums</span></em>, <em class="sig-param"><span class="n">ignore_unknown_mirrors</span></em>, <em class="sig-param"><span class="n">mirrors</span></em>, <em class="sig-param"><span class="n">default_mirrors</span></em>, <em class="sig-param"><span class="n">common_files</span></em>, <em class="sig-param"><span class="n">uri</span></em>, <em class="sig-param"><span class="n">filename</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebuild_src.html#base.create_fetchable_from_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.create_fetchable_from_uri" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.defined_phases">
+<code class="sig-name descname">defined_phases</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.defined_phases" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.depend">
+<code class="sig-name descname">depend</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.depend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.description">
+<code class="sig-name descname">description</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.description" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.distfiles">
+<code class="sig-name descname">distfiles</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.distfiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.eapi">
+<code class="sig-name descname">eapi</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.eapi" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.ebuild">
+<em class="property">property </em><code class="sig-name descname">ebuild</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.ebuild" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.fetchables">
+<code class="sig-name descname">fetchables</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.fetchables" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.fullslot">
+<code class="sig-name descname">fullslot</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.fullslot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.generate_fetchables">
+<code class="sig-name descname">generate_fetchables</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">allow_missing_checksums</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">ignore_unknown_mirrors</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">skip_default_mirrors</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebuild_src.html#base.generate_fetchables"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.generate_fetchables" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate fetchables object for a package.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.homepage">
+<code class="sig-name descname">homepage</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.homepage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.inherit">
+<code class="sig-name descname">inherit</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.inherit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.inherited">
+<code class="sig-name descname">inherited</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.inherited" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.is_supported">
+<em class="property">property </em><code class="sig-name descname">is_supported</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.is_supported" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to eapi.is_supported</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.iuse">
+<code class="sig-name descname">iuse</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.iuse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.iuse_effective">
+<em class="property">property </em><code class="sig-name descname">iuse_effective</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.iuse_effective" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to iuse_stripped</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.iuse_stripped">
+<em class="property">property </em><code class="sig-name descname">iuse_stripped</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.iuse_stripped" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.keywords">
+<code class="sig-name descname">keywords</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.keywords" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.license">
+<code class="sig-name descname">license</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.license" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.live">
+<em class="property">property </em><code class="sig-name descname">live</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.live" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.mandatory_phases">
+<em class="property">property </em><code class="sig-name descname">mandatory_phases</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.mandatory_phases" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.path">
+<em class="property">property </em><code class="sig-name descname">path</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.path" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.pdepend">
+<code class="sig-name descname">pdepend</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.pdepend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.properties">
+<code class="sig-name descname">properties</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.properties" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.rdepend">
+<code class="sig-name descname">rdepend</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.rdepend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.required_use">
+<code class="sig-name descname">required_use</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.required_use" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.restrict">
+<code class="sig-name descname">restrict</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.restrict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.slot">
+<code class="sig-name descname">slot</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.slot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.sorted_keywords">
+<em class="property">property </em><code class="sig-name descname">sorted_keywords</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.sorted_keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort keywords with prefix keywords after regular arches.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.source_repository">
+<em class="property">property </em><code class="sig-name descname">source_repository</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.source_repository" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to repo.repo_id</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.subslot">
+<code class="sig-name descname">subslot</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.subslot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.base.tracked_attributes">
+<em class="property">property </em><code class="sig-name descname">tracked_attributes</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.tracked_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to eapi.tracked_attributes</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.base.user_patches">
+<code class="sig-name descname">user_patches</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.base.user_patches" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebuild_src.package">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebuild_src.</code><code class="sig-name descname">package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">shared_pkg_data</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebuild_src.html#package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.ebuild_src.base" title="pkgcore.ebuild.ebuild_src.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebuild_src.base</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package.environment">
+<em class="property">property </em><code class="sig-name descname">environment</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package.environment" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package.local_use">
+<em class="property">property </em><code class="sig-name descname">local_use</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package.local_use" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _shared_pkg_data.metadata_xml.local_use</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package.longdescription">
+<em class="property">property </em><code class="sig-name descname">longdescription</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package.longdescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _shared_pkg_data.metadata_xml.longdescription</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package.maintainers">
+<em class="property">property </em><code class="sig-name descname">maintainers</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package.maintainers" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _shared_pkg_data.metadata_xml.maintainers</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package.manifest">
+<em class="property">property </em><code class="sig-name descname">manifest</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package.manifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _shared_pkg_data.manifest</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package.stabilize_allarches">
+<em class="property">property </em><code class="sig-name descname">stabilize_allarches</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package.stabilize_allarches" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias to _shared_pkg_data.metadata_xml.stabilize_allarches</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.ebuild_src.package_factory">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.ebuild_src.</code><code class="sig-name descname">package_factory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent</span></em>, <em class="sig-param"><span class="n">cachedb</span></em>, <em class="sig-param"><span class="n">eclass_cache</span></em>, <em class="sig-param"><span class="n">mirrors</span></em>, <em class="sig-param"><span class="n">default_mirrors</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebuild_src.html#package_factory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package_factory" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.package.metadata.html#pkgcore.package.metadata.factory" title="pkgcore.package.metadata.factory"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.package.metadata.factory</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.package_factory.child_class">
+<code class="sig-name descname">child_class</code><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package_factory.child_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcore.ebuild.ebuild_src.package" title="pkgcore.ebuild.ebuild_src.package"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.ebuild_src.package</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package_factory.get_ebuild_src">
+<code class="sig-name descname">get_ebuild_src</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebuild_src.html#package_factory.get_ebuild_src"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package_factory.get_ebuild_src" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.ebuild_src.package_factory.new_package">
+<code class="sig-name descname">new_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/ebuild_src.html#package_factory.new_package"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package_factory.new_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>generate a new package instance</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.ebuild_src.package_factory.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 5</em><a class="headerlink" href="#pkgcore.ebuild.ebuild_src.package_factory.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.ebuild_src module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

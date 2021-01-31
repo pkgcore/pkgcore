@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig dump-uncollapsed [-h] [--debug] [-q] [-v] [--color BOOLEAN]

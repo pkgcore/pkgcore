@@ -1,0 +1,685 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.eclass &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eclass</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.eclass</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Eclass parsing support.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ImmutableDict</span><span class="p">,</span> <span class="n">OrderedSet</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+<span class="kn">from</span> <span class="nn">snakeoil.version</span> <span class="kn">import</span> <span class="n">get_version</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">__title__</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">conditionals</span>
+<span class="kn">from</span> <span class="nn">.eapi</span> <span class="kn">import</span> <span class="n">EAPI</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="AttrDict"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.AttrDict">[docs]</a><span class="k">class</span> <span class="nc">AttrDict</span><span class="p">(</span><span class="n">ImmutableDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Support accessing dict keys as attributes.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_dict&#39;</span><span class="p">)[</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span>
+
+    <span class="k">def</span> <span class="fm">__dir__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">))</span></div>
+
+
+<span class="k">def</span> <span class="nf">_rst_header</span><span class="p">(</span><span class="n">char</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">leading</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create rST header data from a given character and header text.&quot;&quot;&quot;</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="n">char</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">text</span><span class="p">,</span> <span class="n">sep</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">leading</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="n">sep</span><span class="p">]</span> <span class="o">+</span> <span class="n">data</span>
+    <span class="k">if</span> <span class="n">newline</span><span class="p">:</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">data</span>
+
+
+<div class="viewcode-block" id="ParseEclassDoc"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.ParseEclassDoc">[docs]</a><span class="k">class</span> <span class="nc">ParseEclassDoc</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generic block for eclass docs.</span>
+
+<span class="sd">    See the devmanual [#]_ for the eclass docs specification.</span>
+
+<span class="sd">    .. [#] https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># block tag</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># block key name -- None for singular block types</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># boolean flagging if block attribute defaults should be inserted</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="c1"># mapping from eclass doc blocks to parsing instances</span>
+    <span class="n">blocks</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register known eclass doc block tags.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tags</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tags</span> <span class="o">=</span> <span class="n">tags</span>
+        <span class="c1"># regex matching all known tags for the eclass doc block</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_block_tags_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;^(?P&lt;tag&gt;</span><span class="si">{</span><span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">)</span><span class="si">}</span><span class="s1">)(?P&lt;value&gt;.*)&#39;</span><span class="p">)</span>
+        <span class="c1"># regex matching @CODE tags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_code_tag</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s*@CODE\s*$&#39;</span><span class="p">)</span>
+        <span class="c1"># regex matching @SUBSECTION tags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_subsection_tag</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^\s*@SUBSECTION (?P&lt;title&gt;.+)$&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_tag_bool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse boolean tags.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">block</span> <span class="k">if</span> <span class="n">x</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: tag takes no args, got </span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">args</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_tag_inline_arg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse tags with inline argument.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: missing inline arg&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: non-inline arg&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">block</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_tag_inline_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse tags with inline, space-separated list argument.&quot;&quot;&quot;</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_tag_multiline_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse tags with multiline arguments.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">block</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: invalid inline arg&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">block</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: missing args&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+    <span class="k">def</span> <span class="nf">_tag_multiline_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse tags with multiline text while handling @CODE/@SUBSECTION tags.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_args</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">lines</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># use literal blocks for all multiline text</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;::&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_code_tag</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">mo</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_subsection_tag</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="n">header</span> <span class="o">=</span> <span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;title&#39;</span><span class="p">))</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">header</span><span class="p">)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;::&#39;</span><span class="p">,</span> <span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">&#39;</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">line</span><span class="p">:</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;  </span><span class="si">{</span><span class="n">line</span><span class="si">}</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_tag_multiline_rst</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse tags with multiline rST formatting.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_args</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_tag_deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse deprecated tags.&quot;&quot;&quot;</span>
+        <span class="n">arg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span> <span class="k">if</span> <span class="n">arg</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;none&#39;</span> <span class="k">else</span> <span class="n">arg</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">_required</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of required eclass doc block tags.&quot;&quot;&quot;</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="p">(</span><span class="n">_name</span><span class="p">,</span> <span class="n">required</span><span class="p">,</span> <span class="n">_func</span><span class="p">,</span> <span class="n">_default</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">required</span><span class="p">:</span>
+                <span class="n">tags</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">bash_env_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The set of all bash variables defined in the default environment.&quot;&quot;&quot;</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># use no-op to fake a pipeline so pipeline specific vars are defined</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;bash&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="s1">&#39;:; compgen -A variable&#39;</span><span class="p">],</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">variables</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">defaults</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return default field mapping for the block.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">default</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_required</span><span class="p">,</span> <span class="n">_func</span><span class="p">,</span> <span class="n">default</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="o">.</span><span class="n">values</span><span class="p">()}</span>
+
+<div class="viewcode-block" id="ParseEclassDoc.parse"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.ParseEclassDoc.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="n">line_ind</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse an eclass block.&quot;&quot;&quot;</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">defaults</span>
+        <span class="c1"># track if all required tags are defined</span>
+        <span class="n">missing_tags</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_required</span><span class="p">)</span>
+
+        <span class="c1"># split eclass doc block into separate blocks by tag</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mo</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_block_tags_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)):</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;tag&#39;</span><span class="p">)</span>
+                <span class="n">missing_tags</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tag</span><span class="p">,</span> <span class="n">line_ind</span> <span class="o">+</span> <span class="n">i</span><span class="p">,</span> <span class="p">[</span><span class="n">value</span><span class="p">]))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">blocks</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+
+        <span class="c1"># parse each tag block</span>
+        <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">line_ind</span><span class="p">,</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">:</span>
+            <span class="n">name</span><span class="p">,</span> <span class="n">required</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">_default</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tags</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span>
+            <span class="n">data</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">line_ind</span><span class="p">)</span>
+
+        <span class="c1"># check if any required tags are missing</span>
+        <span class="k">if</span> <span class="n">missing_tags</span><span class="p">:</span>
+            <span class="n">missing_tags_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="n">missing_tags</span><span class="p">))</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="n">missing_tags</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s1">: missing tag</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">missing_tags_str</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">AttrDict</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="EclassBlock"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassBlock">[docs]</a><span class="k">class</span> <span class="nc">EclassBlock</span><span class="p">(</span><span class="n">ParseEclassDoc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;ECLASS doc block.&quot;&quot;&quot;</span>
+
+    <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;@ECLASS:&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;@ECLASS:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@VCSURL:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;vcsurl&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@BLURB:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;blurb&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@DEPRECATED:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;deprecated&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_deprecated</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@INDIRECT_ECLASSES:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;indirect_eclasses&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_list</span><span class="p">,</span> <span class="p">()),</span>
+            <span class="s1">&#39;@MAINTAINER:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;maintainers&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_args</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@AUTHOR:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;authors&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_args</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@BUGREPORTS:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;bugreports&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_str</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@DESCRIPTION:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_str</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@EXAMPLE:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;example&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_str</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@SUPPORTED_EAPIS:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;supported_eapis&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_supported_eapis</span><span class="p">,</span> <span class="p">()),</span>
+        <span class="p">}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_known_eapis</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">EAPI</span><span class="o">.</span><span class="n">known_eapis</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_supported_eapis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse @SUPPORTED_EAPIS tag arguments.&quot;&quot;&quot;</span>
+        <span class="n">eapis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_list</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">eapis</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_known_eapis</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="n">unknown</span><span class="p">)</span>
+            <span class="n">unknown_str</span> <span class="o">=</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">))</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: unknown EAPI</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">unknown_str</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">OrderedSet</span><span class="p">(</span><span class="n">eapis</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EclassVarBlock"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassVarBlock">[docs]</a><span class="k">class</span> <span class="nc">EclassVarBlock</span><span class="p">(</span><span class="n">ParseEclassDoc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;ECLASS-VARIABLE doc block.&quot;&quot;&quot;</span>
+
+    <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;@ECLASS-VARIABLE:&#39;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;variables&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;@ECLASS-VARIABLE:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@DEPRECATED:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;deprecated&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_deprecated</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@DEFAULT_UNSET&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;default_unset&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@INTERNAL&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;internal&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@REQUIRED&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;required&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@PRE_INHERIT&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;pre_inherit&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@USER_VARIABLE&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;user_variable&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@OUTPUT_VARIABLE&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;output_variable&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@DESCRIPTION:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_str</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EclassFuncBlock"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassFuncBlock">[docs]</a><span class="k">class</span> <span class="nc">EclassFuncBlock</span><span class="p">(</span><span class="n">ParseEclassDoc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;FUNCTION doc block.&quot;&quot;&quot;</span>
+
+    <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;@FUNCTION:&#39;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;functions&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;@FUNCTION:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@RETURN:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;returns&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@DEPRECATED:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;deprecated&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_deprecated</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@INTERNAL&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;internal&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@MAINTAINER:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;maintainers&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_args</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@DESCRIPTION:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_str</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="c1"># TODO: The devmanual states this is required, but disabling for now since</span>
+            <span class="c1"># many phase override functions don&#39;t document usage.</span>
+            <span class="s1">&#39;@USAGE:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;usage&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_usage</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_usage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse @USAGE tag arguments.</span>
+
+<span class="sd">        Empty usage is allowed for functions with no arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">block</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: non-inline arg&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">block</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<div class="viewcode-block" id="EclassFuncBlock.parse"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassFuncBlock.parse">[docs]</a>    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">returns</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">description</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&#39;, @RETURN or @DESCRIPTION required&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div></div>
+
+
+<div class="viewcode-block" id="EclassFuncVarBlock"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassFuncVarBlock">[docs]</a><span class="k">class</span> <span class="nc">EclassFuncVarBlock</span><span class="p">(</span><span class="n">ParseEclassDoc</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;VARIABLE doc block.&quot;&quot;&quot;</span>
+
+    <span class="n">tag</span> <span class="o">=</span> <span class="s1">&#39;@VARIABLE:&#39;</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="s1">&#39;function_variables&#39;</span>
+    <span class="n">default</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;@VARIABLE:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_inline_arg</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;@DEPRECATED:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;deprecated&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_deprecated</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@DEFAULT_UNSET&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;default_unset&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@INTERNAL&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;internal&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@REQUIRED&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;required&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_bool</span><span class="p">,</span> <span class="kc">False</span><span class="p">),</span>
+            <span class="s1">&#39;@DESCRIPTION:&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;description&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tag_multiline_str</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">tags</span><span class="p">)</span></div>
+
+
+<span class="n">_eclass_blocks_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">rf</span><span class="s1">&#39;^(?P&lt;prefix&gt;\s*#) (?P&lt;tag&gt;</span><span class="si">{</span><span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ParseEclassDoc</span><span class="o">.</span><span class="n">blocks</span><span class="p">)</span><span class="si">}</span><span class="s1">)(?P&lt;value&gt;.*)&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="EclassDoc"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassDoc">[docs]</a><span class="k">class</span> <span class="nc">EclassDoc</span><span class="p">(</span><span class="n">AttrDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Support parsing eclass docs for a given eclass path.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="o">/</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">sourced</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mtime</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># parse eclass doc</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="c1"># inject full lists of exported funcs and vars</span>
+        <span class="k">if</span> <span class="n">sourced</span><span class="p">:</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_source_eclass</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_source_eclass</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># TODO: support this via pkgcore&#39;s ebd</span>
+        <span class="c1"># source eclass to determine PROPERTIES</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;bash&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s1">&#39;source </span><span class="si">{</span><span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s1">; &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;compgen -A function; &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;echo &quot;#&quot;; &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;compgen -A variable; &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;echo &quot;#&quot;; &#39;</span>
+                <span class="sa">f</span><span class="s1">&#39;echo $</span><span class="se">{{</span><span class="s1">PROPERTIES</span><span class="se">}}</span><span class="s1">&#39;</span><span class="p">],</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">eclass_obj</span> <span class="o">=</span> <span class="n">ParseEclassDoc</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="s1">&#39;@ECLASS:&#39;</span><span class="p">]</span>
+            <span class="n">funcs</span><span class="p">,</span> <span class="n">variables</span><span class="p">,</span> <span class="n">properties</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;#</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;_exported_funcs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">funcs</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;_exported_vars&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">eclass_obj</span><span class="o">.</span><span class="n">bash_env_vars</span>
+            <span class="p">)</span>
+            <span class="n">data</span><span class="p">[</span><span class="s1">&#39;_properties&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">conditionals</span><span class="o">.</span><span class="n">DepSet</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
+                <span class="n">properties</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">operators</span><span class="o">=</span><span class="p">{},</span> <span class="n">attr</span><span class="o">=</span><span class="s1">&#39;PROPERTIES&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">function_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of documented function names in the eclass.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">internal_function_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of internal function names in the eclass.&quot;&quot;&quot;</span>
+        <span class="c1"># include all internal tagged functions</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">internal</span><span class="p">}</span>
+        <span class="c1"># and all exported, underscore-prefixed functions</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_exported_funcs&#39;</span><span class="p">,</span> <span class="p">())</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">exported_function_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of all exported function names in the eclass.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_exported_funcs&#39;</span><span class="p">,</span> <span class="p">()))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">variable_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of documented variable names in the eclass.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">internal_variable_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of internal variable names in the eclass.&quot;&quot;&quot;</span>
+        <span class="c1"># include all internal tagged variables</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">internal</span><span class="p">}</span>
+        <span class="c1"># and all exported, underscore-prefixed variables</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_exported_vars&#39;</span><span class="p">,</span> <span class="p">())</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">exported_variable_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of all exported variable names in the eclass.</span>
+
+<span class="sd">        Ignores variables that start with underscores since</span>
+<span class="sd">        it&#39;s assumed they are private.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_exported_vars&#39;</span><span class="p">,</span> <span class="p">()))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">function_variable_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of documented function variable names in the eclass.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_variables</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">live</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Eclass implements functionality to support a version control system.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s1">&#39;live&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;_properties&#39;</span><span class="p">,</span> <span class="p">())</span>
+
+<div class="viewcode-block" id="EclassDoc.parse"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassDoc.parse">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse eclass docs.&quot;&quot;&quot;</span>
+        <span class="n">blocks</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+            <span class="n">line_ind</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">while</span> <span class="n">line_ind</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">mo</span> <span class="o">:=</span> <span class="n">_eclass_blocks_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">lines</span><span class="p">[</span><span class="n">line_ind</span><span class="p">])):</span>
+                    <span class="c1"># Isolate identified doc block by pulling all following</span>
+                    <span class="c1"># lines with a matching prefix.</span>
+                    <span class="n">prefix</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;prefix&#39;</span><span class="p">)</span>
+                    <span class="n">tag</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;tag&#39;</span><span class="p">)</span>
+                    <span class="n">block</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="n">block_start</span> <span class="o">=</span> <span class="n">line_ind</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="k">while</span> <span class="n">line_ind</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">lines</span><span class="p">):</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="n">lines</span><span class="p">[</span><span class="n">line_ind</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+                            <span class="k">break</span>
+                        <span class="n">line</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+                        <span class="n">block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                        <span class="n">line_ind</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">blocks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">tag</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">block_start</span><span class="p">))</span>
+                <span class="n">line_ind</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># set default fields</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ParseEclassDoc</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="s1">&#39;@ECLASS:&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">defaults</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">block_obj</span> <span class="ow">in</span> <span class="n">ParseEclassDoc</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">block_obj</span><span class="o">.</span><span class="n">default</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">block_obj</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">OrderedSet</span><span class="p">()</span>
+        <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">block</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">OrderedSet</span><span class="p">()</span> <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">ParseEclassDoc</span><span class="o">.</span><span class="n">blocks</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">block</span><span class="o">.</span><span class="n">default</span><span class="p">})</span>
+
+        <span class="c1"># @ECLASS block must exist and be first in eclasses</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">blocks</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;&#39;@ECLASS:&#39; block missing&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="k">elif</span> <span class="n">blocks</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;@ECLASS:&#39;</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;&#39;@ECLASS:&#39; block not first&quot;</span><span class="p">)</span>
+
+        <span class="c1"># track duplicate tags</span>
+        <span class="n">duplicates</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">set</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ParseEclassDoc</span><span class="o">.</span><span class="n">blocks</span><span class="p">}</span>
+
+        <span class="c1"># parse identified blocks</span>
+        <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">block_start</span> <span class="ow">in</span> <span class="n">blocks</span><span class="p">:</span>
+            <span class="n">block_obj</span> <span class="o">=</span> <span class="n">ParseEclassDoc</span><span class="o">.</span><span class="n">blocks</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span>
+            <span class="n">block_data</span> <span class="o">=</span> <span class="n">block_obj</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="n">block_start</span><span class="p">)</span>
+            <span class="c1"># check if duplicate blocks exist and merge data</span>
+            <span class="k">if</span> <span class="n">block_obj</span><span class="o">.</span><span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># main @ECLASS block</span>
+                <span class="k">if</span> <span class="n">duplicates</span><span class="p">[</span><span class="n">tag</span><span class="p">]:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;&#39;@ECLASS:&#39;, line </span><span class="si">{</span><span class="n">block_start</span><span class="si">}</span><span class="s2">: duplicate block&quot;</span><span class="p">)</span>
+                <span class="n">duplicates</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="c1"># verify name is correct</span>
+                <span class="n">file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">block_data</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="n">file_name</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;&#39;@ECLASS:&#39; invalid name </span><span class="si">{</span><span class="n">block_data</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> (should be </span><span class="si">{</span><span class="n">file_name</span><span class="si">!r}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                <span class="n">data</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">block_data</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># item block</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">block_data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">duplicates</span><span class="p">[</span><span class="n">tag</span><span class="p">]:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">repr</span><span class="p">(</span><span class="n">block</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="si">}</span><span class="s1">, line </span><span class="si">{</span><span class="n">block_start</span><span class="si">}</span><span class="s1">: duplicate block&#39;</span><span class="p">)</span>
+                <span class="n">duplicates</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">block_obj</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">block_data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span></div>
+
+<div class="viewcode-block" id="EclassDoc.to_rst"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassDoc.to_rst">[docs]</a>    <span class="k">def</span> <span class="nf">to_rst</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert eclassdoc object to reStructuredText.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;eclass lacking doc support&#39;</span><span class="p">)</span>
+
+        <span class="n">_header_only</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">rst</span> <span class="o">=</span> <span class="n">_header_only</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">leading</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blurb</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_header_only</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">blurb</span><span class="p">,</span> <span class="n">leading</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Description&#39;</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">deprecated</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Deprecated&#39;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deprecated</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                <span class="n">replacement</span> <span class="o">=</span> <span class="s1">&#39;none&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">replacement</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deprecated</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Replacement: </span><span class="si">{</span><span class="n">replacement</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">supported_eapis</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Supported EAPIs&#39;</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supported_eapis</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">example</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Example&#39;</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">example</span><span class="p">)</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">external_funcs</span> <span class="o">:=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">functions</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">internal</span><span class="p">]:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_header_only</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Functions&#39;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">external_funcs</span><span class="p">:</span>
+                <span class="n">header</span> <span class="o">=</span> <span class="p">[</span><span class="n">func</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">func</span><span class="o">.</span><span class="n">usage</span><span class="p">:</span>
+                    <span class="n">header</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">usage</span><span class="p">)</span>
+                <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">header</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">func</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+                    <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">func</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+                        <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+                    <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Return value: </span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="n">returns</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">external_vars</span> <span class="o">:=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">internal</span><span class="p">]:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_header_only</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Variables&#39;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">external_vars</span><span class="p">:</span>
+                <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="n">var</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+                    <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+                <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">external_func_vars</span> <span class="o">:=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">function_variables</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">internal</span><span class="p">]:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_header_only</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Function Variables&#39;</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">external_func_vars</span><span class="p">:</span>
+                <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">,</span> <span class="n">var</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">description</span><span class="p">:</span>
+                    <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">var</span><span class="o">.</span><span class="n">description</span><span class="p">)</span>
+                <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">authors</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Authors&#39;</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;| </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">authors</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maintainers</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Maintainers&#39;</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;| </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">maintainers</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bugreports</span><span class="p">:</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">_rst_header</span><span class="p">(</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;Bug Reports&#39;</span><span class="p">))</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bugreports</span><span class="p">)</span>
+            <span class="n">rst</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rst</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_to_docutils</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">writer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert eclassdoc object using docutils.&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">docutils.core</span> <span class="kn">import</span> <span class="n">publish_string</span>
+        <span class="k">return</span> <span class="n">publish_string</span><span class="p">(</span>
+            <span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">to_rst</span><span class="p">(),</span> <span class="n">writer</span><span class="o">=</span><span class="n">writer</span><span class="p">,</span>
+            <span class="n">settings_overrides</span><span class="o">=</span><span class="p">{</span>
+                <span class="s1">&#39;input_encoding&#39;</span><span class="p">:</span> <span class="s1">&#39;unicode&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;output_encoding&#39;</span><span class="p">:</span> <span class="s1">&#39;unicode&#39;</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="EclassDoc.to_man"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassDoc.to_man">[docs]</a>    <span class="k">def</span> <span class="nf">to_man</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert eclassdoc object to a man page.&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">docutils.writers</span> <span class="kn">import</span> <span class="n">manpage</span>
+
+        <span class="n">man_data</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;manual_section&#39;</span><span class="p">:</span> <span class="s1">&#39;5&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;manual_group&#39;</span><span class="p">:</span> <span class="s1">&#39;eclass-manpages&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;date&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcnow</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;version&#39;</span><span class="p">:</span> <span class="s1">&#39;Gentoo Linux&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">blurb</span><span class="p">:</span>
+            <span class="n">man_data</span><span class="p">[</span><span class="s1">&#39;subtitle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blurb</span>
+
+        <span class="c1"># add pkgcore version to header comment</span>
+        <span class="n">pkgcore_version</span> <span class="o">=</span> <span class="n">get_version</span><span class="p">(</span><span class="n">__title__</span><span class="p">,</span> <span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; --&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">header_comment</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">Created by </span><span class="si">{</span><span class="n">pkgcore_version</span><span class="si">}</span><span class="s1">.&#39;</span>
+
+        <span class="k">class</span> <span class="nc">Translator</span><span class="p">(</span><span class="n">manpage</span><span class="o">.</span><span class="n">Translator</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Override docutils man page metadata defaults.&quot;&quot;&quot;</span>
+
+            <span class="n">document_start</span> <span class="o">=</span> <span class="n">manpage</span><span class="o">.</span><span class="n">Translator</span><span class="o">.</span><span class="n">document_start</span> <span class="o">+</span> <span class="n">header_comment</span>
+
+            <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_docinfo</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">man_data</span><span class="p">)</span>
+
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">manpage</span><span class="o">.</span><span class="n">Writer</span><span class="p">()</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">translator_class</span> <span class="o">=</span> <span class="n">Translator</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_docutils</span><span class="p">(</span><span class="n">writer</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EclassDoc.to_html"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.eclass.html#pkgcore.ebuild.eclass.EclassDoc.to_html">[docs]</a>    <span class="k">def</span> <span class="nf">to_html</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert eclassdoc object to an HTML 5 document.&quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">docutils.writers</span> <span class="kn">import</span> <span class="n">html5_polyglot</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_docutils</span><span class="p">(</span><span class="n">html5_polyglot</span><span class="o">.</span><span class="n">Writer</span><span class="p">())</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.eclass</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

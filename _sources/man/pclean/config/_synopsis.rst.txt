@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pclean config [-p] [-x EXCLUDE] [-X EXCLUDE_FILE] [-S PKGSET] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [TARGET [TARGET ...]]

@@ -1,0 +1,397 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.conditionals &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.conditionals</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.ebuild.conditionals</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;DepSet parsing.</span>
+
+<span class="sd">Turns a DepSet (depend, rdepend, SRC_URI, license, etc) into</span>
+<span class="sd">appropriate conditionals.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;DepSet&quot;</span><span class="p">,</span> <span class="s2">&quot;stringify_boolean&quot;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">IGNORED_EXCEPTIONS</span>
+<span class="kn">from</span> <span class="nn">snakeoil.iterables</span> <span class="kn">import</span> <span class="n">expandable_chain</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">boolean</span><span class="p">,</span> <span class="n">packages</span><span class="p">,</span> <span class="n">restriction</span><span class="p">,</span> <span class="n">values</span>
+<span class="kn">from</span> <span class="nn">.atom</span> <span class="kn">import</span> <span class="n">atom</span><span class="p">,</span> <span class="n">transitive_use_atom</span>
+<span class="kn">from</span> <span class="nn">.errors</span> <span class="kn">import</span> <span class="n">DepsetParseError</span>
+
+
+<div class="viewcode-block" id="DepSet"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.conditionals.html#pkgcore.ebuild.conditionals.DepSet">[docs]</a><span class="k">class</span> <span class="nc">DepSet</span><span class="p">(</span><span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Gentoo DepSet syntax parser&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;element_class&#39;</span><span class="p">,</span> <span class="s1">&#39;_node_conds&#39;</span><span class="p">,</span> <span class="s1">&#39;_known_conditionals&#39;</span><span class="p">)</span>
+
+    <span class="n">_evaluate_collapse</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="c1"># do not enable instance caching w/out adjust evaluate_depset!</span>
+    <span class="n">__inst_caching__</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrictions</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">element_class</span><span class="o">=</span><span class="n">atom</span><span class="p">,</span>
+                 <span class="n">node_conds</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">known_conditionals</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">sf</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_known_conditionals&#39;</span><span class="p">,</span> <span class="n">known_conditionals</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;element_class&#39;</span><span class="p">,</span> <span class="n">element_class</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;restrictions&#39;</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_node_conds&#39;</span><span class="p">,</span> <span class="n">node_conds</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="n">restriction</span><span class="o">.</span><span class="n">package_type</span><span class="p">)</span>
+        <span class="n">sf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;negate&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DepSet.parse"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.conditionals.html#pkgcore.ebuild.conditionals.DepSet.parse">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">parse</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dep_str</span><span class="p">,</span> <span class="n">element_class</span><span class="p">,</span>
+              <span class="n">operators</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">element_func</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">transitive_use_atoms</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+              <span class="n">allow_src_uri_file_renames</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param dep_str: string abiding by DepSet syntax</span>
+<span class="sd">        :param operators: mapping of node -&gt; callable for special operators</span>
+<span class="sd">            in DepSet syntax</span>
+<span class="sd">        :param element_func: if None, element_class is used for generating</span>
+<span class="sd">            elements, else it&#39;s used to generate elements.</span>
+<span class="sd">            Mainly useful for when you need to curry a few args for instance</span>
+<span class="sd">            generation, since element_class _must_ be a class</span>
+<span class="sd">        :param element_class: class of generated elements</span>
+<span class="sd">        :param attr: name of the DepSet attribute being parsed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">element_func</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">element_func</span> <span class="o">=</span> <span class="n">element_class</span>
+
+        <span class="n">restrictions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">operators</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">operators</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;||&quot;</span><span class="p">:</span> <span class="n">boolean</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">:</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">}</span>
+
+        <span class="n">raw_conditionals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">depsets</span> <span class="o">=</span> <span class="p">[</span><span class="n">restrictions</span><span class="p">]</span>
+
+        <span class="n">node_conds</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">words</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">dep_str</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="c1"># we specifically do it this way since expandable_chain has a bit of nasty</span>
+        <span class="c1"># overhead to the tune of 33% slower</span>
+        <span class="k">if</span> <span class="n">allow_src_uri_file_renames</span><span class="p">:</span>
+            <span class="n">words</span> <span class="o">=</span> <span class="n">expandable_chain</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">words</span><span class="p">:</span>
+                <span class="k">if</span> <span class="s2">&quot;)&quot;</span> <span class="o">==</span> <span class="n">k</span><span class="p">:</span>
+                    <span class="c1"># no elements == error. if closures don&#39;t map up,</span>
+                    <span class="c1"># indexerror would be chucked from trying to pop</span>
+                    <span class="c1"># the frame so that is addressed.</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">raw_conditionals</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">DepsetParseError</span><span class="p">(</span><span class="n">dep_str</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">raw_conditionals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="ow">in</span> <span class="n">operators</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                                <span class="n">operators</span><span class="p">[</span><span class="n">raw_conditionals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]](</span><span class="o">*</span><span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">node_conds</span> <span class="o">=</span> <span class="kc">True</span>
+                        <span class="n">c</span> <span class="o">=</span> <span class="n">raw_conditionals</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                        <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;!&quot;</span><span class="p">:</span>
+                            <span class="n">c</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">ContainmentMatch2</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">c</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">ContainmentMatch2</span><span class="p">(</span><span class="n">c</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+                        <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">packages</span><span class="o">.</span><span class="n">Conditional</span><span class="p">(</span><span class="s2">&quot;use&quot;</span><span class="p">,</span> <span class="n">c</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+
+                    <span class="n">raw_conditionals</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                    <span class="n">depsets</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+
+                <span class="k">elif</span> <span class="s2">&quot;(&quot;</span> <span class="o">==</span> <span class="n">k</span><span class="p">:</span>
+                    <span class="n">k</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+                    <span class="c1"># push another frame on</span>
+                    <span class="n">depsets</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                    <span class="n">raw_conditionals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="n">k</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;?&#39;</span> <span class="ow">or</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">operators</span><span class="p">:</span>
+                    <span class="c1"># use conditional or custom op.</span>
+                    <span class="c1"># no tokens left == bad dep_str.</span>
+                    <span class="n">k2</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">k2</span> <span class="o">!=</span> <span class="s2">&quot;(&quot;</span><span class="p">:</span>
+                        <span class="k">raise</span> <span class="n">DepsetParseError</span><span class="p">(</span><span class="n">dep_str</span><span class="p">,</span> <span class="n">k2</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span>
+
+                    <span class="c1"># push another frame on</span>
+                    <span class="n">depsets</span><span class="o">.</span><span class="n">append</span><span class="p">([])</span>
+                    <span class="n">raw_conditionals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="s2">&quot;|&quot;</span> <span class="ow">in</span> <span class="n">k</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">DepsetParseError</span><span class="p">(</span><span class="n">dep_str</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">allow_src_uri_file_renames</span><span class="p">:</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">k2</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                        <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element_func</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">k2</span> <span class="o">!=</span> <span class="s1">&#39;-&gt;&#39;</span><span class="p">:</span>
+                            <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element_func</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+                            <span class="n">words</span><span class="o">.</span><span class="n">appendleft</span><span class="p">((</span><span class="n">k2</span><span class="p">,))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">k3</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">words</span><span class="p">)</span>
+                            <span class="c1"># file rename</span>
+                            <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element_func</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k3</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># node/element</span>
+                    <span class="n">depsets</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">element_func</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+
+        <span class="k">except</span> <span class="n">IGNORED_EXCEPTIONS</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="n">DepsetParseError</span><span class="p">:</span>
+            <span class="c1"># [][-1] for a frame access, which means it was a parse error.</span>
+            <span class="k">raise</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span>
+            <span class="k">raise</span> <span class="n">DepsetParseError</span><span class="p">(</span><span class="n">dep_str</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DepsetParseError</span><span class="p">(</span><span class="n">dep_str</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+        <span class="c1"># check if any closures required</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">depsets</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DepsetParseError</span><span class="p">(</span><span class="n">dep_str</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">transitive_use_atoms</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">node_conds</span><span class="p">:</span>
+            <span class="c1"># localize to this scope for speed.</span>
+            <span class="n">element_class</span> <span class="o">=</span> <span class="n">transitive_use_atom</span>
+            <span class="c1"># we can&#39;t rely on iter(self) here since it doesn&#39;t</span>
+            <span class="c1"># descend through boolean restricts.</span>
+            <span class="n">node_conds</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_has_transitive_use_atoms</span><span class="p">(</span><span class="n">restrictions</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">restrictions</span><span class="p">),</span> <span class="n">element_class</span><span class="p">,</span> <span class="n">node_conds</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_has_transitive_use_atoms</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+        <span class="n">kls</span> <span class="o">=</span> <span class="n">transitive_use_atom</span>
+        <span class="n">ifunc</span> <span class="o">=</span> <span class="nb">isinstance</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">ifunc</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">kls</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="n">iterable</span><span class="p">,</span> <span class="n">atom</span><span class="p">))</span>
+
+<div class="viewcode-block" id="DepSet.evaluate_depset"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.conditionals.html#pkgcore.ebuild.conditionals.DepSet.evaluate_depset">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_depset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cond_dict</span><span class="p">,</span> <span class="n">tristate_filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param cond_dict: container to be used for conditional collapsing,</span>
+<span class="sd">            typically is a use list</span>
+<span class="sd">        :param tristate_filter: a control; if specified, must be a container</span>
+<span class="sd">            of conditionals to lock to cond_dict.</span>
+<span class="sd">            during processing, if it&#39;s not in tristate_filter will</span>
+<span class="sd">            automatically enable the payload</span>
+<span class="sd">            (regardless of the conditionals negation)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_conditionals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">evaluate_conditionals</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span>
+            <span class="n">cond_dict</span><span class="p">,</span> <span class="n">tristate_filter</span><span class="p">,</span> <span class="n">force_collapse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">results</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">element_class</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DepSet.find_cond_nodes"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.conditionals.html#pkgcore.ebuild.conditionals.DepSet.find_cond_nodes">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">find_cond_nodes</span><span class="p">(</span><span class="n">restriction_set</span><span class="p">,</span> <span class="n">yield_non_conditionals</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">conditions_stack</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">new_set</span> <span class="o">=</span> <span class="n">expandable_chain</span><span class="p">(</span><span class="n">restriction_set</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">cur_node</span> <span class="ow">in</span> <span class="n">new_set</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">packages</span><span class="o">.</span><span class="n">Conditional</span><span class="p">):</span>
+                <span class="n">conditions_stack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cur_node</span><span class="o">.</span><span class="n">restriction</span><span class="p">)</span>
+                <span class="n">new_set</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">cur_node</span><span class="o">.</span><span class="n">payload</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">transitive_use_atom</span><span class="p">):</span>
+                <span class="n">new_set</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">cur_node</span><span class="o">.</span><span class="n">convert_to_conditionals</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">boolean</span><span class="o">.</span><span class="n">base</span><span class="p">)</span> <span class="ow">and</span>
+                    <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">atom</span><span class="p">)):</span>
+                <span class="n">new_set</span><span class="o">.</span><span class="n">appendleft</span><span class="p">(</span><span class="n">cur_node</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">cur_node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">conditions_stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">conditions_stack</span> <span class="ow">or</span> <span class="n">yield_non_conditionals</span><span class="p">:</span> <span class="c1"># leaf</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">cur_node</span><span class="p">,</span> <span class="n">conditions_stack</span><span class="p">[:])</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">node_conds</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_conds</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_node_conds&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_conds</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">nc</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="n">always_required</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+            <span class="k">for</span> <span class="n">payload</span><span class="p">,</span> <span class="n">restrictions</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_cond_nodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">restrictions</span><span class="p">:</span>
+                    <span class="n">always_required</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">restrictions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">current</span> <span class="o">=</span> <span class="n">restrictions</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">current</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">restrictions</span><span class="p">)</span>
+
+                    <span class="n">nc</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">payload</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">always_required</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">nc</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">nc</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">nc</span><span class="p">:</span>
+                <span class="n">nc</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">nc</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_node_conds&quot;</span><span class="p">,</span> <span class="n">nc</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_conds</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">has_conditionals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_node_conds</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">known_conditionals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_node_conds</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">frozenset</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_known_conditionals</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kc</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">payload</span><span class="p">,</span> <span class="n">restrictions</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_cond_nodes</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">):</span>
+                <span class="n">kc</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">vals</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">restrictions</span><span class="p">))</span>
+            <span class="n">kc</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">kc</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;_known_conditionals&quot;</span><span class="p">,</span> <span class="n">kc</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">kc</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_known_conditionals</span>
+
+<div class="viewcode-block" id="DepSet.match"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.conditionals.html#pkgcore.ebuild.conditionals.DepSet.match">[docs]</a>    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="DepSet.slotdep_str"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.conditionals.html#pkgcore.ebuild.conditionals.DepSet.slotdep_str">[docs]</a>    <span class="k">def</span> <span class="nf">slotdep_str</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">stringify_boolean</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span></div>
+
+    <span class="n">force_False</span> <span class="o">=</span> <span class="n">force_True</span> <span class="o">=</span> <span class="n">match</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">stringify_boolean</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="c1"># parent __hash__() isn&#39;t inherited when __eq__() is defined in the child class</span>
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="o">.</span><span class="fm">__hash__</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">DepSet</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="stringify_boolean"><a class="viewcode-back" href="../../../api/pkgcore.ebuild.conditionals.html#pkgcore.ebuild.conditionals.stringify_boolean">[docs]</a><span class="k">def</span> <span class="nf">stringify_boolean</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">domain</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;func is used to stringify the actual content. Useful for fetchables.&quot;&quot;&quot;</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">DepSet</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="n">_internal_stringify_boolean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_internal_stringify_boolean</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">)</span>
+    <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">l</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">_internal_stringify_boolean</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">visit</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;func is used to stringify the actual content. Useful for fetchables.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">boolean</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">):</span>
+        <span class="n">visit</span><span class="p">(</span><span class="s2">&quot;|| (&quot;</span><span class="p">)</span>
+        <span class="n">iterable</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">restrictions</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">atom</span><span class="p">)):</span>
+        <span class="n">visit</span><span class="p">(</span><span class="s2">&quot;(&quot;</span><span class="p">)</span>
+        <span class="n">iterable</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">restrictions</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">packages</span><span class="o">.</span><span class="n">Conditional</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">vals</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">iterable</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">payload</span>
+        <span class="n">visit</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s%s</span><span class="s2">? (&quot;</span> <span class="o">%</span> <span class="p">(</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">negate</span> <span class="ow">and</span> <span class="s2">&quot;!&quot;</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">vals</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">domain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span>
+                <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">atom</span><span class="p">)</span> <span class="ow">and</span> <span class="n">node</span><span class="o">.</span><span class="n">slot_operator</span> <span class="o">==</span> <span class="s1">&#39;=&#39;</span><span class="p">)):</span>
+            <span class="n">pkg</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">all_installed_repos</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">node</span><span class="p">)))</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">)</span>
+            <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="s2">&quot;subslot&quot;</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">subslot</span><span class="p">)</span>
+        <span class="n">visit</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">node</span><span class="p">))</span>
+        <span class="k">return</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="n">_internal_stringify_boolean</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">domain</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">visit</span><span class="p">)</span>
+    <span class="n">visit</span><span class="p">(</span><span class="s2">&quot;)&quot;</span><span class="p">)</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.conditionals</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

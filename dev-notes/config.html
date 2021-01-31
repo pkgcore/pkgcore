@@ -1,0 +1,485 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Config use and implementation notes &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Checking the source out" href="developing.html" />
+    <link rel="prev" title="Commandline framework" href="commandline.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="developing.html" title="Checking the source out"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="commandline.html" title="Commandline framework"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Config use and implementation notes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="config-use-and-implementation-notes">
+<h1>Config use and implementation notes<a class="headerlink" href="#config-use-and-implementation-notes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="using-the-manager">
+<h2>Using the manager<a class="headerlink" href="#using-the-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="normal-use">
+<h3>Normal use<a class="headerlink" href="#normal-use" title="Permalink to this headline">¶</a></h3>
+<p>To get at the user's configuration:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pkgcore.config</span> <span class="kn">import</span> <span class="n">load_config</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">load_config</span><span class="p">()</span>
+<span class="n">main_repo</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get_default</span><span class="p">(</span><span class="s1">&#39;repo&#39;</span><span class="p">)</span>
+<span class="n">spork_repo</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">repo</span><span class="p">[</span><span class="s1">&#39;spork&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Usually this is everything you need to know about the manager. Some
+things to be aware of:</p>
+<ul>
+<li><p>Some of the managed sources of configuration data may be slow, so
+accessing a source is delayed for as long as possible. Some things
+require accessing all sources though and should therefore be
+avoided. The easiest one to trigger is config.repo.keys() or the
+equivalent list(config.sections('repo')). This has to get the
+&quot;class&quot; setting for every available config section, which might be
+slow.</p></li>
+<li><p>For the same reason the manager does not know what type names exist
+(there is no hardcoded list of them, so the only way to get that
+information would be loading all config sections). This is why you
+can get this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">load_config</span><span class="p">()</span><span class="o">.</span><span class="n">section</span><span class="p">(</span><span class="s1">&#39;repo&#39;</span><span class="p">)</span> <span class="c1"># typo, should be &quot;sections&quot;</span>
+<span class="gt">Traceback (most recent call last):</span>
+  File <span class="nb">&quot;&lt;stdin&gt;&quot;</span>, line <span class="m">1</span>, in <span class="n">?</span>
+<span class="gr">TypeError</span>: <span class="n">&#39;_ConfigMapping&#39; object is not callable</span>
+</pre></div>
+</div>
+<p>This constructed a dictlike object for accessing all config sections
+of the type &quot;section&quot;, then tried to call it.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="testcase-use">
+<h3>Testcase use<a class="headerlink" href="#testcase-use" title="Permalink to this headline">¶</a></h3>
+<p>For testing of high-level scripts it can be useful to construct a
+config manager containing hardcoded values:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pkgcore.config</span> <span class="kn">import</span> <span class="n">basics</span><span class="p">,</span> <span class="n">central</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">central</span><span class="o">.</span><span class="n">ConfigManager</span><span class="p">([{</span>
+    <span class="s1">&#39;repo&#39;</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">HardCodedConfigSection</span><span class="p">({</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">my_repo</span><span class="p">,</span>
+                                            <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">,</span> <span class="s1">&#39;2&#39;</span><span class="p">]}),</span>
+    <span class="s1">&#39;cont&#39;</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">ConfigSectionFromStringDict</span><span class="p">({</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;pkgcore.my.cont&#39;</span><span class="p">,</span>
+                                                 <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="s1">&#39;repo&#39;</span><span class="p">}),</span>
+    <span class="p">}])</span>
+</pre></div>
+</div>
+<p>What this does should be fairly obvious. Be careful you do not use the
+same ConfigSection object in more than one place: caching will not
+behave the way you want. See <a class="reference internal" href="#adding-a-config-source">Adding a config source</a> for details.</p>
+</div>
+</div>
+<div class="section" id="adding-a-configurable">
+<h2>Adding a configurable<a class="headerlink" href="#adding-a-configurable" title="Permalink to this headline">¶</a></h2>
+<p>You often do not really <em>have</em> to do anything to make something a
+valid &quot;class&quot; value, but it is clearer and it is necessary in certain
+cases.</p>
+<div class="section" id="adding-a-class">
+<h3>Adding a class<a class="headerlink" href="#adding-a-class" title="Permalink to this headline">¶</a></h3>
+<p>To make a class available, do this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pkgcore.config</span> <span class="kn">import</span> <span class="n">ConfigHint</span><span class="p">,</span> <span class="n">errors</span>
+
+<span class="k">class</span> <span class="nc">MyRepo</span><span class="p">:</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">({</span><span class="s1">&#39;cache&#39;</span><span class="p">:</span> <span class="s1">&#39;section_ref&#39;</span><span class="p">},</span>
+                                     <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;repo&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">repo</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SomeRandomException</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">InstantiationError</span><span class="p">(</span><span class="s1">&#39;eep!&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The first ConfigHint arg tells the config system what kind of
+arguments you take. Without it it assumes arguments with no default
+are strings and guesses for the other args based on the type of the
+default value. So if you have no default values or they are just None
+you should tell the system about your args.</p>
+<p>The second one tells it you fulfill the repo &quot;protocol&quot;, meaning your
+instances will show up in load_config().repo.</p>
+<p>ConfigHint takes some more arguments, see the api docs for details.</p>
+</div>
+<div class="section" id="adding-a-callable">
+<h3>Adding a callable<a class="headerlink" href="#adding-a-callable" title="Permalink to this headline">¶</a></h3>
+<p>To make a callable available you can do this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pkgcore.config.hint</span> <span class="kn">import</span> <span class="n">configurable</span>
+
+<span class="nd">@configurable</span><span class="p">({</span><span class="s1">&#39;cache&#39;</span><span class="p">:</span> <span class="s1">&#39;section_ref&#39;</span><span class="p">},</span> <span class="n">typename</span><span class="o">=</span><span class="n">repo</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">my_repo</span><span class="p">(</span><span class="n">repo</span><span class="p">):</span>
+    <span class="c1"># do stuff</span>
+</pre></div>
+</div>
+<p>configurable is just a convenience function that applies a ConfigHint.</p>
+</div>
+<div class="section" id="exception-handling">
+<h3>Exception handling<a class="headerlink" href="#exception-handling" title="Permalink to this headline">¶</a></h3>
+<p>If you raise an exception when the config system calls you it will
+catch the exception and wrap it in an InstantiationError. This is good
+for calling code since catching and printing those provides the user
+with a readable description of what happened. It is less good for
+developers since the raising of a new exception kills the traceback
+printed in debug mode. You will have a traceback that &quot;ends&quot; in the
+config code handling instantiation.</p>
+<p>You can improve this by raising an InstantiationError yourself. If you
+do this the config system will be able to add the extra information
+needed for a user-friendly error message to it without raising a new
+exception, meaning debug mode will give a traceback leading right back
+to your code raising the InstantiationError.</p>
+</div>
+</div>
+<div class="section" id="adding-a-config-source">
+<h2>Adding a config source<a class="headerlink" href="#adding-a-config-source" title="Permalink to this headline">¶</a></h2>
+<p>Config sources are pretty straightforward: they are mappings from a
+section name to a ConfigSection subclass. The only tricky thing is the
+combination of section references and caching. The general rule is &quot;do
+not expose the same ConfigSection in more than one way&quot;. If you do it
+will be collapsed and instantiated once for every way it is exposed,
+which is usually not what you want. An example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pkgcore.config</span> <span class="kn">import</span> <span class="n">basics</span>
+<span class="kn">from</span> <span class="nn">pkgcore.config.hint</span> <span class="kn">import</span> <span class="n">configurable</span>
+
+<span class="k">def</span> <span class="nf">example</span><span class="p">():</span>
+    <span class="k">return</span> <span class="nb">object</span><span class="p">()</span>
+
+<span class="nd">@configurable</span><span class="p">({</span><span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="s1">&#39;section_ref&#39;</span><span class="p">})</span>
+<span class="k">def</span> <span class="nf">nested</span><span class="p">(</span><span class="n">ref</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ref</span>
+
+<span class="n">multi</span> <span class="o">=</span> <span class="n">basics</span><span class="o">.</span><span class="n">HardCodedConfigSection</span><span class="p">({</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">example</span><span class="p">})</span>
+
+<span class="n">myconf</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">&#39;multi&#39;</span><span class="p">:</span> <span class="n">multi</span><span class="p">,</span>
+    <span class="s1">&#39;bad&#39;</span><span class="p">:</span> <span class="n">basics</span><span class="o">.</span><span class="n">HardCodedConfigSection</span><span class="p">({</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="n">nested</span><span class="p">,</span> <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="n">multi</span><span class="p">})</span>
+    <span class="s1">&#39;good&#39;</span><span class="p">:</span> <span class="n">basics</span><span class="o">.</span><span class="n">ConfigSectionFromStringDict</span><span class="p">({</span><span class="s1">&#39;class&#39;</span><span class="p">:</span> <span class="s1">&#39;nested&#39;</span><span class="p">,</span>
+                                                <span class="s1">&#39;ref&#39;</span><span class="p">:</span> <span class="s1">&#39;multi&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>If you feed this to the ConfigManager and instantiate everything
+&quot;multi&quot; and &quot;good&quot; will be identical but &quot;bad&quot; will be a different
+object. For an explanation of why this happens see the implementation
+notes in the next section.</p>
+<p>You trigger a similar problem if you create a custom ConfigSection
+subclass that bypasses central's collapse_named_section for named
+section refs. If you somehow get at the referenced ConfigSection and
+hand it to collapse_section you will most likely circumvent caching.
+Only use collapse_section for unnamed sections.</p>
+<p>ConfigManager tries not to extract more things from this mapping than
+it has to. Specifically, it will not call __getitem__ before it needs
+to instantiate the section or needs to know its type. However it
+<em>will</em> iterate over the keys (section names) immediately to find
+autoloads. If this is a problem (getting those names is slow) then
+make sure the manager knows your config is &quot;remote&quot;.</p>
+</div>
+<div class="section" id="implementation-notes">
+<h2>Implementation notes<a class="headerlink" href="#implementation-notes" title="Permalink to this headline">¶</a></h2>
+<p>This code has evolved quite a bit over time. The current code/design
+tries among other things to:</p>
+<ul class="simple">
+<li><p>Allow sections to contain both named and nameless/inline references
+to other sections.</p></li>
+<li><p>Allow serialization of the loaded config.</p></li>
+<li><p>Not do unnecessary work (if possibly not recollapse configs,
+definitely not trigger unnecessary imports, access configs
+unnecessarily, reinstantiate configs)</p></li>
+<li><p>Provide both end-user error messages that are complete enough to
+track down a problem in a complex nested config and tracebacks that
+reach back to actual buggy code for developers.</p></li>
+</ul>
+<div class="section" id="overview-from-load-config-to-instantiated-repo">
+<h3>Overview from load_config() to instantiated repo<a class="headerlink" href="#overview-from-load-config-to-instantiated-repo" title="Permalink to this headline">¶</a></h3>
+<p>When you call load_config() it looks up what config files are available
+(/etc/pkgcore/pkgcore.conf, ~/.config/pkgcore/pkgcore.conf,
+/etc/portage/make.conf) and loads them. This produces a dict mapping section
+names to ConfigSection instances. For the ini-format pkgcore.conf files this is
+straightforward, for make.conf this is a lot of work done in
+pkgcore.ebuild.portage_conf. I'm not going to describe that module here, read
+the source for details.</p>
+<p>The ConfigSections have a pretty straightforward api: they work like
+dicts but get passed a string describing what &quot;type&quot; the value should
+be and a central.ConfigManager instance for reasons described later.
+Passing in this &quot;type&quot; string when getting the value is necessary
+because the way things like lists of strings are stored depends on the
+format of the configuration file but the parser does not have enough
+information to know it should parse as a list instead of a string. For
+example, an ini-format pkgcore.conf could contain:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">my</span><span class="o">-</span><span class="n">overlay</span><span class="o">-</span><span class="n">cache</span><span class="p">]</span>
+<span class="n">class</span><span class="o">=</span><span class="n">pkgcore</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">flat_hash</span><span class="o">.</span><span class="n">database</span>
+<span class="n">auxdbkeys</span><span class="o">=</span><span class="n">DEPEND</span> <span class="n">RDEPEND</span>
+</pre></div>
+</div>
+<p>We want to turn that auxdbkeys value into a list of strings in the ini
+file parser code instead of in the central.ConfigManager or even
+higher up because more exotic config sections may want to store this
+in a different way (perhaps as a comma-separated list, or even as
+&quot;&lt;el&gt;DEPEND&lt;/el&gt;&lt;el&gt;RDEPEND&lt;/el&gt;&quot;. But there is obviously not enough
+information in the ini file for the parser to know this is meant as a
+list instead of a string with a space in it.</p>
+<p>central.ConfigManager gets instantiated with one or more of those
+dicts mapping section names to ConfigSections. They're split up into
+normal and &quot;remote&quot; configs which I'll describe later, let's assume
+they're all &quot;remote&quot; for now. In that case no work is done when the
+ConfigManager is instantiated.</p>
+<p>Getting an actual configured object out of the ConfigManager is split
+in two phases. First the involved config sections are &quot;collapsed&quot;:
+inherits are processed, values are converted to the right type,
+presence of required arguments is checked, etc. Everything up to
+actually instantiating the target class and actually instantiating any
+section references it needs. The result of this work is bundled in a
+CollapsedConfig instance. Actual instantiation is handled by the
+CollapsedConfig instance.</p>
+<p>The ConfigManager manages CollapsedConfig instances. It creates new
+ones if required and makes sure that if a cached instance is available
+it is used.</p>
+<p>For the remainder of the example let's assume our config looks like
+this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">spork</span><span class="p">]</span>
+<span class="n">inherit</span><span class="o">=</span><span class="n">cache</span>
+<span class="n">auxdbkeys</span><span class="o">=</span><span class="n">DEPEND</span> <span class="n">RDEPEND</span>
+
+<span class="p">[</span><span class="n">cache</span><span class="p">]</span>
+<span class="n">class</span><span class="o">=</span><span class="n">pkgcore</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">flat_hash</span><span class="o">.</span><span class="n">database</span>
+</pre></div>
+</div>
+<p>Running config.repo['spork'] runs
+config.collapse_named_section('spork'). This first checks if this
+section was already collapsed and returns the CollapsedConfig if it is
+available. If it is not in the cache it looks up the ConfigSection
+with that name in the dicts handed to the ConfigManager on
+instantiation and calls collapse_section on it.</p>
+<p>collapse_section first recursively finds any inherited sections (just
+the &quot;cache&quot; section in this case). It then grabs the 'class' setting
+(which is always of type 'callable'). In this case that's
+&quot;pkgcore.cache.flat_hash.database&quot;, which the ConfigSection imports
+and returns. This is then wrapped in a config.basics.ConfigType. A
+ConfigType contains the information necessary to validate arguments
+passed to the callable. It uses the magic pkgcore_config_type
+attribute if the callable has it and introspection for everything
+else. In this case
+pkgcore.cache.flat_hash.database.pkgcore_config_type is a ConfigHint
+stating the &quot;auxdbkeys&quot; argument is of type &quot;list&quot;.</p>
+<p>Now that collapse_section has a ConfigType it uses it to retrieve the
+arguments from the ConfigSections and passes the ConfigType and
+arguments to CollapsedConfig's __init__. Then it returns the
+CollapsedConfig instance to collapse_named_section.
+collapse_named_section caches it and returns it.</p>
+<p>Now we're back in the __getattr__ triggered by config.repo['spork'].
+This checks if the ConfigType on the CollapsedConfig is actually
+'repo', and returns collapsedConfig.instantiate() if this matches.</p>
+</div>
+<div class="section" id="lazy-section-references">
+<h3>Lazy section references<a class="headerlink" href="#lazy-section-references" title="Permalink to this headline">¶</a></h3>
+<p>The main reason the above is so complicated is to support various
+kinds of references to other sections. Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">spork</span><span class="p">]</span>
+<span class="n">class</span><span class="o">=</span><span class="n">pkgcore</span><span class="o">.</span><span class="n">Spork</span>
+<span class="n">ref</span><span class="o">=</span><span class="n">foon</span>
+
+<span class="p">[</span><span class="n">foon</span><span class="p">]</span>
+<span class="n">class</span><span class="o">=</span><span class="n">pkgcore</span><span class="o">.</span><span class="n">Foon</span>
+</pre></div>
+</div>
+<p>Let's say pkgcore.Spork has a ConfigHint stating the type of the &quot;ref&quot;
+argument is &quot;lazy_ref:foon&quot; (lazy reference to a foon) and its typename is
+&quot;repo&quot;, and pkgcore.Foon has a ConfigHint stating its typename is
+&quot;foon&quot;. a &quot;lazy reference&quot; is an instance of basics.LazySectionRef,
+which is an object containing just enough information to produce a
+CollapsedConfig instance. This is not the most common kind of
+reference, but it is simpler from the config point of view so I'm
+describing this one first.</p>
+<p>When collapse_section runs on the &quot;spork&quot; section it calls
+section.get_value(self, 'ref:repo', 'section_ref'). &quot;lazy_ref&quot; in the
+type hint is converted to just &quot;ref&quot; here because the ConfigSections
+do not have to distinguish between lazy and &quot;normal&quot; references.
+Because this particular ConfigSection only supports named
+references it returns a LazyNamedSectionRef(central, 'ref:repo',
+'foon'). This just gets handed to Spork's __init__. If the Spork
+decides to call instantiate() on the LazyNamedSectionRef it calls
+central.collapse_named_section('foon'), checks if the result is of
+type foon, instantiates it and returns it.</p>
+<p>The same thing using a dhcp-style config:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spork</span> <span class="p">{</span>
+    <span class="k">class</span> <span class="nc">pkgcore</span><span class="o">.</span><span class="n">Spork</span><span class="p">;</span>
+    <span class="n">ref</span> <span class="p">{</span>
+        <span class="k">class</span> <span class="nc">pkgcore</span><span class="o">.</span><span class="n">Foon</span><span class="p">;</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>In this format the reference is an inline unnamed section. When
+get_value(central, 'ref:repo', 'foon') is called it returns a
+LazyUnnamedSectionRef(central, 'ref:repo', section) where section is a
+ConfigSection instance for the nested section (knowing just that
+&quot;class&quot; is &quot;pkgcore.Foon&quot; in this case). This is handed to
+Spork.__init__. If Spork calls instantiate() on it it calls
+central.collapse_section(self.section) and does the same type checking
+and instantiating LazyNamedSectionRef did.</p>
+<p>Notice neither Spork nor ConfigManager care if the reference is inline
+or named. get_value just has to return a LazySectionRef instance
+(LazyUnnamedSectionRef and LazyNamedSectionRef are subclasses of
+this). How this actually gets a referenced config section is up to the
+ConfigSection whose get_value gets called.</p>
+</div>
+<div class="section" id="normal-section-references">
+<h3>Normal section references<a class="headerlink" href="#normal-section-references" title="Permalink to this headline">¶</a></h3>
+<p>If Spork's ConfigHint defines the type of its &quot;ref&quot; argument as
+&quot;ref:foon&quot; instead of &quot;lazy_ref:foon&quot; it gets handed an actual Foon
+instance instead of a LazySectionRef to one. This is built on top of
+the lazy reference code. For the ConfigSections nothing changes (the
+same get_value call is made). But the ConfigManager now immediately
+calls collapse() on the LazySectionRef, retrieving a CollapsedConfig
+instance (for the &quot;foon&quot;). This is handed to the CollapsedConfig for
+&quot;spork&quot;, and when this one is instantiated the referenced
+CollapsedConfig is also instantiated.</p>
+</div>
+<div class="section" id="miscellaneous-details">
+<h3>Miscellaneous details<a class="headerlink" href="#miscellaneous-details" title="Permalink to this headline">¶</a></h3>
+<p>The support for nameless sections means neither ConfigSection nor
+CollapsedConfig have a name attribute. This makes the error handling
+code a bit tricky as it has to tag in the name at various points, but
+this works better than enforcing names where it does not make sense
+(means lots of unnecessary duplication of names when dealing with
+dicts of HardCoded/StringBasedConfigSections).</p>
+<p>The suppport for serialization of the loaded config means section_refs
+cannot be instantiated straight away. The object used for
+serialization is the CollapsedConfig which gives you both the actual
+values and the type they have. If the CollapsedConfig contained
+arbitrary instantiated objects serializing them would be impossible.
+So it contains nested CollapsedConfigs instead.</p>
+<p>Not doing unnecessary work is done by caching in two places. The
+simple one is CollapsedConfig caching its instantiated value. This is
+pretty straightforward. The more subtle one is ConfigManager caching
+CollapsedConfigs by name. It is obviously a good idea to cache these
+(if we didn't we would have to cache the instantiated value in the
+ConfigManager). An alternative would be caching them by their
+ConfigSection. This has the minor disadvantage of keeping the
+ConfigSection in memory, and the larger one that it may break caching
+for weird config sources that generate ConfigSections on demand. The
+downside of caching by name is we have to make sure nothing generates
+a CollapsedConfig for a named section in a way other than
+collapse_named_section (handing the ConfigSection to collapse_section
+bypasses caching).</p>
+<p>This means a ConfigSection cannot return a raw ConfigSection from a
+section_ref get_value call. If it was a ConfigSection that central
+then collapsed and the reference was actually to a named section
+caching is bypassed.</p>
+<p>The need for a section name starting with &quot;autoload&quot; is also there to
+avoid unnecessary work. Without this we would have to figure out the
+typename of every section. While we can do that without entirely
+collapsing the config we cannot avoid importing the &quot;class&quot;, which
+means load_config() would import most of pkgcore. That should
+definitely be avoided.</p>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Config use and implementation notes</a><ul>
+<li><a class="reference internal" href="#using-the-manager">Using the manager</a><ul>
+<li><a class="reference internal" href="#normal-use">Normal use</a></li>
+<li><a class="reference internal" href="#testcase-use">Testcase use</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#adding-a-configurable">Adding a configurable</a><ul>
+<li><a class="reference internal" href="#adding-a-class">Adding a class</a></li>
+<li><a class="reference internal" href="#adding-a-callable">Adding a callable</a></li>
+<li><a class="reference internal" href="#exception-handling">Exception handling</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#adding-a-config-source">Adding a config source</a></li>
+<li><a class="reference internal" href="#implementation-notes">Implementation notes</a><ul>
+<li><a class="reference internal" href="#overview-from-load-config-to-instantiated-repo">Overview from load_config() to instantiated repo</a></li>
+<li><a class="reference internal" href="#lazy-section-references">Lazy section references</a></li>
+<li><a class="reference internal" href="#normal-section-references">Normal section references</a></li>
+<li><a class="reference internal" href="#miscellaneous-details">Miscellaneous details</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="commandline.html"
+                        title="previous chapter">Commandline framework</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="developing.html"
+                        title="next chapter">Checking the source out</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="developing.html" title="Checking the source out"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="commandline.html" title="Commandline framework"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Config use and implementation notes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

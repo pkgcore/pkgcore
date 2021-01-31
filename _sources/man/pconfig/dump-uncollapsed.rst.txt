@@ -1,0 +1,7 @@
+pconfig dump-uncollapsed - dump the configuration in a raw, uncollapsed form
+----------------------------------------------------------------------------
+
+.. include:: dump-uncollapsed/_synopsis.rst
+.. include:: dump-uncollapsed/_description.rst
+.. include:: dump-uncollapsed/_options.rst
+.. include:: dump-uncollapsed/_subcommands.rst

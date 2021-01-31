@@ -1,0 +1,21 @@
+pkgcore.binpkg package
+======================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcore.binpkg.remote
+   pkgcore.binpkg.repo_ops
+   pkgcore.binpkg.repository
+   pkgcore.binpkg.xpak
+
+Module contents
+---------------
+
+.. automodule:: pkgcore.binpkg
+   :members:
+   :undoc-members:
+   :show-inheritance:

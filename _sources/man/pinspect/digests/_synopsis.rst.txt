@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pinspect digests [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--domain DOMAIN] [repos [repos ...]]

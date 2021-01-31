@@ -1,0 +1,7 @@
+pkgcore.fetch.errors module
+===========================
+
+.. automodule:: pkgcore.fetch.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:

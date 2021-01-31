@@ -1,0 +1,7 @@
+pkgcore.cache.errors module
+===========================
+
+.. automodule:: pkgcore.cache.errors
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,4 @@
+Synopsis
+~~~~~~~~
+
+pinspect portageq best_version [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--eapi ATOM_KLS] [--use USE] root atom

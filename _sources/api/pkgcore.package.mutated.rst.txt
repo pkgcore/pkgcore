@@ -1,0 +1,7 @@
+pkgcore.package.mutated module
+==============================
+
+.. automodule:: pkgcore.package.mutated
+   :members:
+   :undoc-members:
+   :show-inheritance:

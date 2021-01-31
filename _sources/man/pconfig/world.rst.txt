@@ -1,0 +1,7 @@
+pconfig world - inspect and modify the world file
+-------------------------------------------------
+
+.. include:: world/_synopsis.rst
+.. include:: world/_description.rst
+.. include:: world/_options.rst
+.. include:: world/_subcommands.rst

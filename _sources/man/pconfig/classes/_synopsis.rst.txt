@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pconfig classes [-h] [--debug] [-q] [-v] [--color BOOLEAN]

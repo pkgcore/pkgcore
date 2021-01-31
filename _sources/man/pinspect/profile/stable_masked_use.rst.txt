@@ -1,0 +1,7 @@
+pinspect profile stable_masked_use - inspect stable masked use flags
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: stable_masked_use/_synopsis.rst
+.. include:: stable_masked_use/_description.rst
+.. include:: stable_masked_use/_options.rst
+.. include:: stable_masked_use/_subcommands.rst

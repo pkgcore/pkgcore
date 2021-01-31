@@ -1,0 +1,7 @@
+pinspect profile masks - inspect package masks
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: masks/_synopsis.rst
+.. include:: masks/_description.rst
+.. include:: masks/_options.rst
+.. include:: masks/_subcommands.rst

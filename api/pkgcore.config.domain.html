@@ -1,0 +1,142 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.config.domain module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.domain module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.config.domain">
+<span id="pkgcore-config-domain-module"></span><h1>pkgcore.config.domain module<a class="headerlink" href="#module-pkgcore.config.domain" title="Permalink to this headline">¶</a></h1>
+<p>base class to derive from for domain objects</p>
+<p>Bit empty at the moment</p>
+<dl class="py exception">
+<dt id="pkgcore.config.domain.Failure">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.config.domain.</code><code class="sig-name descname">Failure</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">text</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/domain.html#Failure"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.Failure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreException" title="pkgcore.exceptions.PkgcoreException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreException</span></code></a></p>
+<p>Generic domain failure.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcore.config.domain.MissingFile">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcore.config.domain.</code><code class="sig-name descname">MissingFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">setting</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/domain.html#MissingFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.MissingFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.exceptions.html#pkgcore.exceptions.PkgcoreException" title="pkgcore.exceptions.PkgcoreException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.exceptions.PkgcoreException</span></code></a></p>
+<p>Required file is missing.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.config.domain.domain">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.config.domain.</code><code class="sig-name descname">domain</code><a class="reference internal" href="../_modules/pkgcore/config/domain.html#domain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.domain" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.config.domain.domain.build_pkg">
+<code class="sig-name descname">build_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">failed</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">clean</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/domain.html#domain.build_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.domain.build_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.domain.domain.fetcher">
+<code class="sig-name descname">fetcher</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.config.domain.domain.fetcher" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.domain.domain.install_pkg">
+<code class="sig-name descname">install_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">newpkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/domain.html#domain.install_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.domain.install_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.domain.domain.pkg_operations">
+<code class="sig-name descname">pkg_operations</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/domain.html#domain.pkg_operations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.domain.pkg_operations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.domain.domain.replace_pkg">
+<code class="sig-name descname">replace_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">oldpkg</span></em>, <em class="sig-param"><span class="n">newpkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/domain.html#domain.replace_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.domain.replace_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.config.domain.domain.tmpdir">
+<code class="sig-name descname">tmpdir</code><em class="property"> = None</em><a class="headerlink" href="#pkgcore.config.domain.domain.tmpdir" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.domain.domain.triggers">
+<em class="property">property </em><code class="sig-name descname">triggers</code><a class="headerlink" href="#pkgcore.config.domain.domain.triggers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.config.domain.domain.uninstall_pkg">
+<code class="sig-name descname">uninstall_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">observer</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/config/domain.html#domain.uninstall_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.config.domain.domain.uninstall_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.config.domain module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

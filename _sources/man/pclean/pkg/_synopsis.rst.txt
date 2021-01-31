@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pclean pkg [-p] [-x EXCLUDE] [-X EXCLUDE_FILE] [-S PKGSET] [-m TIME] [-s SIZE] [-I] [-E] [-f] [-r REPO] [--source-repo REPO] [-b] [-c CHANGED] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [TARGET [TARGET ...]]

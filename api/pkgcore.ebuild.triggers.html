@@ -1,0 +1,288 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.triggers module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.triggers module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.triggers">
+<span id="pkgcore-ebuild-triggers-module"></span><h1>pkgcore.ebuild.triggers module<a class="headerlink" href="#module-pkgcore.ebuild.triggers" title="Permalink to this headline">¶</a></h1>
+<p>gentoo/ebuild specific triggers</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.CollisionProtect">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">CollisionProtect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extra_protects</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">extra_disables</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">extra_ignores</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#CollisionProtect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.CollisionProtect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.triggers.FileCollision</span></code></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.CollisionProtect.collision">
+<code class="sig-name descname">collision</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colliding</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#CollisionProtect.collision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.CollisionProtect.collision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle livefs file collisions.</p>
+<p>Must be overridden in derived trigger classes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectInstall">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">ConfigProtectInstall</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extra_protects</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">extra_disables</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#ConfigProtectInstall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectInstall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectInstall.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 100</em><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectInstall.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectInstall.register">
+<code class="sig-name descname">register</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#ConfigProtectInstall.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectInstall.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>register with a MergeEngine</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectInstall.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('install_existing', 'install')</em><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectInstall.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectInstall.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">existing_cset</span></em>, <em class="sig-param"><span class="n">install_cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#ConfigProtectInstall.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectInstall.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectUninstall">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">ConfigProtectUninstall</code><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#ConfigProtectUninstall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectUninstall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectUninstall.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('uninstall_existing', 'uninstall')</em><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectUninstall.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.ConfigProtectUninstall.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">existing_cset</span></em>, <em class="sig-param"><span class="n">uninstall_cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#ConfigProtectUninstall.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.ConfigProtectUninstall.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.FixImageSymlinks">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">FixImageSymlinks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format_op</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#FixImageSymlinks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.FixImageSymlinks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.FixImageSymlinks.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.ebuild.triggers.FixImageSymlinks.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.FixImageSymlinks.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#FixImageSymlinks.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.FixImageSymlinks.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.GenerateTriggers">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">GenerateTriggers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em>, <em class="sig-param"><span class="n">settings</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#GenerateTriggers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.GenerateTriggers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.InfoRegen">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">InfoRegen</code><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#InfoRegen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.InfoRegen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.InfoRegen" title="pkgcore.merge.triggers.InfoRegen"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.InfoRegen</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.InfoRegen.locations">
+<em class="property">property </em><code class="sig-name descname">locations</code><a class="headerlink" href="#pkgcore.ebuild.triggers.InfoRegen.locations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Built-in immutable sequence.</p>
+<p>If no argument is given, the constructor returns an empty tuple.
+If iterable is specified the tuple is initialized from iterable’s items.</p>
+<p>If the argument is a tuple, the return value is the same object.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.InfoRegen.register">
+<code class="sig-name descname">register</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#InfoRegen.register"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.InfoRegen.register" title="Permalink to this definition">¶</a></dt>
+<dd><p>register with a MergeEngine</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.InfoRegen.should_skip_directory">
+<code class="sig-name descname">should_skip_directory</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">basepath</span></em>, <em class="sig-param"><span class="n">files</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#InfoRegen.should_skip_directory"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.InfoRegen.should_skip_directory" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.InfoRegen.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#InfoRegen.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.InfoRegen.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.ProtectOwned">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">ProtectOwned</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">vdb</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#ProtectOwned"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.ProtectOwned" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.triggers.FileCollision</span></code></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.ProtectOwned.collision">
+<code class="sig-name descname">collision</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">colliding</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#ProtectOwned.collision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.ProtectOwned.collision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle livefs file collisions.</p>
+<p>Must be overridden in derived trigger classes.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.SFPerms">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">SFPerms</code><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#SFPerms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.SFPerms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.SFPerms.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.ebuild.triggers.SFPerms.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.SFPerms.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#SFPerms.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.SFPerms.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.triggers.collapse_envd">
+<code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">collapse_envd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">base</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#collapse_envd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.collapse_envd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.env_update">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">env_update</code><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#env_update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.env_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.env_update.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 5</em><a class="headerlink" href="#pkgcore.ebuild.triggers.env_update.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.env_update.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcore.ebuild.triggers.env_update.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.env_update.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#env_update.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.env_update.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.install_into_symdir_protect">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">install_into_symdir_protect</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extra_protects</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="n">extra_disables</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#install_into_symdir_protect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.install_into_symdir_protect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.install_into_symdir_protect.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = {0: ('install', 'install_existing', 'old_cset'), 1: ('install', 'install_existing')}</em><a class="headerlink" href="#pkgcore.ebuild.triggers.install_into_symdir_protect.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.install_into_symdir_protect.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">install</span></em>, <em class="sig-param"><span class="n">existing</span></em>, <em class="sig-param"><span class="n">old_cset</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#install_into_symdir_protect.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.install_into_symdir_protect.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.triggers.preinst_contents_reset">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">preinst_contents_reset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">format_op</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#preinst_contents_reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.preinst_contents_reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.merge.triggers.html#pkgcore.merge.triggers.base" title="pkgcore.merge.triggers.base"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.merge.triggers.base</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.preinst_contents_reset.priority">
+<code class="sig-name descname">priority</code><em class="property"> = 1</em><a class="headerlink" href="#pkgcore.ebuild.triggers.preinst_contents_reset.priority" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.triggers.preinst_contents_reset.required_csets">
+<code class="sig-name descname">required_csets</code><em class="property"> = ('new_cset',)</em><a class="headerlink" href="#pkgcore.ebuild.triggers.preinst_contents_reset.required_csets" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.triggers.preinst_contents_reset.trigger">
+<code class="sig-name descname">trigger</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">engine</span></em>, <em class="sig-param"><span class="n">cset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#preinst_contents_reset.trigger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.preinst_contents_reset.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.triggers.string_collapse_envd">
+<code class="sig-prename descclassname">pkgcore.ebuild.triggers.</code><code class="sig-name descname">string_collapse_envd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">envd_dict</span></em>, <em class="sig-param"><span class="n">incrementals</span></em>, <em class="sig-param"><span class="n">colon_incrementals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/triggers.html#string_collapse_envd"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.triggers.string_collapse_envd" title="Permalink to this definition">¶</a></dt>
+<dd><p>transform a passed in dict to strictly strings</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.triggers module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

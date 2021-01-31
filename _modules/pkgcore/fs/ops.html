@@ -1,0 +1,426 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.fs.ops &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.ops</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.fs.ops</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">default fs ops.</span>
+
+<span class="sd">Shouldn&#39;t be accessed directly for the most part, use</span>
+<span class="sd">:mod:`pkgcore.plugins` to get at these ops.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">errno</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">ensure_dirs</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">,</span> <span class="n">unlink_if_exists</span>
+<span class="kn">from</span> <span class="nn">snakeoil.process.spawn</span> <span class="kn">import</span> <span class="n">spawn</span>
+
+<span class="kn">from</span> <span class="nn">..const</span> <span class="kn">import</span> <span class="n">CP_BINARY</span>
+<span class="kn">from</span> <span class="nn">..plugin</span> <span class="kn">import</span> <span class="n">get_plugin</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">contents</span><span class="p">,</span> <span class="n">fs</span>
+<span class="kn">from</span> <span class="nn">.livefs</span> <span class="kn">import</span> <span class="n">gen_obj</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;merge_contents&quot;</span><span class="p">,</span> <span class="s2">&quot;unmerge_contents&quot;</span><span class="p">,</span> <span class="s2">&quot;default_ensure_perms&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;default_copyfile&quot;</span><span class="p">,</span> <span class="s2">&quot;default_mkdir&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="default_ensure_perms"><a class="viewcode-back" href="../../../api/pkgcore.fs.ops.html#pkgcore.fs.ops.default_ensure_perms">[docs]</a><span class="k">def</span> <span class="nf">default_ensure_perms</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span> <span class="n">d2</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;Enforce a fs objects attributes on the livefs.</span>
+
+<span class="sd">    Attributes enforced are permissions, mtime, uid, gid.</span>
+
+<span class="sd">    :param d2: if not None, an fs object for what&#39;s on the livefs now</span>
+<span class="sd">    :return: True on success, else an exception is thrown</span>
+<span class="sd">    :raise EnvironmentError: if fs object attributes can&#39;t be enforced</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">m</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">t</span> <span class="o">=</span> <span class="n">d1</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">d1</span><span class="o">.</span><span class="n">uid</span><span class="p">,</span> <span class="n">d1</span><span class="o">.</span><span class="n">gid</span><span class="p">,</span> <span class="n">d1</span><span class="o">.</span><span class="n">mtime</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">g</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">d2</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">do_mode</span><span class="p">,</span> <span class="n">do_chown</span><span class="p">,</span> <span class="n">do_mtime</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">True</span>
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="n">do_mode</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fs</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d1</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fs</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">d2</span><span class="p">):</span>
+                <span class="c1"># if it&#39;s preexisting, keep its perms.</span>
+                <span class="n">do_mode</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">do_mode</span> <span class="o">=</span> <span class="p">(</span><span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">m</span> <span class="o">!=</span> <span class="n">d2</span><span class="o">.</span><span class="n">mode</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="c1"># yes.  this _is_ stupid.  vdb&#39;s don&#39;t always store all attributes</span>
+            <span class="n">do_mode</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="n">do_chown</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">do_chown</span> <span class="o">=</span> <span class="p">(</span><span class="n">o</span> <span class="o">!=</span> <span class="n">d2</span><span class="o">.</span><span class="n">uid</span> <span class="ow">or</span> <span class="n">g</span> <span class="o">!=</span> <span class="n">d2</span><span class="o">.</span><span class="n">gid</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">do_chown</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">do_mtime</span> <span class="o">=</span> <span class="p">(</span><span class="n">t</span> <span class="o">!=</span> <span class="n">d2</span><span class="o">.</span><span class="n">mtime</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="n">do_mtime</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">if</span> <span class="n">do_chown</span> <span class="ow">and</span> <span class="p">(</span><span class="n">o</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">or</span> <span class="n">g</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">lchown</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">g</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fs</span><span class="o">.</span><span class="n">issym</span><span class="p">(</span><span class="n">d1</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">do_mode</span> <span class="ow">and</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">chmod</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">do_mtime</span> <span class="ow">and</span> <span class="n">t</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">utime</span><span class="p">(</span><span class="n">d1</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">t</span><span class="p">))</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="default_mkdir"><a class="viewcode-back" href="../../../api/pkgcore.fs.ops.html#pkgcore.fs.ops.default_mkdir">[docs]</a><span class="k">def</span> <span class="nf">default_mkdir</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    mkdir for a fsDir object</span>
+
+<span class="sd">    :param d: :class:`pkgcore.fs.fs.fsDir` instance</span>
+<span class="sd">    :return: true if success, else an exception is thrown</span>
+<span class="sd">    :raise EnvironmentError: if can&#39;t complete</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">mode</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="mo">0o777</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">mode</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+    <span class="n">get_plugin</span><span class="p">(</span><span class="s2">&quot;fs_ops.ensure_perms&quot;</span><span class="p">)(</span><span class="n">d</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<span class="c1"># minor hack.</span>
+
+<span class="k">class</span> <span class="nc">FailedCopy</span><span class="p">(</span><span class="ne">TypeError</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;failed copying </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">CannotOverwrite</span><span class="p">(</span><span class="n">FailedCopy</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">existing</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">existing</span> <span class="o">=</span> <span class="n">obj</span><span class="p">,</span> <span class="n">existing</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;cannot write </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">obj</span><span class="si">}</span><span class="s1"> due to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">existing</span><span class="si">}</span><span class="s1"> existing&#39;</span>
+
+
+<div class="viewcode-block" id="default_copyfile"><a class="viewcode-back" href="../../../api/pkgcore.fs.ops.html#pkgcore.fs.ops.default_copyfile">[docs]</a><span class="k">def</span> <span class="nf">default_copyfile</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">mkdirs</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    copy a :class:`pkgcore.fs.fs.fsBase` to its stated location.</span>
+
+<span class="sd">    :param obj: :class:`pkgcore.fs.fs.fsBase` instance, exempting :class:`fsDir`</span>
+<span class="sd">    :return: true if success, else an exception is thrown</span>
+<span class="sd">    :raise EnvironmentError: permission errors</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">existent</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">ensure_perms</span> <span class="o">=</span> <span class="n">get_plugin</span><span class="p">(</span><span class="s2">&quot;fs_ops.ensure_perms&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">fs</span><span class="o">.</span><span class="n">isfs_obj</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;obj must be fsBase derivative: </span><span class="si">{</span><span class="n">obj</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fs</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;obj must not be a fsDir instance: </span><span class="si">{</span><span class="n">obj</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">existing</span> <span class="o">=</span> <span class="n">gen_obj</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fs</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">existing</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">CannotOverwrite</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">existing</span><span class="p">)</span>
+        <span class="n">existent</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">oe</span><span class="p">:</span>
+        <span class="c1"># verify the parent dir is there at least</span>
+        <span class="n">basefp</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">basefp</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">basefp</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">mkdirs</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">ensure_dirs</span><span class="p">(</span><span class="n">basefp</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="mo">0o750</span><span class="p">,</span> <span class="n">minimal</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">FailedCopy</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">oe</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span>
+        <span class="n">existent</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">existent</span><span class="p">:</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">existent_fp</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span> <span class="o">+</span> <span class="s2">&quot;#new&quot;</span>
+
+    <span class="k">if</span> <span class="n">fs</span><span class="o">.</span><span class="n">isreg</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="n">obj</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">transfer_to_path</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fs</span><span class="o">.</span><span class="n">issym</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">symlink</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">target</span><span class="p">,</span> <span class="n">fp</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fs</span><span class="o">.</span><span class="n">isfifo</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkfifo</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">fs</span><span class="o">.</span><span class="n">isdev</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="n">dev</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">makedev</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">major</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">minor</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mknod</span><span class="p">(</span><span class="n">fp</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">dev</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">spawn</span><span class="p">([</span><span class="n">CP_BINARY</span><span class="p">,</span> <span class="s2">&quot;-Rp&quot;</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">fp</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">ret</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">FailedCopy</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;got </span><span class="si">{</span><span class="n">ret</span><span class="si">}</span><span class="s1"> from </span><span class="si">{</span><span class="n">CP_BINARY</span><span class="si">}</span><span class="s1"> -Rp&#39;</span><span class="p">)</span>
+
+    <span class="n">ensure_perms</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">change_attributes</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="n">fp</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">existent</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">existent_fp</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<span class="k">def</span> <span class="nf">do_link</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">trg</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">trg</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">==</span> <span class="n">errno</span><span class="o">.</span><span class="n">EXDEV</span><span class="p">:</span>
+            <span class="c1"># hardlink is impossible, force copyfile</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">raise</span>
+
+    <span class="n">path</span> <span class="o">=</span> <span class="n">trg</span><span class="o">.</span><span class="n">location</span> <span class="o">+</span> <span class="s1">&#39;#new&#39;</span>
+    <span class="n">unlink_if_exists</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">link</span><span class="p">(</span><span class="n">src</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">EnvironmentError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">EXDEV</span><span class="p">:</span>
+            <span class="c1"># someone is screwing with us, or unlink_if_exists is broken.</span>
+            <span class="k">raise</span>
+        <span class="c1"># hardlink is impossible, force copyfile</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">trg</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">EnvironmentError</span><span class="p">:</span>
+        <span class="n">unlink_if_exists</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">eerrno</span> <span class="o">!=</span> <span class="n">errno</span><span class="o">.</span><span class="n">EXDEV</span><span class="p">:</span>
+            <span class="c1"># weird error, broken FS codes, perms, or someone is screwing with us.</span>
+            <span class="k">raise</span>
+        <span class="c1"># this is only possible on overlay fs&#39;s; while annoying, you can have two</span>
+        <span class="c1"># different filesystems in use in the same directory in those cases.</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+
+
+<div class="viewcode-block" id="merge_contents"><a class="viewcode-back" href="../../../api/pkgcore.fs.ops.html#pkgcore.fs.ops.merge_contents">[docs]</a><span class="k">def</span> <span class="nf">merge_contents</span><span class="p">(</span><span class="n">cset</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    merge a :class:`pkgcore.fs.contents.contentsSet` instance to the livefs</span>
+
+<span class="sd">    :param cset: :class:`pkgcore.fs.contents.contentsSet` instance</span>
+<span class="sd">    :param offset: if not None, offset to prefix all locations with.</span>
+<span class="sd">        Think of it as target dir.</span>
+<span class="sd">    :param callback: callable to report each entry being merged; given a single arg,</span>
+<span class="sd">        the fs object being merged.</span>
+<span class="sd">    :raise EnvironmentError: Thrown for permission failures.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">callback</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">callback</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">obj</span><span class="p">:</span><span class="kc">None</span>
+
+    <span class="n">ensure_perms</span> <span class="o">=</span> <span class="n">get_plugin</span><span class="p">(</span><span class="s2">&quot;fs_ops.ensure_perms&quot;</span><span class="p">)</span>
+    <span class="n">copyfile</span> <span class="o">=</span> <span class="n">get_plugin</span><span class="p">(</span><span class="s2">&quot;fs_ops.copyfile&quot;</span><span class="p">)</span>
+    <span class="n">mkdir</span> <span class="o">=</span> <span class="n">get_plugin</span><span class="p">(</span><span class="s2">&quot;fs_ops.mkdir&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cset</span><span class="p">,</span> <span class="n">contents</span><span class="o">.</span><span class="n">contentsSet</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;cset must be a contentsSet, got </span><span class="si">{</span><span class="n">cset</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">offset</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">offset</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;offset must be a dir, or not exist: </span><span class="si">{</span><span class="n">offset</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mkdir</span><span class="p">(</span><span class="n">fs</span><span class="o">.</span><span class="n">fsDir</span><span class="p">(</span><span class="n">offset</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+        <span class="n">iterate</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">contents</span><span class="o">.</span><span class="n">offset_rewriter</span><span class="p">,</span> <span class="n">offset</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">iterate</span> <span class="o">=</span> <span class="nb">iter</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterate</span><span class="p">(</span><span class="n">cset</span><span class="o">.</span><span class="n">iterdirs</span><span class="p">()))</span>
+    <span class="n">d</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">d</span><span class="p">:</span>
+        <span class="n">callback</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># we pass in the stat ourselves, using stat instead of</span>
+            <span class="c1"># lstat gen_obj uses internally; this is the equivalent of</span>
+            <span class="c1"># &quot;deference that link&quot;</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">gen_obj</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">stat</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fs</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+                <span class="c1"># according to the spec, dirs can&#39;t be merged over files</span>
+                <span class="c1"># that aren&#39;t dirs or symlinks to dirs</span>
+                <span class="k">raise</span> <span class="n">CannotOverwrite</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+            <span class="n">ensure_perms</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">obj</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">FileNotFoundError</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># we do this form to catch dangling symlinks</span>
+                <span class="n">mkdir</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">FileExistsError</span><span class="p">:</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">unlink</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+                <span class="n">mkdir</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">ensure_perms</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">del</span> <span class="n">d</span>
+
+    <span class="c1"># might look odd, but what this does is minimize the try/except cost</span>
+    <span class="c1"># to one time, assuming everything behaves, rather then per item.</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">iterate</span><span class="p">(</span><span class="n">cset</span><span class="o">.</span><span class="n">iterdirs</span><span class="p">(</span><span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+    <span class="n">merged_inodes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+                <span class="n">callback</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">is_reg</span><span class="p">:</span>
+                    <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dev</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">inode</span><span class="p">)</span>
+                    <span class="c1"># This logic could be made smarter- instead of</span>
+                    <span class="c1"># blindly trying candidates, we could inspect the st_dev</span>
+                    <span class="c1"># of the final location.  This however can be broken by</span>
+                    <span class="c1"># overlayfs&#39;s potentially.  Brute force is in use either</span>
+                    <span class="c1"># way.</span>
+                    <span class="n">candidates</span> <span class="o">=</span> <span class="n">merged_inodes</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">[])</span>
+                    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">target</span><span class="o">.</span><span class="n">_can_be_hardlinked</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="ow">and</span> <span class="n">do_link</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">):</span>
+                        <span class="k">continue</span>
+                    <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+                <span class="n">copyfile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">mkdirs</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">break</span>
+        <span class="k">except</span> <span class="n">CannotOverwrite</span> <span class="k">as</span> <span class="n">cf</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">fs</span><span class="o">.</span><span class="n">issym</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="k">raise</span>
+
+            <span class="c1"># by this time, all directories should&#39;ve been merged.</span>
+            <span class="c1"># thus we can check the target</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">fs</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">gen_obj</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">target</span><span class="p">))):</span>
+                    <span class="k">raise</span>
+            <span class="k">except</span> <span class="ne">OSError</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">cf</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="unmerge_contents"><a class="viewcode-back" href="../../../api/pkgcore.fs.ops.html#pkgcore.fs.ops.unmerge_contents">[docs]</a><span class="k">def</span> <span class="nf">unmerge_contents</span><span class="p">(</span><span class="n">cset</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">callback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    unmerge a :obj:`pkgcore.fs.contents.contentsSet` instance to the livefs</span>
+
+<span class="sd">    :param cset: :obj:`pkgcore.fs.contents.contentsSet` instance</span>
+<span class="sd">    :param offset: if not None, offset to prefix all locations with.</span>
+<span class="sd">        Think of it as target dir.</span>
+<span class="sd">    :param callback: callable to report each entry being unmerged</span>
+<span class="sd">    :return: True, or an exception is thrown on failure</span>
+<span class="sd">        (OSError, although see default_copyfile for specifics).</span>
+<span class="sd">    :raise EnvironmentError: see :func:`default_copyfile` and :func:`default_mkdir`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">callback</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">callback</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">obj</span><span class="p">:</span> <span class="kc">None</span>
+
+    <span class="n">iterate</span> <span class="o">=</span> <span class="nb">iter</span>
+    <span class="k">if</span> <span class="n">offset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">iterate</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">contents</span><span class="o">.</span><span class="n">offset_rewriter</span><span class="p">,</span> <span class="n">offset</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterate</span><span class="p">(</span><span class="n">cset</span><span class="o">.</span><span class="n">iterdirs</span><span class="p">(</span><span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)):</span>
+        <span class="n">callback</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">unlink_if_exists</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+
+    <span class="c1"># this is a fair sight faster then using sorted/reversed</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">iterate</span><span class="p">(</span><span class="n">cset</span><span class="o">.</span><span class="n">iterdirs</span><span class="p">()))</span>
+    <span class="n">l</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">rmdir</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">errno</span> <span class="ow">in</span> <span class="p">(</span><span class="n">errno</span><span class="o">.</span><span class="n">ENOTEMPTY</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOENT</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">ENOTDIR</span><span class="p">,</span>
+                               <span class="n">errno</span><span class="o">.</span><span class="n">EBUSY</span><span class="p">,</span> <span class="n">errno</span><span class="o">.</span><span class="n">EEXIST</span><span class="p">):</span>
+                <span class="k">raise</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">callback</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+<span class="c1"># Plugin system priorities</span>
+<span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="p">[</span><span class="n">default_copyfile</span><span class="p">,</span> <span class="n">default_ensure_perms</span><span class="p">,</span> <span class="n">default_mkdir</span><span class="p">,</span>
+             <span class="n">merge_contents</span><span class="p">,</span> <span class="n">unmerge_contents</span><span class="p">]:</span>
+    <span class="n">func</span><span class="o">.</span><span class="n">priority</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="k">del</span> <span class="n">func</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.fs.ops</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

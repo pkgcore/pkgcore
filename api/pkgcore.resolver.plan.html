@@ -1,0 +1,416 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.resolver.plan module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.plan module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.resolver.plan">
+<span id="pkgcore-resolver-plan-module"></span><h1>pkgcore.resolver.plan module<a class="headerlink" href="#module-pkgcore.resolver.plan" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcore.resolver.plan.merge_plan">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.plan.</code><code class="sig-name descname">merge_plan</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em>, <em class="sig-param"><span class="n">per_repo_strategy</span></em>, <em class="sig-param"><span class="n">global_strategy</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">depset_reorder_strategy</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">process_built_depends</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">drop_cycles</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">debug</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">debug_handle</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.add_atom">
+<code class="sig-name descname">add_atom</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.add_atom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.add_atom" title="Permalink to this definition">¶</a></dt>
+<dd><p>add an atom, recalculating as necessary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the last unresolvable atom stack if a solution can’t be found,
+else returns None if the atom was successfully added.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.add_atoms">
+<code class="sig-name descname">add_atoms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restricts</span></em>, <em class="sig-param"><span class="n">finalize</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.add_atoms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.add_atoms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.check_for_cycles">
+<code class="sig-name descname">check_for_cycles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">cur_frame</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.check_for_cycles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.check_for_cycles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check the current stack for cyclical issues.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>stack</strong> – current stack, a <a class="reference internal" href="#pkgcore.resolver.plan.resolver_stack" title="pkgcore.resolver.plan.resolver_stack"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolver_stack</span></code></a> instance</p></li>
+<li><p><strong>cur_frame</strong> – current frame, a <a class="reference internal" href="#pkgcore.resolver.plan.resolver_frame" title="pkgcore.resolver.plan.resolver_frame"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resolver_frame</span></code></a> instance</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>True if no issues and resolution should continue, else the
+value to return after collapsing the calling frame</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.default_depset_reorder_strategy">
+<code class="sig-name descname">default_depset_reorder_strategy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">depset</span></em>, <em class="sig-param"><span class="n">mode</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.default_depset_reorder_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.default_depset_reorder_strategy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.default_global_strategy">
+<em class="property">static </em><code class="sig-name descname">default_global_strategy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em>, <em class="sig-param"><span class="n">atom</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.default_global_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.default_global_strategy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.forced_restrictions">
+<em class="property">property </em><code class="sig-name descname">forced_restrictions</code><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.forced_restrictions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.free_caches">
+<code class="sig-name descname">free_caches</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.free_caches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.free_caches" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.generate_mangled_blocker">
+<code class="sig-name descname">generate_mangled_blocker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">blocker</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.generate_mangled_blocker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.generate_mangled_blocker" title="Permalink to this definition">¶</a></dt>
+<dd><p>converts a blocker into a “cannot block ourself” block</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.insert_blockers">
+<code class="sig-name descname">insert_blockers</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">blocks</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.insert_blockers"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.insert_blockers" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.insert_choice">
+<code class="sig-name descname">insert_choice</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">choices</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.insert_choice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.insert_choice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.just_livefs_dbs">
+<em class="property">static </em><code class="sig-name descname">just_livefs_dbs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.just_livefs_dbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.just_livefs_dbs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.just_nonlivefs_dbs">
+<em class="property">static </em><code class="sig-name descname">just_nonlivefs_dbs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.just_nonlivefs_dbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.just_nonlivefs_dbs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.load_vdb_state">
+<code class="sig-name descname">load_vdb_state</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.load_vdb_state"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.load_vdb_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.notify_choice_failed">
+<code class="sig-name descname">notify_choice_failed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">msg_args</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.notify_choice_failed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.notify_choice_failed" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.notify_choice_succeeded">
+<code class="sig-name descname">notify_choice_succeeded</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">msg</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">msg_args</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.notify_choice_succeeded"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.notify_choice_succeeded" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.notify_starting_mode">
+<code class="sig-name descname">notify_starting_mode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span></em>, <em class="sig-param"><span class="n">stack</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.notify_starting_mode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.notify_starting_mode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.notify_trying_choice">
+<code class="sig-name descname">notify_trying_choice</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">choices</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.notify_trying_choice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.notify_trying_choice" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.notify_viable">
+<code class="sig-name descname">notify_viable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">viable</span></em>, <em class="sig-param"><span class="n">msg</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">pre_solved</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.notify_viable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.notify_viable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.prefer_downgrade_version_strategy">
+<em class="property">classmethod </em><code class="sig-name descname">prefer_downgrade_version_strategy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="n">dbs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.prefer_downgrade_version_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.prefer_downgrade_version_strategy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.prefer_highest_version_strategy">
+<em class="property">classmethod </em><code class="sig-name descname">prefer_highest_version_strategy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.prefer_highest_version_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.prefer_highest_version_strategy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.prefer_livefs_dbs">
+<em class="property">classmethod </em><code class="sig-name descname">prefer_livefs_dbs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em>, <em class="sig-param"><span class="n">just_vdb</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.prefer_livefs_dbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.prefer_livefs_dbs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dbs</strong> – db list to walk</p></li>
+<li><p><strong>just_vdb</strong> – if None, no filtering; if True, just vdb, if False,
+non-vdb only</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>yields repos in requested ordering</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.prefer_lowest_version_strategy">
+<em class="property">static </em><code class="sig-name descname">prefer_lowest_version_strategy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.prefer_lowest_version_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.prefer_lowest_version_strategy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.prefer_nonlivefs_dbs">
+<em class="property">classmethod </em><code class="sig-name descname">prefer_nonlivefs_dbs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em>, <em class="sig-param"><span class="n">just_vdb</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.prefer_nonlivefs_dbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.prefer_nonlivefs_dbs" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dbs</strong> – db list to walk</p></li>
+<li><p><strong>just_vdb</strong> – if None, no filtering; if True, just vdb, if False,
+non-vdb only</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>yields repos in requested ordering</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.prefer_reuse_strategy">
+<em class="property">classmethod </em><code class="sig-name descname">prefer_reuse_strategy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dbs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.prefer_reuse_strategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.prefer_reuse_strategy" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.process_blocker">
+<code class="sig-name descname">process_blocker</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">blocker</span></em>, <em class="sig-param"><span class="n">mode</span></em>, <em class="sig-param"><span class="n">atom</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.process_blocker"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.process_blocker" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.process_dependencies">
+<code class="sig-name descname">process_dependencies</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">mode</span></em>, <em class="sig-param"><span class="n">depset</span></em>, <em class="sig-param"><span class="n">atom</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.process_dependencies"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.process_dependencies" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.process_dependencies_and_blocks">
+<code class="sig-name descname">process_dependencies_and_blocks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stack</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">atom</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">depth</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.process_dependencies_and_blocks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.process_dependencies_and_blocks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.process_finalize">
+<code class="sig-name descname">process_finalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.process_finalize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.process_finalize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.merge_plan.reset">
+<code class="sig-name descname">reset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">point</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#merge_plan.reset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.reset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.merge_plan.vdb_restrict">
+<code class="sig-name descname">vdb_restrict</code><em class="property"> = &lt;PackageRestriction attr='repo.livefs' restriction=&lt;EqualityMatch True negate=False &#64;0x7f90c97fb6c0&gt; &#64;0x7f90c97fca90&gt;</em><a class="headerlink" href="#pkgcore.resolver.plan.merge_plan.vdb_restrict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.plan.resolver_frame">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.plan.</code><code class="sig-name descname">resolver_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parent</span></em>, <em class="sig-param"><span class="n">mode</span></em>, <em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">dbs</span></em>, <em class="sig-param"><span class="n">start_point</span></em>, <em class="sig-param"><span class="n">depth</span></em>, <em class="sig-param"><span class="n">drop_cycles</span></em>, <em class="sig-param"><span class="n">ignored</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">vdb_limited</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.atom">
+<code class="sig-name descname">atom</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.atom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.choices">
+<code class="sig-name descname">choices</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.choices" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_frame.current_pkg">
+<em class="property">property </em><code class="sig-name descname">current_pkg</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.current_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the package related to the resolver frame.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.dbs">
+<code class="sig-name descname">dbs</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.dbs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.depth">
+<code class="sig-name descname">depth</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.depth" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.drop_cycles">
+<code class="sig-name descname">drop_cycles</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.drop_cycles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.events">
+<code class="sig-name descname">events</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.events" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.ignored">
+<code class="sig-name descname">ignored</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.ignored" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.mode">
+<code class="sig-name descname">mode</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.mode" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.parent">
+<code class="sig-name descname">parent</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.parent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_frame.reduce_solutions">
+<code class="sig-name descname">reduce_solutions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">nodes</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_frame.reduce_solutions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.reduce_solutions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.start_point">
+<code class="sig-name descname">start_point</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.start_point" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.succeeded">
+<code class="sig-name descname">succeeded</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.succeeded" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_frame.vdb_limited">
+<code class="sig-name descname">vdb_limited</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_frame.vdb_limited" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.resolver.plan.resolver_stack">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.resolver.plan.</code><code class="sig-name descname">resolver_stack</code><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_stack"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/collections.html#collections.deque" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">collections.deque</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.add_event">
+<code class="sig-name descname">add_event</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_stack.add_event"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.add_event" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.add_frame">
+<code class="sig-name descname">add_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mode</span></em>, <em class="sig-param"><span class="n">atom</span></em>, <em class="sig-param"><span class="n">choices</span></em>, <em class="sig-param"><span class="n">dbs</span></em>, <em class="sig-param"><span class="n">start_point</span></em>, <em class="sig-param"><span class="n">drop_cycles</span></em>, <em class="sig-param"><span class="n">vdb_limited</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_stack.add_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.add_frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.current_frame">
+<em class="property">property </em><code class="sig-name descname">current_frame</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.current_frame" title="Permalink to this definition">¶</a></dt>
+<dd><p>itemgetter(item, …) –&gt; itemgetter object</p>
+<p>Return a callable object that fetches the given item(s) from its operand.
+After f = itemgetter(2), the call f(r) returns r[2].
+After g = itemgetter(2, 5, 3), the call g(r) returns (r[2], r[5], r[3])</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.depth">
+<em class="property">property </em><code class="sig-name descname">depth</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.depth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the number of items in a container.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.resolver.plan.resolver_stack.frame_klass">
+<code class="sig-name descname">frame_klass</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.frame_klass" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcore.resolver.plan.resolver_frame" title="pkgcore.resolver.plan.resolver_frame"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.resolver.plan.resolver_frame</span></code></a></p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.index">
+<code class="sig-name descname">index</code><span class="sig-paren">(</span><em class="sig-param">value</em><span class="optional">[</span>, <em class="sig-param">start</em><span class="optional">[</span>, <em class="sig-param">stop</em><span class="optional">]</span><span class="optional">]</span><span class="sig-paren">)</span> &#x2192; integer – return first index of value.<a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_stack.index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Raises ValueError if the value is not present.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.parent">
+<em class="property">property </em><code class="sig-name descname">parent</code><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.parent" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.pop_frame">
+<code class="sig-name descname">pop_frame</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">result</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_stack.pop_frame"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.pop_frame" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.resolver.plan.resolver_stack.slot_cycles">
+<code class="sig-name descname">slot_cycles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">trg_frame</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/resolver/plan.html#resolver_stack.slot_cycles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.resolver.plan.resolver_stack.slot_cycles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.resolver.plan module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

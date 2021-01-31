@@ -1,0 +1,7 @@
+pkgcore.fs.ops module
+=====================
+
+.. automodule:: pkgcore.fs.ops
+   :members:
+   :undoc-members:
+   :show-inheritance:

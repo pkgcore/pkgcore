@@ -1,0 +1,7 @@
+pkgcore.ebuild.pkg\_updates module
+==================================
+
+.. automodule:: pkgcore.ebuild.pkg_updates
+   :members:
+   :undoc-members:
+   :show-inheritance:

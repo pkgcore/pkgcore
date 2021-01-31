@@ -1,0 +1,7 @@
+pkgcore.pkgsets.glsa module
+===========================
+
+.. automodule:: pkgcore.pkgsets.glsa
+   :members:
+   :undoc-members:
+   :show-inheritance:

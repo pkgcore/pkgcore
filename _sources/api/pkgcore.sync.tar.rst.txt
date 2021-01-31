@@ -1,0 +1,7 @@
+pkgcore.sync.tar module
+=======================
+
+.. automodule:: pkgcore.sync.tar
+   :members:
+   :undoc-members:
+   :show-inheritance:

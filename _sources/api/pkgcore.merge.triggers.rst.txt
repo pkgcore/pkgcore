@@ -1,0 +1,7 @@
+pkgcore.merge.triggers module
+=============================
+
+.. automodule:: pkgcore.merge.triggers
+   :members:
+   :undoc-members:
+   :show-inheritance:

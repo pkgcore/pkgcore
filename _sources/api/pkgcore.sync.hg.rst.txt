@@ -1,0 +1,7 @@
+pkgcore.sync.hg module
+======================
+
+.. automodule:: pkgcore.sync.hg
+   :members:
+   :undoc-members:
+   :show-inheritance:

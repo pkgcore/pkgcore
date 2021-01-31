@@ -1,0 +1,7 @@
+pinspect profile deprecated - dump deprecation notices, if any
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. include:: deprecated/_synopsis.rst
+.. include:: deprecated/_description.rst
+.. include:: deprecated/_options.rst
+.. include:: deprecated/_subcommands.rst

@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.pkgsets.glsa &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.pkgsets.glsa</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcore.pkgsets.glsa</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Gentoo Linux Security Advisories (GLSA) support</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;GlsaDirSet&quot;</span><span class="p">,</span> <span class="s2">&quot;SecurityUpgrades&quot;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+<span class="kn">from</span> <span class="nn">snakeoil.compatibility</span> <span class="kn">import</span> <span class="n">IGNORED_EXCEPTIONS</span>
+<span class="kn">from</span> <span class="nn">snakeoil.iterables</span> <span class="kn">import</span> <span class="n">caching_iter</span>
+<span class="kn">from</span> <span class="nn">snakeoil.klass</span> <span class="kn">import</span> <span class="n">generic_equality</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">listdir_files</span><span class="p">,</span> <span class="n">pjoin</span>
+
+<span class="kn">from</span> <span class="nn">..config.hint</span> <span class="kn">import</span> <span class="n">ConfigHint</span>
+<span class="kn">from</span> <span class="nn">..ebuild</span> <span class="kn">import</span> <span class="n">atom</span><span class="p">,</span> <span class="n">cpv</span>
+<span class="kn">from</span> <span class="nn">..ebuild</span> <span class="kn">import</span> <span class="n">restricts</span> <span class="k">as</span> <span class="n">atom_restricts</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">..package</span> <span class="kn">import</span> <span class="n">mutated</span>
+<span class="kn">from</span> <span class="nn">..repository.util</span> <span class="kn">import</span> <span class="n">get_virtual_repos</span>
+<span class="kn">from</span> <span class="nn">..restrictions</span> <span class="kn">import</span> <span class="n">packages</span><span class="p">,</span> <span class="n">restriction</span><span class="p">,</span> <span class="n">values</span>
+
+
+<div class="viewcode-block" id="GlsaDirSet"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.glsa.html#pkgcore.pkgsets.glsa.GlsaDirSet">[docs]</a><span class="k">class</span> <span class="nc">GlsaDirSet</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;generate a pkgset based on GLSA&#39;s distributed via a directory.</span>
+
+<span class="sd">    (rsync tree is the usual source.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">({</span><span class="s1">&#39;src&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:repo&#39;</span><span class="p">},</span> <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;pkgset&#39;</span><span class="p">)</span>
+    <span class="n">op_translate</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;ge&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;gt&quot;</span><span class="p">:</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;lt&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;le&quot;</span><span class="p">:</span> <span class="s2">&quot;&lt;=&quot;</span><span class="p">,</span> <span class="s2">&quot;eq&quot;</span><span class="p">:</span> <span class="s2">&quot;=&quot;</span><span class="p">}</span>
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;paths&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">src</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param src: where to get the glsa from</span>
+<span class="sd">        :type src: must be either full path to glsa dir, or a repo object</span>
+<span class="sd">            to pull it from</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span>
+                <span class="nb">filter</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">,</span> <span class="p">(</span><span class="n">pjoin</span><span class="p">(</span>
+                    <span class="n">repo</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;glsa&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span>
+                    <span class="n">get_virtual_repos</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;base&#39;</span><span class="p">))</span>
+                <span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">src</span> <span class="o">=</span> <span class="p">[</span><span class="n">src</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">paths</span> <span class="o">=</span> <span class="n">src</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">glsa</span><span class="p">,</span> <span class="n">catpkg</span><span class="p">,</span> <span class="n">pkgatom</span><span class="p">,</span> <span class="n">vuln</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_vulnerabilities</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span>
+                <span class="n">pkgatom</span><span class="p">,</span> <span class="n">vuln</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">catpkg</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;GLSA vulnerable:&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GlsaDirSet.pkg_grouped_iter"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.glsa.html#pkgcore.pkgsets.glsa.GlsaDirSet.pkg_grouped_iter">[docs]</a>    <span class="k">def</span> <span class="nf">pkg_grouped_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sorter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;yield GLSA restrictions grouped by package key</span>
+
+<span class="sd">        :param sorter: must be either None, or a comparison function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">sorter</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sorter</span> <span class="o">=</span> <span class="nb">iter</span>
+        <span class="n">pkgs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">pkgatoms</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">glsa</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">pkgatom</span><span class="p">,</span> <span class="n">vuln</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">iter_vulnerabilities</span><span class="p">():</span>
+            <span class="n">pkgatoms</span><span class="p">[</span><span class="n">pkg</span><span class="p">]</span> <span class="o">=</span> <span class="n">pkgatom</span>
+            <span class="n">pkgs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">vuln</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">pkgname</span> <span class="ow">in</span> <span class="n">sorter</span><span class="p">(</span><span class="n">pkgs</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span>
+                <span class="n">pkgatoms</span><span class="p">[</span><span class="n">pkgname</span><span class="p">],</span> <span class="n">packages</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">pkgs</span><span class="p">[</span><span class="n">pkgname</span><span class="p">]),</span> <span class="n">key</span><span class="o">=</span><span class="n">pkgname</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GlsaDirSet.iter_vulnerabilities"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.glsa.html#pkgcore.pkgsets.glsa.GlsaDirSet.iter_vulnerabilities">[docs]</a>    <span class="k">def</span> <span class="nf">iter_vulnerabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;generator yielding each GLSA restriction&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">paths</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="n">listdir_files</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="c1"># glsa-1234-12.xml</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;glsa-&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">fn</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.xml&quot;</span><span class="p">)):</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;invalid glsa file name: </span><span class="si">{</span><span class="n">fn</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="c1"># This verifies the filename is of the correct syntax.</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">fn</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)]</span>
+                <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;invalid glsa file name: </span><span class="si">{</span><span class="n">fn</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="n">root</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">fn</span><span class="p">))</span>
+                <span class="n">glsa_node</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">glsa_node</span><span class="o">.</span><span class="n">tag</span> <span class="o">!=</span> <span class="s1">&#39;glsa&#39;</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;glsa file without glsa root node: </span><span class="si">{</span><span class="n">fn</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+                <span class="k">for</span> <span class="n">affected</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;affected&#39;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">affected</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;package&#39;</span><span class="p">):</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">pkgname</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                            <span class="n">pkg_vuln_restrict</span> <span class="o">=</span> \
+                                <span class="bp">self</span><span class="o">.</span><span class="n">generate_intersects_from_pkg_node</span><span class="p">(</span>
+                                    <span class="n">pkg</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;glsa(</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="n">fn</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">])</span>
+                            <span class="k">if</span> <span class="n">pkg_vuln_restrict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                                <span class="k">continue</span>
+                            <span class="n">pkgatom</span> <span class="o">=</span> <span class="n">atom</span><span class="o">.</span><span class="n">atom</span><span class="p">(</span><span class="n">pkgname</span><span class="p">)</span>
+                            <span class="k">yield</span> <span class="n">fn</span><span class="p">[</span><span class="mi">5</span><span class="p">:</span><span class="o">-</span><span class="mi">4</span><span class="p">],</span> <span class="n">pkgname</span><span class="p">,</span> <span class="n">pkgatom</span><span class="p">,</span> <span class="n">pkg_vuln_restrict</span>
+                        <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="c1"># thrown from cpv.</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid glsa file </span><span class="si">{</span><span class="n">fn</span><span class="si">!r}</span><span class="s2">, package </span><span class="si">{</span><span class="n">pkgname</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="n">IGNORED_EXCEPTIONS</span><span class="p">:</span>
+                            <span class="k">raise</span>
+                        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;invalid glsa file </span><span class="si">{</span><span class="n">fn</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GlsaDirSet.generate_intersects_from_pkg_node"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.glsa.html#pkgcore.pkgsets.glsa.GlsaDirSet.generate_intersects_from_pkg_node">[docs]</a>    <span class="k">def</span> <span class="nf">generate_intersects_from_pkg_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg_node</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">arch</span> <span class="o">=</span> <span class="n">pkg_node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;arch&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">arch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">arch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">arch</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">arch</span> <span class="ow">or</span> <span class="s2">&quot;*&quot;</span> <span class="ow">in</span> <span class="n">arch</span><span class="p">:</span>
+                <span class="n">arch</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">vuln</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">pkg_node</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;vulnerable&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vuln</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">vuln</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">vuln_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">generate_restrict_from_range</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">vuln</span><span class="p">]</span>
+            <span class="n">vuln</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">vuln_list</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">vuln_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">generate_restrict_from_range</span><span class="p">(</span><span class="n">vuln</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span>
+            <span class="n">vuln</span> <span class="o">=</span> <span class="n">vuln_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">arch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">vuln</span> <span class="o">=</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="n">vuln</span><span class="p">,</span> <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+                <span class="s2">&quot;keywords&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">ContainmentMatch2</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="n">match_all</span><span class="o">=</span><span class="kc">False</span><span class="p">)))</span>
+        <span class="n">invuln</span> <span class="o">=</span> <span class="p">(</span><span class="n">pkg_node</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;unaffected&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">invuln</span><span class="p">:</span>
+            <span class="c1"># wrap it.</span>
+            <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span><span class="n">vuln</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+        <span class="n">invuln_list</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">generate_restrict_from_range</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                       <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">invuln</span><span class="p">]</span>
+        <span class="n">invuln</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">invuln_list</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">vuln_list</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">invuln</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span><span class="n">vuln</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span><span class="n">vuln</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span><span class="n">vuln</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="o">*</span><span class="n">invuln</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GlsaDirSet.generate_restrict_from_range"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.glsa.html#pkgcore.pkgsets.glsa.GlsaDirSet.generate_restrict_from_range">[docs]</a>    <span class="k">def</span> <span class="nf">generate_restrict_from_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">op</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;range&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">slot</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;slot&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">restrict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">op_translate</span><span class="p">[</span><span class="n">op</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">)]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown operator: </span><span class="si">{</span><span class="n">op</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">op</span><span class="si">!r}</span><span class="s2"> node missing version&quot;</span><span class="p">)</span>
+
+        <span class="n">base</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+        <span class="n">glob</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">glob</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">base</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="n">cpv</span><span class="o">.</span><span class="n">VersionedCPV</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cat/pkg-</span><span class="si">{</span><span class="n">base</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">glob</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">op</span> <span class="o">!=</span> <span class="s2">&quot;eq&quot;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;glob cannot be used with </span><span class="si">{</span><span class="n">op</span><span class="si">}</span><span class="s2"> ops&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">PackageRestriction</span><span class="p">(</span>
+                <span class="s2">&quot;fullver&quot;</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">StrGlobMatch</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">fullver</span><span class="p">))</span>
+        <span class="n">restrictions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">op</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;r&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">base</span><span class="o">.</span><span class="n">revision</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;rlt&quot;</span><span class="p">:</span> <span class="c1"># rlt -r0 can never match</span>
+                    <span class="c1"># this is a non-range.</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;range </span><span class="si">%s</span><span class="s2"> version </span><span class="si">%s</span><span class="s2"> is a guaranteed empty set&quot;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="n">op</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())))</span>
+                <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;rle&quot;</span><span class="p">:</span> <span class="c1"># rle -r0 -&gt; = -r0</span>
+                    <span class="k">return</span> <span class="n">atom_restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">op</span> <span class="o">==</span> <span class="s2">&quot;rge&quot;</span><span class="p">:</span> <span class="c1"># rge -r0 -&gt; ~</span>
+                    <span class="k">return</span> <span class="n">atom_restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span>
+            <span class="c1"># rgt -r0 passes through to regular ~ + &gt;</span>
+            <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom_restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">version</span><span class="p">))</span>
+        <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">atom_restricts</span><span class="o">.</span><span class="n">VersionMatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">rev</span><span class="o">=</span><span class="n">base</span><span class="o">.</span><span class="n">revision</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">slot</span><span class="p">:</span>
+            <span class="n">restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">atom_restricts</span><span class="o">.</span><span class="n">SlotDep</span><span class="p">(</span><span class="n">slot</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">packages</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">(</span><span class="o">*</span><span class="n">restrictions</span><span class="p">,</span> <span class="n">negate</span><span class="o">=</span><span class="n">negate</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">find_vulnerable_repo_pkgs</span><span class="p">(</span><span class="n">glsa_src</span><span class="p">,</span> <span class="n">repo</span><span class="p">,</span> <span class="n">grouped</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;generator yielding GLSA restrictions, and vulnerable pkgs from a repo.</span>
+
+<span class="sd">    :param glsa_src: GLSA pkgset to pull vulnerabilities from</span>
+<span class="sd">    :param repo: repo to scan for vulnerable packages</span>
+<span class="sd">    :param grouped: if grouped, combine glsa restrictions into one restriction</span>
+<span class="sd">        (thus yielding a pkg only once)</span>
+<span class="sd">    :param arch: arch to scan for, x86 for example</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">grouped</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">glsa_src</span><span class="o">.</span><span class="n">pkg_grouped_iter</span><span class="p">()</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">glsa_src</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">arch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wrapper</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">p</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arch</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">arch</span> <span class="o">=</span> <span class="p">(</span><span class="n">arch</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">arch</span><span class="p">)</span>
+        <span class="n">wrapper</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">mutated</span><span class="o">.</span><span class="n">MutatedPkg</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;keywords&quot;</span><span class="p">:</span> <span class="n">arch</span><span class="p">})</span>
+    <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="n">caching_iter</span><span class="p">(</span><span class="n">wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                               <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">,</span>
+                                                       <span class="n">sorter</span><span class="o">=</span><span class="nb">sorted</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">matches</span>
+
+
+<div class="viewcode-block" id="SecurityUpgrades"><a class="viewcode-back" href="../../../api/pkgcore.pkgsets.glsa.html#pkgcore.pkgsets.glsa.SecurityUpgrades">[docs]</a><span class="k">class</span> <span class="nc">SecurityUpgrades</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">generic_equality</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Set of packages for available security upgrades.&quot;&quot;&quot;</span>
+
+    <span class="n">pkgcore_config_type</span> <span class="o">=</span> <span class="n">ConfigHint</span><span class="p">({</span><span class="s1">&#39;ebuild_repo&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:repo&#39;</span><span class="p">,</span>
+                                      <span class="s1">&#39;vdb&#39;</span><span class="p">:</span> <span class="s1">&#39;ref:vdb&#39;</span><span class="p">},</span>
+                                     <span class="n">typename</span><span class="o">=</span><span class="s1">&#39;pkgset&#39;</span><span class="p">)</span>
+    <span class="n">__attr_comparison__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;arch&#39;</span><span class="p">,</span> <span class="s1">&#39;glsa_src&#39;</span><span class="p">,</span> <span class="s1">&#39;vdb&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ebuild_repo</span><span class="p">,</span> <span class="n">vdb</span><span class="p">,</span> <span class="n">arch</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">glsa_src</span> <span class="o">=</span> <span class="n">GlsaDirSet</span><span class="p">(</span><span class="n">ebuild_repo</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">vdb</span> <span class="o">=</span> <span class="n">vdb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arch</span> <span class="o">=</span> <span class="n">arch</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">glsa</span><span class="p">,</span> <span class="n">matches</span> <span class="ow">in</span> <span class="n">find_vulnerable_repo_pkgs</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">glsa_src</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">vdb</span><span class="p">,</span> <span class="n">grouped</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">arch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">arch</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">packages</span><span class="o">.</span><span class="n">KeyedAndRestriction</span><span class="p">(</span><span class="n">glsa</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">restriction</span><span class="o">.</span><span class="n">Negate</span><span class="p">(</span><span class="n">glsa</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.pkgsets.glsa</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

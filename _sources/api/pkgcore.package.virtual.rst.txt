@@ -1,0 +1,7 @@
+pkgcore.package.virtual module
+==============================
+
+.. automodule:: pkgcore.package.virtual
+   :members:
+   :undoc-members:
+   :show-inheritance:

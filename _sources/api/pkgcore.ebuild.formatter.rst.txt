@@ -1,0 +1,7 @@
+pkgcore.ebuild.formatter module
+===============================
+
+.. automodule:: pkgcore.ebuild.formatter
+   :members:
+   :undoc-members:
+   :show-inheritance:

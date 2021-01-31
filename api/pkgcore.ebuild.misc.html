@@ -1,0 +1,321 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.misc module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.misc module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.misc">
+<span id="pkgcore-ebuild-misc-module"></span><h1>pkgcore.ebuild.misc module<a class="headerlink" href="#module-pkgcore.ebuild.misc" title="Permalink to this headline">¶</a></h1>
+<p>misc. stuff we’ve not found a spot for yet.</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">ChunkedDataDict</code><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.add">
+<code class="sig-name descname">add</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cinst</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.add"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.add" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.add_bare_global">
+<code class="sig-name descname">add_bare_global</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">disabled</span></em>, <em class="sig-param"><span class="n">enabled</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.add_bare_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.add_bare_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.add_global">
+<code class="sig-name descname">add_global</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">item</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.add_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.add_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.clone">
+<code class="sig-name descname">clone</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">unfreeze</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.clone"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.clone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.freeze">
+<code class="sig-name descname">freeze</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.freeze"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.freeze" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.frozen">
+<em class="property">property </em><code class="sig-name descname">frozen</code><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.frozen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.merge">
+<code class="sig-name descname">merge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cdict</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.merge" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.mk_item">
+<code class="sig-name descname">mk_item</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">neg</span></em>, <em class="sig-param"><span class="n">pos</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.mk_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.mk_item" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.optimize">
+<code class="sig-name descname">optimize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cache</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.optimize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.optimize" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.pull_data">
+<code class="sig-name descname">pull_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">pre_defaults</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.pull_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.render_pkg">
+<code class="sig-name descname">render_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">pre_defaults</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.render_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.render_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.render_to_dict">
+<code class="sig-name descname">render_to_dict</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.render_to_dict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.render_to_dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.render_to_payload">
+<code class="sig-name descname">render_to_payload</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.render_to_payload"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.render_to_payload" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.ChunkedDataDict.update_from_stream">
+<code class="sig-name descname">update_from_stream</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stream</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#ChunkedDataDict.update_from_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.ChunkedDataDict.update_from_stream" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.misc.IncrementalsDict">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">IncrementalsDict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">incrementals</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#IncrementalsDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.IncrementalsDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.mappings.DictMixin</span></code></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.IncrementalsDict.clear">
+<code class="sig-name descname">clear</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.IncrementalsDict.clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method alias to invoke <code class="xref py py-meth docutils literal notranslate"><span class="pre">_dict.clear()</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.misc.IncrementalsDict.disable_py3k_rewriting">
+<code class="sig-name descname">disable_py3k_rewriting</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.misc.IncrementalsDict.disable_py3k_rewriting" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.IncrementalsDict.items">
+<code class="sig-name descname">items</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.IncrementalsDict.items" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method alias to invoke <code class="xref py py-meth docutils literal notranslate"><span class="pre">_dict.items()</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.IncrementalsDict.keys">
+<code class="sig-name descname">keys</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.IncrementalsDict.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method alias to invoke <code class="xref py py-meth docutils literal notranslate"><span class="pre">_dict.keys()</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.IncrementalsDict.pop">
+<code class="sig-name descname">pop</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.IncrementalsDict.pop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method alias to invoke <code class="xref py py-meth docutils literal notranslate"><span class="pre">_dict.pop()</span></code>.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.IncrementalsDict.values">
+<code class="sig-name descname">values</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.IncrementalsDict.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method alias to invoke <code class="xref py py-meth docutils literal notranslate"><span class="pre">_dict.values()</span></code>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.misc.PayloadDict">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">PayloadDict</code><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#PayloadDict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.PayloadDict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.misc.ChunkedDataDict" title="pkgcore.ebuild.misc.ChunkedDataDict"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.misc.ChunkedDataDict</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.PayloadDict.add_bare_global">
+<code class="sig-name descname">add_bare_global</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">payload</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#PayloadDict.add_bare_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.PayloadDict.add_bare_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.PayloadDict.add_global">
+<code class="sig-name descname">add_global</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pinst</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#PayloadDict.add_global"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.PayloadDict.add_global" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.PayloadDict.mk_item">
+<code class="sig-name descname">mk_item</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">neg</span></em>, <em class="sig-param"><span class="n">pos</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#PayloadDict.mk_item"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.PayloadDict.mk_item" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.PayloadDict.pull_data">
+<code class="sig-name descname">pull_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">pre_defaults</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.PayloadDict.pull_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.PayloadDict.render_pkg">
+<code class="sig-name descname">render_pkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">pre_defaults</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#PayloadDict.render_pkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.PayloadDict.render_pkg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.PayloadDict.update_from_stream">
+<code class="sig-name descname">update_from_stream</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stream</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#PayloadDict.update_from_stream"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.PayloadDict.update_from_stream" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.misc.chunked_data">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">chunked_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">neg</span></em>, <em class="sig-param"><span class="n">pos</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.misc.chunked_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.misc.chunked_data.key">
+<code class="sig-name descname">key</code><a class="headerlink" href="#pkgcore.ebuild.misc.chunked_data.key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.misc.chunked_data.neg">
+<code class="sig-name descname">neg</code><a class="headerlink" href="#pkgcore.ebuild.misc.chunked_data.neg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.misc.chunked_data.pos">
+<code class="sig-name descname">pos</code><a class="headerlink" href="#pkgcore.ebuild.misc.chunked_data.pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.misc.collapsed_restrict_to_data">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">collapsed_restrict_to_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">restrict_sources</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#collapsed_restrict_to_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.collapsed_restrict_to_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.misc.collapsed_restrict_to_data.incremental">
+<code class="sig-name descname">incremental</code><em class="property"> = True</em><a class="headerlink" href="#pkgcore.ebuild.misc.collapsed_restrict_to_data.incremental" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.collapsed_restrict_to_data.iter_pull_data">
+<code class="sig-name descname">iter_pull_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">pre_defaults</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#collapsed_restrict_to_data.iter_pull_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.collapsed_restrict_to_data.iter_pull_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.collapsed_restrict_to_data.pull_data">
+<code class="sig-name descname">pull_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">force_copy</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">pre_defaults</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#collapsed_restrict_to_data.pull_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.collapsed_restrict_to_data.pull_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.misc.incremental_chunked">
+<code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">incremental_chunked</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">orig</span></em>, <em class="sig-param"><span class="n">iterables</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#incremental_chunked"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.incremental_chunked" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.misc.incremental_expansion">
+<code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">incremental_expansion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">iterable</span></em>, <em class="sig-param"><span class="n">orig</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">msg_prefix</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">finalize</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#incremental_expansion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.incremental_expansion" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.misc.incremental_expansion_license">
+<code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">incremental_expansion_license</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">licenses</span></em>, <em class="sig-param"><span class="n">license_groups</span></em>, <em class="sig-param"><span class="n">iterable</span></em>, <em class="sig-param"><span class="n">msg_prefix</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#incremental_expansion_license"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.incremental_expansion_license" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">non_incremental_collapsed_restrict_to_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">restrict_sources</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwds</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#non_incremental_collapsed_restrict_to_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcore.ebuild.misc.collapsed_restrict_to_data" title="pkgcore.ebuild.misc.collapsed_restrict_to_data"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.misc.collapsed_restrict_to_data</span></code></a></p>
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data.iter_pull_data">
+<code class="sig-name descname">iter_pull_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#non_incremental_collapsed_restrict_to_data.iter_pull_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data.iter_pull_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data.pull_data">
+<code class="sig-name descname">pull_data</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">force_copy</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#non_incremental_collapsed_restrict_to_data.pull_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.non_incremental_collapsed_restrict_to_data.pull_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.misc.optimize_incrementals">
+<code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">optimize_incrementals</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sequence</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#optimize_incrementals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.optimize_incrementals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.misc.sort_keywords">
+<code class="sig-prename descclassname">pkgcore.ebuild.misc.</code><code class="sig-name descname">sort_keywords</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">keywords</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/misc.html#sort_keywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.misc.sort_keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort keywords in the proper order: i.e. glob-arches, arch, prefix-arches.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.misc module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

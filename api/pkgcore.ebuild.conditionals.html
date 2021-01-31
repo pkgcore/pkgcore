@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcore.ebuild.conditionals module &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.conditionals module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcore.ebuild.conditionals">
+<span id="pkgcore-ebuild-conditionals-module"></span><h1>pkgcore.ebuild.conditionals module<a class="headerlink" href="#module-pkgcore.ebuild.conditionals" title="Permalink to this headline">¶</a></h1>
+<p>DepSet parsing.</p>
+<p>Turns a DepSet (depend, rdepend, SRC_URI, license, etc) into
+appropriate conditionals.</p>
+<dl class="py class">
+<dt id="pkgcore.ebuild.conditionals.DepSet">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcore.ebuild.conditionals.</code><code class="sig-name descname">DepSet</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/conditionals.html#DepSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcore.restrictions.boolean.html#pkgcore.restrictions.boolean.AndRestriction" title="pkgcore.restrictions.boolean.AndRestriction"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.restrictions.boolean.AndRestriction</span></code></a></p>
+<p>Gentoo DepSet syntax parser</p>
+<dl class="py attribute">
+<dt id="pkgcore.ebuild.conditionals.DepSet.element_class">
+<code class="sig-name descname">element_class</code><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.element_class" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.evaluate_depset">
+<code class="sig-name descname">evaluate_depset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cond_dict</span></em>, <em class="sig-param"><span class="n">tristate_filter</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">pkg</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/conditionals.html#DepSet.evaluate_depset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.evaluate_depset" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cond_dict</strong> – container to be used for conditional collapsing,
+typically is a use list</p></li>
+<li><p><strong>tristate_filter</strong> – a control; if specified, must be a container
+of conditionals to lock to cond_dict.
+during processing, if it’s not in tristate_filter will
+automatically enable the payload
+(regardless of the conditionals negation)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.find_cond_nodes">
+<em class="property">static </em><code class="sig-name descname">find_cond_nodes</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restriction_set</span></em>, <em class="sig-param"><span class="n">yield_non_conditionals</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/conditionals.html#DepSet.find_cond_nodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.find_cond_nodes" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.force_False">
+<code class="sig-name descname">force_False</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.force_False" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.force_True">
+<code class="sig-name descname">force_True</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em><span class="sig-paren">)</span><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.force_True" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.has_conditionals">
+<em class="property">property </em><code class="sig-name descname">has_conditionals</code><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.has_conditionals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.known_conditionals">
+<em class="property">property </em><code class="sig-name descname">known_conditionals</code><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.known_conditionals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.match">
+<code class="sig-name descname">match</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/conditionals.html#DepSet.match"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.node_conds">
+<em class="property">property </em><code class="sig-name descname">node_conds</code><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.node_conds" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.parse">
+<em class="property">classmethod </em><code class="sig-name descname">parse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dep_str</span></em>, <em class="sig-param"><span class="n">element_class</span></em>, <em class="sig-param"><span class="n">operators</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">attr</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">element_func</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">transitive_use_atoms</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">allow_src_uri_file_renames</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/conditionals.html#DepSet.parse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.parse" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dep_str</strong> – string abiding by DepSet syntax</p></li>
+<li><p><strong>operators</strong> – mapping of node -&gt; callable for special operators
+in DepSet syntax</p></li>
+<li><p><strong>element_func</strong> – if None, element_class is used for generating
+elements, else it’s used to generate elements.
+Mainly useful for when you need to curry a few args for instance
+generation, since element_class _must_ be a class</p></li>
+<li><p><strong>element_class</strong> – class of generated elements</p></li>
+<li><p><strong>attr</strong> – name of the DepSet attribute being parsed</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcore.ebuild.conditionals.DepSet.slotdep_str">
+<code class="sig-name descname">slotdep_str</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">domain</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/conditionals.html#DepSet.slotdep_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.conditionals.DepSet.slotdep_str" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcore.ebuild.conditionals.stringify_boolean">
+<code class="sig-prename descclassname">pkgcore.ebuild.conditionals.</code><code class="sig-name descname">stringify_boolean</code><span class="sig-paren">(</span><em class="sig-param">node</em>, <em class="sig-param">func=&lt;class 'str'&gt;</em>, <em class="sig-param">domain=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcore/ebuild/conditionals.html#stringify_boolean"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcore.ebuild.conditionals.stringify_boolean" title="Permalink to this definition">¶</a></dt>
+<dd><p>func is used to stringify the actual content. Useful for fetchables.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcore.ebuild.conditionals module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

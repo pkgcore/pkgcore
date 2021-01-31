@@ -1,0 +1,7 @@
+pkgcore.fetch.custom module
+===========================
+
+.. automodule:: pkgcore.fetch.custom
+   :members:
+   :undoc-members:
+   :show-inheritance:

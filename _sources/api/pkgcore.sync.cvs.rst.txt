@@ -1,0 +1,7 @@
+pkgcore.sync.cvs module
+=======================
+
+.. automodule:: pkgcore.sync.cvs
+   :members:
+   :undoc-members:
+   :show-inheritance:

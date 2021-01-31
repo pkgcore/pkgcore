@@ -1,0 +1,680 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Python Code Guidelines &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="resolver" href="harring-notes.html" />
+    <link rel="prev" title="Filesystem Operations" href="fs-ops.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="harring-notes.html" title="resolver"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="fs-ops.html" title="Filesystem Operations"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" accesskey="U">Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Python Code Guidelines</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="python-code-guidelines">
+<h1>Python Code Guidelines<a class="headerlink" href="#python-code-guidelines" title="Permalink to this headline">¶</a></h1>
+<p>Note that not all of the existing code follows this style guide.
+This doesn't mean existing code is correct.</p>
+<p>Stats are all from a sempron 1.6Ghz with python 2.4.2.</p>
+<p>Finally, code _should_ be documented, following epydoc/epytext guidelines</p>
+<div class="section" id="follow-pep8-with-following-exemptions">
+<h2>Follow pep8, with following exemptions<a class="headerlink" href="#follow-pep8-with-following-exemptions" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>&lt;80 char limit is only applicable where it doesn't make the logic
+ugly. This is not an excuse to have a 200 char if statement (fix
+your logic). Use common sense.</p></li>
+<li><p>Combining imports is ok.</p></li>
+<li><p>Use absolute imports</p></li>
+<li><p>_Simple_ try/except combined lines are acceptable, but not forced
+(this is your call). example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span> <span class="n">l</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">blah</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span> <span class="k">pass</span>
+</pre></div>
+</div>
+</li>
+<li><p>For comments, 2 spaces trailing is pointless- not needed.</p></li>
+<li><p>Classes should be named SomeClass, functions/methods should be named
+some_func.</p></li>
+<li><p>Exceptions are classes.  Don't raise strings.</p></li>
+<li><p>Avoid __var 'private' attributes unless you absolutely have a reason
+to hide it, and the class won't be inherited (or that attribute
+must _not_ be accessed)</p></li>
+<li><p>Using string module functions when you could use a string method is
+evil. Don't do it.</p></li>
+<li><dl class="simple">
+<dt>Use isinstance(str_instance, basestring) unless you _really_ need to</dt><dd><p>know if it's utf8/ascii</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="throw-self-with-a-notimplementederror">
+<h2>Throw self with a NotImplementedError<a class="headerlink" href="#throw-self-with-a-notimplementederror" title="Permalink to this headline">¶</a></h2>
+<p>The reason for this is simple: if you just throw a NotImplementedError,
+you can't tell how the path was hit if derivative classes are involved;
+thus throw NotImplementedError(self, string_name_of_attr)</p>
+<p>This gives far better tracebacks.</p>
+</div>
+<div class="section" id="be-aware-of-what-the-interpreter-is-actually-doing">
+<h2>Be aware of what the interpreter is actually doing<a class="headerlink" href="#be-aware-of-what-the-interpreter-is-actually-doing" title="Permalink to this headline">¶</a></h2>
+<p>Don't use len(list_instance) when you just want to know if it's
+nonempty/empty:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">l</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">l</span><span class="p">:</span> <span class="n">blah</span>
+<span class="c1"># instead of</span>
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="p">):</span> <span class="n">blah</span>
+</pre></div>
+</div>
+<p>python looks for __nonzero__, then __len__. It's far faster
+than if you try to be explicit there:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">timeit</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;l=[]&#39;</span> <span class="s1">&#39;if len(l) &gt; 0: pass&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.705</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">timeit</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;l=[]&#39;</span> <span class="s1">&#39;if len(l): pass&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.689</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">timeit</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;l=[]&#39;</span> <span class="s1">&#39;if l: pass&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.302</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="don-t-explicitly-use-has-key-rely-on-the-in-operator">
+<h2>Don't explicitly use has_key. Rely on the 'in' operator<a class="headerlink" href="#don-t-explicitly-use-has-key-rely-on-the-in-operator" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="s1">&#39;timeit&#39;</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;d=dict(zip(range(1000), range(1000)))&#39;</span> <span class="s1">&#39;d.has_key(1999999)&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.512</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="s1">&#39;timeit&#39;</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;d=dict(zip(range(1000), range(1000)))&#39;</span> <span class="s1">&#39;1999999 in d&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.279</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+</pre></div>
+</div>
+<p>Python interprets the 'in' command by using __contains__ on the
+instance. The interpreter is faster at doing getattr's than actual
+python code is: for example, the code above uses d.__contains__ , if you do
+d.has_key or d.__contains__, it's the same speed. Using 'in' is faster
+because it has the interpreter do the lookup.</p>
+<p>So be aware of how the interpreter will execute that code. Python
+code specified attribute access is slower then the interpreter doing
+it on its own.</p>
+<p>If you're in doubt, python -m timeit is your friend. ;-)</p>
+</div>
+<div class="section" id="do-not-use-or-as-default-args-in-function-method-definitions">
+<h2>Do not use [] or {} as default args in function/method definitions<a class="headerlink" href="#do-not-use-or-as-default-args-in-function-method-definitions" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="p">[]):</span>
+<span class="gp">&gt;&gt;&gt; </span>  <span class="n">default</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span>  <span class="k">return</span> <span class="n">default</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">f</span><span class="p">()</span>
+<span class="go">[1]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span> <span class="n">f</span><span class="p">()</span>
+<span class="go">[1,1]</span>
+</pre></div>
+</div>
+<p>When the function/class/method is defined, the default args are
+instantiated _then_, not per call. The end result of this is that if it's a
+mutable default arg, you should use None and test for it being None; this is
+exempted if you _know_ the code doesn't mangle the default.</p>
+</div>
+<div class="section" id="visible-curried-functions-should-have-documentation">
+<h2>Visible curried functions should have documentation<a class="headerlink" href="#visible-curried-functions-should-have-documentation" title="Permalink to this headline">¶</a></h2>
+<p>When using the currying methods (pkgcore.util.currying) for function
+mangling, preserve the documentation via pretty_docs.</p>
+<p>If this is exempted, pydoc output for objects isn't incredibly useful.</p>
+</div>
+<div class="section" id="unit-testing">
+<h2>Unit testing<a class="headerlink" href="#unit-testing" title="Permalink to this headline">¶</a></h2>
+<p>All code _should_ have test case functionality.  We use twisted.trial - you
+should be running &gt;=2.2 (&lt;2.2 results in false positives in the spawn tests).
+Regressions should be test cased, exempting idiot mistakes (e.g, typos).</p>
+<p>We are more than willing to look at code that lacks tests, but
+actually merging the code to integration requires that it has tests.</p>
+<p>One area that is (at the moment) exempted from this is the ebuild interaction;
+testing that interface is extremely hard, although it _does_ need to
+be implemented.</p>
+<p>If tests are missing from code (due to tests not being written initially),
+new tests are always desired.</p>
+</div>
+<div class="section" id="if-it-s-fs-related-code-it-s-usually-cheaper-to-try-then-to-ask-then-try">
+<h2>If it's FS related code, it's _usually_ cheaper to try then to ask then try<a class="headerlink" href="#if-it-s-fs-related-code-it-s-usually-cheaper-to-try-then-to-ask-then-try" title="Permalink to this headline">¶</a></h2>
+<p>...but you should verify it ;)</p>
+<p>existing file (but empty to avoid reading overhead):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>echo &gt; dar
+
+python -m &#39;timeit&#39; -s &#39;import os&#39; &#39;os.path.exists(&quot;dar&quot;) and open(&quot;dar&quot;).read()&#39;
+10000 loops, best of 3: 36.4 usec per loop
+
+python -m &#39;timeit&#39; -s &#39;import os&#39; $&#39;try:open(&quot;dar&quot;).read()\nexcept IOError: pass&#39;
+10000 loops, best of 3: 22 usec per loop
+</pre></div>
+</div>
+<p>nonexistent file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>rm foo
+
+python -m &#39;timeit&#39; -s &#39;import os&#39; &#39;os.path.exists(&quot;foo&quot;) and open(&quot;foo&quot;).read()&#39;
+10000 loops, best of 3: 29.8 usec per loop
+
+python -m &#39;timeit&#39; -s &#39;import os&#39; $&#39;try:open(&quot;foo&quot;).read()\nexcept IOError: pass&#39;
+10000 loops, best of 3: 27.7 usec per loop
+</pre></div>
+</div>
+<p>As you can see, there is a bit of a difference. :)</p>
+<p>Note that this was qualified with &quot;If it's FS related code&quot;; syscalls
+are not cheap- if it's not triggering syscalls, the next section is
+relevant.</p>
+</div>
+<div class="section" id="catching-exceptions-in-python-code-rather-then-cpython-isn-t-cheap">
+<h2>Catching Exceptions in python code (rather then cpython) isn't cheap<a class="headerlink" href="#catching-exceptions-in-python-code-rather-then-cpython-isn-t-cheap" title="Permalink to this headline">¶</a></h2>
+<p>stats from python-2.4.2</p>
+<p>When an exception is caught:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python -m &#39;timeit&#39; -s &#39;d=dict(zip(range(1000), range(1000)))&#39; $&#39;try: d[1999]\nexcept KeyError: pass&#39;
+100000 loops, best of 3: 8.7 usec per loop
+
+python -m &#39;timeit&#39; -s &#39;d=dict(zip(range(1000), range(1000)))&#39; $&#39;1999 in d and d[1999]&#39;
+1000000 loops, best of 3: 0.492 usec per loop
+</pre></div>
+</div>
+<p>When no exception is caught, overhead of try/except setup:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python -m &#39;timeit&#39; -s &#39;d=dict(zip(range(1000), range(1000)))&#39; $&#39;try: d[0]\nexcept KeyError: pass&#39;
+1000000 loops, best of 3: 0.532 usec per loop
+
+python -m &#39;timeit&#39; -s &#39;d=dict(zip(range(1000), range(1000)))&#39; $&#39;d[0]&#39;
+1000000 loops, best of 3: 0.407 usec per loop
+</pre></div>
+</div>
+<p>This doesn't advocate writing code that doesn't protect itself- just be aware
+of what the code is actually doing, and be aware that exceptions in
+python code are costly due to the machinery involved.</p>
+<p>Another example is when to use or not to use dict's setdefault or get methods:</p>
+<p>key exists:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Through exception handling</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">timeit</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;d=dict.fromkeys(range(100))&#39;</span> <span class="s1">&#39;try: x=d[1]&#39;</span> <span class="s1">&#39;except KeyError: x=42&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">0.548</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+
+<span class="c1"># d.get</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">timeit</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;d=dict.fromkeys(range(100))&#39;</span> <span class="s1">&#39;x=d.get(1, 42)&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">1.01</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+</pre></div>
+</div>
+<p>key doesn't exist:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Through exception handling</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">timeit</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;d=dict.fromkeys(range(100))&#39;</span> <span class="s1">&#39;try: x=d[101]&#39;</span> <span class="s1">&#39;except KeyError: x=42&#39;</span>
+<span class="mi">100000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">8.8</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+
+<span class="c1"># d.get</span>
+<span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">timeit</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;d=dict.fromkeys(range(100))&#39;</span> <span class="s1">&#39;x=d.get(101, 42)&#39;</span>
+<span class="mi">1000000</span> <span class="n">loops</span><span class="p">,</span> <span class="n">best</span> <span class="n">of</span> <span class="mi">3</span><span class="p">:</span> <span class="mf">1.05</span> <span class="n">usec</span> <span class="n">per</span> <span class="n">loop</span>
+</pre></div>
+</div>
+<p>The short version of this is: if you know the key is there, dict.get()
+is slower. If you don't, get is your friend. In other words, use it
+instead of doing a containment test and then accessing the key.</p>
+<p>Of course this only considers the case where the default value is
+simple. If it's something more costly &quot;except&quot; will do relatively
+better since it's not constructing the default value if it's not
+needed. So if in doubt and in a performance-critical piece of code:
+benchmark parts of it with timeit instead of assuming &quot;exceptions are
+slow&quot; or &quot;[] is fast&quot;.</p>
+</div>
+<div class="section" id="cpython-leaks-vars-into-local-namespace-for-certain-constructs">
+<h2>cpython 'leaks' vars into local namespace for certain constructs<a class="headerlink" href="#cpython-leaks-vars-into-local-namespace-for-certain-constructs" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">some_func_that_throws_exception</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># e exists in this namespace now.</span>
+            <span class="k">pass</span>
+        <span class="c1"># some other code here...</span>
+</pre></div>
+</div>
+<p>From the code above, e bled into the f namespace- that's referenced
+memory that isn't used, and will linger until the while loop exits.</p>
+<p>Python _does_ bleed variables into the local namespace- be aware of
+this, and explicitly delete references you don't need when dealing in
+large objs, especially dealing with exceptions:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">c</span><span class="p">:</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+        <span class="n">d</span><span class="p">[</span><span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+</pre></div>
+</div>
+<p>While the class above is contrived, the thing to note is that
+c.x is now valid- the x from the for loop bleeds into the class
+namespace and stays put.</p>
+<p>Don't leave uneeded vars lingering in class namespace.</p>
+<p>Variables that leak from for loops _normally_ aren't an issue, just be
+aware it does occur- especially if the var is referencing a large object
+(thus keeping it in memory).</p>
+<p>So... for loops leak, list comps leak, dependent on your except
+clause they can also leak.</p>
+<p>Do not go overboard with this though. If your function will exit soon
+do not bother cleaning up variables by hand. If the &quot;leaking&quot; things
+are small do not bother either.</p>
+<p>The current code deletes exception instances explicitly much more
+often than it should since this was believed to clean up the traceback
+object. This does not work: the only thing &quot;del e&quot; frees up is the
+exception instance and the arguments passed to its constructor. &quot;del
+e&quot; also takes a small amount of time to run (clearing up all locals
+when the function exits is faster).</p>
+</div>
+<div class="section" id="unless-you-need-to-generate-and-save-a-range-result-use-xrange">
+<h2>Unless you need to generate (and save) a range result, use xrange<a class="headerlink" href="#unless-you-need-to-generate-and-save-a-range-result-use-xrange" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt>::</dt><dd><p>python -m timeit 'for x in range(10000): pass'
+100 loops, best of 3: 2.01 msec per loop</p>
+<p>$ python -m timeit 'for x in xrange(10000): pass'
+1000 loops, best of 3: 1.69 msec per loop</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="removals-from-a-list-aren-t-cheap-especially-left-most">
+<h2>Removals from a list aren't cheap, especially left most<a class="headerlink" href="#removals-from-a-list-aren-t-cheap-especially-left-most" title="Permalink to this headline">¶</a></h2>
+<p>If you _do_ need to do left most removals, the deque module is your friend.</p>
+<p>Rightmost removals aren't too cheap either, depending on what idiocy people
+come up with to try and 'help' the interpreter:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python -m timeit $&#39;l=range(1000);i=0;\nwhile i &lt; len(l):\n\tif l[i]!=&quot;asdf&quot;:del l[i]\n\telse:i+=1&#39;
+100 loops, best of 3: 4.12 msec per loop
+
+python -m timeit $&#39;l=range(1000);\nfor i in xrange(len(l)-1,-1,-1):\n\tif l[i]!=&quot;asdf&quot;:del l[i]&#39;
+100 loops, best of 3: 3 msec per loop
+
+python -m timeit &#39;l=range(1000);l=[x for x in l if x == &quot;asdf&quot;]&#39;
+1000 loops, best of 3: 1 msec per loop
+</pre></div>
+</div>
+<p>Granted, that's worst case, but the worst case is usually where people
+get bitten (note the best case still is faster for list comprehension).</p>
+<p>On a related note, don't pop() unless you have a reason to.</p>
+</div>
+<div class="section" id="if-you-re-testing-for-none-specifically-be-aware-of-the-is-operator">
+<h2>If you're testing for None specifically, be aware of the 'is' operator<a class="headerlink" href="#if-you-re-testing-for-none-specifically-be-aware-of-the-is-operator" title="Permalink to this headline">¶</a></h2>
+<p>Is avoids the equality protocol, and does a straight ptr comparison:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python -m timeit &#39;10000000 != None&#39;
+1000000 loops, best of 3: 0.721 usec per loop
+
+$ python -m timeit &#39;10000000 is not None&#39;
+1000000 loops, best of 3: 0.343 usec per loop
+</pre></div>
+</div>
+<p>Note that we're specificially forcing a large int; using 1 under 2.5 is the
+same runtime, the reason for this is that it defaults to an identity check,
+then a comparison; for small ints, python uses singletons, thus identity kicks in.</p>
+</div>
+<div class="section" id="deprecated-crappy-modules">
+<h2>Deprecated/crappy modules<a class="headerlink" href="#deprecated-crappy-modules" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Don't use types module. Use isinstance (this isn't a speed reason,
+types sucks).</p></li>
+<li><p>Don't use strings module. There are exceptions, but use string
+methods when available.</p></li>
+<li><dl>
+<dt>Don't use stat module just to get a stat attribute- e.g.,::</dt><dd><p>import stats
+l=os.stat(&quot;asdf&quot;)[stat.ST_MODE]</p>
+<p># can be done as (and a bit cleaner)
+l=os.stat(&quot;asdf&quot;).st_mode</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="know-the-exceptions-that-are-thrown-and-catch-just-those-you-re-interested-in">
+<h2>Know the exceptions that are thrown, and catch just those you're interested in<a class="headerlink" href="#know-the-exceptions-that-are-thrown-and-catch-just-those-you-re-interested-in" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="n">blah</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">blah2</span>
+</pre></div>
+</div>
+<p>There is a major issue here. It catches SystemExit exceptions (triggered by
+keyboard interupts); meaning this code, which was just bad exception handling
+now swallows Ctrl+c (meaning it now screws with UI code).</p>
+<p>Catch what you're interested in <em>only</em>.</p>
+</div>
+<div class="section" id="tuples-versus-lists">
+<h2>tuples versus lists.<a class="headerlink" href="#tuples-versus-lists" title="Permalink to this headline">¶</a></h2>
+<p>The former is immutable, while the latter is mutable.</p>
+<p>Lists over-allocate (a cpython thing), meaning it takes up more memory
+then is used (this is actually a good thing usually).</p>
+<p>If you're generating/storing a lot of sequences that shouldn't be
+modified, use tuples. They're cheaper in memory, and people can reference
+the tuple directly without being concerned about it being mutated elsewhere.</p>
+<p>However, using lists there would require each consumer to copy the list
+to protect themselves from mutation. So... over-allocation +
+allocating a new list for each consumer.</p>
+<p>Bad, mm'kay.</p>
+</div>
+<div class="section" id="don-t-try-to-copy-immutable-instances-e-g-tuples-strings">
+<h2>Don't try to copy immutable instances (e.g. tuples/strings)<a class="headerlink" href="#don-t-try-to-copy-immutable-instances-e-g-tuples-strings" title="Permalink to this headline">¶</a></h2>
+<p>Example: copy.copy((1,2,3)) is dumb; nobody makes a mistake that obvious,
+but in larger code people do (people even try using [:] to copy a
+string; it returns the same string since it's immutable).</p>
+<p>You can't modify them, therefore there is no point in trying to make copies of them.</p>
+</div>
+<div class="section" id="del-methods-mess-with-garbage-collection">
+<h2>__del__ methods mess with garbage collection<a class="headerlink" href="#del-methods-mess-with-garbage-collection" title="Permalink to this headline">¶</a></h2>
+<p>__del__ methods have the annoying side affect of blocking garbage
+collection when that instance is involved in a cycle- basically, the
+interpreter doesn't know what __del__ is going to reference, so it's
+unknowable (general case) how to break the cycle.</p>
+<p>So... if you're using __del__ methods, make sure the instance doesn't
+wind up in a cycle (whether careful data structs, or weakref usage).</p>
+</div>
+<div class="section" id="a-general-point-python-isn-t-slow-your-algorithm-is">
+<h2>A general point: python isn't slow, your algorithm is<a class="headerlink" href="#a-general-point-python-isn-t-slow-your-algorithm-is" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">l</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data_generator</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+        <span class="n">l</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>That code is _best_ case O(1) (e.g., yielding all 0's). The worst case is
+O(N^2).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">l</span><span class="o">=</span><span class="nb">set</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">data_generator</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+        <span class="n">l</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Best/Worst are now constant (this isn't strictly true due to the potential
+expansion of the set internally, but that's ignorable in this case).</p>
+<p>Furthermore, the first loop actually invokes the __eq__ protocol for x for
+each element, which can potentially be <em>quite</em> slow if dealing in
+complex objs.</p>
+<p>The second loop invokes __hash__ once on x instead (technically the set
+implementation may invoke __eq__ if a collision occurs, but that's an implementation
+detail).</p>
+<p>Technically, the second loop still is a bit innefficient:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">l</span><span class="o">=</span><span class="nb">set</span><span class="p">(</span><span class="n">data_generator</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>is simpler and faster.</p>
+<p>An example data for people who don't see how _bad_ this can get:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python -m timeit $&#39;l=[]\nfor x in xrange(1000):\n\tif x not in l:l.append(x)&#39;
+10 loops, best of 3: 74.4 msec per loop
+
+python -m timeit $&#39;l=set()\nfor x in xrange(1000):\n\tif x not in l:l.add(x)&#39;
+1000 loops, best of 3: 1.24 msec per loop
+
+python -m timeit &#39;l=set(xrange(1000))&#39;
+1000 loops, best of 3: 278 usec per loop
+</pre></div>
+</div>
+<p>The difference here is obvious.</p>
+<p>This does _not_ mean that sets are automatically better everywhere,
+just be aware of what you're doing- for a single search of a range,
+the setup overhead is far slower then a linear search.  Nature of sets, while
+the implementation may be able to guess the proper list size, it still has to
+add each item in; if it <em>cannot</em> guess the size (ie, no size hint, generator,
+iterator, etc), it has to just keep adding items in, expanding the set as
+needed (which requires linear walks for each expansion).  While this may seem
+obvious, people sometimes do effectively the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>python -m timeit -s &#39;l=range(50)&#39; $&#39;if 1001 in set(l): pass&#39;
+100000 loops, best of 3: 12.2 usec per loop
+
+python -m timeit -s &#39;l=range(50)&#39; $&#39;if 1001 in l: pass&#39;
+10000 loops, best of 3: 7.68 usec per loop
+</pre></div>
+</div>
+</div>
+<div class="section" id="what-s-up-with-hash-and-dicts">
+<h2>What's up with __hash__ and dicts<a class="headerlink" href="#what-s-up-with-hash-and-dicts" title="Permalink to this headline">¶</a></h2>
+<p>A bunch of things (too many things most likely) in the codebase define
+__hash__. The rule for __hash__ is (quoted from
+<a class="reference external" href="http://docs.python.org/ref/customization.html">http://docs.python.org/ref/customization.html</a>):</p>
+<blockquote>
+<div><p>Should return a 32-bit integer usable as a hash value for dictionary
+operations. The only required property is that objects which compare
+equal have the same hash value.</p>
+</div></blockquote>
+<p>Here's a quick rough explanation for people who do not know how a &quot;dict&quot; works
+internally:</p>
+<ul class="simple">
+<li><p>Things added to it are dumped in a &quot;bucket&quot; depending on their hash
+value.</p></li>
+<li><p>To check if something is in the dict it first determines the bucket
+to check (based on hash value), then does equality checks (__cmp__
+or __eq__ if there is one, otherwise object identity comparison) for
+everything in the bucket (if there is anything).</p></li>
+</ul>
+<p>So what does this mean?</p>
+<ul class="simple">
+<li><p>There's no reason at all to define your own __hash__ unless you also
+define __eq__ or __cmp__. The behaviour of your object in dicts/sets
+will not change, it will just be slower (since your own __hash__ is
+almost certainly slower than the default one).</p></li>
+<li><p>If you define __eq__ or __cmp__ and want your object to be usable in
+a dict you have to define __hash__. If you don't the default
+__hash__ is used which means your objects act in dicts like only
+object identity matters <em>until</em> you hit a hash collision and your
+own __eq__ or __cmp__ kicks in.</p></li>
+<li><p>If you do define your own __hash__ it has to produce the same value
+for objects that compare equal, or you get <em>really</em> weird behaviour
+in dicts/sets (&quot;thing in dict&quot; returning False because the hash
+values differ while &quot;thing in dict.keys()&quot; returns True because that
+does not use the hash value, only equality checks).</p></li>
+<li><p>If the hash value changes after the object was put in a dict you get
+weird behaviour too (&quot;s=set([thing]); thing.change_hash();thing in s&quot;
+is False, but &quot;thing in list(s)&quot; is True). So if your objects are
+mutable they can usually provide __eq__/__cmp__ but not __hash__.</p></li>
+<li><p>Not having many hash &quot;collisions&quot; (same hash value for objects that
+compare nonequal) is good, but collisions are not illegal. Too many
+of them just slow down dict/set operations (in a worst case scenario
+of the same hash for every object dict/set operations become linear
+searches through the single hash bucket everything ends up in).</p></li>
+<li><p>If you use the hash value directly keep in mind that collisions are
+legal. Do not use comparisons of hash values as a substitute for
+comparing objects (implementing __eq__ / __cmp__). Probably the only
+legitimate use of hash() is to determine an object's hash value
+based on things used for comparison.</p></li>
+</ul>
+</div>
+<div class="section" id="eq-and-ne">
+<h2>__eq__ and __ne__<a class="headerlink" href="#eq-and-ne" title="Permalink to this headline">¶</a></h2>
+<p>From <a class="reference external" href="http://docs.python.org/ref/customization.html">http://docs.python.org/ref/customization.html</a>:</p>
+<blockquote>
+<div><p>There are no implied relationships among the comparison operators.
+The truth of x==y does not imply that x!=y is false. Accordingly,
+when defining __eq__(), one should also define __ne__() so that the
+operators will behave as expected.</p>
+</div></blockquote>
+<p>They really mean that. If you define __eq__ but not __ne__ doing &quot;!=&quot;
+on instances compares them by identity. This is surprisingly easy to
+miss, especially since the natural way to write unit tests for classes
+with custom comparisons goes like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="bp">self</span><span class="o">.</span><span class="n">assertEqual</span><span class="p">(</span><span class="n">YourClass</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">YourClass</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+<span class="c1"># Repeat for more possible values. Uses == and therefore __eq__,</span>
+<span class="c1"># behaves as expected.</span>
+<span class="bp">self</span><span class="o">.</span><span class="n">assertNotEqual</span><span class="p">(</span><span class="n">YourClass</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">YourClass</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+<span class="c1"># Repeat for more possible values. Uses != and therefore object</span>
+<span class="c1"># identity, so they all pass (all different instances)!</span>
+</pre></div>
+</div>
+<p>So you end up only testing __eq__ on equal values (it can say
+&quot;identical&quot; for different values without you noticing).</p>
+<p>Adding a __ne__ that just does &quot;return not self == other&quot; fixes this.</p>
+</div>
+<div class="section" id="eq-hash-and-subclassing">
+<h2>__eq__/__hash__ and subclassing<a class="headerlink" href="#eq-hash-and-subclassing" title="Permalink to this headline">¶</a></h2>
+<p>If your class has a custom __eq__ and it might be subclassed you have
+to be very careful about how you &quot;compare&quot; to instances of a subclass.
+Usually you will want to be &quot;different&quot; from those unconditionally:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">YourClass</span> <span class="ow">or</span> <span class="n">other</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">YourClass</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="c1"># Your actual code goes here</span>
+</pre></div>
+</div>
+<p>This might seem like overkill, but it is necessary to avoid problems if
+you are subclassed and the subclass does not have a new __eq__. If you
+just do an &quot;isinstance(other, self.__class__)&quot; check you will compare
+equal to instances of a subclass, which is usually not what you want.
+If you just check for &quot;self.__class__ is other.__class__&quot; then
+subclasses that add a new attribute without overriding __eq__ will
+compare equal when they should not (because the new attribute
+differs).</p>
+<p>If you subclass something that has an __eq__ you should most likely
+override it (you might get away with not doing so if the class does
+not do the type check demonstrated above). If you add a new attribute
+don't forget to override __hash__ too (that is not critical, but you
+will have unnecessary hash collisions if you forget it).</p>
+<p>This is especially important for pkgcore because of
+pkgcore.util.caching. If an instance of a class with a broken __eq__
+is used as argument for the __init__ of a class that uses
+caching.WeakInstMeta it will cause a cached instance to be used when
+it should not. Notice the class with the broken __eq__ does not have
+to be cached itself to trigger this! Getting this wrong can cause fun
+behaviour like atoms showing up in the list of fetchables because the
+restrictions they're in compare equal independent of their &quot;payload&quot;.</p>
+</div>
+<div class="section" id="exception-subclassing">
+<h2>Exception subclassing<a class="headerlink" href="#exception-subclassing" title="Permalink to this headline">¶</a></h2>
+<p>It is pretty common for an Exception subclass to want to customize the
+return value of str() on an instance. The easiest way to do that is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">MyException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot;Describe when it is raised here.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stuff</span><span class="p">):</span>
+        <span class="ne">Exception</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;MyException because of </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">stuff</span><span class="p">,))</span>
+</pre></div>
+</div>
+<p>This is usually easier than defining a custom __str__ (since you do
+not have to store the value of &quot;stuff&quot; as an attribute) and you should
+be calling the base class __init__ anyway.</p>
+<p>(This does not mean you should never store things like &quot;stuff&quot; as
+attrs: it can be very useful for code catching the exception to have
+access to it. Use common sense.)</p>
+</div>
+<div class="section" id="memory-debugging">
+<h2>Memory debugging<a class="headerlink" href="#memory-debugging" title="Permalink to this headline">¶</a></h2>
+<p>Either heappy, or dowser are the two currently recommended tools.</p>
+<p>To use dowser, insert the following into the code wherever you'd like
+to check the heap- this is blocking also:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">cherrpy</span>
+<span class="kn">import</span> <span class="nn">dowser</span>
+<span class="n">cherrypy</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;engine.autoreload_on&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">})</span>
+<span class="k">try</span><span class="p">:</span>
+  <span class="n">cherrypy</span><span class="o">.</span><span class="n">quickstart</span><span class="p">(</span><span class="n">dowser</span><span class="o">.</span><span class="n">Root</span><span class="p">())</span>
+<span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+  <span class="n">cherrypy</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="n">dowser</span><span class="o">.</span><span class="n">Root</span><span class="p">()</span>
+  <span class="n">cherrypy</span><span class="o">.</span><span class="n">server</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For using heappy, see the heappy documentation in pkgcore/dev-notes.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Python Code Guidelines</a><ul>
+<li><a class="reference internal" href="#follow-pep8-with-following-exemptions">Follow pep8, with following exemptions</a></li>
+<li><a class="reference internal" href="#throw-self-with-a-notimplementederror">Throw self with a NotImplementedError</a></li>
+<li><a class="reference internal" href="#be-aware-of-what-the-interpreter-is-actually-doing">Be aware of what the interpreter is actually doing</a></li>
+<li><a class="reference internal" href="#don-t-explicitly-use-has-key-rely-on-the-in-operator">Don't explicitly use has_key. Rely on the 'in' operator</a></li>
+<li><a class="reference internal" href="#do-not-use-or-as-default-args-in-function-method-definitions">Do not use [] or {} as default args in function/method definitions</a></li>
+<li><a class="reference internal" href="#visible-curried-functions-should-have-documentation">Visible curried functions should have documentation</a></li>
+<li><a class="reference internal" href="#unit-testing">Unit testing</a></li>
+<li><a class="reference internal" href="#if-it-s-fs-related-code-it-s-usually-cheaper-to-try-then-to-ask-then-try">If it's FS related code, it's _usually_ cheaper to try then to ask then try</a></li>
+<li><a class="reference internal" href="#catching-exceptions-in-python-code-rather-then-cpython-isn-t-cheap">Catching Exceptions in python code (rather then cpython) isn't cheap</a></li>
+<li><a class="reference internal" href="#cpython-leaks-vars-into-local-namespace-for-certain-constructs">cpython 'leaks' vars into local namespace for certain constructs</a></li>
+<li><a class="reference internal" href="#unless-you-need-to-generate-and-save-a-range-result-use-xrange">Unless you need to generate (and save) a range result, use xrange</a></li>
+<li><a class="reference internal" href="#removals-from-a-list-aren-t-cheap-especially-left-most">Removals from a list aren't cheap, especially left most</a></li>
+<li><a class="reference internal" href="#if-you-re-testing-for-none-specifically-be-aware-of-the-is-operator">If you're testing for None specifically, be aware of the 'is' operator</a></li>
+<li><a class="reference internal" href="#deprecated-crappy-modules">Deprecated/crappy modules</a></li>
+<li><a class="reference internal" href="#know-the-exceptions-that-are-thrown-and-catch-just-those-you-re-interested-in">Know the exceptions that are thrown, and catch just those you're interested in</a></li>
+<li><a class="reference internal" href="#tuples-versus-lists">tuples versus lists.</a></li>
+<li><a class="reference internal" href="#don-t-try-to-copy-immutable-instances-e-g-tuples-strings">Don't try to copy immutable instances (e.g. tuples/strings)</a></li>
+<li><a class="reference internal" href="#del-methods-mess-with-garbage-collection">__del__ methods mess with garbage collection</a></li>
+<li><a class="reference internal" href="#a-general-point-python-isn-t-slow-your-algorithm-is">A general point: python isn't slow, your algorithm is</a></li>
+<li><a class="reference internal" href="#what-s-up-with-hash-and-dicts">What's up with __hash__ and dicts</a></li>
+<li><a class="reference internal" href="#eq-and-ne">__eq__ and __ne__</a></li>
+<li><a class="reference internal" href="#eq-hash-and-subclassing">__eq__/__hash__ and subclassing</a></li>
+<li><a class="reference internal" href="#exception-subclassing">Exception subclassing</a></li>
+<li><a class="reference internal" href="#memory-debugging">Memory debugging</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="fs-ops.html"
+                        title="previous chapter">Filesystem Operations</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="harring-notes.html"
+                        title="next chapter">resolver</a></p>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="harring-notes.html" title="resolver"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="fs-ops.html" title="Filesystem Operations"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../dev-notes.html" >Developer Notes</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Python Code Guidelines</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcore.package.conditionals module
+===================================
+
+.. automodule:: pkgcore.package.conditionals
+   :members:
+   :undoc-members:
+   :show-inheritance:

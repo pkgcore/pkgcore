@@ -1,0 +1,61 @@
+Positional Arguments
+--------------------
+
+:repo:  
+      repo(s) to regenerate caches for
+
+Config Options
+--------------
+
+--domain DOMAIN  
+                 custom pkgcore domain to use for this operation
+
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.
+
+Subcommand Options
+------------------
+
+--disable-eclass-caching       
+                               For regen operation, pkgcore internally turns on an optimization that
+                                       caches eclasses into individual functions thus parsing the eclass only
+                                       twice max per EBD processor. Disabling this optimization via this
+                                       option results in ~2x slower regeneration. Disable it only if you
+                                       suspect the optimization is somehow causing issues.
+
+-t THREADS, --threads THREADS  
+                               Number of threads to use for regeneration, defaults to using all
+                               available processors.
+
+--force                        
+                               force regeneration to occur regardless of staleness checks or repo settings
+
+--dir CACHE_DIR                
+                               use separate directory to store repository caches
+
+--rsync                        
+                               perform actions necessary for rsync repos (update metadata/timestamp.chk)
+
+--use-local-desc               
+                               update local USE flag description cache (profiles/use.local.desc)
+
+--pkg-desc-index               
+                               update package description cache (metadata/pkg_desc_index)

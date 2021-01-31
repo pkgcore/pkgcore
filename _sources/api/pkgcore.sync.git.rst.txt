@@ -1,0 +1,7 @@
+pkgcore.sync.git module
+=======================
+
+.. automodule:: pkgcore.sync.git
+   :members:
+   :undoc-members:
+   :show-inheritance:

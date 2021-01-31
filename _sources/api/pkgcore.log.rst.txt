@@ -1,0 +1,7 @@
+pkgcore.log module
+==================
+
+.. automodule:: pkgcore.log
+   :members:
+   :undoc-members:
+   :show-inheritance:

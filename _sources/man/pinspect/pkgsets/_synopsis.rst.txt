@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pinspect pkgsets [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--all | pkgset [pkgset ...]]

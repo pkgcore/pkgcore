@@ -1,0 +1,1001 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>snakeoil.mappings &#8212; pkgcore trunk documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/sphinxdoc.css" type="text/css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">snakeoil.mappings</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for snakeoil.mappings</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Miscellaneous mapping related classes and functionality</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">&quot;DictMixin&quot;</span><span class="p">,</span> <span class="s2">&quot;LazyValDict&quot;</span><span class="p">,</span> <span class="s2">&quot;LazyFullValLoadDict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ProtectedDict&quot;</span><span class="p">,</span> <span class="s2">&quot;ImmutableDict&quot;</span><span class="p">,</span> <span class="s2">&quot;IndeterminantDict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;defaultdictkey&quot;</span><span class="p">,</span> <span class="s2">&quot;AttrAccessible&quot;</span><span class="p">,</span> <span class="s2">&quot;StackedDict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;make_SlottedDict_kls&quot;</span><span class="p">,</span> <span class="s2">&quot;ProxiedAttrs&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">MutableSet</span><span class="p">,</span> <span class="n">Set</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">filterfalse</span><span class="p">,</span> <span class="n">islice</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+
+<span class="kn">from</span> <span class="nn">.klass</span> <span class="kn">import</span> <span class="n">get</span><span class="p">,</span> <span class="n">contains</span><span class="p">,</span> <span class="n">steal_docs</span><span class="p">,</span> <span class="n">sentinel</span>
+
+
+<span class="k">class</span> <span class="nc">DictMixin</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    new style class replacement for :py:func:`UserDict.DictMixin`</span>
+<span class="sd">    designed around iter* methods rather then forcing lists as DictMixin does</span>
+
+<span class="sd">    To use this mixin, you need to define the following methods:</span>
+
+<span class="sd">    * __delitem__</span>
+<span class="sd">    * __setitem__</span>
+<span class="sd">    * __getitem__</span>
+<span class="sd">    * keys</span>
+
+<span class="sd">    It&#39;s suggested for performance reasons, it might be worth defining</span>
+<span class="sd">    `values` and `items` in addition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">__externally_mutable__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param iterables: optional, an iterable of (key, value) to initialize this</span>
+<span class="sd">            instance with</span>
+<span class="sd">        :param kwargs: optional, key=value form of specifying the keys value tuples to</span>
+<span class="sd">            store in this instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">iterable</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">iterable</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;keys&quot;</span><span class="p">)</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+            <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+
+    <span class="n">get</span> <span class="o">=</span> <span class="n">get</span>
+    <span class="fm">__contains__</span> <span class="o">=</span> <span class="n">contains</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">other</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">k1</span><span class="p">,</span> <span class="n">k2</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">other</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">k1</span> <span class="o">!=</span> <span class="n">k2</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="p">[</span><span class="n">k1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">other</span><span class="p">[</span><span class="n">k2</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">sentinel</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__externally_mutable__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;pop&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">default</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">sentinel</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">default</span>
+            <span class="k">raise</span>
+        <span class="k">return</span> <span class="n">val</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">setdefault</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__externally_mutable__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;setdefault&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">default</span>
+        <span class="k">return</span> <span class="n">default</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;__getitem__&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__externally_mutable__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;__setitem__&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;__setitem__&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__externally_mutable__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;__delitem__&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;__delitem__&quot;</span><span class="p">)</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__externally_mutable__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;clear&quot;</span><span class="p">)</span>
+
+        <span class="c1"># yes, a bit ugly, but this works and is py3k compatible</span>
+        <span class="c1"># post conversion</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__delitem__</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">df</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="n">c</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+    <span class="k">def</span> <span class="fm">__bool__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">popitem</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__externally_mutable__</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;popitem&quot;</span><span class="p">)</span>
+        <span class="c1"># do it this way so python handles the stopiteration; faster</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;container is empty&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">LazyValDict</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mapping that loads values via a callable.</span>
+
+<span class="sd">    given a function to get keys, and to look up the val for those keys, it&#39;ll</span>
+<span class="sd">    lazily load key definitions and values as requested</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;_keys&quot;</span><span class="p">,</span> <span class="s2">&quot;_keys_func&quot;</span><span class="p">,</span> <span class="s2">&quot;_vals&quot;</span><span class="p">,</span> <span class="s2">&quot;_val_func&quot;</span><span class="p">)</span>
+    <span class="n">__externally_mutable__</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_keys_func</span><span class="p">,</span> <span class="n">get_val_func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param get_keys_func: either a container, or func to call to get keys.</span>
+<span class="sd">        :param get_val_func: a callable that is JIT called</span>
+<span class="sd">            with the key requested.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">get_val_func</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;get_val_func isn&#39;t a callable&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">get_keys_func</span><span class="p">,</span> <span class="s2">&quot;__iter__&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="n">get_keys_func</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">get_keys_func</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;get_keys_func isn&#39;t iterable or callable&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="o">=</span> <span class="n">get_keys_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_val_func</span> <span class="o">=</span> <span class="n">get_val_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val_func</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">LazyFullValLoadDict</span><span class="p">(</span><span class="n">LazyValDict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Lazily load all keys for this mapping in a single load.</span>
+
+<span class="sd">    This is essentially the same thing as :py:class:`LazyValDict`, just that the</span>
+<span class="sd">    load function must return all keys in a single request.</span>
+
+<span class="sd">    The val function must still return values one by one per key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_keys_func</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_val_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_val_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">))</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_vals</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ProtectedDict</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mapping wrapper storing changes to a dict without modifying the original.</span>
+
+<span class="sd">    Changes are stored in a secondary dict, protecting the underlying</span>
+<span class="sd">    mapping from changes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;orig&quot;</span><span class="p">,</span> <span class="s2">&quot;new&quot;</span><span class="p">,</span> <span class="s2">&quot;blacklist&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orig</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param orig: original dictionary to wrap</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orig</span> <span class="o">=</span> <span class="n">orig</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">orig</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">return</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">orig</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">return</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">k</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">orig</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span> <span class="ow">and</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">k</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">new</span> <span class="ow">or</span> <span class="p">(</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">blacklist</span> <span class="ow">and</span>
+                                   <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">orig</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ImmutableDict</span><span class="p">(</span><span class="n">Mapping</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Immutable dict, unchangeable after instantiating.</span>
+
+<span class="sd">    Because this is immutable, it&#39;s hashable.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ImmutableDict</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">_dict</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">DictMixin</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="k">elif</span> <span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">data</span><span class="p">}</span>
+            <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unsupported data format: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_dict&#39;</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="c1"># hack to avoid recursion exceptions for subclasses that use</span>
+        <span class="c1"># inject_getitem_as_getattr()</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;_dict&#39;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__getattribute__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_dict&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__reversed__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">0</span><span class="p">))))</span>
+
+
+<span class="k">class</span> <span class="nc">OrderedFrozenSet</span><span class="p">(</span><span class="n">Set</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ordered, immutable set using guaranteed insertion order dicts in py3.6 onwards.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="o">=</span><span class="p">()):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="n">ImmutableDict</span><span class="p">({</span><span class="n">x</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">})</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;not iterable&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s1">&#39;index out of range&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__reversed__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span> <span class="o">==</span> <span class="n">other</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">elements_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="se">{{</span><span class="si">{</span><span class="n">elements_str</span><span class="si">}</span><span class="se">}}</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">intersection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">&amp;</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">union</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">|</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">-</span> <span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">symmetric_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="o">^</span> <span class="n">other</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">OrderedSet</span><span class="p">(</span><span class="n">OrderedFrozenSet</span><span class="p">,</span> <span class="n">MutableSet</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ordered, mutable set using guaranteed insertion order dicts in py3.6 onwards.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="o">=</span><span class="p">()):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">}</span>
+        <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;not iterable&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">value</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">discard</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="n">value</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">x</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unhashable type: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">IndeterminantDict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A wrapped dict with constant defaults, and a function for other keys.</span>
+
+<span class="sd">    The primary use for this class is to make a JIT loaded mapping- for instance, a</span>
+<span class="sd">    mapping representing the filesystem that loads keys/values as it goes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;__initial&quot;</span><span class="p">,</span> <span class="s2">&quot;__pull&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pull_func</span><span class="p">,</span> <span class="n">starter_dict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">starter_dict</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__initial</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__initial</span> <span class="o">=</span> <span class="n">starter_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__pull</span> <span class="o">=</span> <span class="n">pull_func</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__initial</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__initial</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__pull</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">val</span>
+
+    <span class="k">def</span> <span class="fm">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;unhashable&quot;</span><span class="p">)</span>
+
+    <span class="n">pop</span> <span class="o">=</span> <span class="n">get</span>
+
+    <span class="k">def</span> <span class="nf">__unmodifiable</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;indeterminate dict: &#39;</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">()&#39; can&#39;t modify </span><span class="si">{</span><span class="n">args</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;__delitem__&#39;</span><span class="p">,</span> <span class="s1">&#39;__setitem__&#39;</span><span class="p">,</span> <span class="s1">&#39;setdefault&#39;</span><span class="p">,</span> <span class="s1">&#39;popitem&#39;</span><span class="p">,</span> <span class="s1">&#39;update&#39;</span><span class="p">,</span> <span class="s1">&#39;clear&#39;</span><span class="p">):</span>
+        <span class="nb">locals</span><span class="p">()[</span><span class="n">func</span><span class="p">]</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">__unmodifiable</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__indeterminate</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;indeterminate dict: &#39;</span><span class="si">{</span><span class="n">func</span><span class="si">}</span><span class="s2">()&#39; is inaccessible&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;__iter__&#39;</span><span class="p">,</span> <span class="s1">&#39;__len__&#39;</span><span class="p">,</span> <span class="s1">&#39;keys&#39;</span><span class="p">,</span> <span class="s1">&#39;values&#39;</span><span class="p">,</span> <span class="s1">&#39;items&#39;</span><span class="p">):</span>
+        <span class="nb">locals</span><span class="p">()[</span><span class="n">func</span><span class="p">]</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">__indeterminate</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">StackedDict</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An unmodifiable dict that makes multiple dicts appear as one&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dicts</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dicts</span> <span class="o">=</span> <span class="n">dicts</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dicts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">filterfalse</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">,</span> <span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_dicts</span><span class="p">)):</span>
+            <span class="n">s</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">k</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dicts</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">x</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;unmodifiable&quot;</span><span class="p">)</span>
+
+    <span class="fm">__delitem__</span> <span class="o">=</span> <span class="n">clear</span> <span class="o">=</span> <span class="fm">__setitem__</span>
+
+
+<span class="k">class</span> <span class="nc">PreservingFoldingDict</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;dict that uses a &#39;folder&#39; function when looking up keys.</span>
+
+<span class="sd">    The most common use for this is to implement a dict with</span>
+<span class="sd">    case-insensitive key values (by using ``str.lower`` as folder</span>
+<span class="sd">    function).</span>
+
+<span class="sd">    This version returns the original &#39;unfolded&#39; key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">folder</span><span class="p">,</span> <span class="n">sourcedict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span> <span class="o">=</span> <span class="n">folder</span>
+        <span class="c1"># dict mapping folded keys to (original key, value)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">sourcedict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sourcedict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">PreservingFoldingDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">refold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">folder</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use the remembered original keys to update to a new folder.</span>
+
+<span class="sd">        If folder is None, keep the current folding function (this</span>
+<span class="sd">        is useful if the folding function uses external data and that</span>
+<span class="sd">        data changed).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">folder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span> <span class="o">=</span> <span class="n">folder</span>
+        <span class="n">oldDict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">oldDict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)][</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">class</span> <span class="nc">NonPreservingFoldingDict</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;dict that uses a &#39;folder&#39; function when looking up keys.</span>
+
+<span class="sd">    The most common use for this is to implement a dict with</span>
+<span class="sd">    case-insensitive key values (by using ``str.lower`` as folder</span>
+<span class="sd">    function).</span>
+
+<span class="sd">    This version returns the &#39;folded&#39; key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">folder</span><span class="p">,</span> <span class="n">sourcedict</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span> <span class="o">=</span> <span class="n">folder</span>
+        <span class="c1"># dict mapping folded keys to values.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">sourcedict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">sourcedict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">NonPreservingFoldingDict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">,</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="fm">__contains__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_folder</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dict</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">class</span> <span class="nc">defaultdictkey</span><span class="p">(</span><span class="n">defaultdict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;:py:class:`defaultdict` derivative that automatically stores any missing key/value pairs.</span>
+
+<span class="sd">    Specifically, if instance[missing_key] is accessed, the `__missing__` method automatically</span>
+<span class="sd">    store self[missing_key] = self.default_factory(key).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_factory</span><span class="p">):</span>
+        <span class="c1"># we have our own init to explicitly force via prototype</span>
+        <span class="c1"># that a default_factory is required</span>
+        <span class="n">defaultdict</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">default_factory</span><span class="p">)</span>
+
+    <span class="nd">@steal_docs</span><span class="p">(</span><span class="n">defaultdict</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__missing__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="bp">self</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_factory</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">obj</span>
+
+
+<span class="k">def</span> <span class="nf">_KeyError_to_Attr</span><span class="p">(</span><span class="n">functor</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">functor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">inner</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">functor</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="n">inner</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">functor</span><span class="o">.</span><span class="vm">__doc__</span>
+    <span class="k">return</span> <span class="n">inner</span>
+
+
+<span class="k">def</span> <span class="nf">inject_getitem_as_getattr</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Modify a given class scope proxying attr access to dict access.</span>
+
+<span class="sd">    If the given scope already has __getattr__, __setattr__, or __delattr__,</span>
+<span class="sd">    the pre-existing method will not be overridden.</span>
+
+<span class="sd">    Example usage:</span>
+
+<span class="sd">    &gt;&gt;&gt; class my_options(dict):</span>
+<span class="sd">    ...    inject_getitem_as_getattr(locals())</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; d = my_options(asdf=1)</span>
+<span class="sd">    &gt;&gt;&gt; print(d.asdf)</span>
+<span class="sd">    1</span>
+<span class="sd">    &gt;&gt;&gt; d.asdf = 2</span>
+<span class="sd">    &gt;&gt;&gt; print(d.asdf)</span>
+<span class="sd">    2</span>
+<span class="sd">    &gt;&gt;&gt; del d.asdf</span>
+<span class="sd">    &gt;&gt;&gt; print(&#39;asdf&#39; in d)</span>
+<span class="sd">    False</span>
+<span class="sd">    &gt;&gt;&gt; print(hasattr(d, &#39;asdf&#39;))</span>
+<span class="sd">    False</span>
+
+<span class="sd">    :param scope: the scope of a class to modify, adding methods as needed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;__getattr__&#39;</span><span class="p">,</span> <span class="n">_KeyError_to_Attr</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">))</span>
+    <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;__delattr__&#39;</span><span class="p">,</span> <span class="n">_KeyError_to_Attr</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="fm">__delitem__</span><span class="p">))</span>
+    <span class="n">scope</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s1">&#39;__setattr__&#39;</span><span class="p">,</span> <span class="n">_KeyError_to_Attr</span><span class="p">(</span><span class="n">operator</span><span class="o">.</span><span class="fm">__setitem__</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">AttrAccessible</span><span class="p">(</span><span class="nb">dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple dict class allowing instance.x and instance[&#39;x&#39;] access.&quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+
+    <span class="n">inject_getitem_as_getattr</span><span class="p">(</span><span class="nb">locals</span><span class="p">())</span>
+
+
+<span class="k">class</span> <span class="nc">ProxiedAttrs</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Proxy mapping protocol to an object&#39;s attributes.</span>
+
+<span class="sd">    Example usage:</span>
+
+<span class="sd">    &gt;&gt;&gt; class foo:</span>
+<span class="sd">    ...     pass</span>
+<span class="sd">    &gt;&gt;&gt; obj = foo()</span>
+<span class="sd">    &gt;&gt;&gt; obj.x, obj.y = 1, 2</span>
+<span class="sd">    &gt;&gt;&gt; d = ProxiedAttrs(obj)</span>
+<span class="sd">    &gt;&gt;&gt; print(d[&#39;x&#39;])</span>
+<span class="sd">    1</span>
+<span class="sd">    &gt;&gt;&gt; del d[&#39;x&#39;]</span>
+<span class="sd">    &gt;&gt;&gt; print(hasattr(obj, &#39;x&#39;))</span>
+<span class="sd">    False</span>
+
+<span class="sd">    :param target: The object to wrap.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;__target__&#39;</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__target__</span> <span class="o">=</span> <span class="n">target</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__target__</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__target__</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__delitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__target__</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__target__</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">native_attr_getitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">native_attr_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">iterable</span><span class="p">:</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">native_attr_contains</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+
+<span class="c1"># python issue 7604; depending on the python version, delattr&#39;ing an empty slot</span>
+<span class="c1"># doesn&#39;t throw AttributeError; we vary our implementation for efficiency</span>
+<span class="c1"># dependent on a onetime runtime test of that.</span>
+<span class="k">class</span> <span class="nc">foo</span><span class="p">:</span>
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;slot&quot;</span><span class="p">,)</span>
+
+<span class="c1"># track which is required since if we can use extensions, we&#39;ll have</span>
+<span class="c1"># to choose which to import; cpy side exports both, leaving it to us</span>
+<span class="c1"># to decide which to use (via runtime check, it means we don&#39;t have to</span>
+<span class="c1"># be recompiled for minor bumps when the fix is in place- it just switches</span>
+<span class="c1"># on).</span>
+<span class="n">_use_slow_delitem</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">del</span> <span class="n">foo</span><span class="p">()</span><span class="o">.</span><span class="n">slot</span>
+<span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+    <span class="c1"># properly throws an exception; thus we do a single lookup.</span>
+    <span class="n">_use_slow_delitem</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">native_attr_delitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="c1"># doesn&#39;t throw the exception; double lookup, getattr, than delattr.</span>
+    <span class="k">def</span> <span class="nf">native_attr_delitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="c1"># Python does not raise anything if you delattr an</span>
+        <span class="c1"># unset slot (works ok if __slots__ is not involved).</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="nb">delattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+<span class="c1"># cleanup the test class.</span>
+<span class="k">del</span> <span class="n">foo</span>
+
+
+<span class="k">def</span> <span class="nf">native_attr_pop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="o">*</span><span class="n">a</span><span class="p">):</span>
+    <span class="c1"># faster then the exception form...</span>
+    <span class="n">l</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">l</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;pop accepts 1 or 2 args only&quot;</span><span class="p">)</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">sentinel</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">sentinel</span><span class="p">:</span>
+        <span class="nb">object</span><span class="o">.</span><span class="fm">__delattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">l</span><span class="p">:</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">o</span>
+
+
+<span class="k">def</span> <span class="nf">native_attr_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">._klass</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">attr_getitem</span><span class="p">,</span> <span class="n">attr_setitem</span><span class="p">,</span> <span class="n">attr_update</span><span class="p">,</span> <span class="n">attr_contains</span><span class="p">,</span> <span class="n">attr_pop</span><span class="p">,</span> <span class="n">attr_get</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_use_slow_delitem</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">._klass</span> <span class="kn">import</span> <span class="n">attr_delitem_slow</span> <span class="k">as</span> <span class="n">attr_delitem</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">._klass</span> <span class="kn">import</span> <span class="n">attr_delitem_fast</span> <span class="k">as</span> <span class="n">attr_delitem</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">attr_getitem</span> <span class="o">=</span> <span class="n">native_attr_getitem</span>
+    <span class="n">attr_setitem</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__setattr__</span>
+    <span class="n">attr_delitem</span> <span class="o">=</span> <span class="n">native_attr_delitem</span>
+    <span class="n">attr_update</span> <span class="o">=</span> <span class="n">native_attr_update</span>
+    <span class="n">attr_contains</span> <span class="o">=</span> <span class="n">native_attr_contains</span>
+    <span class="n">attr_pop</span> <span class="o">=</span> <span class="n">native_attr_pop</span>
+    <span class="n">attr_get</span> <span class="o">=</span> <span class="n">native_attr_get</span>
+
+
+<span class="k">class</span> <span class="nc">_SlottedDict</span><span class="p">(</span><span class="n">DictMixin</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A space efficient mapping class with a limited set of keys.</span>
+
+<span class="sd">    Specifically, this class has its __slots__ locked to the passed in keys-</span>
+<span class="sd">    this eliminates the allocation of a dict for the instance thus avoiding the</span>
+<span class="sd">    wasted memory common to dictionary overallocation- for small mappings that</span>
+<span class="sd">    waste is roughly 75%, for 100 item mappings it&#39;s roughly 95%, and for 1000</span>
+<span class="sd">    items it&#39;s roughly 84%.  Point is, it&#39;s sizable, consistantly so.</span>
+
+<span class="sd">    The constraint of this is that the resultant mapping has a locked set of</span>
+<span class="sd">    keys- you cannot add a key that wasn&#39;t allowed up front.</span>
+
+<span class="sd">    This functionality is primarily useful when you&#39;ll be generating many</span>
+<span class="sd">    dict instances, all with a common set of allowed keys.</span>
+
+<span class="sd">    :param keys: iterable/sequence of keys to allow in the resultant mapping</span>
+
+<span class="sd">    Example usage:</span>
+
+<span class="sd">    &gt;&gt;&gt; from snakeoil.mappings import make_SlottedDict_kls</span>
+<span class="sd">    &gt;&gt;&gt; import sys</span>
+<span class="sd">    &gt;&gt;&gt; my_kls = make_SlottedDict_kls([&quot;key1&quot;, &quot;key2&quot;, &quot;key3&quot;])</span>
+<span class="sd">    &gt;&gt;&gt; items = ((&quot;key1&quot;, 1), (&quot;key2&quot;, 2), (&quot;key3&quot;,3))</span>
+<span class="sd">    &gt;&gt;&gt; inst = dict(items)</span>
+<span class="sd">    &gt;&gt;&gt; slotted_inst = my_kls(items)</span>
+<span class="sd">    &gt;&gt;&gt; print(sys.getsizeof(inst))</span>
+<span class="sd">    280</span>
+<span class="sd">    &gt;&gt;&gt; print(sys.getsizeof(slotted_inst))</span>
+<span class="sd">    72</span>
+<span class="sd">    &gt;&gt;&gt; # and now for an extreme example:</span>
+<span class="sd">    &gt;&gt;&gt; raw = {&quot;attribute%i&quot; % (x,): x for x in range(1000)}</span>
+<span class="sd">    &gt;&gt;&gt; skls = make_SlottedDict_kls(raw.keys())</span>
+<span class="sd">    &gt;&gt;&gt; print(sys.getsizeof(raw))</span>
+<span class="sd">    49432</span>
+<span class="sd">    &gt;&gt;&gt; sraw = skls(raw.items())</span>
+<span class="sd">    &gt;&gt;&gt; print(sys.getsizeof(sraw))</span>
+<span class="sd">    8048</span>
+<span class="sd">    &gt;&gt;&gt; print(sraw[&quot;attribute2&quot;], sraw[&quot;attribute3&quot;])</span>
+<span class="sd">    2 3</span>
+
+<span class="sd">    Note that those stats are for a 64bit python 2.6.5 VM.  The stats may</span>
+<span class="sd">    differ for other python implementations or versions, although for cpython</span>
+<span class="sd">    the stats above should hold +/- a couple of bites.</span>
+
+<span class="sd">    Finally, it&#39;s worth noting that the stats above are the minimal savings-</span>
+<span class="sd">    via a side affect of the __slots__ the keys are automatically interned.</span>
+
+<span class="sd">    This means that if you have 100 instances floating around, for dict&#39;s</span>
+<span class="sd">    that costs you sizeof(key) * 100, for slotted dict instances you pay</span>
+<span class="sd">    sizeof(key) due to the interning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="vm">__slots__</span> <span class="o">=</span> <span class="p">()</span>
+    <span class="n">__externally_mutable__</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">iterables</span><span class="o">=</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">iterables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">iterables</span><span class="p">)</span>
+
+    <span class="fm">__setitem__</span> <span class="o">=</span> <span class="n">attr_setitem</span>
+    <span class="fm">__getitem__</span> <span class="o">=</span> <span class="n">attr_getitem</span>
+    <span class="fm">__delitem__</span> <span class="o">=</span> <span class="n">attr_delitem</span>
+    <span class="fm">__contains__</span> <span class="o">=</span> <span class="n">attr_contains</span>
+    <span class="n">update</span> <span class="o">=</span> <span class="n">attr_update</span>
+    <span class="n">pop</span> <span class="o">=</span> <span class="n">attr_pop</span>
+    <span class="n">get</span> <span class="o">=</span> <span class="n">attr_get</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__slots__</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">k</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">k</span>
+
+    <span class="k">def</span> <span class="nf">keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">values</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+
+<span class="k">def</span> <span class="nf">make_SlottedDict_kls</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a space efficient mapping class with a limited set of keys.&quot;&quot;&quot;</span>
+    <span class="n">new_keys</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span>
+    <span class="n">cls_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;SlottedDict_</span><span class="si">{</span><span class="nb">hash</span><span class="p">(</span><span class="n">new_keys</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span>
+    <span class="n">o</span> <span class="o">=</span> <span class="nb">globals</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">cls_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">o</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">cls_name</span><span class="p">,</span> <span class="p">(</span><span class="n">_SlottedDict</span><span class="p">,),</span> <span class="p">{})</span>
+        <span class="n">o</span><span class="o">.</span><span class="vm">__slots__</span> <span class="o">=</span> <span class="n">new_keys</span>
+        <span class="nb">globals</span><span class="p">()[</span><span class="n">cls_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">o</span>
+    <span class="k">return</span> <span class="n">o</span>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcore trunk documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">snakeoil.mappings</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcore contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

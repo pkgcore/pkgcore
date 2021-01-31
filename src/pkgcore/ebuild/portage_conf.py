@@ -333,6 +333,7 @@ class PortageConfig(DictMixin):
                         f"repos.conf: parsing {fp!r}: "
                         f"{name!r} repo missing location setting, ignoring repo")
                     continue
+                location = os.path.expanduser(location)
                 if os.path.isabs(location):
                     repo_conf['location'] = location
                 else:

@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.11.2 (2021-01-31)
+---------------------------
+
+- Use user cache directory for repo storage when not running on a Gentoo
+  system.
+
+---------------------------
 pkgcore 0.11.1 (2021-01-29)
 ---------------------------
 

@@ -3,11 +3,9 @@ __all__ = ("tar_syncer",)
 import atexit
 import os
 import shutil
+import subprocess
 import tempfile
-import uuid
 from functools import partial
-
-from snakeoil.osutils import ensure_dirs
 
 from . import base
 from .http import http_syncer
@@ -39,50 +37,53 @@ class tar_syncer(http_syncer, base.ExternalSyncer):
 
     def _pre_download(self):
         # create temp file for downloading
-        temp = tempfile.NamedTemporaryFile()
-        tarball = temp.name
+        self.tarball = tempfile.NamedTemporaryFile()
         # make sure temp file is deleted on exit
-        atexit.register(partial(temp.close))
+        atexit.register(partial(self.tarball.close))
 
         # determine names of tempdirs for staging
         basedir = self.basedir.rstrip(os.path.sep)
         repos_dir = os.path.dirname(basedir)
         repo_name = os.path.basename(basedir)
-        self.tempdir = os.path.join(repos_dir, f'.{repo_name}.update.{uuid.uuid4().hex}')
-        self.tempdir_old = os.path.join(repos_dir, f'.{repo_name}.old.{uuid.uuid4().hex}')
-        # remove temp repo dir on exit
+        self.tempdir = os.path.join(repos_dir, f'.{repo_name}.update')
+        self.tempdir_old = os.path.join(repos_dir, f'.{repo_name}.old')
+        # remove tempdirs on exit
         atexit.register(partial(shutil.rmtree, self.tempdir, ignore_errors=True))
-        return tarball
+        atexit.register(partial(shutil.rmtree, self.tempdir_old, ignore_errors=True))
+        return self.tarball.name
 
     def _post_download(self, path):
         super()._post_download(path)
 
-        # create tempdir for staging decompression
-        if not ensure_dirs(self.tempdir, mode=0o755, uid=self.uid, gid=self.gid):
-            raise base.SyncError(
-                f'failed creating repo update dir: {self.tempdir!r}')
+        # create tempdirs for staging
+        try:
+            os.makedirs(self.tempdir)
+            os.makedirs(self.tempdir_old)
+        except OSError as e:
+            raise base.SyncError(f'failed creating repo update dirs: {e}')
 
         exts = {'gz': 'gzip', 'bz2': 'bzip2', 'xz': 'xz'}
         compression = exts[self.uri.rsplit('.', 1)[1]]
         # use tar instead of tarfile so we can easily strip leading path components
-        # TODO: programmatically determine how man components to strip?
+        # TODO: programmatically determine how many components to strip?
         cmd = [
-            'tar', '--extract', f'--{compression}', '-f', path,
+            'tar', '--extract', f'--{compression}', '-f', self.tarball.name,
             '--strip-components=1', '--no-same-owner', '-C', self.tempdir
         ]
-        with open(os.devnull) as f:
-            ret = self._spawn(cmd, pipes={1: f.fileno(), 2: f.fileno()})
-        if ret:
-            raise base.SyncError('failed to unpack tarball')
+
+        try:
+            subprocess.run(cmd, stderr=subprocess.PIPE, check=True, encoding='utf8')
+        except subprocess.CalledProcessError as e:
+            error = e.stderr.splitlines()[0]
+            raise base.SyncError(f'failed to unpack tarball: {error}')
 
         # TODO: verify gpg data if it exists
 
-        # move old repo out of the way and then move new, unpacked repo into place
         try:
-            os.rename(self.basedir, self.tempdir_old)
+            if os.path.exists(self.basedir):
+                # move old repo out of the way if it exists
+                os.rename(self.basedir, self.tempdir_old)
+            # move new, unpacked repo into place
             os.rename(self.tempdir, self.basedir)
         except OSError as e:
             raise base.SyncError(f'failed to update repo: {e.strerror}') from e
-
-        # register old repo removal after it has been successfully replaced
-        atexit.register(partial(shutil.rmtree, self.tempdir_old, ignore_errors=True))

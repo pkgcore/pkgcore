@@ -79,7 +79,7 @@ class http_syncer(base.Syncer):
         length = resp.getheader('content-length')
         if length:
             length = int(length)
-            blocksize = max(4096, length//100)
+            blocksize = max(4096, length // 100)
         else:
             blocksize = 1000000
 

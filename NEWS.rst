@@ -3,6 +3,14 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.11.3 (2021-02-18)
+---------------------------
+
+- Default to tarball-based syncing instead of using sqfs archives in
+  fallback config to avoid requiring elevated permissions for CI
+  actions.
+
+---------------------------
 pkgcore 0.11.2 (2021-01-31)
 ---------------------------
 

@@ -525,11 +525,11 @@ def store_config(namespace, attr, global_config=()):
     setattr(namespace, attr, config)
 
 
-def _mk_domain(parser):
+def _mk_domain(parser, help=True):
     parser.add_argument(
         '--domain', get_default=True, config_type='domain',
         action=StoreConfigObject,
-        help="custom pkgcore domain to use for this operation")
+        help='custom pkgcore domain to use for this operation' if help else argparse.SUPPRESS)
 
 
 class _SubParser(arghparse._SubParser):
@@ -544,7 +544,8 @@ class _SubParser(arghparse._SubParser):
 
 class ArgumentParser(arghparse.ArgumentParser):
 
-    def __init__(self, suppress=False, config=True, domain=True, script=None, **kwds):
+    def __init__(self, suppress=False, help=True, config=True,
+                 domain=True, script=None, **kwds):
         super().__init__(suppress=suppress, script=script, **kwds)
         self.register('action', 'parsers', _SubParser)
 
@@ -554,18 +555,18 @@ class ArgumentParser(arghparse.ArgumentParser):
                 config_opts.add_argument(
                     '--add-config', nargs=3, action='append',
                     metavar=('SECTION', 'KEY', 'VALUE'),
-                    help='modify existing pkgcore config section')
+                    help='modify existing pkgcore config section' if help else argparse.SUPPRESS)
                 config_opts.add_argument(
                     '--new-config', nargs=3, action='append',
                     metavar=('SECTION', 'KEY', 'VALUE'),
-                    help='add new pkgcore config section')
+                    help='add new pkgcore config section' if help else argparse.SUPPRESS)
                 config_opts.add_argument(
                     '--empty-config', action='store_true',
-                    help='skip loading user/system pkgcore config')
+                    help='skip loading user/system pkgcore config' if help else argparse.SUPPRESS)
                 config_opts.add_argument(
                     '--config', metavar='PATH', dest='override_config',
                     type=arghparse.existent_path,
-                    help='use custom pkgcore config file')
+                    help='use custom pkgcore config file' if help else argparse.SUPPRESS)
 
                 if script is not None:
                     try:
@@ -589,7 +590,7 @@ class ArgumentParser(arghparse.ArgumentParser):
                     partial(store_config, **kwargs)))
 
             if domain:
-                _mk_domain(config_opts)
+                _mk_domain(config_opts, help)
 
 
 def convert_to_restrict(sequence, default=packages.AlwaysTrue):

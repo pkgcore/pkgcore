@@ -86,7 +86,7 @@ __ebd_exec_main() {
 	fi
 
 	# enable colored support as early as possible for early die() usage
-	[[ -z ${PKGCORE_NOCOLOR} ]] && __colored_output_enable
+	[[ -z ${NO_COLOR} ]] && __colored_output_enable
 
 	if ! source "${PKGCORE_EBD_PATH}"/ebuild.bash; then
 		__ebd_write_line "failed"

@@ -613,14 +613,6 @@ class Tool(tool.Tool):
         if self.parser.debug:
             os.environ['PKGCORE_DEBUG'] = str(self.parser.verbosity)
 
-    def post_parse(self, options):
-        """Pass down pkgcore-specific settings to the bash side."""
-        if not getattr(options, 'color', True):
-            # pass down color setting
-            if 'PKGCORE_NOCOLOR' not in os.environ:
-                os.environ['PKGCORE_NOCOLOR'] = '1'
-        return options
-
 
 # TODO: deprecated wrapper, remove in 0.11.0
 def main(parser, args=None, outfile=None, errfile=None):

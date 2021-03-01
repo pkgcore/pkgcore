@@ -363,10 +363,6 @@ class EbuildProcessor:
             env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
         if int(os.environ.get('PKGCORE_DEBUG', 0)):
             env["PKGCORE_DEBUG"] = os.environ['PKGCORE_DEBUG']
-        if int(os.environ.get('PKGCORE_NOCOLOR', 0)):
-            env["PKGCORE_NOCOLOR"] = os.environ['PKGCORE_NOCOLOR']
-            if sandbox:
-                env["NOCOLOR"] = os.environ['PKGCORE_NOCOLOR']
 
         # prepend script dir to PATH for git repo or unpacked tarball, for
         # installed versions it's empty

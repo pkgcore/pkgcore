@@ -37,6 +37,11 @@ class GitRepo:
             cmd, cwd=self.path, encoding='utf8', check=True,
             stdout=stdout, stderr=stderr, **kwargs)
 
+    def log(self, args):
+        """Run ``git log`` with given args and return a list of outputted lines."""
+        p = self.run(['git', 'log'] + args, stdout=subprocess.PIPE)
+        return p.stdout.strip().splitlines()
+
     @property
     def changes(self):
         """Return a list of any untracked or modified files in the repo."""

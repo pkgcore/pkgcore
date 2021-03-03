@@ -179,10 +179,15 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
     os.makedirs(os.path.dirname(path), exist_ok=True)
     log.info("writing lookup config to %r" % path)
 
+    wheel_install = (
+        install_prefix != os.path.abspath(sys.prefix)
+        and not install_prefix.startswith(pkgdist.REPODIR)
+    )
+
     with open(path, "w") as f:
         os.chmod(path, 0o644)
         # write more dynamic _const file for wheel installs
-        if install_prefix != os.path.abspath(sys.prefix):
+        if wheel_install:
             import textwrap
             f.write(textwrap.dedent("""\
                 import os.path as osp

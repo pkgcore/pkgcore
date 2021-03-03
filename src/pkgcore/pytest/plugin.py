@@ -166,7 +166,8 @@ class EbuildRepo:
         homepage = kwargs.pop('homepage', 'https://github.com/pkgcore/pkgcheck')
         license = kwargs.pop('license', 'blank')
 
-        with open(pjoin(ebuild_dir, f'{cpv.package}-{cpv.version}.ebuild'), 'w') as f:
+        ebuild_path = pjoin(ebuild_dir, f'{cpv.package}-{cpv.version}.ebuild')
+        with open(ebuild_path, 'w') as f:
             if self.repo_id == 'gentoo':
                 f.write(textwrap.dedent(f"""\
                     # Copyright 1999-{self._today.year} Gentoo Authors
@@ -190,6 +191,8 @@ class EbuildRepo:
                 f.write(f'{k.upper()}="{v}"\n')
             if data:
                 f.write(data.strip() + '\n')
+
+        return ebuild_path
 
     def __iter__(self):
         yield from iter(self._repo)

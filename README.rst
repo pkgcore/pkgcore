@@ -86,7 +86,7 @@ For bugs and feature requests please create an issue_.
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcore.svg
     :target: https://pypi.python.org/pypi/pkgcore
-.. |test| image:: https://github.com/pkgcore/pkgcore/workflows/Run%20tests/badge.svg
-    :target: https://github.com/pkgcore/pkgcore/actions?query=workflow%3A%22Run+tests%22
+.. |test| image:: https://github.com/pkgcore/pkgcore/workflows/test/badge.svg
+    :target: https://github.com/pkgcore/pkgcore/actions?query=workflow%3A%22test%22
 .. |coverage| image:: https://codecov.io/gh/pkgcore/pkgcore/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/pkgcore/pkgcore

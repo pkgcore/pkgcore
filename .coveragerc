@@ -9,8 +9,8 @@ omit =
 [paths]
 source =
 	src/pkgcore
+	build/install/lib/python*/site-packages/pkgcore
 	.tox/*/lib/python*/site-packages/pkgcore
-	.tox/pypy*/site-packages/pkgcore
 
 [report]
 show_missing = True

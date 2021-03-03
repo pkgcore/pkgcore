@@ -232,25 +232,6 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
             byte_compile([path], optimize=2, prefix=python_base)
 
 
-class test(pkgdist.pytest):
-    """test wrapper to enforce testing against built version."""
-
-    def run(self):
-        # This is fairly hacky, but is done to ensure that the tests
-        # are ran purely from what's in build, reflecting back to the source
-        # only for misc bash scripts or config data.
-        key = 'PKGCORE_OVERRIDE_REPO_PATH'
-        original = os.environ.get(key)
-        try:
-            os.environ[key] = os.path.dirname(os.path.realpath(__file__))
-            super().run()
-        finally:
-            if original is not None:
-                os.environ[key] = original
-            else:
-                os.environ.pop(key, None)
-
-
 setup(**dict(
     pkgdist_setup,
     description='package managing framework',
@@ -271,7 +252,6 @@ setup(**dict(
     cmdclass=dict(
         pkgdist_cmds,
         sdist=sdist,
-        test=test,
         install=install,
     ),
     classifiers=[

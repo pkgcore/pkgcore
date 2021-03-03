@@ -22,7 +22,7 @@ except ImportError:
     _defaults = object()
 
 
-def _GET_CONST(attr, default_value, allow_environment_override=False):
+def _GET_CONST(attr, default_value):
     consts = mappings.ProxiedAttrs(_module)
     is_tuple = not isinstance(default_value, str)
     if is_tuple:
@@ -31,8 +31,6 @@ def _GET_CONST(attr, default_value, allow_environment_override=False):
         default_value %= consts
 
     result = getattr(_defaults, attr, default_value)
-    if allow_environment_override:
-        result = os.environ.get(f'PKGCORE_OVERRIDE_{attr}', result)
     if is_tuple:
         result = tuple(result)
     return result
@@ -50,7 +48,7 @@ USER_CONF_FILE = osp.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcore.conf')
 SYSTEM_CONF_FILE = '/etc/pkgcore/pkgcore.conf'
 SYSTEM_CACHE_PATH = '/var/cache/pkgcore'
 
-REPO_PATH = _GET_CONST('REPO_PATH', _reporoot, allow_environment_override=True)
+REPO_PATH = _GET_CONST('REPO_PATH', _reporoot)
 DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')
 LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', '%(REPO_PATH)s')
 CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(REPO_PATH)s/data/config')

@@ -258,6 +258,7 @@ setup(**dict(
     license='BSD',
     author='Tim Harder',
     author_email='radhermit@gmail.com',
+    entry_points={'pytest11': ['pkgcore = pkgcore.pytest.plugin']},
     data_files=list(chain(
         pkgdist.data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
         pkgdist.data_mapping(DATA_INSTALL_OFFSET, 'data'),

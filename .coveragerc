@@ -1,9 +1,7 @@
 [run]
 source = pkgcore
 branch = True
-omit =
-	src/*
-	tests/*
+omit = src/*, tests/*
 
 [paths]
 source = **/site-packages/pkgcore

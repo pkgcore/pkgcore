@@ -1,4 +1,3 @@
+-r dev.txt
 -r test.txt
-
-pytest-xdist
-coverage
+-r ci.txt

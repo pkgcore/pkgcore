@@ -2,15 +2,11 @@
 source = pkgcore
 branch = True
 omit =
+	src/*
 	tests/*
-	*/_const.py
-	*/_verinfo.py
 
 [paths]
-source =
-	src/pkgcore
-	build/install/lib/python*/site-packages/pkgcore
-	.tox/*/lib/python*/site-packages/pkgcore
+source = **/site-packages/pkgcore
 
 [report]
 show_missing = True

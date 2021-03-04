@@ -4,3 +4,8 @@ requires = [
 	"snakeoil @ https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["tests"]

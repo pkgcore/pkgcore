@@ -84,7 +84,7 @@ class ConfigManagerTest(TestCase):
               }])
         self.check_error(
             "Collapsing section named 'rsync repo':\n"
-            "type module.config.test_central.repo needs settings for "
+            "type tests.config.test_central.repo needs settings for "
             "'cache'",
             self.get_config_obj, manager, 'repo', 'rsync repo')
 
@@ -149,7 +149,7 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "Failed instantiating section 'myrepo':\n"
             "'No object returned' instantiating "
-            "module.config.test_central.noop",
+            "tests.config.test_central.noop",
             manager.collapse_named_section('myrepo').instantiate)
 
     def test_not_callable(self):
@@ -173,7 +173,7 @@ class ConfigManagerTest(TestCase):
               }])
         self.check_error(
             "Failed instantiating section 'myrepo':\n"
-            "Failed instantiating section 'myrepo': exception caught from 'module.config.test_central.myrepo':\n"
+            "Failed instantiating section 'myrepo': exception caught from 'tests.config.test_central.myrepo':\n"
             "I raised",
             self.get_config_obj, manager, 'myrepo', 'myrepo')
 
@@ -185,7 +185,7 @@ class ConfigManagerTest(TestCase):
               }])
         self.check_error(
             "Failed instantiating section 'myrepo':\n"
-            "Failed instantiating section 'myrepo': exception caught from 'module.config.test_central.myrepo':\n"
+            "Failed instantiating section 'myrepo': exception caught from 'tests.config.test_central.myrepo':\n"
             "I raised",
             self.get_config_obj, manager, 'myrepo', 'myrepo')
         manager = central.ConfigManager(
@@ -193,7 +193,7 @@ class ConfigManagerTest(TestCase):
               }], debug=True)
         self.check_error(
             "Failed instantiating section 'myrepo':\n"
-            "Failed instantiating section 'myrepo': exception caught from 'module.config.test_central.myrepo':\n"
+            "Failed instantiating section 'myrepo': exception caught from 'tests.config.test_central.myrepo':\n"
             "I raised",
                 self.get_config_obj, manager, 'myrepo', 'myrepo',
                 klass=errors.ConfigurationError)
@@ -301,13 +301,13 @@ class ConfigManagerTest(TestCase):
         for i in range(3):
             self.check_error(
                 "Failed instantiating section 'spork':\n"
-                "Failed instantiating section 'spork': exception caught from 'module.config.test_central.myrepo':\n"
+                "Failed instantiating section 'spork': exception caught from 'tests.config.test_central.myrepo':\n"
                 "'I suck', callable unset!",
                 spork.instantiate)
         for i in range(3):
             self.check_error(
                 "Failed instantiating section 'spork':\n"
-                "Failed instantiating section 'spork': exception caught from 'module.config.test_central.myrepo':\n"
+                "Failed instantiating section 'spork': exception caught from 'tests.config.test_central.myrepo':\n"
                 "'I suck', callable unset!",
                 manager.collapse_named_section('spork').instantiate)
 
@@ -319,7 +319,7 @@ class ConfigManagerTest(TestCase):
         manager = central.ConfigManager(
             [{'spork': basics.HardCodedConfigSection({'class': myrepo}),
               'drawer': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'content': 'spork',
                             }),
               }])
@@ -333,7 +333,7 @@ class ConfigManagerTest(TestCase):
     def test_collapse_named_errors(self):
         manager = central.ConfigManager(
             [{'spork': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'content': 'ref'})}], [RemoteSource()])
         self.assertRaises(KeyError, self.get_config_obj, manager, 'repo', 'foon')
         self.check_error(
@@ -361,13 +361,13 @@ class ConfigManagerTest(TestCase):
     def test_recursive_section_ref(self):
         manager = central.ConfigManager(
             [{'spork': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'content': 'foon'}),
               'foon': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'content': 'spork'}),
               'self': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'content': 'self'}),
               }])
         self.check_error(
@@ -386,10 +386,10 @@ class ConfigManagerTest(TestCase):
     def test_recursive_inherit(self):
         manager = central.ConfigManager(
             [{'spork': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'inherit': 'foon'}),
               'foon': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'inherit': 'spork'}),
               }])
         self.check_error(
@@ -515,14 +515,14 @@ class ConfigManagerTest(TestCase):
             "Failed instantiating section 'one':\n"
             "Instantiating reference 'content' pointing at None:\n"
             "Failed instantiating section None:\n"
-            "Failed instantiating section None: exception caught from 'module.config.test_central.broken':\n"
+            "Failed instantiating section None: exception caught from 'tests.config.test_central.broken':\n"
             "'broken', callable unset!",
             manager.collapse_named_section('one').instantiate)
         self.check_error(
             "Failed instantiating section 'multi':\n"
             "Instantiating reference 'contents' pointing at None:\n"
             "Failed instantiating section None:\n"
-            "Failed instantiating section None: exception caught from 'module.config.test_central.broken':\n"
+            "Failed instantiating section None: exception caught from 'tests.config.test_central.broken':\n"
             "'broken', callable unset!",
             manager.collapse_named_section('multi').instantiate)
 
@@ -533,7 +533,7 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "Failed loading autoload section 'autoload_broken':\n"
             "Failed instantiating section 'autoload_broken':\n"
-            "Failed instantiating section 'autoload_broken': exception caught from 'module.config.test_central.broken':\n"
+            "Failed instantiating section 'autoload_broken': exception caught from 'tests.config.test_central.broken':\n"
             "'broken', callable unset!",
             central.ConfigManager, [{
                     'autoload_broken': basics.HardCodedConfigSection({
@@ -638,7 +638,7 @@ class ConfigManagerTest(TestCase):
         section = basics.HardCodedConfigSection({'inherit': ['self']})
         manager = central.ConfigManager([{
                     'self': basics.ConfigSectionFromStringDict({
-                            'class': 'module.config.test_central.drawer',
+                            'class': 'tests.config.test_central.drawer',
                             'inherit': 'self'}),
                     }], [RemoteSource()])
         self.check_error(

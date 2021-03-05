@@ -180,7 +180,7 @@ class EbuildRepo:
         homepage = kwargs.pop('homepage', 'https://github.com/pkgcore/pkgcheck')
         license = kwargs.pop('license', 'blank')
 
-        ebuild_path = pjoin(ebuild_dir, f'{cpv.package}-{cpv.version}.ebuild')
+        ebuild_path = pjoin(ebuild_dir, f'{cpv.package}-{cpv.fullver}.ebuild')
         with open(ebuild_path, 'w') as f:
             if self.repo_id == 'gentoo':
                 f.write(textwrap.dedent(f"""\

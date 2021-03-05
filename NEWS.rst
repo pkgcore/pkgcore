@@ -3,6 +3,17 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.11.4 (2021-03-05)
+---------------------------
+
+- pkgcore.pytest: Add initial pytest plugin for ebuild and git repo fixture
+  support.
+
+- pkgcore.util.commandline: Add support for suppressing help output for highly
+  pkgcore-specific options users generally shouldn't touch but are needed
+  internally.
+
+---------------------------
 pkgcore 0.11.3 (2021-02-18)
 ---------------------------
 

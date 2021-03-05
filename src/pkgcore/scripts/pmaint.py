@@ -31,9 +31,7 @@ from ..operations import OperationError
 from ..operations import observer as observer_mod
 from ..package import mutated
 from ..package.errors import MetadataException
-from ..restrictions import packages
 from ..util import commandline
-from ..util.parserestrict import parse_match
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
 argparser = commandline.ArgumentParser(
@@ -434,104 +432,6 @@ def mirror_main(options, out, err):
     if warnings:
         return 1
     return 0
-
-
-digest = subparsers.add_parser(
-    "digest", parents=shared_options_domain,
-    description="update package manifests")
-digest.add_argument(
-    'target', nargs='*',
-    help="packages matching any of these restrictions will have their "
-         "manifest/digest updated",
-    docs="""
-        Packages matching any of these restrictions will have their manifest
-        entries updated; however, if no target is specified one of the
-        following two cases occurs:
-
-        - If a repo is specified, the entire repo is manifested.
-        - If a repo isn't specified, a path restriction is created based on the
-          current working directory. In other words, if `pmaint digest` is run
-          within an ebuild's directory, all the ebuilds within that directory
-          will be manifested. If the current working directory isn't
-          within any configured repo, all repos are manifested.
-    """)
-digest_opts = digest.add_argument_group("subcommand options")
-digest_opts.add_argument(
-    "-f", "--force", help="forcibly remanifest specified packages",
-    action='store_true',
-    docs="""
-        Force package manifest files to be rewritten. Note that this requires
-        downloading all distfiles.
-    """)
-digest_opts.add_argument(
-    "-m", "--mirrors", help="enable fetching from Gentoo mirrors",
-    action='store_true',
-    docs="""
-        Enable checking Gentoo mirrors first for distfiles. This is disabled by
-        default because manifest generation is often performed when adding new
-        ebuilds with distfiles that aren't on Gentoo mirrors yet.
-    """)
-digest_opts.add_argument(
-    "-r", "--repo", help="target repository",
-    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
-    docs="""
-        Target repository to search for matches. If no repo is specified all
-        ebuild repos are used.
-    """)
-@digest.bind_final_check
-def _digest_validate(parser, namespace):
-    repo = namespace.repo
-    targets = namespace.target
-    restrictions = []
-    if repo is not None:
-        if not targets:
-            restrictions.append(repo.path_restrict(repo.location))
-    else:
-        # if we're currently in a known ebuild repo use it, otherwise use all ebuild repos
-        cwd = os.getcwd()
-        repo = namespace.domain.ebuild_repos_raw.repo_match(cwd)
-        if repo is None:
-            repo = namespace.domain.all_ebuild_repos_raw
-
-        if not targets:
-            try:
-                restrictions.append(repo.path_restrict(cwd))
-            except ValueError:
-                # we're not in a configured repo so manifest everything
-                restrictions.extend(repo.path_restrict(x.location) for x in repo.trees)
-
-    if not repo.operations.supports("digests"):
-        digest.error("no repository support for digests")
-
-    for target in targets:
-        if os.path.exists(target):
-            try:
-                restrictions.append(repo.path_restrict(target))
-            except ValueError as e:
-                digest.error(e)
-        else:
-            try:
-                restrictions.append(parse_match(target))
-            except ValueError:
-                digest.error(f"invalid atom: {target!r}")
-
-    restriction = packages.OrRestriction(*restrictions)
-    namespace.restriction = restriction
-    namespace.repo = repo
-
-
-@digest.bind_main_func
-def digest_main(options, out, err):
-    repo = options.repo
-
-    failed = repo.operations.digests(
-        domain=options.domain,
-        restriction=options.restriction,
-        observer=observer_mod.formatter_output(out),
-        mirrors=options.mirrors,
-        force=options.force)
-
-    return int(any(failed))
 
 
 class EclassArgs(argparse.Action):

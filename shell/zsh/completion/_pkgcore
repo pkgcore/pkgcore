@@ -514,7 +514,6 @@ _pmaint() {
         perl-rebuild:'perl-rebuild support for use after upgrading perl (experimental)'
         env-update:'update env.d and ldconfig'
         mirror:'mirror the sources for a package in full'
-        digest:'update package manifests'
       )
 
       _describe -t subcommands subcommand subcommands && ret=0
@@ -567,18 +566,6 @@ _pmaint() {
             $common_output_args \
             {'(--ignore-failures)-f','(-f)--ignore-failures'}'[if a failure occurs, keep going]' \
             ':query:' \
-            && ret=0
-          ;;
-        (digest)
-          # complete ebuilds before directories
-          zstyle ':completion:*' file-patterns '*%p(^-/):other-files:ebuilds *(-/):directories:directories'
-
-          _arguments -C -w -S -s -A '-*' \
-            $common_output_args \
-            {'(--force)-f','(-f)--force'}'[forcibly remanifest specified packages]' \
-            {'(--repo)-r','(-r)--repo'}'[target repository]:repo:_repos' \
-            {'(--mirrors)-m','(-m)--mirrors'}'[enable fetching from Gentoo mirrors]' \
-            '*::ebuilds:_files -g \*.ebuild' \
             && ret=0
           ;;
         (*)

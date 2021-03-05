@@ -18,12 +18,16 @@ class GitRepo:
     dependency requirements.
     """
 
-    def __init__(self, path, commit=False):
+    def __init__(self, path, bare=False, commit=False, clone=False):
         self.path = path
-        # initialize the repo
-        self.run(['git', 'init'])
-        self.run(['git', 'config', 'user.email', 'first.last@email.com'])
-        self.run(['git', 'config', 'user.name', 'First Last'])
+        if clone:
+            os.makedirs(self.path)
+            self.run(['git', 'clone', clone, self.path])
+        else:
+            self.run(['git', 'init'] + (['--bare'] if bare else []) + [self.path])
+            self.run(['git', 'config', 'user.email', 'first.last@email.com'])
+            self.run(['git', 'config', 'user.name', 'First Last'])
+
         if commit:
             if self.changes:
                 # if files exist in the repo, add them in an initial commit

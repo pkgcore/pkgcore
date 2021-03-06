@@ -19,11 +19,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        # pull in pkgdist dep lists
-        git clone https://github.com/pkgcore/pkgdist.git
-        cp -Rv pkgdist/requirements/* requirements/
-
-        # install deps required for building sdist/wheels
+        # install deps required for building sdist/wheel
         python -m pip install --upgrade pip
         pip install -r requirements/dist.txt
         pip install -r requirements/test.txt

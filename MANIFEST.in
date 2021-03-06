@@ -7,6 +7,5 @@ recursive-include ebd *
 recursive-include examples *
 recursive-include requirements *
 recursive-include shell *
-recursive-include src *.[ch]
 recursive-include tests *
 global-exclude *.pyc *.pyo __pycache__

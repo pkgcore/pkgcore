@@ -47,4 +47,5 @@ def main(options, out, err):
 
 
 if __name__ == '__main__':
-    commandline.main(argparser)
+    tool = commandline.Tool(argparser)
+    sys.exit(tool())

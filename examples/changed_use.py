@@ -66,5 +66,7 @@ def main(options, out, err):
                 if options.verbosity > 0:
                     out.write("%s is the same as it was before" % current.cpvstr)
 
+
 if __name__ == '__main__':
-    commandline.main(argparser)
+    tool = commandline.Tool(argparser)
+    sys.exit(tool())

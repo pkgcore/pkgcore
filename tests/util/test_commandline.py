@@ -77,17 +77,3 @@ class TestModifyConfig(ArgParseMixin):
             '--trigger')
         with pytest.raises(errors.ConfigurationError):
             namespace.config.collapse_named_section('foo')
-
-
-# This dance is currently necessary because commandline.main wants
-# an object it can write text to (to write error messages) and
-# pass to PlainTextFormatter, which wants an object it can write
-# bytes to. If we pass it a TextIOWrapper then the formatter can
-# unwrap it to get at the byte stream (a BytesIO in our case).
-def _stream_and_getvalue():
-    bio = io.BytesIO()
-    f = io.TextIOWrapper(bio, line_buffering=True)
-
-    def getvalue():
-        return bio.getvalue().decode('ascii')
-    return f, getvalue

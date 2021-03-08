@@ -49,5 +49,7 @@ def main(options, out, err):
                 (item.title(), 's'[len(values) == 1:], ', '.join(str(x) for x in values)))
         out.write()
 
+
 if __name__ == '__main__':
-    commandline.main(argparser)
+    tool = commandline.Tool(argparser)
+    sys.exit(tool())

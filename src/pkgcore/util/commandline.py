@@ -9,10 +9,6 @@ consistent exception handling.
 See dev-notes/commandline.rst for more complete documentation.
 """
 
-__all__ = (
-    "Tool", "main",
-)
-
 import argparse
 import os
 import sys
@@ -612,27 +608,3 @@ class Tool(tool.Tool):
         # pass down verbosity level to affect debug output
         if self.parser.debug:
             os.environ['PKGCORE_DEBUG'] = str(self.parser.verbosity)
-
-
-# TODO: deprecated wrapper, remove in 0.11.0
-def main(parser, args=None, outfile=None, errfile=None):
-    """Function to use in an "if __name__ == '__main__'" block in a script.
-
-    Takes an argparser instance and runs it against available args, them,
-    taking care of exception handling and some other things.
-
-    Any ConfigurationErrors raised from your function (by the config
-    manager) are handled. Other exceptions are not (trigger a traceback).
-
-    :type parser: ArgumentParser instance
-    :param parser: Argument parser for external commands or scripts.
-    :type args: sequence of strings
-    :param args: arguments to parse, defaulting to C{sys.argv[1:]}.
-    :type outfile: file-like object
-    :param outfile: File to use for stdout, defaults to C{sys.stdout}.
-    :type errfile: file-like object
-    :param errfile: File to use for stderr, defaults to C{sys.stderr}.
-    """
-    t = Tool(parser=parser, outfile=outfile, errfile=errfile)
-    ret = t(args=args)
-    raise SystemExit(ret)

@@ -5,10 +5,11 @@ import sys
 from collections import defaultdict
 from functools import partial
 
-from snakeoil import klass, mappings, weakrefs
+from snakeoil import klass, weakrefs
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
+from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
 
 from ..log import logger
 from . import atom, const
@@ -18,7 +19,7 @@ demand_compile_regexp(
 )
 
 
-eapi_optionals = mappings.ImmutableDict({
+eapi_optionals = ImmutableDict({
     # Controls what version of bash compatibility to force; see PMS.
     "bash_compat": '3.2',
 
@@ -145,9 +146,9 @@ eapi_optionals = mappings.ImmutableDict({
 })
 
 
-class _optionals_cls(mappings.ImmutableDict):
+class _optionals_cls(ImmutableDict):
 
-    mappings.inject_getitem_as_getattr(locals())
+    inject_getitem_as_getattr(locals())
 
 
 class EAPI(metaclass=klass.immutable_instance):
@@ -164,8 +165,8 @@ class EAPI(metaclass=klass.immutable_instance):
         sf(self, "_magic", str(magic))
         sf(self, "_parent", parent)
 
-        sf(self, "phases", mappings.ImmutableDict(phases))
-        sf(self, "phases_rev", mappings.ImmutableDict((v, k) for k, v in
+        sf(self, "phases", ImmutableDict(phases))
+        sf(self, "phases_rev", ImmutableDict((v, k) for k, v in
            self.phases.items()))
 
         # We track the phases that have a default implementation- this is
@@ -386,17 +387,17 @@ class EAPI(metaclass=klass.immutable_instance):
     def __str__(self):
         return self._magic
 
-    @property
+    @klass.jit_attr
     def inherits(self):
-        """Yield an EAPI's inheritance tree.
+        """Ordered set containing an EAPI's inheritance tree.
 
         Note that this assumes a simple, linear inheritance tree.
         """
-        yield self
-        parent = self._parent
-        while parent is not None:
-            yield parent
-            parent = parent._parent
+        eapis = [self]
+        eapi = self
+        while eapi := eapi._parent:
+            eapis.append(eapi)
+        return OrderedFrozenSet(eapis)
 
     @klass.jit_attr
     def helpers(self):
@@ -416,7 +417,7 @@ class EAPI(metaclass=klass.immutable_instance):
                         paths[phase].append(dirpath)
                     else:
                         raise ValueError(f'unknown phase: {phase!r}')
-        return mappings.ImmutableDict((k, tuple(v)) for k, v in paths.items())
+        return ImmutableDict((k, tuple(v)) for k, v in paths.items())
 
     @klass.jit_attr
     def ebd_env(self):
@@ -426,7 +427,7 @@ class EAPI(metaclass=klass.immutable_instance):
             d[f"PKGCORE_{k.upper()}"] = str(getattr(self.options, k)).lower()
         d["PKGCORE_EAPI_INHERITS"] = ' '.join(x._magic for x in self.inherits)
         d["EAPI"] = self._magic
-        return mappings.ImmutableDict(d)
+        return ImmutableDict(d)
 
 
 def get_eapi(magic, suppress_unsupported=True):

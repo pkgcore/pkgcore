@@ -755,6 +755,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         sf(self, 'eapis_banned', tuple(iter_stable_unique(data.get('eapis-banned', '').split())))
         sf(self, 'properties_allowed', tuple(iter_stable_unique(data.get('properties-allowed', '').split())))
         sf(self, 'restrict_allowed', tuple(iter_stable_unique(data.get('restrict-allowed', '').split())))
+        sf(self, 'sign_commits', data.get('sign-commits', 'false').lower() == 'true')
 
         v = set(data.get('cache-formats', 'md5-dict').lower().split())
         if not v:

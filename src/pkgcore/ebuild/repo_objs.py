@@ -83,6 +83,9 @@ class Maintainer:
                 return other == self.email or other == self.name
         return False
 
+    def __hash__(self):
+        return hash((self.email, self.name))
+
 
 class MetadataXml:
     """metadata.xml parsed results

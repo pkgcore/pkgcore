@@ -245,53 +245,6 @@ class ProvidesRepo(util.SimpleTree):
         return False
 
 
-@configurable(
-    typename='repo',
-    types={
-        'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
-        'eclass_cache': 'ref:eclass_cache',
-        'default_mirrors': 'list',
-        'allow_missing_manifests': 'bool'},
-    requires_config='config')
-def tree(config, repo_config, cache=(), eclass_cache=None,
-         default_mirrors=None, allow_missing_manifests=False):
-    """Initialize an unconfigured ebuild repository."""
-    repo_id = repo_config.repo_id
-    repo_path = repo_config.location
-
-    if repo_config.masters is None:
-        # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
-        # empty tuple means it's a standalone repository
-        default = config.get_default('repo_config')
-        if default is None:
-            raise errors.InitializationError(
-                f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
-
-    configured_repos = tuple(r.repo_id for r in config.objects['repo_config'].values())
-    missing = set(repo_config.masters).difference(configured_repos)
-    if missing:
-        missing = ', '.join(map(repr, sorted(missing)))
-        raise errors.InitializationError(
-            f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
-
-    try:
-        masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
-    except RecursionError:
-        repo_id = repo_config.repo_id
-        masters = ', '.join(repo_config.masters)
-        raise errors.InitializationError(
-            f'{repo_id!r} repo has cyclic masters: {masters}')
-
-    if eclass_cache is None:
-        eclass_cache = _sort_eclasses(config, repo_config)
-
-    return UnconfiguredTree(
-        repo_config.location, eclass_cache=eclass_cache, masters=masters, cache=cache,
-        default_mirrors=default_mirrors,
-        allow_missing_manifests=allow_missing_manifests,
-        repo_config=repo_config)
-
-
 class UnconfiguredTree(prototype.tree):
     """Raw implementation supporting standard ebuild tree.
 
@@ -632,6 +585,54 @@ class UnconfiguredTree(prototype.tree):
     def __setstate__(self, state):
         self.__dict__ = state.copy()
         self.__dict__['_shared_pkg_cache'] = WeakValCache()
+
+
+@configurable(
+    typename='repo',
+    types={
+        'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
+        'eclass_cache': 'ref:eclass_cache',
+        'default_mirrors': 'list',
+        'allow_missing_manifests': 'bool'},
+    requires_config='config')
+def tree(config, repo_config, cache=(), eclass_cache=None,
+         default_mirrors=None, allow_missing_manifests=False,
+         tree_cls=UnconfiguredTree):
+    """Initialize an unconfigured ebuild repository."""
+    repo_id = repo_config.repo_id
+    repo_path = repo_config.location
+
+    if repo_config.masters is None:
+        # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
+        # empty tuple means it's a standalone repository
+        default = config.get_default('repo_config')
+        if default is None:
+            raise errors.InitializationError(
+                f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
+
+    configured_repos = tuple(r.repo_id for r in config.objects['repo_config'].values())
+    missing = set(repo_config.masters).difference(configured_repos)
+    if missing:
+        missing = ', '.join(map(repr, sorted(missing)))
+        raise errors.InitializationError(
+            f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
+
+    try:
+        masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
+    except RecursionError:
+        repo_id = repo_config.repo_id
+        masters = ', '.join(repo_config.masters)
+        raise errors.InitializationError(
+            f'{repo_id!r} repo has cyclic masters: {masters}')
+
+    if eclass_cache is None:
+        eclass_cache = _sort_eclasses(config, repo_config)
+
+    return tree_cls(
+        repo_config.location, eclass_cache=eclass_cache, masters=masters, cache=cache,
+        default_mirrors=default_mirrors,
+        allow_missing_manifests=allow_missing_manifests,
+        repo_config=repo_config)
 
 
 class _RegenOpHelper:

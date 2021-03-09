@@ -620,7 +620,7 @@ class domain(config_domain):
             wrapped_repo = self.filter_repo(wrapped_repo)
         return wrapped_repo
 
-    def add_repo(self, path, config, name=None, configure=True):
+    def add_repo(self, path, config, name=None, configure=True, **kwargs):
         """Add an external repo to the domain."""
         path = os.path.abspath(path)
         # don't recreate existing repos
@@ -632,7 +632,6 @@ class domain(config_domain):
             repo_config = RepoConfig(path, disable_inst_caching=True)
         except OSError as e:
             raise repo_errors.InvalidRepo(str(e))
-        kwargs = {}
         if repo_config.cache_format is not None:
             # default to using md5 cache
             kwargs['cache'] = (md5_cache(path),)

@@ -87,6 +87,26 @@ class Maintainer:
         return hash((self.email, self.name))
 
 
+class Upstream:
+    """Data on a single upstream."""
+
+    __slots__ = ('type', 'name')
+
+    def __init__(self, type, name):
+        self.type = type
+        self.name = name
+
+    def __eq__(self, other):
+        try:
+            return self.type == other.type and self.name == other.name
+        except AttributeError:
+            pass
+        return False
+
+    def __hash__(self):
+        return hash((self.type, self.name))
+
+
 class MetadataXml:
     """metadata.xml parsed results
 
@@ -95,7 +115,7 @@ class MetadataXml:
     """
 
     __slots__ = (
-        "__weakref__", "_maintainers", "_local_use",
+        "__weakref__", "_maintainers", "_upstreams", "_local_use",
         "_longdescription", "_source", "_stabilize_allarches",
     )
 
@@ -107,8 +127,8 @@ class MetadataXml:
             self._parse_xml()
         return getattr(self, attr)
 
-    for attr in ("maintainers", "local_use", "longdescription",
-                 "stabilize_allarches"):
+    for attr in ("maintainers", "upstreams", "local_use",
+                 "longdescription", "stabilize_allarches"):
         locals()[attr] = property(post_curry(_generic_attr, "_" + attr))
     del attr
 
@@ -119,6 +139,7 @@ class MetadataXml:
             tree = etree.parse(source)
         except etree.XMLSyntaxError as e:
             self._maintainers = ()
+            self._upstreams = ()
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None
@@ -146,6 +167,13 @@ class MetadataXml:
                 pass
 
         self._maintainers = tuple(maintainers)
+
+        upstreams = []
+        for x in tree.findall("upstream"):
+            for e in x:
+                if e.tag == "remote-id":
+                    upstreams.append(Upstream(e.get('type'), e.text))
+        self._upstreams = tuple(upstreams)
 
         # Could be unicode!
         self._longdescription = None
@@ -183,6 +211,7 @@ class LocalMetadataXml(MetadataXml):
             MetadataXml._parse_xml(self, open(self._source, "rb", 32768))
         except FileNotFoundError:
             self._maintainers = ()
+            self._upstreams = ()
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None

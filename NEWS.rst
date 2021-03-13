@@ -3,6 +3,24 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.11.5 (2021-03-12)
+---------------------------
+
+- pkgcore.ebuild.repo_objs: Add support for parsing upstreams from
+  metadata.xml.
+
+- pkgcore.ebuild.repo_objs: Support pulling sign-commits setting from
+  metadata/layout.conf.
+
+- pkgcore.ebuild.repository: Support creating repos with custom classes.
+
+- pkgcore.util.commandline: Drop deprecated main() wrapper.
+
+- pkgcore.pytest: Use full version for ebuild file creation.
+
+- pmaint: Drop ``pmaint digest`` support in favor of ``pkgdev manifest``.
+
+---------------------------
 pkgcore 0.11.4 (2021-03-05)
 ---------------------------
 

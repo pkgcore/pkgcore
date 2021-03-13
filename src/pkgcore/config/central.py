@@ -314,7 +314,7 @@ class ConfigManager:
         return basics.GeneratedConfigSource(config, "unknown")
 
     def reload(self):
-        """Reinitialize us from the config sources originally passed in.
+        """Reinitialize from the config sources originally passed in.
 
         This throws away all cached instances and re-executes autoloads.
         """
@@ -329,6 +329,11 @@ class ConfigManager:
         self._types = klass._uncached_singleton
         for config in self.original_config_sources:
             self.add_config_source(config)
+
+    def update(self, config):
+        """Reinitialize using an additional supplied config."""
+        self.original_config_sources += (config,)
+        self.reload()
 
     def add_config_source(self, config):
         return self._add_config_source(self._compat_mangle_config(config))

@@ -610,9 +610,8 @@ def tree(config, repo_config, cache=(), eclass_cache=None,
             raise errors.InitializationError(
                 f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
 
-    configured_repos = tuple(r.repo_id for r in config.objects['repo_config'].values())
-    missing = set(repo_config.masters).difference(configured_repos)
-    if missing:
+    aliases = (r.aliases for r in config.objects['repo_config'].values())
+    if missing := set(repo_config.masters).difference(chain.from_iterable(aliases)):
         missing = ', '.join(map(repr, sorted(missing)))
         raise errors.InitializationError(
             f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')

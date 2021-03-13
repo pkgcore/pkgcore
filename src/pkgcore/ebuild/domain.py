@@ -28,6 +28,7 @@ from snakeoil.sequences import predicate_split, split_negations, stable_unique
 
 from ..binpkg import repository as binary_repo
 from ..cache.flat_hash import md5_cache
+from ..config import basics
 from ..config import errors as config_errors
 from ..config.domain import Failure
 from ..config.domain import domain as config_domain
@@ -637,6 +638,22 @@ class domain(config_domain):
             kwargs['cache'] = (md5_cache(path),)
         repo_obj = ebuild_repo.tree(config, repo_config, **kwargs)
         self.source_repos_raw += repo_obj
+
+        # inject repo objects into config to dynamically register repo
+        data = {}
+        repo_conf = {
+            'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
+            'config_name': repo_config.location,
+            'location': repo_config.location,
+            'syncer': 'sync:' + repo_config.location,
+        }
+        repo = {
+            'inherit': ('ebuild-repo-common',),
+            'repo_config': f'conf:{repo_config.location}',
+        }
+        data[f'conf:{repo_config.location}'] = basics.AutoConfigSection(repo_conf)
+        data[repo_config.location] = basics.AutoConfigSection(repo)
+        config.update(data)
 
         # reset repo-related jit attrs
         for attr in (x for x in dir(self) if x.startswith('_jit_repo_')):

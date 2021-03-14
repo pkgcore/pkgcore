@@ -51,17 +51,20 @@ class Maintainer:
     :ivar description: description of maintainership.
     :type maint_type: C{unicode} object or C{None}
     :ivar maint_type: maintainer type (person or project).
+    :type proxied: C{unicode} object or C{None}
+    :ivar proxied: proxied maintainer status (yes, no, proxy)
     """
 
-    __slots__ = ('email', 'description', 'name', 'maint_type')
+    __slots__ = ('email', 'description', 'name', 'maint_type', 'proxied')
 
-    def __init__(self, email=None, name=None, description=None, maint_type=None):
+    def __init__(self, email=None, name=None, description=None, maint_type=None, proxied=None):
         if email is None and name is None:
             raise ValueError('need at least one of name and email')
         self.email = email
         self.name = name
         self.description = description
         self.maint_type = maint_type
+        self.proxied = proxied
 
     def __str__(self):
         if self.name is not None:
@@ -161,7 +164,7 @@ class MetadataXml:
             try:
                 maintainers.append(Maintainer(
                     name=name, email=email, description=description,
-                    maint_type=x.get('type')))
+                    maint_type=x.get('type'), proxied=x.get('proxied')))
             except ValueError:
                 # ignore invalid maintainers that should be caught by pkgcheck
                 pass

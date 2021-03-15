@@ -522,7 +522,7 @@ class _InstallWrapper(IpcCommand):
 class Doins(_InstallWrapper):
     """Python wrapper for doins."""
 
-    arg_parser = _InstallWrapper.arg_parser.copy()
+    arg_parser = IpcArgumentParser(parents=(_InstallWrapper.arg_parser,))
     arg_parser.add_argument('-r', dest='recursive', action='store_true')
 
     def _install_targets(self, targets):
@@ -537,7 +537,7 @@ class Dodoc(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    arg_parser = _InstallWrapper.arg_parser.copy()
+    arg_parser = IpcArgumentParser(parents=(_InstallWrapper.arg_parser,))
     arg_parser.add_argument('-r', dest='recursive', action='store_true')
 
     def __init__(self, *args, **kwargs):
@@ -673,7 +673,7 @@ class Doman(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    arg_parser = _InstallWrapper.arg_parser.copy()
+    arg_parser = IpcArgumentParser(parents=(_InstallWrapper.arg_parser,))
     arg_parser.add_argument('-i18n', action='store_true', default='')
 
     detect_lang_re = re.compile(r'^(\w+)\.([a-z]{2}([A-Z]{2})?)\.(\w+)$')
@@ -734,7 +734,7 @@ class Dohtml(_InstallWrapper):
 
     insoptions_default = '-m0644'
 
-    arg_parser = _InstallWrapper.arg_parser.copy()
+    arg_parser = IpcArgumentParser(parents=(_InstallWrapper.arg_parser,))
     arg_parser.add_argument('-r', dest='recursive', action='store_true')
     arg_parser.add_argument('-V', dest='verbose', action='store_true')
     arg_parser.add_argument('-A', dest='extra_allowed_file_exts', action='csv', default=[])

@@ -1,5 +1,4 @@
 import binascii
-import errno
 import os
 import shutil
 import tempfile
@@ -25,10 +24,11 @@ class ProfileNode(profiles.ProfileNode):
     # re-inherited to disable inst-caching
     pass
 
+
 class profile_mixin(TempDirMixin):
 
     def mk_profile(self, profile_name):
-        return self.mk_profiles({'name':profile_name})
+        return self.mk_profiles({'name': profile_name})
 
     def mk_profiles(self, *profiles, **kwds):
         for x in os.listdir(self.dir):
@@ -104,13 +104,11 @@ class TestPmsProfileNode(profile_mixin, TestCase):
 
     def wipe_path(self, path):
         try:
-            os.unlink(path)
-        except EnvironmentError as e:
-            if e.errno == errno.ENOENT:
-                return
-            elif e.errno != errno.EISDIR:
-                raise
             shutil.rmtree(path)
+        except NotADirectoryError:
+            os.unlink(path)
+        except FileNotFoundError:
+            return
 
     def write_file(self, filename, iterable, profile=None):
         if profile is None:

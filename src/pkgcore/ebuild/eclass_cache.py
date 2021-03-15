@@ -6,13 +6,13 @@ __all__ = ("base", "cache", "StackedCaches")
 
 import os
 from sys import intern
+from weakref import WeakValueDictionary
 
 from snakeoil.chksum import LazilyHashedPath
 from snakeoil.data_source import local_source
 from snakeoil.klass import jit_attr_ext_method
 from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, StackedDict
 from snakeoil.osutils import listdir_files, normpath, pjoin
-from snakeoil.weakrefs import WeakValCache
 
 from ..config.hint import ConfigHint
 
@@ -23,7 +23,7 @@ class base:
     """
 
     def __init__(self, location=None, eclassdir=None):
-        self._eclass_data_inst_cache = WeakValCache()
+        self._eclass_data_inst_cache = WeakValueDictionary()
         # generate this.
         # self.eclasses = {} # {"Name": ("location", "_mtime_")}
         self.location = location
@@ -80,7 +80,7 @@ class base:
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
-        self.__dict__['_eclass_data_inst_cache'] = WeakValCache()
+        self.__dict__['_eclass_data_inst_cache'] = WeakValueDictionary()
 
 
 class cache(base):

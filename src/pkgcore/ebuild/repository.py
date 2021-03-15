@@ -12,6 +12,7 @@ from itertools import chain, filterfalse
 from operator import attrgetter
 from random import shuffle
 from sys import intern
+from weakref import WeakValueDictionary
 
 from snakeoil import chksum, klass
 from snakeoil.bash import iter_read_bash, read_dict
@@ -23,7 +24,6 @@ from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism as _pl
-from snakeoil.weakrefs import WeakValCache
 
 from .. import fetch
 from ..config.hint import ConfigHint, configurable
@@ -337,7 +337,7 @@ class UnconfiguredTree(prototype.tree):
         self._allow_missing_chksums = allow_missing_manifests
         self.package_class = self.package_factory(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
-        self._shared_pkg_cache = WeakValCache()
+        self._shared_pkg_cache = WeakValueDictionary()
         self._bad_masked = RestrictionRepo(repo_id='bad_masked')
         self.projects_xml = repo_objs.LocalProjectsXml(
             pjoin(self.location, 'metadata', 'projects.xml'))
@@ -584,7 +584,7 @@ class UnconfiguredTree(prototype.tree):
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
-        self.__dict__['_shared_pkg_cache'] = WeakValCache()
+        self.__dict__['_shared_pkg_cache'] = WeakValueDictionary()
 
 
 @configurable(

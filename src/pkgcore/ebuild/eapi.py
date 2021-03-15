@@ -4,8 +4,9 @@ import subprocess
 import sys
 from collections import defaultdict
 from functools import partial
+from weakref import WeakValueDictionary
 
-from snakeoil import klass, weakrefs
+from snakeoil import klass
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
@@ -153,8 +154,8 @@ class _optionals_cls(ImmutableDict):
 
 class EAPI(metaclass=klass.immutable_instance):
 
-    known_eapis = weakrefs.WeakValCache()
-    unknown_eapis = weakrefs.WeakValCache()
+    known_eapis = WeakValueDictionary()
+    unknown_eapis = WeakValueDictionary()
 
     def __init__(self, magic, parent=None, phases=(), default_phases=(),
                  mandatory_keys=(), dep_keys=(), metadata_keys=(),

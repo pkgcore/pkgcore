@@ -2,7 +2,9 @@
 
 __all__ = ("DeriveMetadataKls", "factory", "package")
 
-from snakeoil import klass, weakrefs
+from weakref import WeakValueDictionary
+
+from snakeoil import klass
 
 from ..ebuild import cpv
 from ..ebuild.atom import atom
@@ -94,7 +96,7 @@ class factory:
 
     def __init__(self, parent_repo):
         self._parent_repo = parent_repo
-        self._cached_instances = weakrefs.WeakValCache()
+        self._cached_instances = WeakValueDictionary()
 
     def new_package(self, *args):
         """generate a new package instance"""
@@ -131,4 +133,4 @@ class factory:
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
-        self.__dict__['_cached_instances'] = weakrefs.WeakValCache()
+        self.__dict__['_cached_instances'] = WeakValueDictionary()

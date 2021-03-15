@@ -41,6 +41,11 @@ jobs:
       if: ${{ matrix.experimental }}
       run: sudo apt install libxml2-dev libxslt-dev python-dev
 
+    # macos needs newer bash
+    - name: Install macos deps
+      if: ${{ matrix.os == 'macos-latest' }}
+      run: brew install bash
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

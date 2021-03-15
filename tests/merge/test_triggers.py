@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import time
 from functools import partial
 from math import ceil, floor
@@ -254,6 +255,7 @@ class trigger_mixin(mixins.TempDirMixin):
             msg="expected {expected!}, got {tested!r}")
 
 
+@pytest.mark.skipif(not sys.platform.startswith('linux'), reason='supported on Linux only')
 class Test_ldconfig(trigger_mixin, TestCase):
 
     # use the kls indirection for when *bsd version of ldconfig trigger

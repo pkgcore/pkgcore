@@ -19,10 +19,9 @@ from functools import partial
 
 from snakeoil.cli import arghparse
 from snakeoil.formatters import decorate_forced_wrapping
-from snakeoil.osutils import pjoin, sizeof_fmt
+from snakeoil.osutils import sizeof_fmt
 from snakeoil.sequences import iter_stable_unique
 
-from .. import const
 from ..ebuild import atom, conditionals
 from ..fs import fs as fs_module
 from ..repository import multiplex

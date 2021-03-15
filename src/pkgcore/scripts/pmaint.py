@@ -3,7 +3,6 @@
 import argparse
 import logging
 import os
-import re
 import textwrap
 import time
 from multiprocessing import cpu_count
@@ -11,7 +10,7 @@ from multiprocessing import cpu_count
 from snakeoil.cli import arghparse
 from snakeoil.contexts import patch
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.osutils import listdir_dirs, pjoin
+from snakeoil.osutils import pjoin
 from snakeoil.sequences import iter_stable_unique
 
 from ..cache.flat_hash import md5_cache

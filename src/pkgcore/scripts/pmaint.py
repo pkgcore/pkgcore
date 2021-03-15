@@ -2,7 +2,7 @@
 
 __all__ = (
     "sync", "sync_main", "copy", "copy_main", "regen", "regen_main",
-    "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main",
+    "env_update", "env_update_main",
 )
 
 import argparse
@@ -334,44 +334,6 @@ def regen_main(options, out, err):
             ret.append(update_pkg_desc_index(repo, observer))
 
     return int(any(ret))
-
-
-perl_rebuild = subparsers.add_parser(
-    "perl-rebuild", parents=shared_options_domain,
-    description="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
-perl_rebuild.add_argument(
-    "new_version", help="the new perl version; 5.12.3 for example")
-@perl_rebuild.bind_main_func
-def perl_rebuild_main(options, out, err):
-    path = pjoin(options.domain.root, "usr/lib/perl5", options.new_version)
-    if not os.path.exists(path):
-        perl_rebuild.error(
-            f"version {options.new_version} doesn't seem to be installed; "
-            f"can't find it at {path!r}")
-
-    base = pjoin(options.domain.root, "/usr/lib/perl5")
-    potential_perl_versions = [
-        x.replace(".", "\\.") for x in listdir_dirs(base)
-        if x.startswith("5.") and x != options.new_version]
-
-    if len(potential_perl_versions) == 1:
-        subpattern = potential_perl_versions[0]
-    else:
-        subpattern = "(?:%s)" % ("|".join(potential_perl_versions),)
-    matcher = re.compile(
-        "/usr/lib(?:64|32)?/perl5/(?:%s|vendor_perl/%s)" %
-        (subpattern, subpattern)).match
-
-    for pkg in options.domain.all_installed_repos:
-        contents = getattr(pkg, 'contents', ())
-        if not contents:
-            continue
-        # scan just directories...
-        for fsobj in contents.iterdirs():
-            if matcher(fsobj.location):
-                out.write(str(pkg.unversioned_atom))
-                break
-    return 0
 
 
 env_update = subparsers.add_parser(

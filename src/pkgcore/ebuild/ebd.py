@@ -88,12 +88,6 @@ class ebd:
             self.env[k] = ' '.join(sorted(v))
 
         self.bashrc = self.env.pop("bashrc", ())
-
-        # TODO: drop this once we rewrite/remove calling python-based scripts
-        # from the bash side
-        if "PYTHONPATH" in os.environ:
-            self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
-
         self.features = set(x.lower() for x in self.domain.features)
         self.env["FEATURES"] = ' '.join(sorted(self.features))
         self.set_path_vars(self.env, self.pkg, self.domain)

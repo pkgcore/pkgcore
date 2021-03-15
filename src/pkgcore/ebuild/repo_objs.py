@@ -167,13 +167,10 @@ class MetadataXml:
                 pass
 
         self._maintainers = tuple(maintainers)
-
-        upstreams = []
-        for x in tree.findall("upstream"):
-            for e in x:
-                if e.tag == "remote-id":
-                    upstreams.append(Upstream(e.get('type'), e.text))
-        self._upstreams = tuple(upstreams)
+        self._upstreams = tuple(
+            Upstream(e.get('type'), e.text) for e in chain.from_iterable(tree.findall("upstream"))
+            if e.tag == 'remote-id'
+        )
 
         # Could be unicode!
         self._longdescription = None

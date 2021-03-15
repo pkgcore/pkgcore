@@ -5,9 +5,6 @@ system. It provides an interface to install, update, and uninstall ebuilds from
 source or binary packages.
 """
 
-# more should be doc'd...
-__all__ = ("AmbiguousQuery", "NoMatches")
-
 import sys
 from functools import partial
 from textwrap import dedent

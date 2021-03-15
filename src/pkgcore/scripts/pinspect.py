@@ -14,12 +14,6 @@ Finally, a portageq compatible interface is provided for several commands that
 were historically used in ebuilds.
 """
 
-__all__ = (
-    "pkgsets", "histo_data", "eapi_usage", "license_usage",
-    "mirror_usage", "eclass_usage", "mirror_usage",
-    "portageq", "query",
-)
-
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from itertools import groupby, islice

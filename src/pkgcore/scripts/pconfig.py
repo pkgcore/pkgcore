@@ -1,13 +1,5 @@
 """configuration querying utility"""
 
-__all__ = (
-    "get_classes", "dump", "dump_main", "classes", "classes_main",
-    "uncollapsable", "uncollapsable_main",
-    "describe_class", "describe_class_main",
-    "configurables", "configurables_main",
-    "dump_uncollapsed", "dump_uncollapsed_main"
-)
-
 import textwrap
 import traceback
 from functools import partial

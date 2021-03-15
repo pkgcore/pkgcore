@@ -1,10 +1,5 @@
 """system/repository maintenance utility"""
 
-__all__ = (
-    "sync", "sync_main", "copy", "copy_main", "regen", "regen_main",
-    "env_update", "env_update_main",
-)
-
 import argparse
 import logging
 import os

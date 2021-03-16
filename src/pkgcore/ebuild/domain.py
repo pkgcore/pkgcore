@@ -665,19 +665,13 @@ class domain(config_domain):
 
     def find_repo(self, path, config, configure=True):
         """Find and add an external repo to the domain given a path."""
-        repo = None
         path = os.path.abspath(path)
         with suppress_logging():
-            while True:
+            while (parent := os.path.dirname(path)) != path:
                 try:
-                    repo = self.add_repo(path, config=config, configure=configure)
-                    break
+                    return self.add_repo(path, config=config, configure=configure)
                 except repo_errors.InvalidRepo:
-                    parent = os.path.dirname(path)
-                    if parent == path:
-                        break
                     path = parent
-        return repo
 
     def _configure_repo(self, repo):
         """Configure a raw repo."""

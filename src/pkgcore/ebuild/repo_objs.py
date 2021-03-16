@@ -11,6 +11,7 @@ __all__ = (
 import errno
 import os
 import platform
+import shlex
 import subprocess
 from collections import namedtuple
 from itertools import chain
@@ -777,7 +778,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             _missing_masters = True
             masters = ()
         else:
-            masters = tuple(iter_stable_unique(masters.split()))
+            masters = tuple(iter_stable_unique(shlex.split(masters)))
         sf(self, '_missing_masters', _missing_masters)
         sf(self, 'masters', masters)
         aliases = data.get('aliases', '').split() + [

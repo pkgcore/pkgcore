@@ -643,16 +643,14 @@ class domain(config_domain):
         data = {}
         repo_conf = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
-            'config_name': repo_config.location,
-            'location': repo_config.location,
-            'syncer': 'sync:' + repo_config.location,
+            'location': path,
         }
         repo = {
             'inherit': ('ebuild-repo-common',),
-            'repo_config': f'conf:{repo_config.location}',
+            'repo_config': f'conf:{path}',
         }
-        data[f'conf:{repo_config.location}'] = basics.AutoConfigSection(repo_conf)
-        data[repo_config.location] = basics.AutoConfigSection(repo)
+        data[f'conf:{path}'] = basics.AutoConfigSection(repo_conf)
+        data[path] = basics.AutoConfigSection(repo)
         config.update(data)
 
         # reset repo-related jit attrs

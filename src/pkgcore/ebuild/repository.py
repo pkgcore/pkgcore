@@ -342,11 +342,12 @@ class UnconfiguredTree(prototype.tree):
         self.projects_xml = repo_objs.LocalProjectsXml(
             pjoin(self.location, 'metadata', 'projects.xml'))
 
-    repo_id = klass.alias_attr("config.repo_id")
-    repo_name = klass.alias_attr("config.repo_name")
-    aliases = klass.alias_attr("config.aliases")
+    repo_id = klass.alias_attr('config.repo_id')
+    repo_name = klass.alias_attr('config.repo_name')
+    aliases = klass.alias_attr('config.aliases')
     eapi = klass.alias_attr('config.eapi')
     is_supported = klass.alias_attr('config.eapi.is_supported')
+    external = klass.alias_attr('config.external')
     pkg_masks = klass.alias_attr('config.pkg_masks')
 
     @klass.jit_attr

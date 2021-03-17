@@ -159,7 +159,6 @@ class repo_operations(_repo_ops.operations):
 
 def _sort_eclasses(config, repo_config):
     repo_path = repo_config.location
-    repo_id = repo_config.repo_id
     masters = repo_config.masters
     eclasses = []
 
@@ -174,8 +173,8 @@ def _sort_eclasses(config, repo_config):
         eclasses = [location]
     else:
         repo_map = {
-            r.repo_id: r.location for r in
-            config.objects['repo_config'].values()}
+            alias: r.location for r in config.objects['repo_config'].values()
+            for alias in r.aliases}
         eclasses = [repo_map[x] for x in masters]
 
     # add the repo's eclass directories if it's not specified.

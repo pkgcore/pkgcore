@@ -344,7 +344,7 @@ class StoreRepoObject(StoreConfigObject):
                         with suppress_logging():
                             repo_obj = self.domain.add_repo(
                                 repo, config=self.config, configure=configure)
-                        repo = repo_obj.repo_id
+                        repo = repo_obj.location
                     except repo_errors.RepoError as e:
                         raise argparse.ArgumentError(self, e)
                     if hasattr(self.domain, '_' + self.repo_key):

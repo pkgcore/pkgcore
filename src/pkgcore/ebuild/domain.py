@@ -621,7 +621,7 @@ class domain(config_domain):
             wrapped_repo = self.filter_repo(wrapped_repo)
         return wrapped_repo
 
-    def add_repo(self, path, config, name=None, configure=True, **kwargs):
+    def add_repo(self, path, config, configure=True, **kwargs):
         """Add an external repo to the domain."""
         path = os.path.abspath(path)
         # don't recreate existing repos

@@ -310,8 +310,8 @@ class UnconfiguredTree(prototype.tree):
                 pjoin(self.location, 'eclass'), location=self.location)
         self.eclass_cache = eclass_cache
 
-        self.masters = masters
-        self.trees = tuple(masters) + (self,)
+        self.masters = tuple(masters)
+        self.trees = self.masters + (self,)
         self.licenses = repo_objs.Licenses(self.location)
         self.profiles = self.config.profiles
         if masters:
@@ -610,19 +610,28 @@ def tree(config, repo_config, cache=(), eclass_cache=None,
             raise errors.InitializationError(
                 f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
 
-    aliases = (r.aliases for r in config.objects['repo_config'].values())
-    if missing := set(repo_config.masters).difference(chain.from_iterable(aliases)):
-        missing = ', '.join(map(repr, sorted(missing)))
-        raise errors.InitializationError(
-            f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
+    # map external repo ids to their config names
+    config_map = {
+        r.repo_id: r.location for r in config.objects['repo_config'].values() if r.external}
 
     try:
-        masters = tuple(config.objects['repo'][r] for r in repo_config.masters)
+        masters = []
+        missing = []
+        for r in repo_config.masters:
+            if repo := config.objects['repo'].get(config_map.get(r, r)):
+                masters.append(repo)
+            else:
+                missing.append(r)
     except RecursionError:
         repo_id = repo_config.repo_id
         masters = ', '.join(repo_config.masters)
         raise errors.InitializationError(
             f'{repo_id!r} repo has cyclic masters: {masters}')
+
+    if missing:
+        missing = ', '.join(map(repr, sorted(missing)))
+        raise errors.InitializationError(
+            f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
 
     if eclass_cache is None:
         eclass_cache = _sort_eclasses(config, repo_config)

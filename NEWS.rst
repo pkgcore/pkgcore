@@ -3,6 +3,26 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.11.6 (2021-03-19)
+---------------------------
+
+- pkgcore.pytest: Add support for keeping arches file updated.
+
+- pkgcore.ebuild.domain: Don't configure external repos by default.
+
+- pkgcore.ebuild.repository: Prefer using external repos over configured ones
+  for matching repo IDs.
+
+- Use tarball syncer for the gentoo repo by default and drop sqfs entries.
+
+- pkgcore.ebuild.repo_objs: Add 'external' attribute to signify an unconfigured
+  repo.
+
+- pmaint: Drop perl-rebuild subcommand.
+
+- pkgcore.ebuild.repo_objs: Support proxied attribute for maintainers.
+
+---------------------------
 pkgcore 0.11.5 (2021-03-12)
 ---------------------------
 

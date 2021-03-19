@@ -1,6 +1,7 @@
 import os
 import subprocess
 import textwrap
+from collections.abc import MutableSet
 from datetime import datetime
 
 import pytest
@@ -119,11 +120,57 @@ def make_git_repo(tmp_path_factory):
     return _make_git_repo
 
 
+class _FileSet(MutableSet):
+    """Set object that maps to file content updates for a given path."""
+
+    def __init__(self, path):
+        self._path = path
+        self._set = set()
+
+    def _sync(self):
+        with open(self._path, 'w') as f:
+            f.write('\n'.join(self._set) + '\n')
+
+    def __contains__(self, key):
+        return key in self._set
+
+    def __iter__(self):
+        return iter(self._set)
+
+    def __len__(self):
+        return len(self._set)
+
+    def update(self, iterable):
+        orig_entries = len(self._set)
+        self._set.update(iterable)
+        if len(self._set) != orig_entries:
+            self._sync()
+
+    def add(self, value):
+        orig_entries = len(self._set)
+        self._set.add(value)
+        if len(self._set) != orig_entries:
+            self._sync()
+
+    def remove(self, value):
+        orig_entries = len(self._set)
+        self._set.remove(value)
+        if len(self._set) != orig_entries:
+            self._sync()
+
+    def discard(self, value):
+        orig_entries = len(self._set)
+        self._set.discard(value)
+        if len(self._set) != orig_entries:
+            self._sync()
+
+
 class EbuildRepo:
     """Class for creating/manipulating ebuild repos."""
 
     def __init__(self, path, repo_id='fake', eapi='5', masters=(), arches=()):
         self.path = path
+        self.arches = _FileSet(pjoin(self.path, 'profiles', 'arch.list'))
         self._today = datetime.today()
         try:
             os.makedirs(pjoin(path, 'profiles'))
@@ -139,17 +186,13 @@ class EbuildRepo:
                     thin-manifests = true
                 """))
             if arches:
-                self.add_arches(arches)
+                self.arches.update(arches)
             os.makedirs(pjoin(path, 'eclass'))
         except FileExistsError:
             pass
         # forcibly create repo_config object, otherwise cached version might be used
         repo_config = repo_objs.RepoConfig(location=path, disable_inst_caching=True)
         self._repo = repository.UnconfiguredTree(path, repo_config=repo_config)
-
-    def add_arches(self, arches):
-        with open(pjoin(self.path, 'profiles', 'arch.list'), 'a+') as f:
-            f.write('\n'.join(arches) + '\n')
 
     def create_profiles(self, profiles):
         for p in profiles:
@@ -170,6 +213,7 @@ class EbuildRepo:
 
     def create_ebuild(self, cpvstr, data=None, **kwargs):
         cpv = cpv_mod.VersionedCPV(cpvstr)
+        self._repo.notify_add_package(cpv)
         ebuild_dir = pjoin(self.path, cpv.category, cpv.package)
         os.makedirs(ebuild_dir, exist_ok=True)
 

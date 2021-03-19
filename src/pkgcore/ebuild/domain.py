@@ -624,33 +624,37 @@ class domain(config_domain):
     def add_repo(self, path, config, configure=True, **kwargs):
         """Add an external repo to the domain."""
         path = os.path.abspath(path)
-        # don't recreate existing repos
-        for repo in self.source_repos_raw:
-            if repo.location == path:
-                return repo
+
+        # return repo if it's already registered
         try:
-            # forcibly create repo_config object, otherwise cached version might be used
+            return next(r for r in self.source_repos_raw if r.location == path)
+        except StopIteration:
+            pass
+
+        # forcibly create repo_config object, otherwise cached version might be used
+        try:
             repo_config = RepoConfig(path, disable_inst_caching=True)
         except OSError as e:
             raise repo_errors.InvalidRepo(str(e))
+
         if repo_config.cache_format is not None:
             # default to using md5 cache
             kwargs['cache'] = (md5_cache(path),)
-        repo_obj = ebuild_repo.tree(config, repo_config, **kwargs)
-        self.source_repos_raw += repo_obj
+        repo = ebuild_repo.tree(config, repo_config, **kwargs)
+        self.source_repos_raw += repo
 
         # inject repo objects into config to dynamically register repo
         data = {}
-        repo_conf = {
+        repo_conf_data = {
             'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
             'location': path,
         }
-        repo = {
+        repo_data = {
             'inherit': ('ebuild-repo-common',),
             'repo_config': f'conf:{path}',
         }
-        data[f'conf:{path}'] = basics.AutoConfigSection(repo_conf)
-        data[path] = basics.AutoConfigSection(repo)
+        data[f'conf:{path}'] = basics.AutoConfigSection(repo_conf_data)
+        data[path] = basics.AutoConfigSection(repo_data)
         config.update(data)
 
         # reset repo-related jit attrs
@@ -658,8 +662,8 @@ class domain(config_domain):
             setattr(self, attr, None)
 
         if configure:
-            return self._wrap_repo(repo_obj)
-        return repo_obj
+            repo = self._wrap_repo(repo)
+        return repo
 
     def find_repo(self, path, config, configure=True):
         """Find and add an external repo to the domain given a path."""
@@ -673,7 +677,6 @@ class domain(config_domain):
 
     def _configure_repo(self, repo):
         """Configure a raw repo."""
-        configured_repo = repo
         if not repo.configured:
             pargs = [repo]
             try:
@@ -690,8 +693,8 @@ class domain(config_domain):
                 raise Failure(
                     f"failed configuring repo {repo!r}: "
                     f"configurable missing: {e}") from e
-            configured_repo = repo.configure(*pargs)
-        return configured_repo
+            repo = repo.configure(*pargs)
+        return repo
 
     def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None, pkg_filters=None,
                     pkg_accept_keywords=None, pkg_keywords=None, profile=True):

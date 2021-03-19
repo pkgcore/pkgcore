@@ -621,7 +621,7 @@ class domain(config_domain):
             wrapped_repo = self.filter_repo(wrapped_repo)
         return wrapped_repo
 
-    def add_repo(self, path, config, configure=True, **kwargs):
+    def add_repo(self, path, config, configure=False, **kwargs):
         """Add an external repo to the domain."""
         path = os.path.abspath(path)
 
@@ -665,7 +665,7 @@ class domain(config_domain):
             repo = self._wrap_repo(repo)
         return repo
 
-    def find_repo(self, path, config, configure=True):
+    def find_repo(self, path, config, configure=False):
         """Find and add an external repo to the domain given a path."""
         path = os.path.abspath(path)
         with suppress_logging():

@@ -9,16 +9,6 @@ class FetchError(PkgcoreUserException):
     """Generic fetch exception."""
 
 
-class DistdirPerms(FetchError):
-
-    def __init__(self, distdir, required):
-        super().__init__(
-            f"distdir {distdir} required fs attributes "
-            f"weren't enforcable: {required}"
-        )
-        self.distdir, self.required = distdir, required
-
-
 class UnmodifiableFile(FetchError):
 
     def __init__(self, filename, extra=''):

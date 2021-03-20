@@ -93,18 +93,6 @@ class fetcher(base.fetcher):
             raise TypeError(
                 f"target must be fetchable instance/derivative: {target}")
 
-        kw = {"mode": 0o775}
-        if self.readonly:
-            kw["mode"] = 0o555
-        if self.userpriv:
-            kw["gid"] = portage_gid
-        kw["minimal"] = True
-        if not ensure_dirs(self.distdir, **kw):
-            raise errors.DistdirPerms(
-                self.distdir, "if userpriv, uid must be %i, gid must be %i. "
-                "if not readonly, directory must be 0775, else 0555" % (
-                    portage_uid, portage_gid))
-
         path = pjoin(self.distdir, target.filename)
         uris = iter(target.uri)
         last_exc = RuntimeError("fetching failed for an unknown reason")

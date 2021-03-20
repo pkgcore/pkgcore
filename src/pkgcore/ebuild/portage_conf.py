@@ -519,7 +519,7 @@ class PortageConfig(DictMixin):
 
         fetcher_dict = {
             "class": "pkgcore.fetch.custom.fetcher",
-            "distdir": os.path.normpath(os.environ.get("DISTDIR", make_conf.pop("DISTDIR"))),
+            "distdir": os.path.normpath(make_conf.pop("DISTDIR")),
             "command": fetchcommand,
             "resume_command": resumecommand,
             "attempts": make_conf.pop("FETCH_ATTEMPTS", '10'),

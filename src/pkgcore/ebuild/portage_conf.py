@@ -190,14 +190,18 @@ class PortageConfig(DictMixin):
                 del repos_conf[repo_name]
                 continue
 
-            self[repo_name] = basics.AutoConfigSection(repo)
+            # only register existent repos
+            if os.path.exists(repo_opts['location']):
+                self[repo_name] = basics.AutoConfigSection(repo)
+            else:
+                del repos_conf[repo_name]
 
         # XXX: Hack for portage-2 profile format support. We need to figure out how
         # to dynamically create this from the config at runtime on attr access.
         profiles.ProfileNode._repo_map = ImmutableDict(repo_map)
 
         self._make_repo_syncers(repos_conf, make_conf)
-        repos = [name for name in repos_conf.keys()]
+        repos = list(repos_conf)
         if repos:
             self['repo-stack'] = basics.FakeIncrementalDictConfigSection(
                 my_convert_hybrid, {

@@ -10,6 +10,7 @@ __all__ = (
 import configparser
 import errno
 import os
+import sys
 from collections import OrderedDict
 
 from snakeoil.bash import read_bash_dict
@@ -107,15 +108,22 @@ class PortageConfig(DictMixin):
             dict: config settings
         """
         self._config = {}
+        stubconfig = pjoin(const.DATA_PATH, 'stubconfig')
 
         if location is None:
-            location = '/etc/portage'
-            # fallback to stub config and profile on non-Gentoo systems
-            if not os.path.exists(location):
-                location = pjoin(const.DATA_PATH, 'stubconfig')
-                profile_override = pjoin(const.DATA_PATH, 'stubrepo/profiles/default')
-        elif location == pjoin(const.DATA_PATH, 'stubconfig'):
-            # override profile when using stub config
+            path = os.path.abspath(sys.prefix)
+            while (parent := os.path.dirname(path)) != path:
+                config_root = pjoin(parent, 'etc/portage')
+                if os.path.exists(config_root):
+                    location = config_root
+                    break
+                path = parent
+            else:
+                # fallback to stub config non-Gentoo systems
+                location = stubconfig
+
+        # override profile when using stub config
+        if location == stubconfig:
             profile_override = pjoin(const.DATA_PATH, 'stubrepo/profiles/default')
 
         self.dir = pjoin(

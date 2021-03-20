@@ -14,7 +14,7 @@ from . import central, cparser
 
 def load_config(user_conf_file=const.USER_CONF_FILE,
                 system_conf_file=const.SYSTEM_CONF_FILE,
-                debug=False, prepend_sources=(), append_sources=(),
+                debug=False, prepend_sources=(),
                 skip_config_files=False, profile_override=None,
                 location=None, **kwargs):
     """The main entry point for any code looking to use pkgcore.
@@ -43,5 +43,4 @@ def load_config(user_conf_file=const.USER_CONF_FILE,
             from pkgcore.ebuild.portage_conf import PortageConfig
             configs.append(PortageConfig(
                 location=location, profile_override=profile_override, **kwargs))
-    configs.extend(append_sources)
     return central.CompatConfigManager(central.ConfigManager(configs, debug=debug))

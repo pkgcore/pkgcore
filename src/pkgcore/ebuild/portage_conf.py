@@ -99,7 +99,6 @@ class PortageConfig(DictMixin):
                 (defaults to /etc/portage)
             profile_override (optional[str]): profile to use instead of the current system
                 profile, i.e. the target of the /etc/portage/make.profile symlink
-            configroot (optional[str]): location for various portage config files (defaults to /)
             root (optional[str]): target root filesystem (defaults to /)
             buildpkg (optional[bool]): forcibly disable/enable building binpkgs, otherwise
                 FEATURES=buildpkg from make.conf is used
@@ -126,7 +125,7 @@ class PortageConfig(DictMixin):
         if location == stubconfig:
             profile_override = pjoin(const.DATA_PATH, 'stubrepo/profiles/default')
 
-        self.dir = pjoin(kwargs.pop('configroot', '/'), location.lstrip('/'))
+        self.dir = location
 
         # this actually differs from portage parsing- we allow
         # make.globals to provide vars used in make.conf, portage keeps

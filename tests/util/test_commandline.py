@@ -1,14 +1,6 @@
 import argparse
-import errno
-import io
-import os
-import pty
-import sys
-import unittest
 
-import pytest
-
-from pkgcore.config import central, errors
+from pkgcore.config import central
 from pkgcore.test.scripts.helpers import ArgParseMixin
 from pkgcore.util import commandline
 
@@ -55,25 +47,3 @@ class TestModifyConfig(ArgParseMixin):
 
     def test_empty_config(self):
         assert self.parse('--empty-config', '--trigger')
-
-    def test_modify_config(self):
-        namespace = self.parse(
-            '--empty-config', '--new-config',
-            'foo', 'class', 'tests.util.test_commandline.sect',
-            '--trigger')
-        assert namespace.config.collapse_named_section('foo')
-
-        namespace = self.parse(
-            '--empty-config', '--new-config',
-            'foo', 'class', 'tests.util.test_commandline.missing',
-            '--add-config', 'foo', 'class',
-            'tests.util.test_commandline.sect',
-            '--trigger')
-        assert namespace.config.collapse_named_section('foo')
-
-        namespace = self.parse(
-            '--empty-config',
-            '--add-config', 'foo', 'inherit', 'missing',
-            '--trigger')
-        with pytest.raises(errors.ConfigurationError):
-            namespace.config.collapse_named_section('foo')

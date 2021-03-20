@@ -6,8 +6,6 @@ unset SHELL_LIB
 
 common_main_args=(
   '(- :)'--version'[show version information and exit]'
-  '--add-config[modify an existing configuration section]'
-  '--new-config[add a new configuration section]'
   '--empty-config[do not load user/system configuration]'
   '--config[override location of config files]:config path:_files'
   "--color[Color output]:yes/no:((y\:'yes' n\:'no'))"

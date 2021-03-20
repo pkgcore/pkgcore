@@ -491,30 +491,10 @@ def register_command(commands, real_type=type):
     return f
 
 
-def _convert_config_mods(iterable):
-    d = {}
-    if iterable is None:
-        return d
-    for (section, key, value) in iterable:
-        d.setdefault(section, {})[key] = value
-    return d
-
-
 def store_config(namespace, attr, global_config=()):
-    configs = list(map(
-        _convert_config_mods, [namespace.pop('new_config', None), namespace.pop('add_config', None)]))
-    # add necessary inherits for add_config
-    for key, vals in configs[1].items():
-        vals.setdefault('inherit', key)
-
-    configs = [{section: basics.ConfigSectionFromStringDict(vals)
-                for section, vals in d.items()}
-               for d in configs if d]
-
     config = load_config(
         skip_config_files=namespace.pop('empty_config', False),
         prepend_sources=tuple(global_config),
-        append_sources=tuple(configs),
         location=namespace.pop('override_config', None),
         profile_override=namespace.pop('profile_override', None),
         **vars(namespace))
@@ -548,14 +528,6 @@ class ArgumentParser(arghparse.ArgumentParser):
         if not suppress:
             config_opts = self.add_argument_group("config options")
             if config:
-                config_opts.add_argument(
-                    '--add-config', nargs=3, action='append',
-                    metavar=('SECTION', 'KEY', 'VALUE'),
-                    help='modify existing pkgcore config section' if help else argparse.SUPPRESS)
-                config_opts.add_argument(
-                    '--new-config', nargs=3, action='append',
-                    metavar=('SECTION', 'KEY', 'VALUE'),
-                    help='add new pkgcore config section' if help else argparse.SUPPRESS)
                 config_opts.add_argument(
                     '--empty-config', action='store_true',
                     help='skip loading user/system pkgcore config' if help else argparse.SUPPRESS)

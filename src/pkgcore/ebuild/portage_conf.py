@@ -126,9 +126,7 @@ class PortageConfig(DictMixin):
         if location == stubconfig:
             profile_override = pjoin(const.DATA_PATH, 'stubrepo/profiles/default')
 
-        self.dir = pjoin(
-            os.environ.get('PORTAGE_CONFIGROOT', kwargs.pop('configroot', '/')),
-            location.lstrip('/'))
+        self.dir = pjoin(kwargs.pop('configroot', '/'), location.lstrip('/'))
 
         # this actually differs from portage parsing- we allow
         # make.globals to provide vars used in make.conf, portage keeps

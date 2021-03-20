@@ -6,7 +6,7 @@ __all__ = ("MalformedCommand", "fetcher",)
 
 import os
 
-from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import is_userpriv_capable, spawn_bash
 
 from ..config.hint import ConfigHint

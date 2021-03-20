@@ -6,19 +6,16 @@ __all__ = ("UnconfiguredTree", "ConfiguredTree", "ProvidesRepo", "tree")
 
 import locale
 import os
-import stat
 from functools import partial, wraps
 from itertools import chain, filterfalse
-from operator import attrgetter
 from random import shuffle
 from sys import intern
 from weakref import WeakValueDictionary
 
 from snakeoil import chksum, klass
-from snakeoil.bash import iter_read_bash, read_dict
+from snakeoil.bash import read_dict
 from snakeoil.containers import InvertedContains
 from snakeoil.data_source import local_source
-from snakeoil.fileutils import readlines
 from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
@@ -27,17 +24,14 @@ from snakeoil.strings import pluralism as _pl
 
 from .. import fetch
 from ..config.hint import ConfigHint, configurable
-from ..fs.livefs import sorted_scan
 from ..log import logger
 from ..operations import repo as _repo_ops
 from ..package import errors as pkg_errors
 from ..repository import configured, errors, prototype, util
 from ..repository.virtual import RestrictionRepo
 from ..restrictions import packages
-from ..util.packages import groupby_pkg
-from . import atom, cpv, digest, ebd, ebuild_src
+from . import cpv, digest, ebd, ebuild_src
 from . import eclass_cache as eclass_cache_mod
-from . import errors as ebuild_errors
 from . import processor, repo_objs, restricts
 from .eapi import get_eapi
 

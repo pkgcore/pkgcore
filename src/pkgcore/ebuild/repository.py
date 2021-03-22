@@ -30,6 +30,7 @@ from ..package import errors as pkg_errors
 from ..repository import configured, errors, prototype, util
 from ..repository.virtual import RestrictionRepo
 from ..restrictions import packages
+from ..util import packages as pkgutils
 from . import cpv, digest, ebd, ebuild_src
 from . import eclass_cache as eclass_cache_mod
 from . import processor, repo_objs, restricts
@@ -38,53 +39,18 @@ from .eapi import get_eapi
 
 class repo_operations(_repo_ops.operations):
 
-    def _cmd_implementation_digests(self, domain, matches, observer,
-                                    mirrors=False, force=False):
+    def _cmd_implementation_manifest(self, domain, restriction, observer,
+                                     mirrors=False, force=False):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
-            observer.info(f"repo {self.repo.repo_id} has manifests disabled")
+            observer.info(f'{self.repo.repo_id} repo has manifests disabled')
             return
         required_chksums = set(manifest_config.required_hashes)
         write_chksums = manifest_config.hashes
         distdir = domain.fetcher.distdir
         ret = set()
 
-        for key_query in sorted(set(match.unversioned_atom for match in matches)):
-            pkgs = self.repo.match(key_query)
-
-            # check for pkgs masked by bad metadata
-            bad_metadata = self.repo._bad_masked.match(key_query)
-            if bad_metadata:
-                for pkg in bad_metadata:
-                    e = pkg.data
-                    error_str = f"{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}"
-                    observer.error(error_str)
-                    ret.add(key_query)
-                continue
-
-            # Check for bad ebuilds -- mismatched or invalid PNs won't be
-            # matched by regular restrictions so they will otherwise be
-            # ignored.
-            ebuilds = {
-                x for x in listdir_files(pjoin(self.repo.location, str(key_query)))
-                if x.endswith('.ebuild')
-            }
-            unknown_ebuilds = ebuilds.difference(os.path.basename(x.path) for x in pkgs)
-            if unknown_ebuilds:
-                error_str = (
-                    f"{key_query}: invalid ebuild{_pl(unknown_ebuilds)}: "
-                    f"{', '.join(unknown_ebuilds)}"
-                )
-                observer.error(error_str)
-                ret.add(key_query)
-                continue
-
-            # empty package dir
-            if not pkgs:
-                continue
-
-            manifest = pkgs[0].manifest
-
+        for pkgs in pkgutils.groupby_pkg(self.repo.itermatch(restriction, sorter=sorted)):
             # all pkgdir fetchables
             pkgdir_fetchables = {}
             for pkg in pkgs:
@@ -107,29 +73,29 @@ class repo_operations(_repo_ops.operations):
 
             # Manifest files aren't necessary with thin manifests and no distfiles
             if manifest_config.thin and not pkgdir_fetchables:
-                if os.path.exists(manifest.path):
+                if os.path.exists(pkg.manifest.path):
                     try:
-                        os.remove(manifest.path)
+                        os.remove(pkg.manifest.path)
                     except EnvironmentError as e:
                         observer.error(
                             'failed removing old manifest: '
-                            f'{key_query}::{self.repo.repo_id}: {e}')
-                        ret.add(key_query)
+                            f'{pkg.key}::{self.repo.repo_id}: {e}')
+                        ret.add(pkg.key)
                 continue
 
             # Manifest file is current and not forcing a refresh
-            if not force and manifest.distfiles.keys() == pkgdir_fetchables.keys():
+            if not force and pkg.manifest.distfiles.keys() == pkgdir_fetchables.keys():
                 continue
 
-            pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
+            pkg_ops = domain.pkg_operations(pkg, observer=observer)
             if not pkg_ops.supports("fetch"):
-                observer.error(f"pkg {pkg} doesn't support fetching, can't generate manifest")
-                ret.add(key_query)
+                observer.error(f"{pkg.key}: fetching unsupported, can't generate manifest")
+                ret.add(pkg.key)
                 continue
 
             # fetch distfiles
             if not pkg_ops.fetch(list(fetchables.values()), observer):
-                ret.add(key_query)
+                ret.add(pkg.key)
                 continue
 
             # calculate checksums for fetched distfiles
@@ -140,13 +106,13 @@ class repo_operations(_repo_ops.operations):
                     fetchable.chksums = dict(zip(write_chksums, chksums))
             except chksum.MissingChksumHandler as e:
                 observer.error(f'failed generating chksum: {e}')
-                ret.add(key_query)
+                ret.add(pkg.key)
                 break
 
-            if key_query not in ret:
+            if pkg.key not in ret:
                 fetchables.update(pkgdir_fetchables)
-                observer.info(f"generating manifest: {key_query}::{self.repo.repo_id}")
-                manifest.update(sorted(fetchables.values()), chfs=write_chksums)
+                observer.info(f"generating manifest: {pkg.key}::{self.repo.repo_id}")
+                pkg.manifest.update(sorted(fetchables.values()), chfs=write_chksums)
 
         return ret
 

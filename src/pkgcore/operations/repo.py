@@ -274,14 +274,11 @@ class operations(sync_operations):
         for cache in self._get_caches():
             cache.commit(force=True)
 
-    def _cmd_api_digests(self, domain, restriction, observer=None,
-                         mirrors=False, force=False):
+    def _cmd_api_manifest(self, domain, restriction, observer=None,
+                          mirrors=False, force=False):
         observer = self._get_observer(observer)
-        matches = self.repo.match(restriction)
-        if not matches:
-            return matches
-        return self._cmd_implementation_digests(
-            domain, matches, observer, mirrors, force)
+        return self._cmd_implementation_manifest(
+            domain, restriction, observer, mirrors, force)
 
 
 class operations_proxy(operations):

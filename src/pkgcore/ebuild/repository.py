@@ -244,9 +244,7 @@ class UnconfiguredTree(prototype.tree):
     Return packages don't have USE configuration bound to them.
     """
 
-    false_categories = frozenset([
-        "eclass", "profiles", "packages", "distfiles", "metadata",
-        "licenses", "scripts", "CVS", "local"])
+    false_categories = frozenset(["eclass", "profiles", "metadata", "licenses"])
     configured = False
     configurables = ("domain", "settings")
     configure = None

@@ -20,7 +20,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance, stable_unique
-from snakeoil.strings import pluralism as _pl
+from snakeoil.strings import pluralism
 
 from .. import fetch
 from ..config.hint import ConfigHint, configurable
@@ -50,7 +50,34 @@ class repo_operations(_repo_ops.operations):
         distdir = domain.fetcher.distdir
         ret = set()
 
-        for pkgs in pkgutils.groupby_pkg(self.repo.itermatch(restriction, sorter=sorted)):
+        matches = self.repo.itermatch(restriction, sorter=sorted)
+        for pkgs in map(list, pkgutils.groupby_pkg(matches)):
+            key = pkgs[0].key
+            manifest = pkgs[0].manifest
+
+            # check for pkgs masked by bad metadata
+            if bad_metadata := self.repo._bad_masked.match(pkgs[0].unversioned_atom):
+                for pkg in bad_metadata:
+                    e = pkg.data
+                    error_str = f"{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}"
+                    observer.error(error_str)
+                    ret.add(pkg.key)
+                continue
+
+            # Check for bad ebuilds -- mismatched or invalid PNs won't be
+            # matched by regular restrictions so they will otherwise be
+            # ignored.
+            ebuilds = {
+                x for x in listdir_files(pjoin(self.repo.location, key))
+                if x.endswith('.ebuild')
+            }
+            if unknown_ebuilds := ebuilds.difference(os.path.basename(x.path) for x in pkgs):
+                s = pluralism(unknown_ebuilds)
+                error_str = f"{key}: invalid ebuild{s}: {', '.join(unknown_ebuilds)}"
+                observer.error(error_str)
+                ret.add(key)
+                continue
+
             # all pkgdir fetchables
             pkgdir_fetchables = {}
             for pkg in pkgs:
@@ -73,29 +100,29 @@ class repo_operations(_repo_ops.operations):
 
             # Manifest files aren't necessary with thin manifests and no distfiles
             if manifest_config.thin and not pkgdir_fetchables:
-                if os.path.exists(pkg.manifest.path):
+                if os.path.exists(manifest.path):
                     try:
-                        os.remove(pkg.manifest.path)
+                        os.remove(manifest.path)
                     except EnvironmentError as e:
                         observer.error(
                             'failed removing old manifest: '
-                            f'{pkg.key}::{self.repo.repo_id}: {e}')
-                        ret.add(pkg.key)
+                            f'{key}::{self.repo.repo_id}: {e}')
+                        ret.add(key)
                 continue
 
             # Manifest file is current and not forcing a refresh
-            if not force and pkg.manifest.distfiles.keys() == pkgdir_fetchables.keys():
+            if not force and manifest.distfiles.keys() == pkgdir_fetchables.keys():
                 continue
 
             pkg_ops = domain.pkg_operations(pkg, observer=observer)
             if not pkg_ops.supports("fetch"):
-                observer.error(f"{pkg.key}: fetching unsupported, can't generate manifest")
-                ret.add(pkg.key)
+                observer.error(f"{key}: fetching unsupported, can't generate manifest")
+                ret.add(key)
                 continue
 
             # fetch distfiles
             if not pkg_ops.fetch(list(fetchables.values()), observer):
-                ret.add(pkg.key)
+                ret.add(key)
                 continue
 
             # calculate checksums for fetched distfiles
@@ -106,13 +133,13 @@ class repo_operations(_repo_ops.operations):
                     fetchable.chksums = dict(zip(write_chksums, chksums))
             except chksum.MissingChksumHandler as e:
                 observer.error(f'failed generating chksum: {e}')
-                ret.add(pkg.key)
+                ret.add(key)
                 break
 
-            if pkg.key not in ret:
+            if key not in ret:
                 fetchables.update(pkgdir_fetchables)
-                observer.info(f"generating manifest: {pkg.key}::{self.repo.repo_id}")
-                pkg.manifest.update(sorted(fetchables.values()), chfs=write_chksums)
+                observer.info(f"generating manifest: {key}::{self.repo.repo_id}")
+                manifest.update(sorted(fetchables.values()), chfs=write_chksums)
 
         return ret
 
@@ -648,10 +675,10 @@ class ConfiguredTree(configured.tree):
             for getting access to fetchable files
         """
         required_settings = {'USE', 'CHOST'}
-        missing_settings = required_settings.difference(domain_settings)
-        if missing_settings:
+        if missing_settings := required_settings.difference(domain_settings):
+            s = pluralism(missing_settings)
             raise errors.InitializationError(
-                f"{self.__class__} missing required setting{_pl(missing_settings)}: "
+                f"{self.__class__} missing required setting{s}: "
                 f"{', '.join(map(repr, missing_settings))}")
 
         chost = domain_settings['CHOST']

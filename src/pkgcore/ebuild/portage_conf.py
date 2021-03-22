@@ -238,7 +238,6 @@ class PortageConfig(DictMixin):
             'default': True,
             'vdb': ('vdb',),
             'profile': 'profile',
-            'name': 'livefs',
             'root': self.root,
             'config_dir': self.dir,
         })

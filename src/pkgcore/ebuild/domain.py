@@ -178,7 +178,7 @@ class domain(config_domain):
     # XXX ouch, verify this crap and add defaults and stuff
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
-        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo', 'name': 'str',
+        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
     }
     for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
                    'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
@@ -187,15 +187,13 @@ class domain(config_domain):
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
         _types, typename='domain',
-        required=['repos', 'profile', 'vdb', 'fetcher', 'name'],
+        required=['repos', 'profile', 'vdb', 'fetcher'],
         allow_unknowns=True)
 
     del _types, _thing
 
-    def __init__(self, profile, repos, vdb, name=None,
-                 root='/', config_dir='/etc/portage', prefix='/', *,
-                 fetcher, **settings):
-        self.name = name
+    def __init__(self, profile, repos, vdb, root='/', prefix='/',
+                 config_dir='/etc/portage', *, fetcher, **settings):
         self.root = settings["ROOT"] = root
         self.config_dir = config_dir
         self.prefix = prefix

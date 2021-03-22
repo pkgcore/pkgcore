@@ -390,7 +390,7 @@ class BooleanQuery(arghparse.DelayedValue):
         elif klass_type == 'or':
             self.klass = packages.OrRestriction
         elif callable(klass_type):
-            self.klass = klass
+            self.klass = klass_type
         else:
             raise ValueError(
                 "klass_type either needs to be 'or', 'and', "

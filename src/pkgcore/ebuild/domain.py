@@ -436,7 +436,7 @@ class domain(config_domain):
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(
                 pkg, and_pair, license_manager.groups, raw_accepted_licenses,
-                msg_prefix=f"while checking ACCEPT_LICENSE ")
+                msg_prefix="while checking ACCEPT_LICENSE ")
             if accepted.issuperset(and_pair):
                 return True
         return False
@@ -465,7 +465,6 @@ class domain(config_domain):
 
         if incremental:
             raise NotImplementedError(self._incremental_apply_keywords_filter)
-            #f = self._incremental_apply_keywords_filter
         else:
             f = self._apply_keywords_filter
         return delegate(partial(f, data))

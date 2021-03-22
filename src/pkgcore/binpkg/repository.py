@@ -232,6 +232,9 @@ class tree(prototype.tree):
         self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
         self.package_class = BinPkg(self)
 
+    def configure(self, *args):
+        return(ConfiguredTree(self, *args))
+
     def __str__(self):
         return self.repo_id
 
@@ -343,6 +346,3 @@ class ConfiguredTree(wrapper.tree):
         pkg = pkg._raw_pkg
         return ebd.built_operations(
             domain, pkg, initial_env=self.domain_settings, **kwargs)
-
-
-tree.configure = ConfiguredTree

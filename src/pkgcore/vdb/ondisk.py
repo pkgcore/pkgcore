@@ -17,7 +17,7 @@ from ..ebuild.errors import InvalidCPV
 from ..log import logger
 from ..package import base as pkg_base
 from ..repository import errors, prototype, wrapper
-from . import repo_ops
+from . import ebd, repo_ops
 from .contents import ContentsFile
 
 
@@ -27,7 +27,6 @@ class tree(prototype.tree):
     livefs = True
     configured = False
     configurables = ("domain", "settings")
-    configure = None
     package_factory = staticmethod(ebuild_built.generate_new_factory)
     operations_kls = repo_ops.operations
 
@@ -53,7 +52,7 @@ class tree(prototype.tree):
             if not stat.S_ISDIR(st.st_mode):
                 raise errors.InitializationError(
                     f"base not a dir: {self.location!r}")
-            elif not st.st_mode & (os.X_OK|os.R_OK):
+            elif not st.st_mode & (os.X_OK | os.R_OK):
                 raise errors.InitializationError(
                     f"base lacks read/executable: {self.location!r}")
         except FileNotFoundError:
@@ -62,6 +61,9 @@ class tree(prototype.tree):
             raise errors.InitializationError(f'lstat failed on base: {self.location!r}') from e
 
         self.package_class = self.package_factory(self)
+
+    def configure(self, *args):
+        return ConfiguredTree(self, *args)
 
     def _get_categories(self, *optional_category):
         # return if optional_category is passed... cause it's not yet supported
@@ -219,6 +221,3 @@ class ConfiguredTree(wrapper.tree, tree):
         pkg = pkg._raw_pkg
         return ebd.built_operations(
             domain, pkg, initial_env=self.domain_settings, **kwargs)
-
-
-tree.configure = ConfiguredTree

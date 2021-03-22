@@ -675,22 +675,22 @@ class domain(config_domain):
     def _configure_repo(self, repo):
         """Configure a raw repo."""
         if not repo.configured:
-            pargs = [repo]
+            args = []
             try:
                 for x in repo.configurables:
                     if x == "domain":
-                        pargs.append(self)
+                        args.append(self)
                     elif x == "settings":
-                        pargs.append(self.settings)
+                        args.append(self.settings)
                     elif x == "profile":
-                        pargs.append(self.profile)
+                        args.append(self.profile)
                     else:
-                        pargs.append(getattr(self, x))
+                        args.append(getattr(self, x))
             except AttributeError as e:
                 raise Failure(
                     f"failed configuring repo {repo!r}: "
                     f"configurable missing: {e}") from e
-            repo = repo.configure(*pargs)
+            repo = repo.configure(*args)
         return repo
 
     def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None, pkg_filters=None,

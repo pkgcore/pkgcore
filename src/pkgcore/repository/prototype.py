@@ -125,8 +125,6 @@ class tree:
         package_class: callable to generate a package instance, must override
         configured (bool): if a repo is unusable for merging/unmerging
             without being configured, set it to False
-        configure: if the repository isn't configured, must be a callable
-            yielding a configured form of the repository
         frozen_settable (bool): controls whether frozen is able to be set
             on initialization
         operations_kls: callable to generate a repo operations instance
@@ -143,7 +141,6 @@ class tree:
     livefs = False
     package_class = None
     configured = True
-    configure = None
     frozen_settable = True
     operations_kls = repo.operations
     pkg_masks = frozenset()
@@ -157,6 +154,10 @@ class tree:
         if self.frozen_settable:
             self.frozen = frozen
         self.lock = None
+
+    def configure(self, *args):
+        """Return a configured form of the repository."""
+        raise NotImplementedError(self, "configure")
 
     def _get_categories(self, *args):
         """this must return a list, or sequence"""

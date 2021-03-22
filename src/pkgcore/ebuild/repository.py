@@ -247,7 +247,6 @@ class UnconfiguredTree(prototype.tree):
     false_categories = frozenset(["eclass", "profiles", "metadata", "licenses"])
     configured = False
     configurables = ("domain", "settings")
-    configure = None
     package_factory = staticmethod(ebuild_src.generate_new_factory)
     enable_gpg = False
     extension = '.ebuild'
@@ -339,6 +338,9 @@ class UnconfiguredTree(prototype.tree):
     is_supported = klass.alias_attr('config.eapi.is_supported')
     external = klass.alias_attr('config.external')
     pkg_masks = klass.alias_attr('config.pkg_masks')
+
+    def configure(self, *args):
+        return ConfiguredTree(self, *args)
 
     @klass.jit_attr
     def known_arches(self):
@@ -771,6 +773,3 @@ class ConfiguredTree(configured.tree):
             fetcher = domain.fetcher
         return ebd.src_operations(
             domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher, **kwds)
-
-
-UnconfiguredTree.configure = ConfiguredTree

@@ -64,20 +64,6 @@ class repo_operations(_repo_ops.operations):
                     ret.add(pkg.key)
                 continue
 
-            # Check for bad ebuilds -- mismatched or invalid PNs won't be
-            # matched by regular restrictions so they will otherwise be
-            # ignored.
-            ebuilds = {
-                x for x in listdir_files(pjoin(self.repo.location, key))
-                if x.endswith('.ebuild')
-            }
-            if unknown_ebuilds := ebuilds.difference(os.path.basename(x.path) for x in pkgs):
-                s = pluralism(unknown_ebuilds)
-                error_str = f"{key}: invalid ebuild{s}: {', '.join(unknown_ebuilds)}"
-                observer.error(error_str)
-                ret.add(key)
-                continue
-
             # all pkgdir fetchables
             pkgdir_fetchables = {}
             for pkg in pkgs:

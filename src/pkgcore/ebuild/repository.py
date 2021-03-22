@@ -244,7 +244,6 @@ class UnconfiguredTree(prototype.tree):
     Return packages don't have USE configuration bound to them.
     """
 
-    false_packages = frozenset(["CVS", ".svn"])
     false_categories = frozenset([
         "eclass", "profiles", "packages", "distfiles", "metadata",
         "licenses", "scripts", "CVS", "local"])
@@ -445,8 +444,7 @@ class UnconfiguredTree(prototype.tree):
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
         try:
-            return tuple(filterfalse(
-                self.false_packages.__contains__, listdir_dirs(cpath)))
+            return tuple(listdir_dirs(cpath))
         except FileNotFoundError:
             if category in self.categories:
                 # ignore it, since it's PMS mandated that it be allowed.

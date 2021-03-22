@@ -22,7 +22,7 @@ from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.sequences import iflatten_instance, unstable_unique
 from snakeoil.strings import pluralism
 
-from ..config import basics, load_config
+from ..config import load_config
 from ..plugin import get_plugins
 from ..repository import errors as repo_errors
 from ..restrictions import packages, restriction

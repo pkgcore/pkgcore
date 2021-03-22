@@ -185,18 +185,11 @@ class TestUnconfiguredTree(TempDirMixin):
     def test_categories_packages(self):
         ensure_dirs(pjoin(self.dir, 'cat', 'pkg'))
         ensure_dirs(pjoin(self.dir, 'empty', 'empty'))
-        ensure_dirs(pjoin(self.dir, 'scripts', 'pkg'))
-        ensure_dirs(pjoin(self.dir, 'notcat', 'CVS'))
         touch(pjoin(self.dir, 'cat', 'pkg', 'pkg-3.ebuild'))
         repo = self.mk_tree(self.dir)
-        self.assertEqual(
-            {'cat': (), 'notcat': (), 'empty': ()}, dict(repo.categories))
-        self.assertEqual(
-            {'cat': ('pkg',), 'empty': ('empty',), 'notcat': ()},
-            dict(repo.packages))
-        self.assertEqual(
-            {('cat', 'pkg'): ('3',), ('empty', 'empty'): ()},
-            dict(repo.versions))
+        assert {'cat': (), 'empty': ()} == dict(repo.categories)
+        assert {'cat': ('pkg',), 'empty': ('empty',)} == dict(repo.packages)
+        assert {('cat', 'pkg'): ('3',), ('empty', 'empty'): ()} == dict(repo.versions)
 
     def test_package_mask(self):
         with open(pjoin(self.pdir, 'package.mask'), 'w') as f:

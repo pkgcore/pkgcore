@@ -11,13 +11,13 @@ from snakeoil.mappings import IndeterminantDict
 from snakeoil.osutils import listdir_dirs, pjoin
 
 from ..config.hint import ConfigHint
-from ..ebuild import ebuild_built
+from ..ebuild import ebd, ebuild_built
 from ..ebuild.cpv import VersionedCPV
 from ..ebuild.errors import InvalidCPV
 from ..log import logger
 from ..package import base as pkg_base
 from ..repository import errors, prototype, wrapper
-from . import ebd, repo_ops
+from . import repo_ops
 from .contents import ContentsFile
 
 

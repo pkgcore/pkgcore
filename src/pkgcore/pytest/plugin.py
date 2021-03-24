@@ -190,9 +190,12 @@ class EbuildRepo:
             os.makedirs(pjoin(path, 'eclass'))
         except FileExistsError:
             pass
-        # forcibly create repo_config object, otherwise cached version might be used
-        repo_config = repo_objs.RepoConfig(location=path, disable_inst_caching=True)
-        self._repo = repository.UnconfiguredTree(path, repo_config=repo_config)
+        self.sync()
+
+    def sync(self):
+        """Forcibly create underlying repo object avoiding cache usage."""
+        repo_config = repo_objs.RepoConfig(location=self.path, disable_inst_caching=True)
+        self._repo = repository.UnconfiguredTree(self.path, repo_config=repo_config)
 
     def create_profiles(self, profiles):
         for p in profiles:

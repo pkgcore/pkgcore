@@ -3,6 +3,26 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.11.7 (2021-03-26)
+---------------------------
+
+- pkgcore.ebuild.repository: Rewrite package manifesting support to allow
+  partial manifest writes via pkgdev.
+
+- pkgcore.ebuild.portage_conf: Drop PORTAGE_CONFIGROOT and DISTDIR env support.
+
+- pkgcore.ebuild.portage_conf: Handle finding the config directory for prefix
+  installs.
+
+- pkgcore.ebuild.portage_conf: Only register existent repos for the config, but
+  they're still registered as raw repo_config objects so they can be synced as
+  wanted.
+
+- pkgcore.config: Drop unused append_sources param for load_config().
+
+- pkgcore.util.commandline: Drop --new-config/--add-config options.
+
+---------------------------
 pkgcore 0.11.6 (2021-03-19)
 ---------------------------
 

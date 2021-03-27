@@ -49,11 +49,10 @@ jobs:
         twine check dist/*
         wheel2json dist/*.whl
 
-    - name: Upload files for tagged releases
+    - name: Upload files to pypi
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      # only upload files for tagged releases
       if: startsWith(github.ref, 'refs/tags/')
       run: |
         twine upload dist/*

@@ -263,8 +263,7 @@ class DisabledSyncer(Syncer):
 
 @configurable({'basedir': 'str', 'usersync': 'bool'}, typename='syncer')
 def AutodetectSyncer(basedir, **kwargs):
-    for plug in plugin.get_plugins('syncer'):
-        ret = plug.is_usable_on_filepath(basedir)
-        if ret is not None:
-            return plug(basedir, *ret, **kwargs)
+    for syncer_cls in plugin.get_plugins('syncer'):
+        if args := syncer_cls.is_usable_on_filepath(basedir):
+            return syncer_cls(basedir, *args, **kwargs)
     return DisabledSyncer(basedir, **kwargs)

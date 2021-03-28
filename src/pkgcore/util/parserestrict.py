@@ -99,14 +99,13 @@ def parse_match(text):
         slot, _sep, subslot = slot.partition('/')
         if slot:
             if '*' in slot:
-                r = convert_glob(slot)
-                if r is not None:
+                if r := convert_glob(slot):
                     restrictions.append(packages.PackageRestriction("slot", r))
             else:
                 restrictions.append(restricts.SlotDep(slot))
         if subslot:
             if '*' in subslot:
-                if r is not None:
+                if r := convert_glob(subslot):
                     restrictions.append(packages.PackageRestriction("subslot", r))
             else:
                 restrictions.append(restricts.SubSlotDep(subslot))
@@ -116,11 +115,10 @@ def parse_match(text):
         ops, text = collect_ops(text)
         if not ops:
             if "*" in text:
-                r = convert_glob(text)
-                if r is None:
-                    restrictions.append(packages.AlwaysTrue)
-                else:
+                if r := convert_glob(text):
                     restrictions.append(packages.PackageRestriction("package", r))
+                else:
+                    restrictions.append(packages.AlwaysTrue)
                 if len(restrictions) == 1:
                     return restrictions[0]
                 return packages.AndRestriction(*restrictions)

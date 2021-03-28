@@ -607,7 +607,7 @@ _pmerge() {
 
   output=(
     "--quiet-repo-display[use numbers to indicate repos instead of ::repo output in the package merge list]"
-    {'(--formatter)-F','(-F)--formatter'}'[output formatter to use]:formatter:((basic pkgcore portage portage-verbose paludis))'
+    {'(--formatter)-F','(-F)--formatter'}'[output formatter to use]:formatter:((basic pkgcore portage portage-verbose))'
   )
 
   _arguments -C -w -S -s -A '-*' \

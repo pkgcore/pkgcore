@@ -15,8 +15,5 @@ pkgcore_plugins = {
         'portage-verbose': basics.ConfigSectionFromStringDict({
             'class': 'pkgcore.ebuild.formatter.PortageVerboseFormatter',
             }),
-        'paludis': basics.ConfigSectionFromStringDict({
-            'class': 'pkgcore.ebuild.formatter.PaludisFormatter',
-            }),
     }],
 }

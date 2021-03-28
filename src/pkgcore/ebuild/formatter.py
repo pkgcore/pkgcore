@@ -3,7 +3,7 @@
 __all__ = (
     "Formatter", "use_expand_filter",
     "BasicFormatter", "PkgcoreFormatter", "CountingFormatter",
-    "PortageFormatter", "PortageVerboseFormatter", "PaludisFormatter",
+    "PortageFormatter", "PortageVerboseFormatter",
 )
 
 import operator
@@ -500,56 +500,3 @@ class PortageFormatter(CountingFormatter):
 
 class PortageVerboseFormatter(VerboseFormatter, PortageFormatter):
     """Formatter designed to resemble portage output in verbose mode."""
-
-
-class PaludisFormatter(CountingFormatter):
-    """Formatter designed to resemble paludis output."""
-
-    def format(self, op):
-        out = self.out
-        origautoline = out.autoline
-        out.autoline = False
-
-        out.write('* ')
-        out.write(out.fg('blue'), op.pkg.key)
-        out.write(f"-{op.pkg.fullver}")
-        out.write(f"::{op.pkg.repo.repo_id} ")
-        out.write(out.fg('blue'), f"{{:{op.pkg.slot}}} ")
-        op_type = op.desc
-        if op.desc == 'add':
-            suffix = 'N'
-            if op.pkg.slot != '0':
-                op_type = 'slotted_add'
-                suffix = 'S'
-            out.write(out.fg('yellow'), f"[{suffix}]")
-        elif op.desc == 'replace':
-            if op.pkg != op.old_pkg:
-                if op.pkg > op.old_pkg:
-                    op_type = 'upgrade'
-                else:
-                    op_type = 'downgrade'
-                out.write(
-                    out.fg('yellow'),
-                    f"[{op_type[0].upper()} {op.old_pkg.fullver}]")
-            else:
-                out.write(out.fg('yellow'), "[R]")
-        else:
-            # shouldn't reach here
-            logger.warning("unknown op type encountered: desc(%r), %r", op.desc, op)
-        self.visit_op(op_type)
-
-        red = out.fg('red')
-        green = out.fg('green')
-        flags = []
-        use = set(op.pkg.use)
-        for flag in sorted(op.pkg.iuse_stripped):
-            if flag in use:
-                flags.extend((green, flag, ' '))
-            else:
-                flags.extend((red, '-', flag, ' '))
-        if flags:
-            out.write(' ')
-            # Throw away the final space.
-            out.write(*flags[:-1])
-        out.write('\n')
-        out.autoline = origautoline

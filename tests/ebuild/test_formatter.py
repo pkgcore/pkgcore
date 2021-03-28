@@ -1,12 +1,10 @@
 import difflib
 
 from snakeoil.test import TestCase
-from snakeoil.test.argparse_helpers import (Bold, Color, FakeStreamFormatter,
-                                            Reset)
+from snakeoil.test.argparse_helpers import Bold, Color, FakeStreamFormatter, Reset
 
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.formatter import (BasicFormatter, PaludisFormatter,
-                                      PkgcoreFormatter, PortageFormatter)
+from pkgcore.ebuild.formatter import BasicFormatter, PkgcoreFormatter, PortageFormatter
 from pkgcore.test.misc import FakePkg, FakeRepo
 
 
@@ -296,71 +294,6 @@ class CountingFormatterTest(BaseFormatterTest):
         self.formatter.end()
         self.assertEnd(
             '\nTotal: 5 packages (1 new, 1 upgrade, 1 downgrade, 1 in new slot, 1 reinstall)')
-
-
-class TestPaludisFormatter(CountingFormatterTest, TestCase):
-    formatterClass = PaludisFormatter
-
-    def setUp(self):
-        BaseFormatterTest.setUp(self)
-        self.repo = FakeRepo(repo_id='gentoo', location='/var/gentoo/repos/gentoo')
-
-    def FakeEbuildSrc(self, *args, **kwargs):
-        kwargs.setdefault("repo", self.repo)
-        return FakeEbuildSrc(*args, **kwargs)
-
-    def test_upgrade(self):
-        self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.4'),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
-        self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2-1.0.4::gentoo ",
-            Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[U 1.0.3-r6]")
-
-    def test_downgrade(self):
-        self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
-            FakeMutatedPkg('app-arch/bzip2-1.0.4')))
-        self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2-1.0.3-r6::gentoo ",
-            Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[D 1.0.4]")
-
-    def test_reinstall(self):
-        self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
-        self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2-1.0.3-r6::gentoo ",
-            Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R]")
-
-    def test_nouse(self):
-        self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
-        self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2", "-1.0.3-r6", "::gentoo ",
-            Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
-            Color('fg', 'red'), "-static")
-
-    def test_iuse_defaults(self):
-        self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', eapi='1', iuse=['+static', '-junk'], use=['static']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
-        self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2", "-1.0.3-r6", "::gentoo ",
-            Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
-            Color('fg', 'red'), "-junk ", Color('fg', 'green'), "static")
-
-    def test_use(self):
-        self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
-        self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2", "-1.0.3-r6", "::gentoo ",
-            Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
-            Color('fg', 'green'), "static")
-
-    def test_multiuse(self):
-        self.formatter.format(
-            FakeOp(self.FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static', 'bootstrap'], use=['static']),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
-        self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2", "-1.0.3-r6", "::gentoo ",
-            Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
-            Color('fg', 'red'), "-bootstrap ", Color('fg', 'green'), "static")
 
 
 class TestPortageFormatter(BaseFormatterTest, TestCase):

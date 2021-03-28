@@ -250,7 +250,7 @@ output_options.add_argument(
     docs="""
         Select an output formatter to use for text formatting of --pretend or
         --ask output, currently available formatters include the following:
-        basic, pkgcore, portage, portage-verbose, and paludis.
+        basic, pkgcore, portage, and portage-verbose.
 
         The basic formatter is the nearest to simple text output and is
         intended for scripting while the portage/portage-verbose formatter

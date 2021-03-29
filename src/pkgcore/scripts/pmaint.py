@@ -354,42 +354,6 @@ def env_update_main(options, out, err):
     return 0
 
 
-mirror = subparsers.add_parser(
-    "mirror", parents=shared_options_domain,
-    description="mirror the sources for a package in full- grab everything that could be required")
-commandline.make_query(
-    mirror, nargs='+', dest='query',
-    help="query of which packages to mirror")
-mirror_opts = mirror.add_argument_group("subcommand options")
-mirror_opts.add_argument(
-    "-f", "--ignore-failures", action='store_true', default=False,
-    help="if a failure occurs, keep going",
-    docs="""
-        Keep going even if a failure occurs. By default, the first failure
-        encountered stops the process.
-    """)
-@mirror.bind_main_func
-def mirror_main(options, out, err):
-    domain = options.domain
-    warnings = False
-    for pkg in domain.all_source_repos.itermatch(options.query):
-        pkg_ops = domain.pkg_operations(pkg)
-        if not pkg_ops.supports("mirror"):
-            warnings = True
-            out.write(f"pkg {pkg} doesn't support mirroring\n")
-            continue
-        out.write(f"mirroring {pkg}")
-        if not pkg_ops.mirror():
-            out.error(f"pkg {pkg} failed to mirror")
-            if not options.ignore_failures:
-                return 2
-            out.info("ignoring..\n")
-            continue
-    if warnings:
-        return 1
-    return 0
-
-
 class EclassArgs(argparse.Action):
     """Determine eclass arguments for `pmaint eclass`."""
 

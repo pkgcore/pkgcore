@@ -44,8 +44,7 @@ from .processor import (ProcessorError, chuck_UnhandledCommand,
 class ebd:
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
-                 observer=None, clean=True, tmp_offset=None,
-                 allow_fetching=False):
+                 observer=None, clean=True, tmp_offset=None):
         """
         :param pkg:
             :class:`pkgcore.ebuild.ebuild_src.package`
@@ -56,7 +55,6 @@ class ebd:
             state of an ebuild processing, whether for unmerging, or
             walking phases during building
         """
-        self.allow_fetching = allow_fetching
         self.pkg = pkg
         self.eapi = pkg.eapi
 
@@ -667,28 +665,16 @@ class buildable(ebd, setup_mixin, format.build):
             self.env["ECLASSDIR"] = eclass_cache.eclassdir
 
         if self.setup_is_for_src:
-            self._init_distfiles_env()
-
-    def _init_distfiles_env(self):
-        # TODO: PORTAGE_ACTUAL_DISTDIR usage by vcs eclasses needs to be killed off
-        distdir_write = self.domain.fetcher.get_storage_path()
-        if distdir_write is None:
-            raise format.GenericBuildError(
-                "no usable distdir was found "
-                f"for PORTAGE_ACTUAL_DISTDIR from fetcher {self.domain.fetcher}")
-        self.env["PORTAGE_ACTUAL_DISTDIR"] = distdir_write
-        self.env["DISTDIR"] = normpath(
-            pjoin(self.builddir, "distdir"))
-        for x in ("PORTAGE_ACTUAL_DISTDIR", "DISTDIR"):
-            self.env[x] = os.path.realpath(self.env[x]).rstrip(os.sep) + os.sep
+            distdir = normpath(pjoin(self.builddir, "distdir"))
+            self.env['DISTDIR'] = os.path.realpath(distdir).rstrip(os.sep) + os.sep
 
     def _setup_distfiles(self):
-        if not self.verified_files and self.allow_fetching:
+        # fetch distfiles
+        if not self.verified_files:
             ops = self.domain.pkg_operations(self.pkg, observer=self.observer)
-            if not ops.fetch():
-                raise format.GenericBuildError("failed fetching required distfiles")
-            self.verified_files = ops._fetch_op.verified_files
+            self.verified_files = ops.fetch()
 
+        # symlink them into builddir
         if self.verified_files:
             try:
                 if os.path.exists(self.env["DISTDIR"]):
@@ -953,17 +939,16 @@ class ebuild_operations:
 
 class src_operations(ebuild_operations, format.build_operations):
 
-    def __init__(self, domain, pkg, eclass_cache, fetcher=None, observer=None):
+    def __init__(self, domain, pkg, eclass_cache, observer=None):
         format.build_operations.__init__(self, domain, pkg, observer=observer)
-        self._fetcher = fetcher
         self._eclass_cache = eclass_cache
 
     def _cmd_implementation_build(self, observer, verified_files,
-                                  clean=False, allow_fetching=False, force_test=False):
+                                  clean=False, force_test=False):
         return buildable(
             self.domain, self.pkg, verified_files,
             self._eclass_cache, observer=observer,
-            clean=clean, allow_fetching=allow_fetching, force_test=force_test)
+            clean=clean, force_test=force_test)
 
 
 class misc_operations(ebd):
@@ -981,9 +966,8 @@ class misc_operations(ebd):
 
 class built_operations(ebuild_operations, format.operations):
 
-    def __init__(self, domain, pkg, fetcher=None, observer=None, initial_env=None):
+    def __init__(self, domain, pkg, observer=None, initial_env=None):
         format.operations.__init__(self, domain, pkg, observer=observer)
-        self._fetcher = fetcher
         self._initial_env = initial_env
         self._localized_ebd = None
 

@@ -592,7 +592,7 @@ def main(options, out, err):
         world_list=world_list,
         verbosity=options.verbosity,
         installed_repos=domain.all_installed_repos,
-        distdir=domain.fetcher.get_storage_path(),
+        distdir=domain.distdir,
         quiet_repo_display=options.quiet_repo_display)
 
     # This mode does not care about sets and packages so bypass all that.

@@ -176,30 +176,27 @@ def load_property(filename, *, read_func=_read_config_file,
 class domain(config_domain):
 
     # XXX ouch, verify this crap and add defaults and stuff
-    _types = {
-        'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
-        'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
-    }
-    for _thing in ('root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
-                   'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
+    _types = {'profile': 'ref:profile', 'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo'}
+    for _thing in (
+            'root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS',
+            'PATH', 'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
         _types[_thing] = 'str'
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
         _types, typename='domain',
-        required=['repos', 'profile', 'vdb', 'fetcher'],
+        required=['repos', 'profile', 'vdb'],
         allow_unknowns=True)
 
     del _types, _thing
 
     def __init__(self, profile, repos, vdb, root='/', prefix='/',
-                 config_dir='/etc/portage', *, fetcher, **settings):
+                 config_dir='/etc/portage', **settings):
         self.root = settings["ROOT"] = root
         self.config_dir = config_dir
         self.prefix = prefix
         self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
         self.profile = profile
-        self.fetcher = fetcher
         self.__repos = repos
         self.__vdb = vdb
 
@@ -279,9 +276,17 @@ class domain(config_domain):
 
     @property
     def arch(self):
-        if "ARCH" not in self.settings:
+        try:
+            return self.settings['ARCH']
+        except KeyError:
             raise Failure("No ARCH setting detected from profile, or user config")
-        return self.settings['ARCH']
+
+    @property
+    def distdir(self):
+        try:
+            return self.settings['DISTDIR']
+        except KeyError:
+            raise Failure("No DISTDIR setting detected from config")
 
     @property
     def stable_arch(self):

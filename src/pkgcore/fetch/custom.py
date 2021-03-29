@@ -137,6 +137,3 @@ class fetcher(base.fetcher):
         if self._verify(path, fetchable) is None:
             return path
         return None
-
-    def get_storage_path(self):
-        return self.distdir

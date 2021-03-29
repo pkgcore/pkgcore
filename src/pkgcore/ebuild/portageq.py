@@ -123,11 +123,8 @@ def env_var(options, out, err):
     """
     return configuration defined variables.
     """
-    default_get = lambda d,k: d.settings.get(k, "")
-    distdir_get = lambda d,k: d.settings["fetcher"].distdir
-    envvar_getter = {"DISTDIR":distdir_get}
     for x in options.variable:
-        val = envvar_getter.get(x, default_get)(options.domain, x)
+        val = options.domain.settings.get(x, '')
         if not isinstance(val, str):
             val = ' '.join(val)
         out.write(str(val))

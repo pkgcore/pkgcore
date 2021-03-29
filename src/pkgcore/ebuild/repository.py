@@ -40,14 +40,16 @@ from .eapi import get_eapi
 class repo_operations(_repo_ops.operations):
 
     def _cmd_implementation_manifest(self, domain, restriction, observer,
-                                     mirrors=False, force=False):
+                                     mirrors=False, force=False, distdir=None):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
             observer.info(f'{self.repo.repo_id} repo has manifests disabled')
             return
         required_chksums = set(manifest_config.required_hashes)
         write_chksums = manifest_config.hashes
-        distdir = domain.fetcher.distdir
+
+        if distdir is None:
+            distdir = domain.distdir
         ret = set()
 
         matches = self.repo.itermatch(restriction, sorter=sorted)
@@ -100,14 +102,9 @@ class repo_operations(_repo_ops.operations):
             if not force and manifest.distfiles.keys() == pkgdir_fetchables.keys():
                 continue
 
-            pkg_ops = domain.pkg_operations(pkg, observer=observer)
-            if not pkg_ops.supports("fetch"):
-                observer.error(f"{key}: fetching unsupported, can't generate manifest")
-                ret.add(key)
-                continue
-
             # fetch distfiles
-            if not pkg_ops.fetch(list(fetchables.values()), observer):
+            pkg_ops = domain.pkg_operations(pkg, observer=observer)
+            if not pkg_ops.fetch(list(fetchables.values()), observer, distdir=distdir):
                 ret.add(key)
                 continue
 
@@ -653,12 +650,10 @@ class ConfiguredTree(configured.tree):
         )
     }
 
-    def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
+    def __init__(self, raw_repo, domain, domain_settings):
         """
         :param raw_repo: :obj:`UnconfiguredTree` instance
         :param domain_settings: environment settings to bind
-        :param fetcher: :obj:`pkgcore.fetch.base.fetcher` instance to use
-            for getting access to fetchable files
         """
         required_settings = {'USE', 'CHOST'}
         if missing_settings := required_settings.difference(domain_settings):
@@ -687,7 +682,6 @@ class ConfiguredTree(configured.tree):
 
         self.domain = domain
         self.domain_settings = domain_settings
-        self._fetcher_override = fetcher
         self._delayed_iuse = partial(make_kls(InvertedContains), InvertedContains)
 
     def _wrap_attr(config_wrappables):
@@ -747,8 +741,4 @@ class ConfiguredTree(configured.tree):
                 self._get_delayed_immutable, pkg, immutable)}
 
     def _generate_pkg_operations(self, domain, pkg, **kwds):
-        fetcher = self._fetcher_override
-        if fetcher is None:
-            fetcher = domain.fetcher
-        return ebd.src_operations(
-            domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher, **kwds)
+        return ebd.src_operations(domain, pkg, pkg.repo.eclass_cache, **kwds)

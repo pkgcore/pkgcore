@@ -274,11 +274,9 @@ class operations(sync_operations):
         for cache in self._get_caches():
             cache.commit(force=True)
 
-    def _cmd_api_manifest(self, domain, restriction, observer=None,
-                          mirrors=False, force=False):
+    def _cmd_api_manifest(self, domain, restriction, observer=None, **kwargs):
         observer = self._get_observer(observer)
-        return self._cmd_implementation_manifest(
-            domain, restriction, observer, mirrors, force)
+        return self._cmd_implementation_manifest(domain, restriction, observer, **kwargs)
 
 
 class operations_proxy(operations):

@@ -343,7 +343,7 @@ dist = subparsers.add_parser(
 dist_opts = dist.add_argument_group('distfile options')
 @dist.bind_final_check
 def _dist_validate_args(parser, namespace):
-    distdir = namespace.domain.fetcher.distdir
+    distdir = namespace.domain.distdir
     repo = namespace.repo
     if repo is None:
         repo = multiplex.tree(*get_virtual_repos(namespace.domain.source_repos, False))

@@ -224,16 +224,10 @@ class PortageConfig(DictMixin):
         if forced_buildpkg:
             make_conf['FEATURES'] += ' buildpkg'
 
-        # now add the fetcher- we delay it till here to clean out the environ
-        # it passes to the command.
-        # *everything* in make_conf must be str values also.
-        self._add_fetcher(make_conf)
-
         # finally... domain.
         make_conf.update({
             'class': 'pkgcore.ebuild.domain.domain',
             'repos': tuple(repos),
-            'fetcher': 'fetcher',
             'default': True,
             'vdb': ('vdb',),
             'profile': 'profile',
@@ -510,19 +504,6 @@ class PortageConfig(DictMixin):
                 "basepath": paths[0],
                 "profile": paths[1],
             })
-
-    def _add_fetcher(self, make_conf):
-        fetchcommand = make_conf.pop("FETCHCOMMAND")
-        resumecommand = make_conf.pop("RESUMECOMMAND", fetchcommand)
-
-        fetcher_dict = {
-            "class": "pkgcore.fetch.custom.fetcher",
-            "distdir": os.path.normpath(make_conf.pop("DISTDIR")),
-            "command": fetchcommand,
-            "resume_command": resumecommand,
-            "attempts": make_conf.pop("FETCH_ATTEMPTS", '10'),
-        }
-        self["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
     def _isolate_rsync_opts(self, options):
         """

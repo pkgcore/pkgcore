@@ -13,16 +13,11 @@ from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
 from snakeoil.process.spawn import spawn
 
 from ..const import CP_BINARY
-from ..plugin import get_plugin
 from . import contents, fs
 from .livefs import gen_obj
 
-__all__ = [
-    "merge_contents", "unmerge_contents", "default_ensure_perms",
-    "default_copyfile", "default_mkdir"]
 
-
-def default_ensure_perms(d1, d2=None):
+def ensure_perms(d1, d2=None):
 
     """Enforce a fs objects attributes on the livefs.
 
@@ -74,7 +69,7 @@ def default_ensure_perms(d1, d2=None):
     return True
 
 
-def default_mkdir(d):
+def mkdir(d):
     """
     mkdir for a fsDir object
 
@@ -87,7 +82,7 @@ def default_mkdir(d):
     else:
         mode = d.mode
     os.mkdir(d.location, mode)
-    get_plugin("fs_ops.ensure_perms")(d)
+    ensure_perms(d)
     return True
 
 # minor hack.
@@ -110,7 +105,7 @@ class CannotOverwrite(FailedCopy):
         return f'cannot write {self.obj} due to {self.existing} existing'
 
 
-def default_copyfile(obj, mkdirs=False):
+def copyfile(obj, mkdirs=False):
     """
     copy a :class:`pkgcore.fs.fs.fsBase` to its stated location.
 
@@ -121,7 +116,6 @@ def default_copyfile(obj, mkdirs=False):
     """
 
     existent = False
-    ensure_perms = get_plugin("fs_ops.ensure_perms")
     if not fs.isfs_obj(obj):
         raise TypeError(f'obj must be fsBase derivative: {obj!r}')
     elif fs.isdir(obj):
@@ -219,10 +213,6 @@ def merge_contents(cset, offset=None, callback=None):
     if callback is None:
         callback = lambda obj:None
 
-    ensure_perms = get_plugin("fs_ops.ensure_perms")
-    copyfile = get_plugin("fs_ops.copyfile")
-    mkdir = get_plugin("fs_ops.mkdir")
-
     if not isinstance(cset, contents.contentsSet):
         raise TypeError(f'cset must be a contentsSet, got {cset!r}')
 
@@ -310,8 +300,8 @@ def unmerge_contents(cset, offset=None, callback=None):
         Think of it as target dir.
     :param callback: callable to report each entry being unmerged
     :return: True, or an exception is thrown on failure
-        (OSError, although see default_copyfile for specifics).
-    :raise EnvironmentError: see :func:`default_copyfile` and :func:`default_mkdir`
+        (OSError, although see copyfile for specifics).
+    :raise EnvironmentError: see :func:`copyfile` and :func:`mkdir`
     """
 
     if callback is None:
@@ -338,9 +328,3 @@ def unmerge_contents(cset, offset=None, callback=None):
         else:
             callback(x)
     return True
-
-# Plugin system priorities
-for func in [default_copyfile, default_ensure_perms, default_mkdir,
-             merge_contents, unmerge_contents]:
-    func.priority = 1
-del func

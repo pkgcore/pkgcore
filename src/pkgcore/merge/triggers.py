@@ -38,9 +38,9 @@ from snakeoil.process import spawn
 from .. import os_data
 from ..fs import contents, fs
 from ..fs.livefs import gen_obj
+from ..fs.ops import merge_contents, unmerge_contents
 from ..operations.observer import threadsafe_repo_observer
 from ..package.mutated import MutatedPkg
-from ..plugin import get_plugin
 from ..util import file_type, thread_pool
 from . import const, errors
 
@@ -410,7 +410,7 @@ class InfoRegen(base):
 
             ret, data = spawn.spawn_get_output(
                 [binary, '--quiet', pjoin(basepath, x), '--dir-file', index],
-                collect_fds=(1,2), split_lines=False)
+                collect_fds=(1, 2), split_lines=False)
 
             if not data or "already exists" in data or \
                     "warning: no info dir entry" in data:
@@ -427,8 +427,7 @@ class merge(base):
     suppress_exceptions = False
 
     def trigger(self, engine, merging_cset):
-        op = get_plugin('fs_ops.merge_contents')
-        return op(merging_cset, callback=engine.observer.installing_fs_obj)
+        return merge_contents(merging_cset, callback=engine.observer.installing_fs_obj)
 
 
 class unmerge(base):
@@ -440,8 +439,7 @@ class unmerge(base):
     suppress_exceptions = False
 
     def trigger(self, engine, unmerging_cset):
-        op = get_plugin('fs_ops.unmerge_contents')
-        return op(unmerging_cset, callback=engine.observer.removing_fs_obj)
+        return unmerge_contents(unmerging_cset, callback=engine.observer.removing_fs_obj)
 
 
 class BaseSystemUnmergeProtection(base):

@@ -18,10 +18,10 @@ from ..ebuild import ebd, ebuild_built
 from ..ebuild.cpv import VersionedCPV
 from ..fs.contents import contentsSet, offset_rewriter
 from ..fs.livefs import scan
+from ..fs.ops import merge_contents
 from ..fs.tar import generate_contents
 from ..merge import engine, triggers
 from ..package import base as pkg_base
-from ..plugin import get_plugin
 from ..repository import errors, prototype, wrapper
 from . import remote, repo_ops
 from .xpak import Xpak
@@ -42,7 +42,6 @@ class force_unpacking(triggers.base):
         op = self.format_op
         op = getattr(op, 'install_op', op)
         op.setup_workdir()
-        merge_contents = get_plugin("fs_ops.merge_contents")
         merge_cset = cset
         if engine.offset != '/':
             merge_cset = cset.change_offset(engine.offset, '/')

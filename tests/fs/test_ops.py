@@ -30,15 +30,15 @@ class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, TestCase):
                 "mode":0o775, "dev":None, "inode":None}
         o = kls(pjoin(self.dir, "blah"), **kwds)
         creator_func(o.location)
-        self.assertTrue(ops.default_ensure_perms(o))
+        self.assertTrue(ops.ensure_perms(o))
         self.verify(o, kwds, os.stat(o.location))
         kwds["mode"] = 0o770
         o2 = kls(pjoin(self.dir, "blah"), **kwds)
-        self.assertTrue(ops.default_ensure_perms(o2))
+        self.assertTrue(ops.ensure_perms(o2))
         self.verify(o2, kwds, os.stat(o.location))
         self.assertRaises(
             OSError,
-            ops.default_ensure_perms, kls(pjoin(self.dir, "asdf"), **kwds))
+            ops.ensure_perms, kls(pjoin(self.dir, "asdf"), **kwds))
 
     def test_dir(self):
         self.common_bits(os.mkdir, fs.fsDir)
@@ -51,7 +51,7 @@ class TestDefaultMkdir(TempDirMixin, TestCase):
 
     def test_it(self):
         o = fs.fsDir(pjoin(self.dir, "mkdir_test"), strict=False)
-        self.assertTrue(ops.default_mkdir(o))
+        self.assertTrue(ops.mkdir(o))
         old_umask = os.umask(0)
         try:
             self.assertEqual((os.stat(o.location).st_mode & 0o4777), 0o777 & ~old_umask)
@@ -59,7 +59,7 @@ class TestDefaultMkdir(TempDirMixin, TestCase):
             os.umask(old_umask)
         os.rmdir(o.location)
         o = fs.fsDir(pjoin(self.dir, "mkdir_test2"), strict=False, mode=0o750)
-        self.assertTrue(ops.default_mkdir(o))
+        self.assertTrue(ops.mkdir(o))
         self.assertEqual(os.stat(o.location).st_mode & 0o4777, 0o750)
 
 
@@ -74,7 +74,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
                 "mode":0o664, "data":local_source(src), "dev":None,
                 "inode":None}
         o = fs.fsFile(dest, **kwds)
-        self.assertTrue(ops.default_copyfile(o))
+        self.assertTrue(ops.copyfile(o))
         with open(dest, "r") as f:
             self.assertEqual("asdf\n" * 10, f.read())
         self.verify(o, kwds, os.stat(o.location))
@@ -91,14 +91,14 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         fp = pjoin(self.dir, "sym")
         o = fs.fsSymlink(fp, mtime=10321, uid=os.getuid(), gid=group,
             mode=0o664, target='target')
-        self.assertTrue(ops.default_copyfile(o))
+        self.assertTrue(ops.copyfile(o))
         self.assertEqual(os.lstat(fp).st_gid, group)
         self.assertEqual(os.lstat(fp).st_uid, os.getuid())
 
     def test_puke_on_dirs(self):
         path = pjoin(self.dir, "puke_dir")
         self.assertRaises(TypeError,
-            ops.default_copyfile,
+            ops.copyfile,
             fs.fsDir(path, strict=False))
         os.mkdir(path)
         fp = pjoin(self.dir, "foon")
@@ -110,10 +110,10 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         # test sym over a directory.
         f = fs.fsSymlink(path, fp, mode=0o644, mtime=0, uid=os.getuid(),
             gid=os.getgid())
-        self.assertRaises(TypeError, ops.default_copyfile, f)
+        self.assertRaises(TypeError, ops.copyfile, f)
         os.unlink(fp)
         os.mkdir(fp)
-        self.assertRaises(ops.CannotOverwrite, ops.default_copyfile, f)
+        self.assertRaises(ops.CannotOverwrite, ops.copyfile, f)
 
 
 class ContentsMixin(VerifyMixin, TempDirMixin, TestCase):

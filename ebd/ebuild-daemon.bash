@@ -69,10 +69,10 @@ __ebd_exec_main() {
 	# side to ensure loading up the intermediate funcs succeeded.
 	local com
 	__ebd_read_line com
-	if [[ ${com} != "dude?" ]]; then
-		die "serv init coms failed, received '${com}' when expecting 'dude?'"
+	if [[ ${com} != "ebd?" ]]; then
+		die "serv init coms failed, received '${com}' when expecting 'ebd?'"
 	fi
-	__ebd_write_line "dude!"
+	__ebd_write_line "ebd!"
 
 	# get our die functionality now.
 	if ! source "${PKGCORE_EBD_PATH}"/exit-handling.bash; then

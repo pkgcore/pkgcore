@@ -1,5 +1,5 @@
 """
-low level ebuild processor.
+low level ebuild processor
 
 This basically is a coprocessor that controls a bash daemon for actual
 ebuild execution. Via this, the bash side can reach into the python
@@ -130,9 +130,8 @@ def release_ebuild_processor(ebp):
         return False
 
     assert ebp not in inactive_ebp_list
-    # We can't reuse processors that use custom fd mappings or are locked on
-    # release for one reason or another.
-    if ebp.is_locked or ebp._fd_pipes:
+    # shutdown processors that can't be reused
+    if ebp.is_locked or ebp.custom_fds:
         ebp.shutdown_processor()
     else:
         inactive_ebp_list.append(ebp)
@@ -300,8 +299,7 @@ def chuck_StoppingCommand(ebp, line):
     if args[0] == 'succeeded':
         raise FinishedProcessing(True)
     else:
-        # Note that we want failures missing an error message to raise
-        # IndexError here so they can be fixed on the bash side.
+        # IndexError is explicitly left unhandled to force visibility
         raise ProcessorError(args[1])
 
 
@@ -319,19 +317,20 @@ class EbuildProcessor:
         """
         self.lock()
         self.ebd = e_const.EBUILD_DAEMON_PATH
-        spawn_opts = {'umask': 0o002}
+        self.sandbox = sandbox
+        self.userpriv = userpriv
+        self.custom_fds = fd_pipes
 
         self._preloaded_eclasses = {}
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
-        self.sandbox = sandbox
-        self.userpriv = userpriv
 
         signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
         signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
-        if userpriv:
+        spawn_opts = {'umask': 0o002}
+        if self.userpriv:
             spawn_opts.update({
                 "uid": os_data.portage_uid,
                 "gid": os_data.portage_gid,
@@ -344,16 +343,12 @@ class EbuildProcessor:
                     "groups": [0, os_data.portage_gid],
                 })
 
-        # open the pipes to be used for chatting with the new daemon
+        # open pipes used for communication
         cread, cwrite = os.pipe()
         dread, dwrite = os.pipe()
 
-        self._fd_pipes = fd_pipes if fd_pipes is not None else {}
-
-        # since it's questionable which spawn method we'll use (if
-        # sandbox fex), we ensure the bashrc is invalid.
-        env = {x: "/etc/portage/spork/not/valid/ha/ha"
-               for x in ("BASHRC", "BASH_ENV")}
+        # force invalid bashrc
+        env = {x: "/not/valid" for x in ("BASHRC", "BASH_ENV")}
 
         if int(os.environ.get('PKGCORE_PERF_DEBUG', 0)):
             env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
@@ -365,11 +360,10 @@ class EbuildProcessor:
         env["PATH"] = os.pathsep.join(
             list(const.PATH_FORCED_PREPEND) + [os.environ["PATH"]])
 
-        if sandbox:
+        if self.sandbox:
             if not spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
             spawn_func = spawn.spawn_sandbox
-#            env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
         else:
             spawn_func = spawn.spawn
 
@@ -377,22 +371,24 @@ class EbuildProcessor:
         # ran from a nonexistent dir
         spawn_opts["cwd"] = e_const.EBD_PATH
 
-        # Force the pipes to be high up fd wise so nobody stupidly hits 'em, we
-        # start from max-3 to avoid a bug in older bash where it doesn't check
-        # if an fd is in use before claiming it.
+        # Use high numbered fds for pipes to avoid external usage collisions
+        # starting with max-3 to avoid a bug in older bash versions where it
+        # doesn't check if an fd is in use before claiming it.
         max_fd = min(spawn.max_fd_limit, 1024)
         env.update({
-            "PKGCORE_EBD_READ_FD": str(max_fd-4),
-            "PKGCORE_EBD_WRITE_FD": str(max_fd-3),
+            "PKGCORE_EBD_READ_FD": str(max_fd - 4),
+            "PKGCORE_EBD_WRITE_FD": str(max_fd - 3),
         })
 
-        # allow any pipe overrides except the ones we use to communicate
+        # allow pipe overrides except ebd-related
         ebd_pipes = {0: 0, 1: 1, 2: 2}
-        ebd_pipes.update(self._fd_pipes)
-        ebd_pipes.update({max_fd-4: cread, max_fd-3: dwrite})
+        if fd_pipes:
+            ebd_pipes.update(fd_pipes)
+        ebd_pipes[max_fd - 4] = cread
+        ebd_pipes[max_fd - 3] = dwrite
 
-        # pgid=0: Each processor is the process group leader for all its
-        # spawned children so everything can be terminated easily if necessary.
+        # force each ebd instance to be a process group leader so everything
+        # can be easily terminated
         self.pid = spawn_func(
             [spawn.BASH_BINARY, self.ebd, "daemonize"],
             fd_pipes=ebd_pipes, returnpid=True, env=env, pgid=0, **spawn_opts)[0]
@@ -402,13 +398,10 @@ class EbuildProcessor:
         self.ebd_write = os.fdopen(cwrite, "w")
         self.ebd_read = os.fdopen(dread, "r")
 
-        # basically a quick "yo" to the daemon
-        self.write("dude?")
-        if not self.expect("dude!"):
-            logger.error("error in server coms, bailing.")
-            raise InternalError(
-                "expected 'dude!' response from ebd, which wasn't received. "
-                "likely a bug")
+        # verify ebd is running
+        self.write("ebd?")
+        if not self.expect("ebd!"):
+            raise InternalError("expected 'ebd!' response from ebd, which wasn't received")
 
         if self.sandbox:
             self.write("sandbox_log?")
@@ -461,7 +454,6 @@ class EbuildProcessor:
             if append_newline:
                 if string != '\n':
                     string += "\n"
-            #logger.debug("wrote %i: %s" % (len(string), string))
             self.ebd_write.write(string)
             if flush:
                 self.ebd_write.flush()
@@ -688,7 +680,7 @@ class EbuildProcessor:
             if kill:
                 os.killpg(self.pid, signal.SIGKILL)
 
-            # now we wait for the process group
+            # wait for the process group
             try:
                 os.waitpid(-self.pid, 0)
             except KeyboardInterrupt:
@@ -721,7 +713,7 @@ class EbuildProcessor:
                 data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
 
         # TODO: Move to using unprefixed lines to avoid leaking internal
-        # variables to spawned commands once we use builtins for all commands
+        # variables to spawned commands once builtins are used for all commands
         # currently using pkgcore-ebuild-helper.
         return f"export {' '.join(data)}"
 

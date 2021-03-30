@@ -883,10 +883,9 @@ class ebuild_operations:
         """Run all defined sanity checks."""
         failures = []
         for check in self._checks:
-            result = check(self, self.pkg, domain=domain)
-            if result is not None:
+            if result := check(self, self.pkg, domain=domain):
                 failures.append(result)
-        return self.pkg, failures
+        return failures
 
     @_register_check(_checks)
     def _check_required_use(self, pkg, **kwargs):
@@ -896,8 +895,7 @@ class ebuild_operations:
         against a known set of enabled USE flags and is in collapsed form.
         """
         if pkg.eapi.options.has_required_use:
-            failures = tuple(node for node in pkg.required_use if not node.match(pkg.use))
-            if failures:
+            if failures := tuple(node for node in pkg.required_use if not node.match(pkg.use)):
                 return errors.RequiredUseError(pkg, failures)
 
     @_register_check(_checks)

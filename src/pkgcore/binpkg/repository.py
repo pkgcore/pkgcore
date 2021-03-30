@@ -338,10 +338,9 @@ class ConfiguredTree(wrapper.tree):
     def __init__(self, repo, domain_settings):
         _WrappedBinpkg._operations = self._generate_operations
         _WrappedBinpkg.repo = self
-        wrapper.tree.__init__(self, repo, package_class=_WrappedBinpkg)
+        super().__init__(repo, package_class=_WrappedBinpkg)
         self.domain_settings = domain_settings
 
     def _generate_operations(self, domain, pkg, **kwargs):
-        pkg = pkg._raw_pkg
         return ebd.built_operations(
-            domain, pkg, initial_env=self.domain_settings, **kwargs)
+            domain, pkg._raw_pkg, initial_env=self.domain_settings, **kwargs)

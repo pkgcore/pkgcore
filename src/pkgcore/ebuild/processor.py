@@ -509,7 +509,7 @@ class EbuildProcessor:
         self._outstanding_expects.append((flush, want))
         return self._consume_async_expects()
 
-    def readlines(self, lines, ignore_killed=False):
+    def readlines(self, lines):
         mydata = []
         while lines > 0:
             mydata.append(self.ebd_read.readline())
@@ -523,12 +523,12 @@ class EbuildProcessor:
             lines -= 1
         return mydata
 
-    def read(self, lines=1, ignore_killed=False):
+    def read(self, lines=1):
         """Read data from the daemon.
 
         Shouldn't be called except internally.
         """
-        return "\n".join(self.readlines(lines, ignore_killed=ignore_killed))
+        return "\n".join(self.readlines(lines))
 
     def sandbox_summary(self, move_log=False):
         """If the instance is sandboxed, print the sandbox access summary.

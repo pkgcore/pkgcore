@@ -665,8 +665,12 @@ class buildable(ebd, setup_mixin, format.build):
             self.env["ECLASSDIR"] = eclass_cache.eclassdir
 
         if self.setup_is_for_src:
-            distdir = normpath(pjoin(self.builddir, "distdir"))
-            self.env['DISTDIR'] = os.path.realpath(distdir).rstrip(os.sep) + os.sep
+            # TODO: PORTAGE_ACTUAL_DISTDIR usage by VCS eclasses needs to be
+            # dropped, but it's currently required for repo reuse.
+            self.env['PORTAGE_ACTUAL_DISTDIR'] = domain.distdir
+            self.env['DISTDIR'] = normpath(pjoin(self.builddir, 'distdir'))
+            for k in ('PORTAGE_ACTUAL_DISTDIR', 'DISTDIR'):
+                self.env[k] = os.path.realpath(self.env[k]).rstrip(os.sep) + os.sep
 
     def _setup_distfiles(self):
         # fetch distfiles

@@ -96,7 +96,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
         sandbox = spawn.is_sandbox_capable()
 
     for ebp in inactive_ebp_list:
-        if ebp.userprived() == userpriv and (ebp.sandboxed() or not sandbox):
+        if ebp.userpriv == userpriv and (ebp.sandbox or not sandbox):
             if not ebp.is_responsive:
                 inactive_ebp_list.remove(ebp)
                 continue
@@ -325,12 +325,13 @@ class EbuildProcessor:
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
+        self.sandbox = sandbox
+        self.userpriv = userpriv
 
         signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
         signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
         if userpriv:
-            self.__userpriv = True
             spawn_opts.update({
                 "uid": os_data.portage_uid,
                 "gid": os_data.portage_gid,
@@ -342,12 +343,10 @@ class EbuildProcessor:
                     "gid": os_data.portage_gid,
                     "groups": [0, os_data.portage_gid],
                 })
-            self.__userpriv = False
 
         # open the pipes to be used for chatting with the new daemon
         cread, cwrite = os.pipe()
         dread, dwrite = os.pipe()
-        self.__sandbox = False
 
         self._fd_pipes = fd_pipes if fd_pipes is not None else {}
 
@@ -369,7 +368,6 @@ class EbuildProcessor:
         if sandbox:
             if not spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
-            self.__sandbox = True
             spawn_func = spawn.spawn_sandbox
 #            env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
         else:
@@ -412,7 +410,7 @@ class EbuildProcessor:
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
 
-        if self.__sandbox:
+        if self.sandbox:
             self.write("sandbox_log?")
             self.__sandbox_log = self.read().split()[0]
         else:
@@ -447,14 +445,6 @@ class EbuildProcessor:
                 return False
         self.write("start_processing")
         return self.generic_handler(additional_commands=additional_commands)
-
-    def sandboxed(self):
-        """Is this instance sandboxed?"""
-        return self.__sandbox
-
-    def userprived(self):
-        """Is this instance userprived?"""
-        return self.__userpriv
 
     def write(self, string, flush=True, disable_runtime_exceptions=False,
               append_newline=True):

@@ -137,7 +137,7 @@ class operations(_operations_mod.base):
             raise GenericBuildError('failed fetching required distfiles')
 
         self.verified_files = verified
-        return verified
+        return True
 
 
 class build_operations(operations):

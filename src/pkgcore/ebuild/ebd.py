@@ -672,7 +672,7 @@ class buildable(ebd, setup_mixin, format.build):
         # fetch distfiles
         if not self.verified_files:
             ops = self.domain.pkg_operations(self.pkg, observer=self.observer)
-            self.verified_files = ops.fetch()
+            ops.fetch()
 
         # symlink them into builddir
         if self.verified_files:

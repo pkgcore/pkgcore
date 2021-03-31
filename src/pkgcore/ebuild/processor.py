@@ -51,12 +51,6 @@ def _single_thread_allowed(functor):
 
 
 @_single_thread_allowed
-def forget_all_processors():
-    active_ebp_list[:] = []
-    inactive_ebp_list[:] = []
-
-
-@_single_thread_allowed
 def shutdown_all_processors():
     """Kill all known processors."""
     try:
@@ -336,16 +330,11 @@ class EbuildProcessor:
                 "gid": os_data.portage_gid,
                 "groups": [os_data.portage_gid],
             })
-        else:
-            if spawn.is_userpriv_capable():
-                spawn_opts.update({
-                    "gid": os_data.portage_gid,
-                    "groups": [0, os_data.portage_gid],
-                })
-
-        # open pipes used for communication
-        cread, cwrite = os.pipe()
-        dread, dwrite = os.pipe()
+        elif spawn.is_userpriv_capable():
+            spawn_opts.update({
+                "gid": os_data.portage_gid,
+                "groups": [0, os_data.portage_gid],
+            })
 
         # force invalid bashrc
         env = {x: "/not/valid" for x in ("BASHRC", "BASH_ENV")}
@@ -379,6 +368,10 @@ class EbuildProcessor:
             "PKGCORE_EBD_READ_FD": str(max_fd - 4),
             "PKGCORE_EBD_WRITE_FD": str(max_fd - 3),
         })
+
+        # open pipes used for communication
+        cread, cwrite = os.pipe()
+        dread, dwrite = os.pipe()
 
         # allow pipe overrides except ebd-related
         ebd_pipes = {0: 0, 1: 1, 2: 2}

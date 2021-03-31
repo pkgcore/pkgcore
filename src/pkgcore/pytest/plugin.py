@@ -19,13 +19,13 @@ class GitRepo:
     dependency requirements.
     """
 
-    def __init__(self, path, bare=False, commit=False, clone=False):
+    def __init__(self, path, bare=False, branch='main', commit=False, clone=False):
         self.path = path
         if clone:
             os.makedirs(self.path)
             self.run(['git', 'clone', clone, self.path])
         else:
-            self.run(['git', 'init'] + (['--bare'] if bare else []) + [self.path])
+            self.run(['git', 'init', '-b', branch] + (['--bare'] if bare else []) + [self.path])
             self.run(['git', 'config', 'user.email', 'first.last@email.com'])
             self.run(['git', 'config', 'user.name', 'First Last'])
 

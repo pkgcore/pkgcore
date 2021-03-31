@@ -41,7 +41,7 @@ inactive_ebp_list = []
 active_ebp_list = []
 
 
-def _single_thread_allowed(functor):
+def _singled_threaded(functor):
     """Decorator that forces method to run under single thread."""
     @wraps(functor)
     def _inner(*args, **kwargs):
@@ -50,7 +50,7 @@ def _single_thread_allowed(functor):
     return _inner
 
 
-@_single_thread_allowed
+@_singled_threaded
 def shutdown_all_processors():
     """Kill all known processors."""
     try:
@@ -76,7 +76,7 @@ def shutdown_all_processors():
 spawn.atexit_register(shutdown_all_processors)
 
 
-@_single_thread_allowed
+@_singled_threaded
 def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
     """Request a processor instance, creating a new one if needed.
 
@@ -104,7 +104,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
     return ebp
 
 
-@_single_thread_allowed
+@_singled_threaded
 def release_ebuild_processor(ebp):
     """Release a given processor instance and shut it down if necessary.
 
@@ -132,7 +132,7 @@ def release_ebuild_processor(ebp):
     return True
 
 
-@_single_thread_allowed
+@_singled_threaded
 def drop_ebuild_processor(ebp):
     """Force a given processor to be dropped from active/inactive lists.
 

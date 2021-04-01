@@ -22,6 +22,7 @@ from snakeoil.osutils import abspath, normpath, pjoin
 from snakeoil.sequences import iflatten_instance, unstable_unique
 from snakeoil.strings import pluralism
 
+from .. import const
 from ..config import load_config
 from ..plugin import get_plugins
 from ..repository import errors as repo_errors
@@ -493,10 +494,8 @@ def register_command(commands, real_type=type):
 
 def store_config(namespace, attr, global_config=()):
     config = load_config(
-        skip_config_files=namespace.pop('empty_config', False),
         prepend_sources=tuple(global_config),
-        location=namespace.pop('override_config', None),
-        profile_override=namespace.pop('profile_override', None),
+        location=namespace.config_path,
         **vars(namespace))
     setattr(namespace, attr, config)
 
@@ -518,6 +517,17 @@ class _SubParser(arghparse._SubParser):
         return super().add_parser(name, config=config, domain=domain, **kwds)
 
 
+class _ConfigArg(argparse._StoreAction):
+    """Store given config path location or use the stub config when disabled."""
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        if value.lower() in {'false', 'no', 'n'}:
+            path = pjoin(const.DATA_PATH, 'stubconfig')
+        else:
+            path = arghparse.existent_path(value)
+        setattr(namespace, self.dest, path)
+
+
 class ArgumentParser(arghparse.ArgumentParser):
 
     def __init__(self, suppress=False, help=True, config=True,
@@ -526,15 +536,19 @@ class ArgumentParser(arghparse.ArgumentParser):
         self.register('action', 'parsers', _SubParser)
 
         if not suppress:
-            config_opts = self.add_argument_group("config options")
+            config_opts = self.add_argument_group('config options')
             if config:
                 config_opts.add_argument(
-                    '--empty-config', action='store_true',
-                    help='skip loading user/system pkgcore config' if help else argparse.SUPPRESS)
-                config_opts.add_argument(
-                    '--config', metavar='PATH', dest='override_config',
-                    type=arghparse.existent_path,
-                    help='use custom pkgcore config file' if help else argparse.SUPPRESS)
+                    '--config', action=_ConfigArg, dest='config_path',
+                    help='use custom config or skip loading system config' if help else argparse.SUPPRESS,
+                    docs="""
+                        The path to a custom pkgcore config file or portage
+                        config directory can be given to override loading the
+                        default system config.
+
+                        Alternatively, an argument of 'false' or 'no' will skip
+                        loading the system config entirely if one exists.
+                    """)
 
                 if script is not None:
                     try:

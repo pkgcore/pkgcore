@@ -6,8 +6,7 @@ unset SHELL_LIB
 
 common_main_args=(
   '(- :)'--version'[show version information and exit]'
-  '--empty-config[do not load user/system configuration]'
-  '--config[override location of config files]:config path:_files'
+  '--config[use config config or skip loading system config]:config path:_files'
   "--color[Color output]:yes/no:((y\:'yes' n\:'no'))"
 )
 

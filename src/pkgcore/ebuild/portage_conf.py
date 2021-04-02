@@ -144,7 +144,7 @@ class PortageConfig(DictMixin):
             make_conf, pjoin(self.dir, 'make.conf'), required=False,
             allow_sourcing=True, incrementals=True)
 
-        self.root = os.environ.get("ROOT", kwargs.pop('root', make_conf.get("ROOT", "/")))
+        self.root = kwargs.pop('root', make_conf.get("ROOT", "/"))
         gentoo_mirrors = [
             x.rstrip("/") + "/distfiles" for x in make_conf.pop("GENTOO_MIRRORS", "").split()]
 

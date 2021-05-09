@@ -24,7 +24,7 @@ import os
 import signal
 import threading
 import traceback
-from functools import partial, wraps
+from functools import partial, wraps, lru_cache
 from itertools import chain
 
 from snakeoil import bash, fileutils, klass
@@ -297,6 +297,12 @@ def chuck_StoppingCommand(ebp, line):
         raise ProcessorError(args[1])
 
 
+@lru_cache(maxsize=None)
+def set_signal_handlers():
+    signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
+    signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
+
+
 class EbuildProcessor:
     """Abstraction of a running ebd instance.
 
@@ -320,8 +326,7 @@ class EbuildProcessor:
         self._outstanding_expects = []
         self._metadata_paths = None
 
-        signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
-        signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
+        set_signal_handlers()
 
         spawn_opts = {'umask': 0o002}
         if self.userpriv:

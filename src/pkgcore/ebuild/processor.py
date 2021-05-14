@@ -268,6 +268,9 @@ def chuck_KeyboardInterrupt(*args):
     raise KeyboardInterrupt("ctrl+c encountered")
 
 
+signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
+
+
 def chuck_TermInterrupt(ebp, *args):
     """Event handler for SIGTERM."""
     if ebp is None:
@@ -280,6 +283,9 @@ def chuck_TermInterrupt(ebp, *args):
         # individual ebd got SIGTERM-ed, shutdown corresponding processor
         drop_ebuild_processor(ebp)
         ebp.shutdown_processor()
+
+
+signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
 
 
 def chuck_UnhandledCommand(ebp, line):
@@ -319,9 +325,6 @@ class EbuildProcessor:
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
-
-        signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
-        signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
         spawn_opts = {'umask': 0o002}
         if self.userpriv:

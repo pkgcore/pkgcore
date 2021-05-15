@@ -679,3 +679,18 @@ eapi7 = EAPI.register(
     )),
     ebd_env_options=eapi6._ebd_env_options,
 )
+
+eapi8 = EAPI.register(
+    magic="8",
+    parent=eapi7,
+    phases=eapi7.phases,
+    default_phases=eapi7.default_phases,
+    mandatory_keys=eapi7.mandatory_keys,
+    dep_keys=eapi7.dep_keys,
+    metadata_keys=eapi7.metadata_keys,
+    eclass_keys=eapi7.eclass_keys,
+    tracked_attributes=eapi7.tracked_attributes,
+    archive_exts=eapi7.archive_exts,
+    optionals=eapi7.options,
+    ebd_env_options=eapi7._ebd_env_options,
+)

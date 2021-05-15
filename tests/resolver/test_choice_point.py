@@ -12,6 +12,7 @@ class fake_package:
                 ("depend", AndRestriction()),
                 ("rdepend", AndRestriction()),
                 ("pdepend", AndRestriction()),
+                ("idepend", AndRestriction()),
                 ("slot", 0),
                 ("key", None),
                 ("marker", None)):

@@ -30,7 +30,7 @@ class package(metadata.package):
         val = None
         if key == "rdepend":
             val = self.provider
-        elif key in ("bdepend", "depend", "pdepend"):
+        elif key in ("bdepend", "depend", "pdepend", "idepend"):
             val = OrRestriction()
         elif key == "slot":
             val = f"{self.provider.category}-{self.version}"

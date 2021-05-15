@@ -459,9 +459,11 @@ class merge_plan:
                     raise AssertionError(
                         "no state change detected, "
                         "old %r != new %r\nchoices(%r)\ncurrent(%r)\n"
-                        "bdepend(%r)\ndepend(%r)\nrdepend(%r)\npdepend(%r)" % (
+                        "bdepend(%r)\ndepend(%r)\nrdepend(%r)\npdepend(%r)\n"
+                        "idepend(%r)" % (
                             last_state, new_state, tuple(choices.matches), choices.current_pkg,
                             choices.bdepend, choices.depend, choices.rdepend, choices.pdepend,
+                            choices.idepend,
                         )
                     )
                 last_state = new_state
@@ -484,6 +486,13 @@ class merge_plan:
 
             new_additions, failures = self.process_dependencies_and_blocks(
                 stack, choices, 'rdepend', atom, depth)
+            if failures:
+                continue
+            additions += new_additions
+
+            # TODO: do we need a conditional for merging a pkg here?
+            new_additions, failures = self.process_dependencies_and_blocks(
+                stack, choices, 'idepend', atom, depth)
             if failures:
                 continue
             additions += new_additions

@@ -12,7 +12,7 @@ from ..restrictions import packages
 class nodeps_repo:
     """Repository wrapper that returns wrapped pkgs with deps wiped."""
 
-    default_bdepend = default_depend = default_rdepend = default_pdepend = DepSet()
+    default_bdepend = default_depend = default_rdepend = default_pdepend = default_idepend = DepSet()
 
     def __init__(self, repo):
         """
@@ -25,7 +25,8 @@ class nodeps_repo:
             x, overrides={"bdepend": self.default_bdepend,
                           "depend": self.default_depend,
                           "rdepend": self.default_rdepend,
-                          "pdepend": self.default_pdepend}
+                          "pdepend": self.default_pdepend,
+                          "idepend": self.default_idepend}
             )
             for x in self.raw_repo.itermatch(*a, **kwds))
 

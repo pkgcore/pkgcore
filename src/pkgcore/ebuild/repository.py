@@ -645,7 +645,7 @@ class ConfiguredTree(configured.tree):
     config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in (
-            "bdepend", "depend", "rdepend", "pdepend",
+            "bdepend", "depend", "rdepend", "pdepend", "idepend",
             "fetchables", "license", "src_uri", "restrict", "required_use",
         )
     }

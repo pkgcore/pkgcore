@@ -263,8 +263,8 @@ __load_ebuild() {
 	SANDBOX_ON=1
 	export S=${WORKDIR}/${P}
 
-	unset -v IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND   BDEPEND
-	local  E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND E_BDEPEND
+	unset -v IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND   BDEPEND   IDEPEND
+	local  E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND E_BDEPEND E_IDEPEND
 
 	__env_push
 	__export_bash_compat
@@ -303,6 +303,7 @@ __load_ebuild() {
 	RDEPEND+=${RDEPEND:+ }${E_RDEPEND}
 	PDEPEND+=${PDEPEND:+ }${E_PDEPEND}
 	BDEPEND+=${BDEPEND:+ }${E_BDEPEND}
+	IDEPEND+=${IDEPEND:+ }${E_IDEPEND}
 }
 
 # short version. think these should be sourced via at the daemon's choice, rather then defacto.

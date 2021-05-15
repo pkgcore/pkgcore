@@ -77,7 +77,7 @@ class PackagesCacheV0(cache.bulk):
     _pkg_attr_sequences = ('use', 'keywords', 'iuse')
     _deserialized_defaults = dict.fromkeys(
         (
-            'BDEPEND', 'DEPEND', 'RDEPEND', 'PDEPEND',
+            'BDEPEND', 'DEPEND', 'RDEPEND', 'PDEPEND', 'IDEPEND',
             'BUILD_TIME', 'IUSE', 'KEYWORDS', 'LICENSE', 'PATH', 'PROPERTIES',
             'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'REPO',
             'DESCRIPTION',

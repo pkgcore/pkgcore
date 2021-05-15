@@ -132,6 +132,7 @@ class tree(prototype.tree):
 
     _metadata_rewrites = {
         "bdepend": "BDEPEND", "depend": "DEPEND", "rdepend": "RDEPEND", "pdepend": "PDEPEND",
+        "idepend": "IDEPEND",
         "use": "USE", "eapi": "EAPI", "CONTENTS": "contents",
         "source_repository": "repository", "fullslot": "SLOT",
     }

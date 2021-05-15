@@ -286,8 +286,14 @@ class TestBase:
     test_bdepend = post_curry(generic_check_depends,
         'dev-util/diffball x86? ( virtual/boo )', 'bdepend', eapi='7')
     # BDEPEND is ignored in EAPIs <= 6
-    test_bdepend = post_curry(generic_check_depends,
+    test_no_bdepend = post_curry(generic_check_depends,
         'dev-util/diffball x86? ( virtual/boo )', 'bdepend', expected='', eapi='0')
+    # IDEPEND in EAPI 8
+    test_idepend = post_curry(generic_check_depends,
+        'dev-util/diffball x86? ( virtual/boo )', 'idepend', eapi='8')
+    # IDEPEND is ignored in EAPIs <= 7
+    test_no_idepend = post_curry(generic_check_depends,
+        'dev-util/diffball x86? ( virtual/boo )', 'idepend', expected='', eapi='0')
 
     def test_fetchables(self):
         l = []

@@ -43,7 +43,7 @@ class base(metadata.package):
     _config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in (
-            "bdepend", "depend", "rdepend", "pdepend",
+            "bdepend", "depend", "rdepend", "pdepend", "idepend",
             "fetchables", "license", "restrict", "required_use",
         )
     }
@@ -73,6 +73,12 @@ class base(metadata.package):
     @DynamicGetattrSetter.register
     def pdepend(self):
         return self._generate_depset(atom, "PDEPEND")
+
+    @DynamicGetattrSetter.register
+    def idepend(self):
+        if "IDEPEND" in self.eapi.metadata_keys:
+            return self._generate_depset(atom, "IDEPEND")
+        return conditionals.DepSet()
 
     @DynamicGetattrSetter.register
     def license(self):

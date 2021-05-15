@@ -182,7 +182,7 @@ inherit() {
 
 	# note that this ensures any later unsets/mangling, the ebuilds original
 	# setting is protected.
-	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND
+	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND IDEPEND
 
 	# keep track of direct ebuild inherits
 	[[ ${INHERIT_DEPTH} -eq 1 ]] && INHERIT+=" $@"
@@ -196,7 +196,7 @@ inherit() {
 			fi
 		fi
 
-		unset -v IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND
+		unset -v IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND IDEPEND
 
 		__internal_inherit "$1" || die "${FUNCNAME}: failed sourcing $1"
 
@@ -208,6 +208,7 @@ inherit() {
 		[[ -n ${RDEPEND}      ]] && E_RDEPEND+=${E_RDEPEND:+ }${RDEPEND}
 		[[ -n ${PDEPEND}      ]] && E_PDEPEND+=${E_PDEPEND:+ }${PDEPEND}
 		[[ -n ${BDEPEND}      ]] && E_BDEPEND+=${E_BDEPEND:+ }${BDEPEND}
+		[[ -n ${IDEPEND}      ]] && E_IDEPEND+=${E_IDEPEND:+ }${IDEPEND}
 
 		# while other PMs have checks to keep this unique, we don't; no need,
 		# further up the stack (python side) we uniquify this.

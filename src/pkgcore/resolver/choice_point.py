@@ -8,7 +8,7 @@ class choice_point:
 
     __slots__ = (
         "__weakref__", "atom", "matches", "matches_cur", "solution_filters",
-        "_prdeps", "_rdeps", "_deps", "_bdeps")
+        "_prdeps", "_rdeps", "_deps", "_bdeps", "_ideps")
 
     def __init__(self, a, matches):
         self.atom = a
@@ -96,7 +96,7 @@ class choice_point:
 
     def _reset_iters(self):
         """
-        Reset bdepend, depend, rdepend, and pdepend properties
+        Reset bdepend, depend, rdepend, pdepend and idepend properties
         to current matches' related attributes.
         """
         cur = self.matches_cur
@@ -104,6 +104,7 @@ class choice_point:
         self._deps = cur.depend.cnf_solutions()
         self._rdeps = cur.rdepend.cnf_solutions()
         self._prdeps = cur.pdepend.cnf_solutions()
+        self._ideps = cur.pdepend.cnf_solutions()
 
     slot = klass.alias_attr("current_pkg.slot")
     key = klass.alias_attr("current_pkg.key")
@@ -160,6 +161,13 @@ class choice_point:
         if not self:
             raise IndexError("no more solutions remain")
         return self._prdeps
+
+    @property
+    def idepend(self):
+        """Install-time dependencies (for CBUILD)."""
+        if not self:
+            raise IndexError("no more solutions remain")
+        return self._ideps
 
     def __bool__(self):
         if self.matches_cur is None:

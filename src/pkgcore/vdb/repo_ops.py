@@ -56,7 +56,7 @@ class install(repo_ops.install):
                 del data
             else:
                 v = getattr(self.new_pkg, k)
-                if k in ('bdepend', 'depend', 'rdepend'):
+                if k in ('bdepend', 'depend', 'rdepend', 'idepend'):
                     s = v.slotdep_str(domain)
                 elif k == 'user_patches':
                     s = '\n'.join(chain.from_iterable(files for _, files in v))

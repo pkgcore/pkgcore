@@ -1,3 +1,5 @@
+import pytest
+
 from snakeoil.test import TestCase
 
 from pkgcore.ebuild import misc
@@ -95,3 +97,19 @@ class TestIncrementalsDict(TestCase):
         d.clear()
         self.assertFalse(d)
         self.assertLen(d, 0)
+
+
+@pytest.mark.parametrize('expected,source,target',
+    [('../../bin/foo', '/bin/foo', '/usr/bin/foo'),
+     ('../../../doc/foo-1', '/usr/share/doc/foo-1', '/usr/share/texmf-site/doc/fonts/foo'),
+     ('../../opt/bar/foo', '/opt/bar/foo', '/usr/bin/foo'),
+     ('../c/d/e', '/a/b/c/d/e', 'a/b/f/g'),
+     ('b/f', '/a/b///./c/d/../e/..//../f', '/a/././///g/../h'),
+     ('../h', '/a/././///g/../h', '/a/b///./c/d/../e/..//../f'),
+     ('.', '/foo', '/foo/bar'),
+     ('..', '/foo', '/foo/bar/baz'),
+     ('../../fo . o/b ar', '/fo . o/b ar', '/baz / qu .. ux/qu x'),
+     (r'../../f"o\o/b$a[]r', r'/f"o\o/b$a[]r', r'/ba\z/qu$u"x/qux'),
+     ])
+def test_get_relative_dosym_target(expected, source, target):
+    assert expected == misc.get_relative_dosym_target(source, target)

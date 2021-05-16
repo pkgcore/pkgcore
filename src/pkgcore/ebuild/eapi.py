@@ -693,7 +693,11 @@ eapi8 = EAPI.register(
     metadata_keys=eapi7.metadata_keys,
     eclass_keys=eapi7.eclass_keys,
     tracked_attributes=eapi7.tracked_attributes,
-    archive_exts=eapi7.archive_exts,
+    archive_exts=eapi7.archive_exts - frozenset([
+        ".rar", ".RAR",
+        ".lha", ".LHa", ".LHA", ".lzh",
+        ".7z", ".7Z",
+    ]),
     optionals=_combine_dicts(eapi7.options, dict(
         accumulate_properties_restrict=True,
         bash_compat='5.0',

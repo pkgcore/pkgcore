@@ -1043,7 +1043,47 @@ class TestRepoConfig:
         with open(updates_file_path, 'w') as f:
             f.write('move cat1/pkg1 cat2/pkg1\n')
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.updates == {
+        expected_updates = {
             'cat1/pkg1':  [('move', atom.atom('cat1/pkg1'), atom.atom('cat2/pkg1'))],
         }
+        assert repo_config.updates == expected_updates
+        del repo_config
+
+        # extraneous file should be ignored
+        extra_file_path = os.path.join(updates_path, 'frobnicate')
+        with open(extra_file_path, 'w') as f:
+            f.write('move cat1/pkg2 cat1/pkg3\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.updates == expected_updates
+        del repo_config
+
+    def test_updates_eapi8(self):
+        # empty file
+        updates_path = os.path.join(self.profiles_base, 'updates')
+        updates_file_path = os.path.join(updates_path, '2021.1')
+        os.makedirs(updates_path)
+        touch(updates_file_path)
+        with open(os.path.join(self.profiles_base, 'eapi'), 'w') as f:
+          f.write('8\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.updates == {}
+        del repo_config
+
+        # simple pkg move
+        # TODO: move pkg_updates content tests to its own module
+        with open(updates_file_path, 'w') as f:
+            f.write('move cat1/pkg1 cat2/pkg1\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        expected_updates = {
+            'cat1/pkg1':  [('move', atom.atom('cat1/pkg1'), atom.atom('cat2/pkg1'))],
+        }
+        assert repo_config.updates == expected_updates
+        del repo_config
+
+        # extraneous file should be ignored
+        extra_file_path = os.path.join(updates_path, '.frobnicate')
+        with open(extra_file_path, 'w') as f:
+            f.write('move cat1/pkg2 cat1/pkg3\n')
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert repo_config.updates == expected_updates
         del repo_config

@@ -1,0 +1,5 @@
+#!/usr/bin/env pkgcore-ipc-helper
+
+PKGCORE_INSDESTTREE=/etc/conf.d
+INSOPTIONS=-m0644
+IPC_CMD=doins

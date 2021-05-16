@@ -1,0 +1,5 @@
+#!/usr/bin/env pkgcore-ipc-helper
+
+PKGCORE_EXEDESTTREE=/etc/init.d
+EXEOPTIONS=-m0755
+IPC_CMD=doexe

@@ -965,7 +965,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
     def updates(self):
         """Package updates for the repo defined in profiles/updates/*."""
         updates_dir = pjoin(self.profiles_base, 'updates')
-        d = pkg_updates.read_updates(updates_dir)
+        d = pkg_updates.read_updates(updates_dir, eapi=self.eapi)
         return mappings.ImmutableDict(d)
 
     @klass.jit_attr

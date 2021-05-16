@@ -8,22 +8,19 @@ from snakeoil.sequences import iflatten_instance
 from ..log import logger
 from .atom import atom
 
-demand_compile_regexp('valid_updates_re', r'^([1-4])Q-(\d{4})$')
 
-
-def _scan_directory(path):
+def _scan_directory(path, eapi):
     files = []
     for filename in listdir_files(path):
-        match = valid_updates_re.match(filename)
+        match = eapi.options.update_regex.match(filename)
         if match is not None:
-            files.append(((match.group(2), match.group(1)), filename))
+            files.append(filename)
         else:
             logger.error(f'incorrectly named update file: {filename!r}')
-    files.sort(key=itemgetter(0))
-    return [x[1] for x in files]
+    return sorted(files)
 
 
-def read_updates(path):
+def read_updates(path, eapi):
     def f():
         d = deque()
         return [d,d]
@@ -38,7 +35,7 @@ def read_updates(path):
     moved = {}
 
     try:
-        for fp in _scan_directory(path):
+        for fp in _scan_directory(path, eapi):
             with open(pjoin(path, fp)) as f:
                 data = (line.rstrip('\n') for line in f)
                 _process_updates(data, fp, mods, moved)

@@ -21,6 +21,9 @@ demand_compile_regexp(
 
 
 eapi_optionals = ImmutableDict({
+    # Controls whether PROPERTIES and RESTRICT are accumulated across eclasses.
+    "accumulate_properties_restrict": False,
+
     # Controls what version of bash compatibility to force; see PMS.
     "bash_compat": '3.2',
 
@@ -512,7 +515,7 @@ common_archive_exts = (
 common_env_optionals = (
     "bash_compat", "ebuild_phase_func", "global_failglob",
     "new_reads_stdin", "nonfatal", "nonfatal_die",
-    "has_desttree",
+    "has_desttree", "accumulate_properties_restrict",
 )
 
 eapi0 = EAPI.register(
@@ -691,6 +694,8 @@ eapi8 = EAPI.register(
     eclass_keys=eapi7.eclass_keys,
     tracked_attributes=eapi7.tracked_attributes,
     archive_exts=eapi7.archive_exts,
-    optionals=eapi7.options,
+    optionals=_combine_dicts(eapi7.options, dict(
+        accumulate_properties_restrict=True,
+    )),
     ebd_env_options=eapi7._ebd_env_options,
 )

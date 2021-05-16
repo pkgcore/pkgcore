@@ -183,6 +183,9 @@ inherit() {
 	# note that this ensures any later unsets/mangling, the ebuilds original
 	# setting is protected.
 	local IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND IDEPEND
+	if ${PKGCORE_ACCUMULATE_PROPERTIES_RESTRICT}; then
+		local PROPERTIES RESTRICT
+	fi
 
 	# keep track of direct ebuild inherits
 	[[ ${INHERIT_DEPTH} -eq 1 ]] && INHERIT+=" $@"
@@ -197,6 +200,9 @@ inherit() {
 		fi
 
 		unset -v IUSE REQUIRED_USE DEPEND RDEPEND PDEPEND BDEPEND IDEPEND
+		if ${PKGCORE_ACCUMULATE_PROPERTIES_RESTRICT}; then
+			unset -v PROPERTIES RESTRICT
+		fi
 
 		__internal_inherit "$1" || die "${FUNCNAME}: failed sourcing $1"
 
@@ -209,6 +215,10 @@ inherit() {
 		[[ -n ${PDEPEND}      ]] && E_PDEPEND+=${E_PDEPEND:+ }${PDEPEND}
 		[[ -n ${BDEPEND}      ]] && E_BDEPEND+=${E_BDEPEND:+ }${BDEPEND}
 		[[ -n ${IDEPEND}      ]] && E_IDEPEND+=${E_IDEPEND:+ }${IDEPEND}
+		if ${PKGCORE_ACCUMULATE_PROPERTIES_RESTRICT}; then
+			[[ -n ${PROPERTIES} ]] && E_PROPERTIES+=${E_PROPERTIES:+ }${PROPERTIES}
+			[[ -n ${RESTRICT}   ]] && E_RESTRICT+=${E_RESTRICT:+ }${RESTRICT}
+		fi
 
 		# while other PMs have checks to keep this unique, we don't; no need,
 		# further up the stack (python side) we uniquify this.

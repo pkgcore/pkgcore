@@ -265,6 +265,10 @@ __load_ebuild() {
 
 	unset -v IUSE   REQUIRED_USE   DEPEND   RDEPEND   PDEPEND   BDEPEND   IDEPEND
 	local  E_IUSE E_REQUIRED_USE E_DEPEND E_RDEPEND E_PDEPEND E_BDEPEND E_IDEPEND
+	if ${PKGCORE_ACCUMULATE_PROPERTIES_RESTRICT}; then
+		unset -v PROPERTIES   RESTRICT
+		local  E_PROPERTIES E_RESTRICT
+	fi
 
 	__env_push
 	__export_bash_compat
@@ -304,6 +308,10 @@ __load_ebuild() {
 	PDEPEND+=${PDEPEND:+ }${E_PDEPEND}
 	BDEPEND+=${BDEPEND:+ }${E_BDEPEND}
 	IDEPEND+=${IDEPEND:+ }${E_IDEPEND}
+	if ${PKGCORE_ACCUMULATE_PROPERTIES_RESTRICT}; then
+		PROPERTIES+=${PROPERTIES:+ }${E_PROPERTIES}
+		RESTRICT+=${RESTRICT:+ }${E_RESTRICT}
+	fi
 }
 
 # short version. think these should be sourced via at the daemon's choice, rather then defacto.

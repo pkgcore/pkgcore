@@ -951,7 +951,7 @@ class Eapply(IpcCommand):
 
     def parse_args(self, options, args):
         args, self.patch_opts = self._parse_patch_opts(args)
-        args = super().parse_args(options, args)
+        args = super().parse_args(options, ['--'] + args)
         return self._find_patches(args.targets)
 
     def run(self, args, user=False):

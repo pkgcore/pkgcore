@@ -696,6 +696,7 @@ eapi8 = EAPI.register(
     archive_exts=eapi7.archive_exts,
     optionals=_combine_dicts(eapi7.options, dict(
         accumulate_properties_restrict=True,
+        bash_compat='5.0',
     )),
     ebd_env_options=eapi7._ebd_env_options,
 )

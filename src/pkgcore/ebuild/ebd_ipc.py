@@ -22,6 +22,7 @@ from .. import os_data
 from ..exceptions import PkgcoreException, PkgcoreUserException
 from . import atom as atom_mod
 from . import filter_env, portageq
+from .misc import get_relative_dosym_target
 
 
 class IpcError(PkgcoreException):
@@ -652,6 +653,12 @@ class Dosym(_Symlink):
     """Python wrapper for dosym."""
 
     _link = os.symlink
+    arg_parser = IpcArgumentParser(parents=(_Symlink.arg_parser,))
+    arg_parser.add_argument('-r', action='store_true')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.dosym_relative = self.eapi.options.dosym_relative
 
     def run(self, args):
         target = args.target
@@ -659,6 +666,14 @@ class Dosym(_Symlink):
                 (os.path.isdir(target) and not os.path.islink(target))):
             # bug 379899
             raise IpcCommandError(f'missing filename target: {target!r}')
+
+        if self.opts.r:
+            if not self.dosym_relative:
+                raise IpcCommandError(f'-r not permitted in EAPI {self.eapi}')
+            if not os.path.isabs(args.source):
+                raise IpcCommandError(f'-r is only meaningful with absolute paths')
+            args.source = get_relative_dosym_target(args.source, target)
+
         super().run(args)
 
 

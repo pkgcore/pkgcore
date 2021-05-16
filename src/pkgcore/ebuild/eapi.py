@@ -39,6 +39,9 @@ eapi_optionals = ImmutableDict({
     # Controls whether -i18n option is allowed.
     "doman_language_override": False,
 
+    # Controls whether dosym -r option is allowed.
+    "dosym_relative": False,
+
     # Controls whether an ebuild_phase function exists for ebuild consumption.
     'ebuild_phase_func': False,
 
@@ -707,6 +710,7 @@ eapi8 = EAPI.register(
     optionals=_combine_dicts(eapi7.options, dict(
         accumulate_properties_restrict=True,
         bash_compat='5.0',
+        dosym_relative=True,
         update_regex=valid_updates_eapi8_re,
     )),
     ebd_env_options=eapi7._ebd_env_options,

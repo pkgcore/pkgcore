@@ -4,11 +4,14 @@ misc. stuff we've not found a spot for yet.
 
 __all__ = (
     "ChunkedDataDict", "IncrementalsDict", "PayloadDict",
-    "chunked_data", "collapsed_restrict_to_data", "incremental_chunked",
-    "incremental_expansion", "incremental_expansion_license",
+    "chunked_data", "collapsed_restrict_to_data", "get_relative_dosym_target",
+    "incremental_chunked", "incremental_expansion",
+    "incremental_expansion_license",
     "non_incremental_collapsed_restrict_to_data", "optimize_incrementals",
     "sort_keywords",
 )
+
+import os.path
 
 from collections import defaultdict, namedtuple
 from functools import partial
@@ -556,3 +559,9 @@ def run_sanity_checks(pkgs, domain, threads=None):
         if pkg_ops.supports("sanity_check") and (failures := pkg_ops.sanity_check()):
             sanity_failures[pkg] = failures
     return sanity_failures
+
+
+def get_relative_dosym_target(source, target):
+    """Get relative path from target to source, for symlink target."""
+    # NB: as dosym arg, initial slash can be omitted
+    return os.path.relpath(source, os.path.join('/', os.path.dirname(target)))

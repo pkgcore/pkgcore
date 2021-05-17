@@ -133,6 +133,9 @@ eapi_optionals = ImmutableDict({
     # Controls whether SRC_URI supports the '->' operator for url filename renaming.
     "src_uri_renames": False,
 
+    # Controls whether SRC_URI supports fetch+ and mirror+ prefixes.
+    "src_uri_unrestrict": False,
+
     # Controls whether or not use dependency atoms are able to control their enforced
     # value relative to another; standard use deps just enforce either on or off; EAPIs
     # supporting this allow syntax that can enforce (for example) X to be on if Y is on.
@@ -711,6 +714,7 @@ eapi8 = EAPI.register(
         accumulate_properties_restrict=True,
         bash_compat='5.0',
         dosym_relative=True,
+        src_uri_unrestrict=True,
         update_regex=valid_updates_eapi8_re,
     )),
     ebd_env_options=eapi7._ebd_env_options,

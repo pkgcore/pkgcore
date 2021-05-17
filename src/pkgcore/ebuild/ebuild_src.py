@@ -134,10 +134,25 @@ class base(metadata.package):
         else:
             uris = preexisting.uri
 
+        # fetch restriction implies mirror restriction
+        pkg_allow_fetch = "fetch" not in self.restrict
+        pkg_allow_mirror = "mirror" not in self.restrict and pkg_allow_fetch
+
         if filename != uri:
+            unrestrict_mirror = unrestrict_fetch = False
+            if self.eapi.options.src_uri_unrestrict:
+                # mirror unrestriction implies fetch unrestriction
+                unrestrict_mirror = uri.startswith('mirror+')
+                unrestrict_fetch = uri.startswith('fetch+') or unrestrict_mirror
+                if unrestrict_fetch:
+                    # strip the prefix
+                    uri = uri.partition('+')[2]
+
+            allow_mirror = pkg_allow_mirror or unrestrict_mirror
+
             if preexisting is None:
                 if "primaryuri" not in self.restrict:
-                    if default_mirrors and "mirror" not in self.restrict:
+                    if default_mirrors and allow_mirror:
                         uris.add_mirror(default_mirrors)
 
             if uri.startswith("mirror://"):
@@ -149,7 +164,7 @@ class base(metadata.package):
             else:
                 uris.add_uri(uri)
             if preexisting is None and "primaryuri" in self.restrict:
-                if default_mirrors and "mirror" not in self.restrict:
+                if default_mirrors and allow_mirror:
                     uris.add_mirror(default_mirrors)
 
         if preexisting is None:

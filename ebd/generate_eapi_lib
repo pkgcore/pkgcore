@@ -24,16 +24,15 @@ load_eapi_libs() {
 
 	local eapi file func
 	for (( eapi=0 ; eapi<=${EAPI} ; eapi++ )) ; do
-		# load generic phase scope lib when targeting a specific phase
-		if [[ ${scope} != global && ${scope} != phase ]]; then
-			file=${PKGCORE_EBD_PATH}/eapi/${eapi}/phase.bash
-			if  [[ -f ${file} ]]; then
-				source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
-			fi
-		fi
-
+		# load phase libs when not targeting global scope
 		if [[ ${scope} != global ]]; then
 			source "${PKGCORE_EBD_PATH}"/eapi/depend.bash || { echo "failed loading depend.bash" >&2; exit 1; }
+			if [[ ${scope} != phase ]]; then
+				file=${PKGCORE_EBD_PATH}/eapi/${eapi}/phase.bash
+				if  [[ -f ${file} ]]; then
+					source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
+				fi
+			fi
 		fi
 
 		file=${PKGCORE_EBD_PATH}/eapi/${eapi}/${scope}.bash

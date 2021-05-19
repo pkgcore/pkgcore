@@ -654,7 +654,7 @@ class Dosym(_Symlink):
 
     _link = os.symlink
     arg_parser = IpcArgumentParser(parents=(_Symlink.arg_parser,))
-    arg_parser.add_argument('-r', action='store_true')
+    arg_parser.add_argument('-r', dest='relative', action='store_true')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -667,7 +667,7 @@ class Dosym(_Symlink):
             # bug 379899
             raise IpcCommandError(f'missing filename target: {target!r}')
 
-        if self.opts.r:
+        if self.opts.relative:
             if not self.dosym_relative:
                 raise IpcCommandError(f'-r not permitted in EAPI {self.eapi}')
             if not os.path.isabs(args.source):

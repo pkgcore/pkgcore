@@ -555,4 +555,4 @@ def run_sanity_checks(pkgs, domain, threads=None):
         pkg_ops = domain.pkg_operations(pkg)
         if pkg_ops.supports("sanity_check") and (failures := pkg_ops.sanity_check()):
             sanity_failures[pkg] = failures
-    return failures
+    return sanity_failures

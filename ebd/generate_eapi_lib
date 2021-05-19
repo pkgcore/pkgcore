@@ -8,7 +8,7 @@
 # function lists are generated at install time and used instead.
 
 load_eapi_libs() {
-	local scope=global
+	local scope="global"
 	local -a skip_funcs=( $(compgen -A function) )
 	local skip_regex=$(IFS='|'; echo "^(${skip_funcs[*]})$")
 
@@ -30,6 +30,10 @@ load_eapi_libs() {
 			if  [[ -f ${file} ]]; then
 				source "${file}" || { echo "failed loading ${file}" >&2; exit 1; }
 			fi
+		fi
+
+		if [[ ${scope} != global ]]; then
+			source "${PKGCORE_EBD_PATH}"/eapi/depend.bash || { echo "failed loading depend.bash" >&2; exit 1; }
 		fi
 
 		file=${PKGCORE_EBD_PATH}/eapi/${eapi}/${scope}.bash

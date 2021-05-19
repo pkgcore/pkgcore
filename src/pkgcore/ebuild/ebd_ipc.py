@@ -671,7 +671,7 @@ class Dosym(_Symlink):
             if not self.dosym_relative:
                 raise IpcCommandError(f'-r not permitted in EAPI {self.eapi}')
             if not os.path.isabs(args.source):
-                raise IpcCommandError(f'-r is only meaningful with absolute paths')
+                raise IpcCommandError('-r is only meaningful with absolute paths')
             args.source = get_relative_dosym_target(args.source, target)
 
         super().run(args)

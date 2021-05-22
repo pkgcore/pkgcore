@@ -3,6 +3,29 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.0 (2021-05-22)
+---------------------------
+
+- Add initial EAPI 8 support.
+
+- pkgcore.ebuild.formatter: Drop paludis formatter support.
+
+- pkgcore.ebuild.processor: Register ebd cleanup signal handlers on the main
+  thread during init to avoid inadvertent issues with 3rd party usage (e.g.
+  pkgcore pytest plugin gets autoloaded).
+
+- Rework fetch support to allow custom DISTDIR targets.
+
+- pmaint: Drop mirror subcommand support.
+
+- pshowkw: Move to ``pkgdev showkw``.
+
+- Simplify config-related options by dropping --empty-config in favor of using
+  false-valued boolean args to --config. For example, use ``--config no`` or
+  ``--config false`` to disable loading the system config where previously
+  --empty-config would be used.
+
+---------------------------
 pkgcore 0.11.8 (2021-03-27)
 ---------------------------
 

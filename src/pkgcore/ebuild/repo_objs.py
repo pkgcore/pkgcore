@@ -897,6 +897,24 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
         return mappings.ImmutableDict(d)
 
+    @klass.jit_attr
+    def use_expand_sort(self):
+        """Dictionary of USE_EXPAND sorting keys for the repo."""
+        base = pjoin(self.profiles_base, 'desc')
+        d = dict()
+        try:
+            targets = listdir_files(base)
+        except FileNotFoundError:
+            targets = []
+
+        for use_group in targets:
+            group = use_group.split('.', 1)[0]
+            use_expand = (x[0] for x in self._split_use_desc_file(
+                f'desc/{use_group}', lambda k: k, matcher=False))
+            d[group] = {use: i for i, use in enumerate(use_expand)}
+
+        return mappings.ImmutableDict(d)
+
     def _split_use_desc_file(self, name, converter, matcher=True):
         line = None
         fp = pjoin(self.profiles_base, name)

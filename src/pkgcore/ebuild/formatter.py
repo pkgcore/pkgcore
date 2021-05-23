@@ -346,8 +346,15 @@ class PortageFormatter(CountingFormatter):
 
         # output USE_EXPAND flags
         for expand in sorted(self.use_expand - self.use_expand_hidden):
-            flaglists = [d.get(expand, ()) for d in usedicts]
-            self.format_use(expand, *flaglists)
+            try:
+                # use flag ordering from repo to sort output
+                use_expand_sort = op.pkg.repo.config.use_expand_sort[expand.lower()]
+                sorter = lambda k: use_expand_sort[k]
+            except (KeyError, AttributeError):
+                # nonexistent USE_EXPAND group (and work around testcase fake repo objs)
+                sorter = lambda k: k
+            flaglists = [sorted(d.get(expand, ()), key=sorter) for d in usedicts]
+            self.format_use(expand, *flaglists, sorter=sorter)
 
         # output download size
         if self.verbosity > 0:
@@ -370,7 +377,7 @@ class PortageFormatter(CountingFormatter):
         out.write('\n')
         out.autoline = origautoline
 
-    def format_use(self, attr, pkg_iuse, pkg_use, old_pkg_iuse=None, old_pkg_use=None):
+    def format_use(self, attr, pkg_iuse, pkg_use, old_pkg_iuse=None, old_pkg_use=None, sorter=lambda k: k):
         """Write the current selection from a set of flags to a formatter.
 
         :type attr: string
@@ -403,7 +410,7 @@ class PortageFormatter(CountingFormatter):
             old_disabled = set(old_pkg_iuse) - set(old_pkg_use)
             removed = set(old_pkg_iuse) - set(pkg_iuse)
 
-            for flag in sorted(enabled):
+            for flag in sorted(enabled, key=sorter):
                 expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if flag in old_enabled:
                     # unchanged
@@ -425,7 +432,7 @@ class PortageFormatter(CountingFormatter):
                     else:
                         flags.extend((yellow, bold, flag, reset, '%*', ' '))
 
-            for flag in sorted(disabled):
+            for flag in sorted(disabled, key=sorter):
                 expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if flag in old_disabled:
                     # unchanged
@@ -448,7 +455,7 @@ class PortageFormatter(CountingFormatter):
                         flags.extend((yellow, bold, '-', flag, reset, '%', ' '))
 
             if self.verbosity > 0:
-                for flag in sorted(removed):
+                for flag in sorted(removed, key=sorter):
                     if flag in old_enabled:
                         flags.extend(('(', yellow, bold, '-', flag, reset, '%*)', ' '))
                     else:
@@ -456,13 +463,13 @@ class PortageFormatter(CountingFormatter):
 
         # new pkg install
         else:
-            for flag in sorted(enabled):
+            for flag in sorted(enabled, key=sorter):
                 expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if expanded_flag in self.pkg_forced_use:
                     flags.extend(('(', red, bold, flag, reset, ')', ' '))
                 else:
                     flags.extend((red, bold, flag, reset, ' '))
-            for flag in sorted(disabled):
+            for flag in sorted(disabled, key=sorter):
                 expanded_flag = '_'.join((attr.lower(), flag)) if attr != 'use' else flag
                 if expanded_flag in self.pkg_disabled_use:
                     flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))

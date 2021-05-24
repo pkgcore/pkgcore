@@ -432,6 +432,13 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         return c
 
     @load_property('make.defaults', read_func=None, fallback=None)
+    def make_defaults(self, data):
+        d = {}
+        if data is not None:
+            d.update(read_bash_dict(data[0]))
+        return ImmutableDict(d)
+
+    @load_property('make.defaults', read_func=None, fallback=None)
     def default_env(self, data):
         rendered = _make_incrementals_dict()
         for parent in self.parents:

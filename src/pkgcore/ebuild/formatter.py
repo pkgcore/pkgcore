@@ -348,7 +348,7 @@ class PortageFormatter(CountingFormatter):
         for expand in sorted(self.use_expand - self.use_expand_hidden):
             try:
                 # use flag ordering from repo to sort output
-                use_expand_sort = op.pkg.repo.config.use_expand_sort[expand.lower()]
+                use_expand_sort = op.pkg.repo.use_expand_sort[expand.lower()]
                 sorter = lambda k: use_expand_sort[k]
             except (KeyError, AttributeError):
                 # nonexistent USE_EXPAND group (and work around testcase fake repo objs)

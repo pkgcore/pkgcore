@@ -883,7 +883,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
     def use_expand_desc(self):
         """USE_EXPAND settings for the repo."""
         base = pjoin(self.profiles_base, 'desc')
-        d = dict()
+        d = {}
         try:
             targets = listdir_files(base)
         except FileNotFoundError:
@@ -899,9 +899,9 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
     @klass.jit_attr
     def use_expand_sort(self):
-        """Dictionary of USE_EXPAND sorting keys for the repo."""
+        """Mapping of USE_EXPAND sorting keys for the repo."""
         base = pjoin(self.profiles_base, 'desc')
-        d = dict()
+        d = {}
         try:
             targets = listdir_files(base)
         except FileNotFoundError:

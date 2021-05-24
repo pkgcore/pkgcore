@@ -397,6 +397,14 @@ class UnconfiguredTree(prototype.tree):
         return ImmutableDict(mirrors)
 
     @klass.jit_attr
+    def use_expand_sort(self):
+        """Inherited mapping of USE_EXPAND sorting keys for the repo."""
+        d = {}
+        for repo in self.trees:
+            d.update(repo.config.use_expand_sort)
+        return ImmutableDict(d)
+
+    @klass.jit_attr
     def category_dirs(self):
         try:
             return frozenset(map(intern, filterfalse(

@@ -19,10 +19,6 @@ demand_compile_regexp(
     '_valid_EAPI_regex', r"^[A-Za-z0-9_][A-Za-z0-9+_.-]*$"
 )
 
-demand_compile_regexp('valid_updates_eapi0_re', r'^([1-4])Q-(\d{4})$')
-demand_compile_regexp('valid_updates_eapi8_re', r'^[^.]')
-
-
 eapi_optionals = ImmutableDict({
     # Controls whether PROPERTIES and RESTRICT are accumulated across eclasses.
     "accumulate_properties_restrict": False,
@@ -155,7 +151,7 @@ eapi_optionals = ImmutableDict({
     "unpack_case_insensitive": False,
 
     # Regular expression to filter out valid update files
-    "update_regex": valid_updates_eapi0_re,
+    "update_regex": re.compile(r'^([1-4])Q-(\d{4})$'),
 
     # Controls whether user patches are supported.
     "user_patches": False,
@@ -715,7 +711,7 @@ eapi8 = EAPI.register(
         bash_compat='5.0',
         dosym_relative=True,
         src_uri_unrestrict=True,
-        update_regex=valid_updates_eapi8_re,
+        update_regex=re.compile(r'^[^.]'),
     )),
     ebd_env_options=eapi7._ebd_env_options,
 )

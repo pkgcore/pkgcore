@@ -404,6 +404,15 @@ class UnconfiguredTree(prototype.tree):
             d.update(repo.config.use_expand_sort)
         return ImmutableDict(d)
 
+    def use_expand_sorter(self, group):
+        """Sorting function for a given USE_EXPAND group."""
+        try:
+            ordering = self.use_expand_sort[group.lower()]
+            return lambda k: ordering.get(k, -1)
+        except KeyError:
+            # nonexistent USE_EXPAND group
+            return lambda k: k
+
     @klass.jit_attr
     def category_dirs(self):
         try:

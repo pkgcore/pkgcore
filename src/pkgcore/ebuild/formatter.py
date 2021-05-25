@@ -347,11 +347,9 @@ class PortageFormatter(CountingFormatter):
         # output USE_EXPAND flags
         for expand in sorted(self.use_expand - self.use_expand_hidden):
             try:
-                # use flag ordering from repo to sort output
-                use_expand_sort = op.pkg.repo.use_expand_sort[expand.lower()]
-                sorter = lambda k: use_expand_sort[k]
-            except (KeyError, AttributeError):
-                # nonexistent USE_EXPAND group (and work around testcase fake repo objs)
+                sorter = op.pkg.repo.use_expand_sorter(expand)
+            except AttributeError:
+                # TODO: hack for unit tests using fake repo objs
                 sorter = lambda k: k
             flaglists = [sorted(d.get(expand, ()), key=sorter) for d in usedicts]
             self.format_use(expand, *flaglists, sorter=sorter)

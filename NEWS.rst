@@ -3,6 +3,14 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.1 (2021-05-28)
+---------------------------
+
+- pkgcore.ebuild.profiles: Provide raw access to make.defaults data for pkgcheck.
+
+- Leverage USE_EXPAND flag ordering from repo to sort output.
+
+---------------------------
 pkgcore 0.12.0 (2021-05-22)
 ---------------------------
 

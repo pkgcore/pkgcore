@@ -44,9 +44,8 @@ from ..util.parserestrict import ParseError, parse_match
 from . import const
 from . import repository as ebuild_repo
 from .atom import atom as _atom
-from .misc import (ChunkedDataDict, chunked_data, collapsed_restrict_to_data,
-                   incremental_expansion, incremental_expansion_license,
-                   non_incremental_collapsed_restrict_to_data,
+from .misc import (ChunkedDataDict, chunked_data, collapsed_restrict_to_data, incremental_expansion,
+                   incremental_expansion_license, non_incremental_collapsed_restrict_to_data,
                    optimize_incrementals)
 from .portage_conf import PortageConfig
 from .repo_objs import OverlayedLicenses, RepoConfig

@@ -1,11 +1,10 @@
 import os
 
+from pkgcore.fs import fs, livefs
+from pkgcore.fs.contents import contentsSet
 from snakeoil.osutils import pjoin
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
-
-from pkgcore.fs import fs, livefs
-from pkgcore.fs.contents import contentsSet
 
 
 class FsObjsTest(TempDirMixin, TestCase):

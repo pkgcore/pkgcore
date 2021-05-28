@@ -1,12 +1,11 @@
 import os
 
-from snakeoil.osutils import pjoin
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import tempdir_decorator
-
 from pkgcore.fs import livefs
 from pkgcore.fs.contents import contentsSet
 from pkgcore.merge import engine
+from snakeoil.osutils import pjoin
+from snakeoil.test import TestCase
+from snakeoil.test.mixins import tempdir_decorator
 
 from ..fs.fs_util import fsDir, fsFile, fsSymlink
 from .util import fake_engine

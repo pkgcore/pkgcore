@@ -5,11 +5,10 @@ import sys
 import tempfile
 from unittest import mock
 
-from snakeoil.osutils import pjoin
-from snakeoil.sequences import stable_unique
-
 from pkgcore import plugin
 from pkgcore.test import silence_logging
+from snakeoil.osutils import pjoin
+from snakeoil.sequences import stable_unique
 
 
 class LowPlug:

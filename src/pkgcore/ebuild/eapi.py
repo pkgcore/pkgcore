@@ -8,9 +8,9 @@ from weakref import WeakValueDictionary
 
 from snakeoil import klass
 from snakeoil.demandload import demand_compile_regexp
+from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
-from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
 
 from ..log import logger
 from . import atom, const

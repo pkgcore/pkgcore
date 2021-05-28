@@ -1,6 +1,5 @@
-from snakeoil.test import TestCase
-
 from pkgcore.package import base, metadata
+from snakeoil.test import TestCase
 
 
 def make_pkg_kls(attrs=(), callbacks={}):

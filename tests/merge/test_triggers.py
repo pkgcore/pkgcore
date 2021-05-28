@@ -6,15 +6,14 @@ from functools import partial
 from math import ceil, floor
 
 import pytest
-from snakeoil import process
-from snakeoil.currying import post_curry
-from snakeoil.osutils import ensure_dirs, normpath, pjoin
-from snakeoil.test import TestCase, mixins
-
 from pkgcore.fs import fs
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
 from pkgcore.merge import const, triggers
+from snakeoil import process
+from snakeoil.currying import post_curry
+from snakeoil.osutils import ensure_dirs, normpath, pjoin
+from snakeoil.test import TestCase, mixins
 
 from .util import fake_engine, fake_reporter, fake_trigger
 

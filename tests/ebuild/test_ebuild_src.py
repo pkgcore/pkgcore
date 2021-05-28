@@ -3,15 +3,14 @@ import textwrap
 from functools import partial
 
 import pytest
-from snakeoil.currying import post_curry
-from snakeoil.data_source import data_source, local_source
-from snakeoil.osutils import pjoin
-
 from pkgcore import fetch
 from pkgcore.ebuild import digest, ebuild_src, repo_objs
 from pkgcore.ebuild.eapi import EAPI, get_eapi
 from pkgcore.package import errors
 from pkgcore.test import malleable_obj
+from snakeoil.currying import post_curry
+from snakeoil.data_source import data_source, local_source
+from snakeoil.osutils import pjoin
 
 from .test_eclass_cache import FakeEclassCache
 

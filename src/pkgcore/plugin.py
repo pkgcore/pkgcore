@@ -22,8 +22,7 @@ from importlib import import_module
 from snakeoil import mappings, modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
-from snakeoil.osutils import (ensure_dirs, listdir_files, pjoin,
-                              unlink_if_exists)
+from snakeoil.osutils import ensure_dirs, listdir_files, pjoin, unlink_if_exists
 
 from . import const, os_data
 from .log import logger

@@ -1,6 +1,5 @@
-from snakeoil.test.mixins import TempDirMixin
-
 from pkgcore.cache import flat_hash
+from snakeoil.test.mixins import TempDirMixin
 
 from . import test_base
 from .test_util import GenericCacheMixin

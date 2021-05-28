@@ -2,10 +2,9 @@ import os
 from functools import partial
 
 import pytest
+from pkgcore.fetch import base, errors, fetchable
 from snakeoil import data_source
 from snakeoil.chksum import get_handlers
-
-from pkgcore.fetch import base, errors, fetchable
 
 repeating_str = 'asdf'
 data = repeating_str * 4000

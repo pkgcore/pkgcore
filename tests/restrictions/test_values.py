@@ -1,7 +1,6 @@
-from snakeoil.test import TestCase
-
 from pkgcore.restrictions import values
 from pkgcore.test import TestRestriction
+from snakeoil.test import TestCase
 
 
 class SillyBool(values.base):

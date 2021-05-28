@@ -1,9 +1,7 @@
 import pytest
-
-from snakeoil.test import TestCase
-
 from pkgcore.ebuild import misc
 from pkgcore.restrictions import packages
+from snakeoil.test import TestCase
 
 AlwaysTrue = packages.AlwaysTrue
 AlwaysFalse = packages.AlwaysFalse

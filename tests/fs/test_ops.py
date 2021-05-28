@@ -2,12 +2,11 @@ import os
 import shutil
 
 import pytest
+from pkgcore.fs import contents, fs, livefs, ops
 from snakeoil.data_source import local_source
 from snakeoil.osutils import pjoin
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
-
-from pkgcore.fs import contents, fs, livefs, ops
 
 
 class VerifyMixin:

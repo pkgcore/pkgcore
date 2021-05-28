@@ -1,9 +1,8 @@
 from functools import partial
 
-from snakeoil.test import TestCase
-
 from pkgcore.package import base
 from pkgcore.test import malleable_obj
+from snakeoil.test import TestCase
 
 
 def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):

@@ -2,11 +2,10 @@
 
 import operator
 
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import mk_named_tempfile
-
 from pkgcore.config import basics, load_config
 from pkgcore.config.hint import configurable
+from snakeoil.test import TestCase
+from snakeoil.test.mixins import mk_named_tempfile
 
 
 @configurable(typename='foo')

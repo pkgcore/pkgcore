@@ -13,8 +13,7 @@ from snakeoil.mappings import LazyValDict
 from snakeoil.osutils import listdir, normpath, pjoin
 
 from .contents import contentsSet
-from .fs import (fsBase, fsDev, fsDir, fsFifo, fsFile, fsSymlink,
-                 get_major_minor)
+from .fs import fsBase, fsDev, fsDir, fsFifo, fsFile, fsSymlink, get_major_minor
 
 __all__ = ["gen_obj", "scan", "iter_scan", "sorted_scan"]
 

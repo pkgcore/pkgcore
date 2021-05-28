@@ -1,8 +1,7 @@
-from snakeoil.currying import post_curry
-from snakeoil.test import TestCase
-
 from pkgcore.resolver import plan
 from pkgcore.test.misc import FakePkg
+from snakeoil.currying import post_curry
+from snakeoil.test import TestCase
 
 
 class TestPkgSorting(TestCase):

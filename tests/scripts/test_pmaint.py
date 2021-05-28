@@ -1,10 +1,6 @@
 from functools import partial
 from io import BytesIO
 
-from snakeoil.formatters import PlainTextFormatter
-from snakeoil.mappings import AttrAccessible
-from snakeoil.test import TestCase
-
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild.cpv import CPV
@@ -13,6 +9,9 @@ from pkgcore.repository import syncable, util
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
 from pkgcore.test.scripts.helpers import ArgParseMixin
+from snakeoil.formatters import PlainTextFormatter
+from snakeoil.mappings import AttrAccessible
+from snakeoil.test import TestCase
 
 Options = AttrAccessible
 

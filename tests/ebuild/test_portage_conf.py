@@ -5,14 +5,13 @@ import stat
 import textwrap
 from tempfile import NamedTemporaryFile
 
-from snakeoil.osutils import pjoin
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import TempDirMixin
-
 from pkgcore import const
 from pkgcore import exceptions as base_errors
 from pkgcore.config import errors as config_errors
 from pkgcore.ebuild.portage_conf import PortageConfig
+from snakeoil.osutils import pjoin
+from snakeoil.test import TestCase
+from snakeoil.test.mixins import TempDirMixin
 
 load_make_conf = PortageConfig.load_make_conf
 load_repos_conf = PortageConfig.load_repos_conf

@@ -1,11 +1,10 @@
 import difflib
 
-from snakeoil.test import TestCase
-from snakeoil.test.argparse_helpers import Bold, Color, FakeStreamFormatter, Reset
-
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.formatter import BasicFormatter, PkgcoreFormatter, PortageFormatter
 from pkgcore.test.misc import FakePkg, FakeRepo
+from snakeoil.test import TestCase
+from snakeoil.test.argparse_helpers import Bold, Color, FakeStreamFormatter, Reset
 
 
 # These two are probably unnecessary with ferringb's changes to

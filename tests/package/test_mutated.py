@@ -1,11 +1,10 @@
 from functools import partial
 
+from pkgcore.package.base import base, dynamic_getattr_dict
+from pkgcore.package.mutated import MutatedPkg
 from snakeoil.compatibility import cmp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
 from snakeoil.test import TestCase
-
-from pkgcore.package.base import base, dynamic_getattr_dict
-from pkgcore.package.mutated import MutatedPkg
 
 
 def passthru(val, self):

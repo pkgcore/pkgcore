@@ -1,9 +1,8 @@
 from random import shuffle
 
 import pytest
-from snakeoil.compatibility import cmp
-
 from pkgcore.ebuild import cpv
+from snakeoil.compatibility import cmp
 
 
 def generate_misc_sufs():

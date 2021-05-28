@@ -1,12 +1,11 @@
 import sys
 
 import pytest
-from snakeoil.test import TestCase
-
 from pkgcore.config import basics, errors
 from pkgcore.config.hint import configurable
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts.helpers import ArgParseMixin
+from snakeoil.test import TestCase
 
 
 @configurable({'reff': 'ref:spork'})

@@ -1,7 +1,6 @@
-from snakeoil.test import TestCase
-
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
+from snakeoil.test import TestCase
 
 
 class fake_package:

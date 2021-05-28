@@ -12,7 +12,6 @@ __all__ = (
 )
 
 import os.path
-
 from collections import defaultdict, namedtuple
 from functools import partial
 from itertools import chain

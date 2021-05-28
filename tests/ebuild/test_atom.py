@@ -1,13 +1,12 @@
 from functools import partial
 from pickle import dumps, loads
 
-from snakeoil.compatibility import cmp
-
 from pkgcore import test
 from pkgcore.ebuild import atom, errors, restricts
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions.boolean import AndRestriction
 from pkgcore.test.misc import FakePkg, FakeRepo
+from snakeoil.compatibility import cmp
 
 
 class Test_atom(test.TestRestriction):

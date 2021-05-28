@@ -1,11 +1,10 @@
 import pytest
-from snakeoil.currying import post_curry
-
 from pkgcore.ebuild import restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import util
 from pkgcore.restrictions import boolean, packages, restriction, values
 from pkgcore.util import parserestrict
+from snakeoil.currying import post_curry
 
 
 class TestMatch:

@@ -1,9 +1,8 @@
 import io
 from functools import partial
 
-from snakeoil.test import TestCase
-
 from pkgcore.ebuild import filter_env
+from snakeoil.test import TestCase
 
 
 class TestFilterEnv(TestCase):

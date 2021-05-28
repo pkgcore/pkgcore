@@ -1,6 +1,5 @@
-from snakeoil.chksum import LazilyHashedPath
-
 from pkgcore.cache import errors
+from snakeoil.chksum import LazilyHashedPath
 
 generic_data = \
     ("sys-libs/libtrash-2.4",

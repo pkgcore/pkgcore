@@ -1,6 +1,5 @@
-from snakeoil.test import TestCase
-
 from pkgcore.restrictions import boolean, restriction
+from snakeoil.test import TestCase
 
 true = restriction.AlwaysBool(node_type='foo', negate=True)
 false = restriction.AlwaysBool(node_type='foo', negate=False)

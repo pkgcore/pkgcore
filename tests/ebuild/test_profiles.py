@@ -5,10 +5,6 @@ import tempfile
 from functools import partial
 from unittest import mock
 
-from snakeoil.osutils import ensure_dirs, normpath, pjoin
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import TempDirMixin
-
 from pkgcore.config import central
 from pkgcore.ebuild import const, profiles, repo_objs
 from pkgcore.ebuild.atom import atom
@@ -16,6 +12,9 @@ from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.misc import chunked_data
 from pkgcore.restrictions import packages
 from pkgcore.test import silence_logging
+from snakeoil.osutils import ensure_dirs, normpath, pjoin
+from snakeoil.test import TestCase
+from snakeoil.test.mixins import TempDirMixin
 
 atrue = packages.AlwaysTrue
 

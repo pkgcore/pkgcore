@@ -1,7 +1,6 @@
-from snakeoil.test import TestCase
-
 from pkgcore.scripts import pclean
 from pkgcore.test.scripts.helpers import ArgParseMixin
+from snakeoil.test import TestCase
 
 
 class CommandlineTest(TestCase, ArgParseMixin):

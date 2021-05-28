@@ -26,8 +26,7 @@ from snakeoil.contexts import chdir
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, listdir_files, normpath, pjoin
-from snakeoil.process.spawn import (is_sandbox_capable, is_userpriv_capable,
-                                    spawn, spawn_bash)
+from snakeoil.process.spawn import is_sandbox_capable, is_userpriv_capable, spawn, spawn_bash
 from snakeoil.sequences import iflatten_instance, iter_stable_unique
 
 from .. import const
@@ -36,9 +35,8 @@ from ..operations import format, observer
 from ..os_data import portage_gid, portage_uid, xargs
 from ..package.mutated import MutatedPkg
 from . import ebd_ipc, ebuild_built, errors
-from .processor import (ProcessorError, chuck_UnhandledCommand,
-                        expected_ebuild_env, inherit_handler,
-                        release_ebuild_processor, request_ebuild_processor)
+from .processor import (ProcessorError, chuck_UnhandledCommand, expected_ebuild_env,
+                        inherit_handler, release_ebuild_processor, request_ebuild_processor)
 
 
 class ebd:

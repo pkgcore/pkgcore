@@ -1,7 +1,6 @@
+from pkgcore import fetch
 from snakeoil.sequences import iflatten_instance
 from snakeoil.test import TestCase
-
-from pkgcore import fetch
 
 
 class base(TestCase):

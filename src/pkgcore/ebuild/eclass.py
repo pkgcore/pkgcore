@@ -13,9 +13,9 @@ from snakeoil.strings import pluralism
 from snakeoil.version import get_version
 
 from .. import __title__
+from ..log import logger
 from . import conditionals
 from .eapi import EAPI
-from ..log import logger
 
 
 class AttrDict(ImmutableDict):

@@ -3,10 +3,9 @@ import pwd
 from unittest import mock
 
 import pytest
-from snakeoil.process import CommandNotFound
-
 from pkgcore import os_data
 from pkgcore.sync import base, git, tar
+from snakeoil.process import CommandNotFound
 
 existing_user = pwd.getpwall()[0].pw_name
 existing_uid = pwd.getpwnam(existing_user).pw_uid

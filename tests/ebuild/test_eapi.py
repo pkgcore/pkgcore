@@ -2,7 +2,6 @@ from importlib import reload
 from unittest import mock
 
 import pytest
-
 from pkgcore.ebuild import eapi
 from pkgcore.ebuild.eapi import EAPI, eapi6, get_eapi
 

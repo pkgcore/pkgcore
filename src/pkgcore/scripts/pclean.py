@@ -23,8 +23,7 @@ from ..repository import multiplex
 from ..repository.util import SimpleTree, get_virtual_repos
 from ..restrictions import boolean, packages
 from ..util import parserestrict
-from ..util.commandline import (ArgumentParser, StoreRepoObject,
-                                convert_to_restrict)
+from ..util.commandline import ArgumentParser, StoreRepoObject, convert_to_restrict
 
 argparser = ArgumentParser(description=__doc__, script=(__file__, __name__))
 subparsers = argparser.add_subparsers(description='cleaning applets')

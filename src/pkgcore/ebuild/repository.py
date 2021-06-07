@@ -176,28 +176,29 @@ class ProvidesRepo(util.SimpleTree):
 
     class PkgProvided(ebuild_src.base):
 
-        __slots__ = ('use',)
+        __slots__ = ('arches', 'use')
 
         package_is_real = False
         __inst_caching__ = True
 
         @property
         def keywords(self):
-            return InvertedContains(())
+            return self.arches
 
-        def __init__(self, *a, **kwds):
-            super().__init__(*a, **kwds)
+        def __init__(self, *args, arches=(), **kwargs):
+            super().__init__(*args, **kwargs)
             object.__setattr__(self, "use", [])
+            object.__setattr__(self, "arches", arches)
             object.__setattr__(self, "data", {"SLOT": "0"})
             object.__setattr__(self, "eapi", get_eapi('0'))
 
-    def __init__(self, pkgs, repo_id='package.provided'):
+    def __init__(self, pkgs, arches, repo_id='package.provided'):
         d = {}
         for pkg in pkgs:
             d.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
         intermediate_parent = self.PkgProvidedParent()
         super().__init__(
-            d, pkg_klass=partial(self.PkgProvided, intermediate_parent),
+            d, pkg_klass=partial(self.PkgProvided, intermediate_parent, arches=arches),
             livefs=True, frozen=True, repo_id=repo_id)
         intermediate_parent._parent_repo = self
 

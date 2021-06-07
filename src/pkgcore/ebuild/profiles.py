@@ -709,7 +709,13 @@ class ProfileStack:
     def provides_repo(self):
         # delay importing to avoid circular imports
         from .repository import ProvidesRepo
-        return ProvidesRepo(pkgs=self._collapse_generic("pkg_provided"))
+        pkgs = self._collapse_generic('pkg_provided')
+        try:
+            arches = self._system_profile.repoconfig.known_arches
+        except AttributeError:
+            # TODO: repoconfig is None when using fake repos
+            arches = ()
+        return ProvidesRepo(pkgs, arches)
 
     @klass.jit_attr
     def masks(self):

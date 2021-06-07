@@ -431,7 +431,7 @@ class PortageConfig(DictMixin):
                 d['class'] = 'pkgcore.sync.base.AutodetectSyncer'
             else:
                 # disable syncing if sync-uri is explicitly unset
-                d['class'] = 'pkgcore.sync.base.DisabledSyncer'
+                d['class'] = 'pkgcore.sync.base.DisabledSync'
 
             name = 'sync:' + repo_name
             self[name] = basics.AutoConfigSection(d)

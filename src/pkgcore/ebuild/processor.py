@@ -282,6 +282,11 @@ def chuck_TermInterrupt(ebp, *args):
         ebp.shutdown_processor()
 
 
+# register signal handlers for ebd cleanup
+signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
+signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
+
+
 def chuck_UnhandledCommand(ebp, line):
     """Event handler for unhandled commands."""
     raise UnhandledCommand(line)
@@ -319,11 +324,6 @@ class EbuildProcessor:
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
-
-        # signal handlers can only be registered in the main thread
-        if threading.current_thread() is threading.main_thread():
-            signal.signal(signal.SIGTERM, partial(chuck_TermInterrupt, None))
-            signal.signal(signal.SIGINT, chuck_KeyboardInterrupt)
 
         spawn_opts = {'umask': 0o002}
         if self.userpriv:

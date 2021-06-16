@@ -9,8 +9,6 @@ from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
 import pytest
-from pkgcore.ebuild import cpv as cpv_mod
-from pkgcore.ebuild import repo_objs, repository
 
 
 class GitRepo:
@@ -195,6 +193,8 @@ class EbuildRepo:
 
     def sync(self):
         """Forcibly create underlying repo object avoiding cache usage."""
+        # avoid issues loading modules that set signal handlers
+        from pkgcore.ebuild import repo_objs, repository
         repo_config = repo_objs.RepoConfig(location=self.path, disable_inst_caching=True)
         self._repo = repository.UnconfiguredTree(self.path, repo_config=repo_config)
 
@@ -216,6 +216,7 @@ class EbuildRepo:
                     f.write(f'{p.eapi}\n')
 
     def create_ebuild(self, cpvstr, data=None, **kwargs):
+        from pkgcore.ebuild import cpv as cpv_mod
         cpv = cpv_mod.VersionedCPV(cpvstr)
         self._repo.notify_add_package(cpv)
         ebuild_dir = pjoin(self.path, cpv.category, cpv.package)

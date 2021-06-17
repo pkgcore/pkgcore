@@ -211,7 +211,8 @@ class ebd:
         for x, y in (("T", "temp"),
                      ("WORKDIR", "work"),
                      ("D", "image"),
-                     ("HOME", "homedir")):
+                     ("HOME", "homedir"),
+                     ("PKGCORE_EMPTYDIR", "empty")):
             self.env[x] = normpath(pjoin(self.builddir, y))
         self.env["D"] += self.eapi.options.trailing_slash
         self.env["PORTAGE_LOGFILE"] = normpath(pjoin(self.env["T"], "build.log"))
@@ -313,6 +314,10 @@ class ebd:
                 return True
             if 'selinux' not in self.features and 'suidctl' not in self.features:
                 return True
+
+        shutil.rmtree(self.env["PKGCORE_EMPTYDIR"], ignore_errors=True)
+        os.mkdir(self.env["PKGCORE_EMPTYDIR"])
+
         userpriv = self.userpriv and userpriv
         sandbox = self.sandbox and sandbox
         self._set_per_phase_env(phase, self.env)

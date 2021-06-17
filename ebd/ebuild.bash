@@ -348,6 +348,7 @@ __run_ebuild_phase() {
 	source "${PKGCORE_EBD_PATH}"/.generated/libs/${EAPI}/$1 \
 		|| die "failed sourcing EAPI ${EAPI} $1 phase scope lib"
 
+	cd "${PKGCORE_EMPTYDIR}" || die "unable to cd into ${PKGCORE_EMPTYDIR}"
 	__qa_run_function_if_exists __phase_pre_$1
 	__qa_run_function_if_exists pre_$1
 

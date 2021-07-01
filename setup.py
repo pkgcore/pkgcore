@@ -4,12 +4,12 @@ import glob
 import os
 import subprocess
 import sys
-from distutils import log
-from distutils.errors import DistutilsExecError
-from distutils.util import byte_compile
 from itertools import chain
 
 from setuptools import setup
+from setuptools._distutils import log
+from setuptools._distutils.errors import DistutilsExecError
+from setuptools._distutils.util import byte_compile
 from snakeoil.dist import distutils_extensions as pkgdist
 
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()

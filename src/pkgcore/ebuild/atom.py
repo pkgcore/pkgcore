@@ -76,13 +76,15 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             inverted for restriction matching
         :keyword eapi: string/int controlling what eapi to enforce for this atom
         """
+        if not atom:
+            raise errors.MalformedAtom(atom)
+
         sf = object.__setattr__
-
         orig_atom = atom
-
         override_kls = False
         use_start = atom.find("[")
         slot_start = atom.find(":")
+
         if use_start != -1:
             # use dep
             use_end = atom.find("]", use_start)

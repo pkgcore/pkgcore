@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.2 (2021-08-04)
+---------------------------
+
+- ebd: Start pkg_* phases in a dedicated empty directory required by EAPI 8
+  (#313).
+
+- ebd: Fix typo in econf --libdir logic (#318).
+
+- pkgcore.ebuild.repo_objs: Support eapis-testing metadata field (GLEP 82).
+
+- pkgcore.ebuild.atom: Explicitly handle empty string when parsing.
+
+- pkgcore.ebuild.repository: Inject parent repo arches as keywords for provided
+  pkgs (#312).
+
+---------------------------
 pkgcore 0.12.1 (2021-05-28)
 ---------------------------
 

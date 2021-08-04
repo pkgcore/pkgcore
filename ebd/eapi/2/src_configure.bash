@@ -26,7 +26,7 @@ econf() {
 			[[ ${CONF_PREFIX} != /* ]] && CONF_PREFIX=/${CONF_PREFIX}
 		elif [[ $* == *"--prefix="* ]]; then
 			local args=$(echo $*)
-			local -a pref=( $(echo ${args/*--prefix[= ]}) )
+			local -a prefix=( $(echo ${args/*--prefix[= ]}) )
 			CONF_PREFIX=${prefix/--*}
 			[[ ${CONF_PREFIX} != /* ]] && CONF_PREFIX=/${CONF_PREFIX}
 		else

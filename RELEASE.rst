@@ -3,7 +3,9 @@ Release process
 
 #. Add new entry in NEWS.rst along with changelog updates for the release.
 
-#. Make sure dependency versions are correct in requirements/install.txt.
+#. Make sure dependency versions are correct in requirements/install.txt. Also,
+   if requirements/pyproject.toml exists make sure dependency versions match
+   those in requirements/install.txt for matching dependencies.
 
 #. Run a test release build by force pushing to a temporary "deploy" branch.
    This triggers the release workflow to run on Github, but doesn't actually

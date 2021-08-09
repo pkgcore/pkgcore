@@ -14,11 +14,17 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         python-version: ['3.8', '3.9']
+        deps: [newest-deps]
         experimental: [false]
         include:
           - os: ubuntu-latest
             python-version: '3.10.0-alpha - 3.10.0'
+            deps: newest-deps
             experimental: true
+          - os: ubuntu-latest
+            python-version: 3.9
+            deps: minimal-deps
+            experimental: false
 
     steps:
     - name: Checkout code
@@ -45,6 +51,12 @@ jobs:
     - name: Install macos deps
       if: ${{ matrix.os == 'macos-latest' }}
       run: brew install bash
+
+    - name: Pin dependencies to minimal versions
+      if: ${{ matrix.deps == 'minimal-deps' }}
+      run: |
+        sed -i -e 's:~=:==:' requirements/*
+        mv requirements/install.txt requirements/dev.txt
 
     - name: Install dependencies
       run: |

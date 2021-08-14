@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.3 (2021-08-14)
+---------------------------
+
+- pkgcore.ebuild.repo_objs: Support profile-eapis-banned
+  and profile-eapis-deprecated metadata fields (GLEP 82).
+
+---------------------------
 pkgcore 0.12.2 (2021-08-04)
 ---------------------------
 

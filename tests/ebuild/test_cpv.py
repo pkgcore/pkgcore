@@ -24,15 +24,18 @@ class TestCPV:
 
     good_cats = (
         "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
-        "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a")
+        "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a",
+        "foo---", "multi--hyphen")
     bad_cats  = (".util", "_dev", "", "dev-util ", "multi//depth")
-    good_pkgs = ("diffball", "a9", "a9+", "a-100dpi", "diff-mode-")
-    bad_pkgs  = ("diffball ", "diffball-9", "a-3D", "ab--df", "-df", "+dfa")
+    good_pkgs = ("diffball", "a9", "a9+", "a-100dpi", "diff-mode-",
+                 "multi--hyphen", "timidity--", "frob---", "diffball-9-")
+    bad_pkgs  = ("diffball ", "diffball-9", "a-3D", "-df", "+dfa",
+                 "timidity--9f", "ormaybe---13_beta")
 
     good_cp   = (
         "bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9",
         "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi",
-        "dev-util/diffball-blah-monkeys")
+        "dev-util/diffball-blah-monkeys", "virtual/7z")
 
     good_vers = ("1", "2.3.4", "2.3.4a", "02.3", "2.03", "3d", "3D")
     bad_vers  = ("2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3.", "cvs.2")

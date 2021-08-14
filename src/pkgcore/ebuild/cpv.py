@@ -33,12 +33,17 @@ def isvalid_pkg_name(chunks):
     if not chunks[0] or chunks[0][0] == '+':
         # this means a leading -; additionally, '+asdf' is disallowed
         return False
-    mf = _pkg_re.match
-    if not all(mf(s) for s in chunks[:-1]):
+    # all remaining chunks can either be empty (meaning multiple
+    # hyphens) or must be valid chars
+    if not all(not s or _pkg_re.match(s) for s in chunks):
         return False
-    if chunks[-1]:
-        return mf(chunks[-1]) and not isvalid_version_re.match(chunks[-1])
+    # the package name must not end with a hyphen followed by anything that
+    # looks like a version -- need to ensure that we've gotten more than one
+    # chunk, i.e. at least one hyphen
+    if len(chunks) > 1 and isvalid_version_re.match(chunks[-1]):
+        return False
     return True
+
 
 def isvalid_rev(s):
     return s and s[0] == 'r' and s[1:].isdigit()

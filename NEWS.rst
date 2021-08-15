@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.4 (2021-08-15)
+---------------------------
+
+- pkgcore.ebuild.cpv: Fix rejecting valid package names that resemble
+  version strings or contain a sequence of multiple hyphens.
+
+---------------------------
 pkgcore 0.12.3 (2021-08-14)
 ---------------------------
 

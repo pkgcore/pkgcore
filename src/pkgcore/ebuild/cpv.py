@@ -59,7 +59,10 @@ class Revision(UserString):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if self.data:
-            self._revint = int(self.data)
+            try:
+                self._revint = int(self.data)
+            except ValueError:
+                raise InvalidCPV(self.data, 'invalid revision')
         else:
             self._revint = 0
 

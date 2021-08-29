@@ -11,6 +11,9 @@ pkgcore 0.12.5 (2021-??-??)
 - pkgcore.ebuild.eclass: Indicate variable types in generated
   documentation.
 
+- Fix unpack to decompress non-archive compressed files into the current
+  directory.
+
 ---------------------------
 pkgcore 0.12.4 (2021-08-15)
 ---------------------------

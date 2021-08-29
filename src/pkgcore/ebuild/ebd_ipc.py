@@ -1093,7 +1093,7 @@ class Unpack(IpcCommand):
         for filename, ext, source in args.targets:
             self.observer.write(f'>>> Unpacking {filename} to {self.cwd}', autoline=True)
             self.observer.flush()
-            dest = pjoin(self.cwd, filename[:-len(ext)])
+            dest = pjoin(self.cwd, os.path.basename(filename[:-len(ext)]))
             try:
                 target = ArComp(source, ext=ext)
                 target.unpack(dest=dest, **spawn_kwargs)

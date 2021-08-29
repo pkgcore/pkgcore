@@ -531,14 +531,28 @@ class EclassDoc(AttrDict):
         if external_vars := [x for x in self.variables if not x.internal]:
             rst.extend(_header_only('-', 'Variables'))
             for var in external_vars:
-                rst.extend(_rst_header('~', var.name))
+                vartype = ''
+                if var.required:
+                    vartype += ' (REQUIRED)'
+                if var.pre_inherit:
+                    vartype += ' (SET BEFORE INHERIT)'
+                if var.user_variable:
+                    vartype += ' (USER VARIABLE)'
+                if var.output_variable:
+                    vartype += ' (OUTPUT VARIABLE)'
+
+                rst.extend(_rst_header('~', var.name + vartype))
                 if var.description:
                     rst.append(var.description)
                 rst.append('')
         if external_func_vars := [x for x in self.function_variables if not x.internal]:
             rst.extend(_header_only('-', 'Function Variables'))
             for var in external_func_vars:
-                rst.extend(_rst_header('~', var.name))
+                vartype = ''
+                if var.required:
+                    vartype += ' (REQUIRED)'
+
+                rst.extend(_rst_header('~', var.name + vartype))
                 if var.description:
                     rst.append(var.description)
                 rst.append('')

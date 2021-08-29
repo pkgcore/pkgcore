@@ -8,6 +8,9 @@ pkgcore 0.12.5 (2021-??-??)
 
 - pkgcore.ebuild.cpv: Explicitly handle invalid revisions.
 
+- pkgcore.ebuild.eclass: Indicate variable types in generated
+  documentation.
+
 ---------------------------
 pkgcore 0.12.4 (2021-08-15)
 ---------------------------

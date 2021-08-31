@@ -15,7 +15,7 @@ FOO_ECLASS = '''
 # Report bugs somewhere.
 # @VCSURL: https://example.com/foo.eclass
 # @SUPPORTED_EAPIS: 0 1 2 3 4 5 6 7
-# @INDIRECT_ECLASSES: bar
+# @PROVIDES: bar
 # @BLURB: Test eclass.
 # @DEPRECATED: bar or frobnicate
 # @DESCRIPTION:
@@ -91,7 +91,7 @@ class TestEclassDoc(TempDirMixin, TestCase):
         assert doc.vcsurl == 'https://example.com/foo.eclass'
         assert doc.blurb == 'Test eclass.'
         assert doc.deprecated == 'bar or frobnicate'
-        assert doc.indirect_eclasses == ('bar',)
+        assert doc.raw_provides == ('bar',)
         assert doc.maintainers == ('Random Person <maintainer@random.email>',)
         assert doc.authors == ('Another Person <another@random.email>',
                                'Random Person <maintainer@random.email>',)

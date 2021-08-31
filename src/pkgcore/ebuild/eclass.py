@@ -210,7 +210,7 @@ class EclassBlock(ParseEclassDoc):
             '@VCSURL:': ('vcsurl', False, self._tag_inline_arg, None),
             '@BLURB:': ('blurb', True, self._tag_inline_arg, None),
             '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
-            '@INDIRECT_ECLASSES:': ('indirect_eclasses', False, self._tag_inline_list, ()),
+            '@PROVIDES:': ('raw_provides', False, self._tag_inline_list, ()),
             '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args, None),
             '@AUTHOR:': ('authors', False, self._tag_multiline_args, None),
             '@BUGREPORTS:': ('bugreports', False, self._tag_multiline_str, None),
@@ -617,3 +617,6 @@ class EclassDoc(AttrDict):
         """Convert eclassdoc object to an HTML 5 document."""
         from docutils.writers import html5_polyglot
         return self._to_docutils(html5_polyglot.Writer())
+
+    # backwards compatibility cruft, remove on next API breaker
+    indirect_eclasses = klass.alias_attr('raw_provides')

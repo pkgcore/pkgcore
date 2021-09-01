@@ -14,6 +14,9 @@ pkgcore 0.12.5 (2021-??-??)
 - Fix unpack to decompress non-archive compressed files into the current
   directory.
 
+- Add support for recursive @PROVIDES eclassdoc tag (replacement
+  for @INDIRECT_ECLASSES).
+
 ---------------------------
 pkgcore 0.12.4 (2021-08-15)
 ---------------------------

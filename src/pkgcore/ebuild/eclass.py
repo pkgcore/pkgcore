@@ -319,7 +319,8 @@ _eclass_blocks_re = re.compile(
 class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
-    def __init__(self, path, /, *, sourced=False):
+    def __init__(self, path, /, *, sourced=False, repo=None):
+        self.repo = repo
         self.mtime = os.path.getmtime(path)
 
         # parse eclass doc
@@ -408,6 +409,22 @@ class EclassDoc(AttrDict):
     def live(self):
         """Eclass implements functionality to support a version control system."""
         return 'live' in self._dict.get('_properties', ())
+
+    @property
+    def provides(self):
+        """Recursively gathered list of other eclasses provided by this eclass."""
+        if self.repo is None:
+            raise ValueError('EclassDoc.provides can only be used if the class has been initialized with repo')
+        out = OrderedSet()
+        to_process = OrderedSet(self.raw_provides)
+        while to_process:
+            out.add(next_eclass := to_process.pop())
+            if (next_eclass_inst := self.repo.eclass_cache.get_eclass(next_eclass)) is None:
+                logger.warning(f"'@PROVIDES:' eclass {next_eclass} not found")
+                continue
+            next_eclass_doc = EclassDoc(next_eclass_inst.path)
+            to_process.update(set(next_eclass_doc.raw_provides).difference(out))
+        return out
 
     @staticmethod
     def parse(path):

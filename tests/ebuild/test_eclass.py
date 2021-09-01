@@ -4,6 +4,34 @@ from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 
 
+class FakeEclass:
+    def __init__(self, path, contents):
+        self.path = path
+        with open(path, 'w') as f:
+            f.write(contents)
+
+
+class FakeEclassCache:
+    def __init__(self, temp_dir, eclasses):
+        self.eclasses = dict((name, FakeEclass(name, contents))
+                             for name, contents in eclasses.items())
+
+    def get_eclass(self, name):
+        return self.eclasses.get(name)
+
+
+class FakeEclassRepo:
+    def __init__(self, temp_dir, eclasses):
+        self.eclass_cache = FakeEclassCache(temp_dir, eclasses)
+
+
+def make_eclass(name, provides=None):
+    eclass = f'# @ECLASS: {name}.eclass\n'
+    if provides is not None:
+        eclass += f'# @PROVIDES: {provides}\n'
+    return eclass
+
+
 FOO_ECLASS = '''
 # @ECLASS: foo.eclass
 # @MAINTAINER:
@@ -80,12 +108,9 @@ foo_public_func() { :; }
 
 
 class TestEclassDoc(TempDirMixin, TestCase):
-    def setUp(self):
-        TempDirMixin.setUp(self)
+    def test_foo_eclass(self):
         with open(pjoin(self.dir, 'foo.eclass'), 'w') as f:
             f.write(FOO_ECLASS)
-
-    def test_foo_eclass(self):
         doc = eclass.EclassDoc(pjoin(self.dir, 'foo.eclass'))
         assert doc.name == 'foo.eclass'
         assert doc.vcsurl == 'https://example.com/foo.eclass'
@@ -169,3 +194,13 @@ class TestEclassDoc(TempDirMixin, TestCase):
                                     'user_variable': False,
                                     'output_variable': False,
                                     'description': '::\n\n  Public variable.'}
+
+    def test_recursive_provides(self):
+        repo = FakeEclassRepo(self.dir, {
+            'foo': FOO_ECLASS,
+            'bar': make_eclass('bar', provides='deep1 deep2'),
+            'deep1': make_eclass('deep1 deep2'),
+            'deep2': make_eclass('deep2 foo'),
+        })
+        assert (eclass.EclassDoc(repo.eclass_cache.get_eclass('foo').path, repo=repo).provides ==
+                {'bar', 'deep1', 'deep2'})

@@ -526,6 +526,10 @@ class EclassDoc(AttrDict):
             rst.extend(_rst_header('-', 'Supported EAPIs'))
             rst.append(' '.join(self.supported_eapis))
             rst.append('')
+        if self.raw_provides:
+            rst.extend(_rst_header('-', 'Transitively Provided Eclasses'))
+            rst.append(' '.join(self.raw_provides))
+            rst.append('')
         if self.example:
             rst.extend(_rst_header('-', 'Example'))
             rst.append(self.example)

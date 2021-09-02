@@ -17,6 +17,8 @@ pkgcore 0.12.5 (2021-??-??)
 - Add support for recursive @PROVIDES eclassdoc tag (replacement
   for @INDIRECT_ECLASSES).
 
+- pkgcore.ebuild.eclass: Include @PROVIDES in generated documentation.
+
 ---------------------------
 pkgcore 0.12.4 (2021-08-15)
 ---------------------------

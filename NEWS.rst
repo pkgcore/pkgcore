@@ -3,7 +3,7 @@ Release Notes
 =============
 
 ---------------------------
-pkgcore 0.12.5 (2021-??-??)
+pkgcore 0.12.5 (2021-09-02)
 ---------------------------
 
 - pkgcore.ebuild.cpv: Explicitly handle invalid revisions.

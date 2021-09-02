@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.6 (2021-??-??)
+---------------------------
+
+- pkgcore.cache: Invalidate cache entries if they are missing INHERIT
+  key, to avoid false positives from pkgcheck's InheritsCheck.
+
+---------------------------
 pkgcore 0.12.5 (2021-09-02)
 ---------------------------
 

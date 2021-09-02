@@ -270,6 +270,10 @@ class base:
         eclass_data = cache_item.get('_eclasses_')
         if eclass_data is None:
             return True
+        # if the INHERIT key is missing yet we did inherit some eclasses,
+        # trigger a refresh to upgrade metadata cache
+        if cache_item.get('INHERIT') is None:
+            return False
         update = eclass_db.rebuild_cache_entry(eclass_data)
         if update is None:
             return False

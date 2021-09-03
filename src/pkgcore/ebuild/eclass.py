@@ -645,6 +645,3 @@ class EclassDoc(AttrDict):
         """Convert eclassdoc object to an HTML 5 document."""
         from docutils.writers import html5_polyglot
         return self._to_docutils(html5_polyglot.Writer())
-
-    # backwards compatibility cruft, remove on next API breaker
-    indirect_eclasses = klass.alias_attr('raw_provides')

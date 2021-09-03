@@ -1,4 +1,4 @@
-from pkgcore.ebuild import eclass
+from pkgcore.ebuild import eclass, eclass_cache
 from snakeoil.osutils import pjoin
 from snakeoil.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
@@ -11,18 +11,14 @@ class FakeEclass:
             f.write(contents)
 
 
-class FakeEclassCache:
+class FakeEclassCache(eclass_cache.base):
     def __init__(self, temp_dir, eclasses):
+        super().__init__(eclassdir=temp_dir)
         self.eclasses = dict((name, FakeEclass(name, contents))
                              for name, contents in eclasses.items())
 
     def get_eclass(self, name):
         return self.eclasses.get(name)
-
-
-class FakeEclassRepo:
-    def __init__(self, temp_dir, eclasses):
-        self.eclass_cache = FakeEclassCache(temp_dir, eclasses)
 
 
 def make_eclass(name, provides=None):
@@ -196,11 +192,11 @@ class TestEclassDoc(TempDirMixin, TestCase):
                                     'description': '::\n\n  Public variable.'}
 
     def test_recursive_provides(self):
-        repo = FakeEclassRepo(self.dir, {
+        eclass_cache = FakeEclassCache(self.dir, {
             'foo': FOO_ECLASS,
             'bar': make_eclass('bar', provides='deep1 deep2'),
             'deep1': make_eclass('deep1 deep2'),
             'deep2': make_eclass('deep2 foo'),
         })
-        assert (eclass.EclassDoc(repo.eclass_cache.get_eclass('foo').path, repo=repo).provides ==
+        assert (eclass.EclassDoc(eclass_cache.get_eclass('foo').path, eclass_cache=eclass_cache).provides ==
                 {'bar', 'deep1', 'deep2'})

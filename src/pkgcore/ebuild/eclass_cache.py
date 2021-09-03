@@ -15,6 +15,7 @@ from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, StackedDict
 from snakeoil.osutils import listdir_files, normpath, pjoin
 
 from ..config.hint import ConfigHint
+from .eclass import EclassDoc
 
 
 class base:
@@ -24,6 +25,7 @@ class base:
 
     def __init__(self, location=None, eclassdir=None):
         self._eclass_data_inst_cache = WeakValueDictionary()
+        self._eclass_doc_inst_cache = {}
         # generate this.
         # self.eclasses = {} # {"Name": ("location", "_mtime_")}
         self.location = location
@@ -51,6 +53,14 @@ class base:
             return None
         return local_source(o.path)
 
+    def get_eclass_doc(self, eclass_name, sourced=False):
+        keys = (eclass_name, sourced)
+        o = self._eclass_doc_inst_cache.get(keys)
+        if o is None and (o := self.eclasses.get(eclass_name)) is not None:
+            o = EclassDoc(o.path, sourced=sourced, eclass_cache=self)
+            self._eclass_doc_inst_cache[keys] = o
+        return o
+
     eclasses = jit_attr_ext_method("_load_eclasses", "_eclasses")
 
     def rebuild_cache_entry(self, entry_eclasses):
@@ -76,11 +86,13 @@ class base:
     def __getstate__(self):
         d = self.__dict__.copy()
         del d['_eclass_data_inst_cache']
+        del d['_eclass_doc_inst_cache']
         return d
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
         self.__dict__['_eclass_data_inst_cache'] = WeakValueDictionary()
+        self.__dict__['_eclass_doc_inst_cache'] = {}
 
 
 class cache(base):

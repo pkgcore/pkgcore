@@ -319,8 +319,10 @@ _eclass_blocks_re = re.compile(
 class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
-    def __init__(self, path, /, *, sourced=False, repo=None):
-        self.repo = repo
+    def __init__(self, path, /, *, sourced=False, repo=None, eclass_cache=None):
+        self.eclass_cache = eclass_cache
+        if repo is not None and eclass_cache is None:
+            self.eclass_cache = repo.eclass_cache
         self.mtime = os.path.getmtime(path)
 
         # parse eclass doc
@@ -413,16 +415,15 @@ class EclassDoc(AttrDict):
     @property
     def provides(self):
         """Recursively gathered list of other eclasses provided by this eclass."""
-        if self.repo is None:
-            raise ValueError('EclassDoc.provides can only be used if the class has been initialized with repo')
+        if self.eclass_cache is None:
+            raise ValueError('EclassDoc.provides can only be used if the class has been initialized with eclass_cache')
         out = OrderedSet()
         to_process = OrderedSet(self.raw_provides)
         while to_process:
             out.add(next_eclass := to_process.pop())
-            if (next_eclass_inst := self.repo.eclass_cache.get_eclass(next_eclass)) is None:
+            if (next_eclass_doc := self.eclass_cache.get_eclass_doc(next_eclass)) is None:
                 logger.warning(f"'@PROVIDES:' eclass {next_eclass} not found")
                 continue
-            next_eclass_doc = EclassDoc(next_eclass_inst.path)
             to_process.update(set(next_eclass_doc.raw_provides).difference(out))
         return out
 

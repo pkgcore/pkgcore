@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.7 (2021-09-03)
+---------------------------
+
+- pkgcore.ebuild.eclass: calculate recursive @PROVIDES in initializer
+  to include them in pkgcheck's eclass cache.
+
+---------------------------
 pkgcore 0.12.6 (2021-09-02)
 ---------------------------
 

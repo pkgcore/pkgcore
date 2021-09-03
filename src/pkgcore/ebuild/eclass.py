@@ -320,17 +320,33 @@ class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
     def __init__(self, path, /, *, sourced=False, repo=None):
-        self.repo = repo
         self.mtime = os.path.getmtime(path)
 
         # parse eclass doc
         data = self.parse(path)
+
+        self._provides = None
+        if repo is not None:
+            self._provides = self._get_provides(data['raw_provides'], repo)
 
         # inject full lists of exported funcs and vars
         if sourced:
             data.update(self._source_eclass(path))
 
         super().__init__(data)
+
+    @staticmethod
+    def _get_provides(raw_provides, repo):
+        out = OrderedSet()
+        to_process = OrderedSet(raw_provides)
+        while to_process:
+            out.add(next_eclass := to_process.pop())
+            if (next_eclass_inst := repo.eclass_cache.get_eclass(next_eclass)) is None:
+                logger.warning(f"'@PROVIDES:' eclass {next_eclass} not found")
+                continue
+            next_eclass_doc = EclassDoc(next_eclass_inst.path)
+            to_process.update(set(next_eclass_doc.raw_provides).difference(out))
+        return out
 
     @staticmethod
     def _source_eclass(path):
@@ -413,18 +429,9 @@ class EclassDoc(AttrDict):
     @property
     def provides(self):
         """Recursively gathered list of other eclasses provided by this eclass."""
-        if self.repo is None:
+        if self._provides is None:
             raise ValueError('EclassDoc.provides can only be used if the class has been initialized with repo')
-        out = OrderedSet()
-        to_process = OrderedSet(self.raw_provides)
-        while to_process:
-            out.add(next_eclass := to_process.pop())
-            if (next_eclass_inst := self.repo.eclass_cache.get_eclass(next_eclass)) is None:
-                logger.warning(f"'@PROVIDES:' eclass {next_eclass} not found")
-                continue
-            next_eclass_doc = EclassDoc(next_eclass_inst.path)
-            to_process.update(set(next_eclass_doc.raw_provides).difference(out))
-        return out
+        return self._provides
 
     @staticmethod
     def parse(path):

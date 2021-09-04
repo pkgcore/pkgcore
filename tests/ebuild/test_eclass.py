@@ -202,5 +202,6 @@ class TestEclassDoc(TempDirMixin, TestCase):
             'deep1': make_eclass('deep1 deep2'),
             'deep2': make_eclass('deep2 foo'),
         })
-        assert (eclass.EclassDoc(repo.eclass_cache.get_eclass('foo').path, repo=repo).provides ==
-                {'bar', 'deep1', 'deep2'})
+        assert (sorted(eclass.EclassDoc(repo.eclass_cache.get_eclass('foo').path,
+                                        repo=repo).provides) ==
+                ['bar', 'deep1', 'deep2'])

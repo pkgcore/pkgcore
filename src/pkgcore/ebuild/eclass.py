@@ -325,9 +325,9 @@ class EclassDoc(AttrDict):
         # parse eclass doc
         data = self.parse(path)
 
-        self._provides = None
+        data['provides'] = None
         if repo is not None:
-            self._provides = self._get_provides(data['raw_provides'], repo)
+            data['provides'] = self._get_provides(data['raw_provides'], repo)
 
         # inject full lists of exported funcs and vars
         if sourced:
@@ -346,7 +346,7 @@ class EclassDoc(AttrDict):
                 continue
             next_eclass_doc = EclassDoc(next_eclass_inst.path)
             to_process.update(set(next_eclass_doc.raw_provides).difference(out))
-        return out
+        return tuple(out)
 
     @staticmethod
     def _source_eclass(path):
@@ -425,13 +425,6 @@ class EclassDoc(AttrDict):
     def live(self):
         """Eclass implements functionality to support a version control system."""
         return 'live' in self._dict.get('_properties', ())
-
-    @property
-    def provides(self):
-        """Recursively gathered list of other eclasses provided by this eclass."""
-        if self._provides is None:
-            raise ValueError('EclassDoc.provides can only be used if the class has been initialized with repo')
-        return self._provides
 
     @staticmethod
     def parse(path):

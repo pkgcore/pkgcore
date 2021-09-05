@@ -319,6 +319,8 @@ _eclass_blocks_re = re.compile(
 class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
+    ABI_VERSION = 5
+
     def __init__(self, path, /, *, sourced=False, repo=None):
         self.mtime = os.path.getmtime(path)
 

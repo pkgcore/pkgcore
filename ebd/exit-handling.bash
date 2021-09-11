@@ -4,7 +4,7 @@
 # returned non-zero and if so calls die passing along any given parameters.
 assert() {
 	local pipestatus=${PIPESTATUS[*]}
-	[[ -z ${pipestatus//[ 0]/} ]] || die "$@ (pipestatus: ${pipestatus})"
+	[[ -z ${pipestatus//[ 0]*/} ]] || die "$@ (pipestatus: ${pipestatus})"
 }
 
 # Abort the current build process (see PMS for details).

@@ -1039,7 +1039,6 @@ class Unpack(IpcCommand):
     def parse_args(self, *args, **kwargs):
         args = super().parse_args(*args, **kwargs)
         self.opts.distdir = self.op.env['DISTDIR']
-        args.targets = self._filter_targets(args.targets)
         return args
 
     def _filter_targets(self, targets):
@@ -1090,7 +1089,7 @@ class Unpack(IpcCommand):
             spawn_kwargs['uid'] = os_data.portage_uid
             spawn_kwargs['gid'] = os_data.portage_gid
 
-        for filename, ext, source in args.targets:
+        for filename, ext, source in self._filter_targets(args.targets):
             self.observer.write(f'>>> Unpacking {filename} to {self.cwd}', autoline=True)
             self.observer.flush()
             dest = pjoin(self.cwd, os.path.basename(filename[:-len(ext)]))

@@ -366,21 +366,35 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
     out.write(f"finished; removed {len(matches)} packages")
 
 
-def display_failures(out, sequence, first_level=True, debug=False):
+def display_failures(out, sequence, first_level=True, debug=False, _color_index=None):
     """when resolution fails, display a nicely formatted message"""
 
     sequence = iter(sequence)
     frame = next(sequence)
+
+    def set_color(color):
+        out.first_prefix[_color_index] = out.fg(color)
+
     if first_level:
+        # _color_index is an encapsulation failure; we're modifying the formatters
+        # prefix directly; that's very much a hack.  Don't rely on it beyond in
+        # this function.
+        _color_index = len(out.first_prefix)
         # pops below need to exactly match.
-        out.first_prefix.extend((out.fg("red"), "!!! ", out.reset))
+        out.first_prefix.extend((out.fg("green"), "!!! ", out.reset))
+    else:
+        assert _color_index is not None
+        set_color("green")
+
     out.write(f"request {frame.atom}, mode {frame.mode}")
     for pkg, steps in sequence:
+        set_color("yellow")
         out.write(f"trying {pkg.cpvstr}")
         out.first_prefix.append("  ")
         for step in steps:
+            set_color("red")
             if isinstance(step, list):
-                display_failures(out, step, False, debug=debug)
+                display_failures(out, step, False, debug=debug, _color_index=_color_index)
             elif step[0] == 'reduce':
                 out.write("removing choices involving %s" %
                           ', '.join(str(x) for x in step[1]))
@@ -396,6 +410,7 @@ def display_failures(out, sequence, first_level=True, debug=False):
                     out.write("failed due to %s" % (step[3],))
             elif step[0] == "debug":
                 if debug:
+                    set_color("yellow")
                     out.write(step[1])
             else:
                 out.write(step)

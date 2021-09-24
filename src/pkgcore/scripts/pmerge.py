@@ -373,12 +373,11 @@ def display_failures(out, sequence, first_level=True, debug=False):
     frame = next(sequence)
     if first_level:
         # pops below need to exactly match.
-        out.first_prefix.extend((out.fg("red"), "!!!", out.reset))
-    out.first_prefix.append(" ")
+        out.first_prefix.extend((out.fg("red"), "!!! ", out.reset))
     out.write(f"request {frame.atom}, mode {frame.mode}")
     for pkg, steps in sequence:
         out.write(f"trying {pkg.cpvstr}")
-        out.first_prefix.append(" ")
+        out.first_prefix.append("  ")
         for step in steps:
             if isinstance(step, list):
                 display_failures(out, step, False, debug=debug)
@@ -401,7 +400,6 @@ def display_failures(out, sequence, first_level=True, debug=False):
             else:
                 out.write(step)
         out.first_prefix.pop()
-    out.first_prefix.pop()
     if first_level:
         for x in range(3):
             out.first_prefix.pop()

@@ -313,10 +313,6 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                 msg = "\n".join(x.lstrip("#").strip() for x in data)
                 data = (replacement, msg)
             except StopIteration:
-                # only an empty replacement could trigger this; thus
-                # formatted badly.
-                logger.error(
-                    f"deprecated profile missing replacement: '{self.name}/deprecated'")
                 data = None
         return data
 

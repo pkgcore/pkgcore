@@ -3,6 +3,18 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.8 (2021-09-26)
+---------------------------
+
+- ebd: fix PIPESTATUS verification for assert
+
+- pkgcore.ebuild.eclass: add ABI_VERSION attribute to EclassDoc
+  to improve future compatibility between pkgcheck and pkgcore
+
+- pkgcore.ebuild.profiles: do not emit errors for profiles deprecated
+  without a replacement
+
+---------------------------
 pkgcore 0.12.7 (2021-09-03)
 ---------------------------
 

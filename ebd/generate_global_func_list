@@ -68,4 +68,5 @@ unset -f source
 
 ${DEBUG} && echo >&2
 # Sorting order; put PMS functionality first, then our internals.
-printf '%s\n' $(compgen -X '__*' -A function) $(compgen -A function __)
+printf '%s\n' $(compgen -X '__*' -A function) $(compgen -A function __) |
+	sort -u

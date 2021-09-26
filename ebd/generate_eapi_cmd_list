@@ -69,11 +69,11 @@ for (( eapi=${INITIAL_EAPI} ; eapi<=${EAPI} ; eapi++ )) ; do
 done
 
 if ${BANNED} && [[ -n ${BANNED_CMDS[@]} ]]; then
-	printf '%s\n' ${BANNED_CMDS[@]}
+	printf '%s\n' ${BANNED_CMDS[@]} | sort -u
 fi
 if ${DEPRECATED} && [[ -n ${DEPRECATED_CMDS[@]} ]]; then
-	printf '%s\n' ${DEPRECATED_CMDS[@]}
+	printf '%s\n' ${DEPRECATED_CMDS[@]} | sort -u
 fi
 if ${INTERNAL} && [[ -n ${INTERNAL_CMDS[@]} ]]; then
-	printf '%s\n' ${INTERNAL_CMDS[@]}
+	printf '%s\n' ${INTERNAL_CMDS[@]} | sort -u
 fi

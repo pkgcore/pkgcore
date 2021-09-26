@@ -33,4 +33,4 @@ done
 ${VISIBLE} || INTERNAL_FUNCS=( $(compgen -A function __) )
 
 # Sorting order; put PMS functionality first, then our internals.
-printf '%s\n' $(compgen -X '__*' -A function) ${INTERNAL_FUNCS[@]}
+printf '%s\n' $(compgen -X '__*' -A function) ${INTERNAL_FUNCS[@]} | sort -u

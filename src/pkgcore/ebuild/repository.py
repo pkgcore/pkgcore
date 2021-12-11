@@ -556,7 +556,10 @@ class UnconfiguredTree(prototype.tree):
     @klass.jit_attr
     def deprecated(self):
         """Base deprecated packages restriction from profiles/package.deprecated."""
-        return packages.OrRestriction(*self.config.pkg_deprecated)
+        pkg_deprecated = set()
+        for repo in self.trees:
+            pkg_deprecated.update(repo.config.pkg_deprecated)
+        return packages.OrRestriction(*pkg_deprecated)
 
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(

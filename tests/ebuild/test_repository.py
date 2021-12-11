@@ -299,6 +299,18 @@ class TestSlavedTree(TestUnconfiguredTree):
         repo = self.mk_tree(self.dir)
         self.assertEqual(sorted(repo.licenses), sorted(master_licenses + slave_licenses))
 
+    def test_package_deprecated(self):
+        with open(pjoin(self.master_pdir, 'package.deprecated'), 'w') as f:
+            f.write(textwrap.dedent('''\
+                # lalala
+                it-is/deprecated
+                <just/newer-than-42
+            '''))
+        repo = self.mk_tree(self.dir_slave)
+        self.assertEqual(sorted([atom('it-is/deprecated'),
+            atom('<just/newer-than-42')]),
+            sorted(list(repo.deprecated)))
+
     def test_masters(self):
         repo = self.mk_tree(self.dir)
         self.assertEqual(repo.masters, (self.master_repo,))

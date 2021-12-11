@@ -311,6 +311,20 @@ class TestSlavedTree(TestUnconfiguredTree):
             atom('<just/newer-than-42')]),
             sorted(list(repo.deprecated)))
 
+    def test_use_expand_desc(self):
+        use_expand_desc = {
+            'example': (('example_foo', 'Build with foo'),
+                        ('example_bar', 'Build with bar'))
+        }
+        ensure_dirs(pjoin(self.master_pdir, 'desc'))
+        with open(pjoin(self.master_pdir, 'desc', 'example'), 'w') as f:
+            f.write(textwrap.dedent('''\
+                foo - Build with foo
+                bar - Build with bar
+            '''))
+        repo = self.mk_tree(self.dir)
+        assert use_expand_desc == dict(repo.use_expand_desc)
+
     def test_masters(self):
         repo = self.mk_tree(self.dir)
         self.assertEqual(repo.masters, (self.master_repo,))

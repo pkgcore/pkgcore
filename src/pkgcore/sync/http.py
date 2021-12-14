@@ -27,7 +27,7 @@ class http_syncer(base.Syncer):
 
         if self.uri.lower().startswith('https://'):
             # default to using system ssl certs
-            context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+            context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
         else:
             context = None
 

@@ -3,6 +3,19 @@ Release Notes
 =============
 
 ---------------------------
+pkgcore 0.12.9 (2021-12-14)
+---------------------------
+
+- ebd: fix unpack command not working if called via pebuild(1)
+
+- pmerge: make failure output more readable via color coding
+
+- ebd: update ``econf`` in EAPI 8 to pass ``--disable-static``
+  as specified by the updated version of PMS
+
+- pkgcore.sync.http: fix incorrect TLS context
+
+---------------------------
 pkgcore 0.12.8 (2021-09-26)
 ---------------------------
 

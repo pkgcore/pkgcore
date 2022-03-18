@@ -2,6 +2,16 @@
 Release Notes
 =============
 
+----------------------------
+pkgcore 0.12.10 (2022-03-18)
+----------------------------
+
+- pkgcore.ebuild.repository: support inheriting use_expand_desc
+  and deprecated
+
+- pkgcore.ebuild.eclass: support @ECLASS_VARIABLE as a modern spelling
+  for @ECLASS-VARIABLE
+
 ---------------------------
 pkgcore 0.12.9 (2021-12-14)
 ---------------------------

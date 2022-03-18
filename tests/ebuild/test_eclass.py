@@ -77,6 +77,10 @@ FOO_ECLASS = '''
 # @DESCRIPTION:
 # Public variable.
 
+# @ECLASS-VARIABLE: FOO_ANOTHER_ECLASS_VAR
+# @DESCRIPTION:
+# Yet another variable.
+
 # @FUNCTION: _foo_internal_func
 # @USAGE: <bar> [<baz>]
 # @RETURN: nothing special
@@ -141,7 +145,9 @@ class TestEclassDoc(TempDirMixin, TestCase):
 
         assert doc.function_variable_names == frozenset(('FOO_PUBLIC_VAR', '_FOO_INTERNAL_VAR'))
 
-        assert doc.variable_names == frozenset(('FOO_PUBLIC_ECLASS_VAR', '_FOO_INTERNAL_ECLASS_VAR'))
+        assert doc.variable_names == frozenset(('FOO_PUBLIC_ECLASS_VAR',
+                                                '_FOO_INTERNAL_ECLASS_VAR',
+                                                'FOO_ANOTHER_ECLASS_VAR'))
         assert doc.internal_variable_names == frozenset(('_FOO_INTERNAL_ECLASS_VAR',))
 
         assert len(doc.functions) == 2
@@ -175,7 +181,7 @@ class TestEclassDoc(TempDirMixin, TestCase):
                                              'required': True,
                                              'description': '::\n\n  Public variable for foo_public_func.'}
 
-        assert len(doc.variables) == 2
+        assert len(doc.variables) == 3
         assert doc.variables[0] == {'name': '_FOO_INTERNAL_ECLASS_VAR',
                                     'deprecated': False,
                                     'default_unset': True,
@@ -194,6 +200,15 @@ class TestEclassDoc(TempDirMixin, TestCase):
                                     'user_variable': False,
                                     'output_variable': False,
                                     'description': '::\n\n  Public variable.'}
+        assert doc.variables[2] == {'name': 'FOO_ANOTHER_ECLASS_VAR',
+                                    'deprecated': False,
+                                    'default_unset': False,
+                                    'internal': False,
+                                    'required': False,
+                                    'pre_inherit': False,
+                                    'user_variable': False,
+                                    'output_variable': False,
+                                    'description': '::\n\n  Yet another variable.'}
 
     def test_recursive_provides(self):
         repo = FakeEclassRepo(self.dir, {

@@ -266,7 +266,7 @@ class EclassVarBlockCompat(ParseEclassDoc):
 
     def __init__(self):
         tags = {
-            '@ECLASS-VARIABLE:': ('name', True, self._tag_inline_arg, None),
+            '@ECLASS-VARIABLE:': ('name', True, self._eclass_variable, None),
             '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
             '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
             '@INTERNAL': ('internal', False, self._tag_bool, False),
@@ -277,6 +277,11 @@ class EclassVarBlockCompat(ParseEclassDoc):
             '@DESCRIPTION:': ('description', True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
+
+    def _eclass_variable(self, block, tag, lineno):
+        """Parse @ECLASS-VARIABLE tag."""
+        logger.warning(f"{repr(tag)}, line {lineno}: deprecated, use '@ECLASS_VARIABLE' instead")
+        return self._tag_inline_arg(block, tag, lineno)
 
 
 class EclassFuncBlock(ParseEclassDoc):

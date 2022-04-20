@@ -208,7 +208,8 @@ class LocalMetadataXml(MetadataXml):
 
     def _parse_xml(self):
         try:
-            MetadataXml._parse_xml(self, open(self._source, "rb", 32768))
+            with open(self._source, "rb", 32768) as src:
+                MetadataXml._parse_xml(self, src)
         except FileNotFoundError:
             self._maintainers = ()
             self._upstreams = ()

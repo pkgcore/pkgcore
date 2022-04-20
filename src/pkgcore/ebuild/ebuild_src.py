@@ -252,6 +252,7 @@ class base(metadata.package):
             if (mo := _EAPI_str_regex.match(line)) and (eapi_str := mo.group('EAPI')):
                 eapi = _EAPI_regex.match(line).group('EAPI')
             break
+        i.close()
         try:
             return get_eapi(eapi)
         except ValueError as e:

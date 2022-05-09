@@ -4,10 +4,11 @@ package class for buildable ebuilds
 
 __all__ = (
     "Maintainer", "MetadataXml", "LocalMetadataXml",
-    "SharedPkgData", "Licenses", "OverlayedLicenses", "OverlayedProfiles",
+    "SharedPkgData", "Licenses", "OverlayedProfiles",
     "Project", "ProjectMember", "Subproject", "ProjectsXml", "LocalProjectsXml"
 )
 
+import contextlib
 import errno
 import os
 import platform
@@ -440,14 +441,25 @@ class LocalProjectsXml(ProjectsXml):
 class Licenses(metaclass=WeakInstMeta):
 
     __inst_caching__ = True
+    __slots__ = ('_base', '_licenses', '_groups', 'license_groups_path', 'licenses_dir', '_repo_masters', '_license_instances')
 
-    __slots__ = ('_base', '_licenses', '_groups', 'license_groups_path', 'licenses_dir')
-
-    def __init__(self, repo_base, profile_base='profiles',
+    def __init__(self, repo, *repo_masters,
                  licenses_dir='licenses', license_groups='profiles/license_groups'):
+        repo_base = repo.location
         object.__setattr__(self, '_base', repo_base)
         object.__setattr__(self, 'license_groups_path', pjoin(repo_base, license_groups))
         object.__setattr__(self, 'licenses_dir', pjoin(repo_base, licenses_dir))
+        object.__setattr__(self, '_repo_masters', repo_masters)
+        self._load_license_instances()
+
+    def _load_license_instances(self):
+        l = []
+        for x in self._repo_masters:
+            if isinstance(x, Licenses):
+                l.append(x)
+            elif hasattr(x, 'licenses'):
+                l.append(x.licenses)
+        object.__setattr__(self, '_license_instances', tuple(l))
 
     @klass.jit_attr_none
     def licenses(self):
@@ -456,25 +468,31 @@ class Licenses(metaclass=WeakInstMeta):
             content = listdir_files(self.licenses_dir)
         except EnvironmentError:
             content = ()
-        return frozenset(content)
+        return frozenset(chain(content, *self._license_instances))
 
     @klass.jit_attr_none
     def groups(self):
         """Return the mapping of defined license groups to licenses for a repo."""
         try:
             d = read_dict(self.license_groups_path, splitter=' ')
+            for k, v in d.items():
+                d[k] = set(v.split())
         except EnvironmentError:
             return mappings.ImmutableDict()
         except BashParseError as pe:
             logger.error(f"failed parsing license_groups: {pe}")
             return mappings.ImmutableDict()
+        for li in self._license_instances:
+            for k, v in li.groups.items():
+                if k in d:
+                    d[k] |= v
+                else:
+                    d[k] = v
         self._expand_groups(d)
         return mappings.ImmutableDict((k, frozenset(v)) for (k, v) in d.items())
 
     def _expand_groups(self, groups):
         keep_going = True
-        for k, v in groups.items():
-            groups[k] = v.split()
         while keep_going:
             keep_going = False
             for k, v in groups.items():
@@ -499,11 +517,17 @@ class Licenses(metaclass=WeakInstMeta):
                 groups[k] = l
 
     def refresh(self):
+        self._load_license_instances()
+        for li in self._license_instances:
+            li.refresh()
         self._licenses = None
         self._groups = None
 
     def __getitem__(self, license):
         if license not in self:
+            for li in self._license_instances:
+                with contextlib.suppress(KeyError):
+                    return li[license]
             raise KeyError(license)
         try:
             return open(pjoin(self.licenses_dir, license)).read()
@@ -518,54 +542,6 @@ class Licenses(metaclass=WeakInstMeta):
 
     def __contains__(self, license):
         return license in self.licenses
-
-
-class OverlayedLicenses(Licenses):
-
-    __inst_caching__ = True
-    __slots__ = ('_license_instances', '_license_sources')
-
-    def __init__(self, *license_sources):
-        object.__setattr__(self, '_license_sources', license_sources)
-        self._load_license_instances()
-
-    @klass.jit_attr_none
-    def groups(self):
-        d = {}
-        for li in self._license_instances:
-            for k, v in li.groups.items():
-                if k in d:
-                    d[k] |= v
-                else:
-                    d[k] = v
-        return mappings.ImmutableDict(d)
-
-    @klass.jit_attr_none
-    def licenses(self):
-        return frozenset(chain.from_iterable(self._license_instances))
-
-    def __getitem__(self, license):
-        for li in self._license_instances:
-            try:
-                return li[license]
-            except KeyError:
-                pass
-        raise KeyError(license)
-
-    def refresh(self):
-        self._load_license_instances()
-        for li in self._license_instances:
-            li.refresh()
-        Licenses.refresh(self)
-
-    def _load_license_instances(self):
-        l = []
-        for x in self._license_sources:
-            if isinstance(x, Licenses):
-                l.append(x)
-            elif hasattr(x, 'licenses'):
-                l.append(x.licenses)
-        object.__setattr__(self, '_license_instances', tuple(l))
 
 
 class _immutable_attr_dict(mappings.ImmutableDict):

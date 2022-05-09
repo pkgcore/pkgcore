@@ -299,6 +299,29 @@ class TestSlavedTree(TestUnconfiguredTree):
         repo = self.mk_tree(self.dir)
         self.assertEqual(sorted(repo.licenses), sorted(master_licenses + slave_licenses))
 
+    def test_license_groups(self):
+        master_licenses = ('GPL-2', 'BSD')
+        slave_licenses = ('BSD-2', 'MIT')
+        ensure_dirs(pjoin(self.dir_slave, 'licenses'))
+        ensure_dirs(pjoin(self.dir_slave, 'profiles'))
+        ensure_dirs(pjoin(self.dir_master, 'licenses'))
+        ensure_dirs(pjoin(self.dir_master, 'profiles'))
+        for license in master_licenses:
+            touch(pjoin(self.dir_master, 'licenses', license))
+        with open(pjoin(self.dir_master, 'profiles', 'license_groups'), 'w') as f:
+            f.write(f'FREE {" ".join(master_licenses)}\n')
+            f.write(f'OSI-APPROVED @FREE\n')
+        for license in slave_licenses:
+            touch(pjoin(self.dir_slave, 'licenses', license))
+        with open(pjoin(self.dir_slave, 'profiles', 'license_groups'), 'w') as f:
+            f.write(f'MISC-FREE @FREE {" ".join(slave_licenses)}\n')
+            f.write('FSF-APPROVED MIT\n')
+            f.write('OSI-APPROVED @FSF-APPROVED\n')
+        repo = self.mk_tree(self.dir)
+        self.assertEqual(sorted(repo.licenses), sorted(master_licenses + slave_licenses))
+        self.assertEqual(sorted(repo.licenses.groups), ['FREE', 'FSF-APPROVED', 'MISC-FREE', 'OSI-APPROVED'])
+        self.assertIn('BSD', repo.licenses.groups['MISC-FREE'])
+
     def test_package_deprecated(self):
         with open(pjoin(self.master_pdir, 'package.deprecated'), 'w') as f:
             f.write(textwrap.dedent('''\

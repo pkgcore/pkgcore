@@ -48,7 +48,7 @@ from .misc import (ChunkedDataDict, chunked_data, collapsed_restrict_to_data, in
                    incremental_expansion_license, non_incremental_collapsed_restrict_to_data,
                    optimize_incrementals)
 from .portage_conf import PortageConfig
-from .repo_objs import OverlayedLicenses, RepoConfig
+from .repo_objs import Licenses, RepoConfig
 from .triggers import GenerateTriggers
 
 
@@ -421,7 +421,7 @@ class domain(config_domain):
 
     @klass.jit_attr_none
     def _default_licenses_manager(self):
-        return OverlayedLicenses(*self.source_repos_raw)
+        return Licenses(*self.source_repos_raw)
 
     def _apply_license_filter(self, master_licenses, pkg, mode):
         """Determine if a package's license is allowed."""

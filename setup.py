@@ -99,8 +99,7 @@ def write_pkgcore_ebd_funclists(root, target):
                 if subprocess.call(
                         [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_func_list'), eapi],
                         cwd=ebd_dir, stdout=f):
-                    raise DistutilsExecError(
-                        "generating EAPI %s function list failed" % eapi)
+                    raise DistutilsExecError(f"generating EAPI {eapi} function list failed")
 
 
 def write_pkgcore_ebd_cmdlists(root, target):
@@ -177,7 +176,7 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
     """Generate file of install path constants."""
     path = os.path.join(python_base, "pkgcore", "_const.py")
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    log.info("writing lookup config to %r" % path)
+    log.info("writing lookup config to %r", path)
 
     wheel_install = (
         install_prefix != os.path.abspath(sys.prefix)
@@ -189,36 +188,30 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
         # write more dynamic _const file for wheel installs
         if wheel_install:
             import textwrap
-            f.write(textwrap.dedent("""\
+            f.write(textwrap.dedent(f"""\
                 import os.path as osp
                 import sys
 
                 from snakeoil import process
 
                 INSTALL_PREFIX = osp.abspath(sys.prefix)
-                DATA_PATH = osp.join(INSTALL_PREFIX, {!r})
-                CONFIG_PATH = osp.join(INSTALL_PREFIX, {!r})
-                LIBDIR_PATH = osp.join(INSTALL_PREFIX, {!r})
-                EBD_PATH = osp.join(INSTALL_PREFIX, {!r})
+                DATA_PATH = osp.join(INSTALL_PREFIX, {DATA_INSTALL_OFFSET!r})
+                CONFIG_PATH = osp.join(INSTALL_PREFIX, {CONFIG_INSTALL_OFFSET!r})
+                LIBDIR_PATH = osp.join(INSTALL_PREFIX, {LIBDIR_INSTALL_OFFSET!r})
+                EBD_PATH = osp.join(INSTALL_PREFIX, {EBD_INSTALL_OFFSET!r})
                 INJECTED_BIN_PATH = ()
                 CP_BINARY = process.find_binary('cp')
-            """.format(
-                DATA_INSTALL_OFFSET, CONFIG_INSTALL_OFFSET,
-                LIBDIR_INSTALL_OFFSET, EBD_INSTALL_OFFSET)))
+            """))
         else:
-            f.write("INSTALL_PREFIX=%r\n" % install_prefix)
-            f.write("DATA_PATH=%r\n" %
-                    os.path.join(install_prefix, DATA_INSTALL_OFFSET))
-            f.write("CONFIG_PATH=%r\n" %
-                    os.path.join(install_prefix, CONFIG_INSTALL_OFFSET))
-            f.write("LIBDIR_PATH=%r\n" %
-                    os.path.join(install_prefix, LIBDIR_INSTALL_OFFSET))
-            f.write("EBD_PATH=%r\n" %
-                    os.path.join(install_prefix, EBD_INSTALL_OFFSET))
+            f.write(f"INSTALL_PREFIX={install_prefix!r}\n")
+            f.write(f"DATA_PATH={os.path.join(install_prefix, DATA_INSTALL_OFFSET)!r}\n")
+            f.write(f"CONFIG_PATH={os.path.join(install_prefix, CONFIG_INSTALL_OFFSET)!r}\n")
+            f.write(f"LIBDIR_PATH={os.path.join(install_prefix, LIBDIR_INSTALL_OFFSET)!r}\n")
+            f.write(f"EBD_PATH={os.path.join(install_prefix, EBD_INSTALL_OFFSET)!r}\n")
 
             # This is added to suppress the default behaviour of looking
             # within the repo for a bin subdir.
-            f.write("INJECTED_BIN_PATH=%r\n" % (tuple(injected_bin_path),))
+            f.write(f"INJECTED_BIN_PATH={tuple(injected_bin_path)!r}\n")
 
             # Static paths for various utilities.
             from snakeoil import process
@@ -226,10 +219,10 @@ def write_pkgcore_lookup_configs(python_base, install_prefix, injected_bin_path=
             try:
                 for prog in required_progs:
                     prog_path = process.find_binary(prog)
-                    f.write("%s_BINARY=%r\n" % (prog.upper(), prog_path))
+                    f.write(f"{prog.upper()}_BINARY={prog_path!r}\n")
             except process.CommandNotFound:
                 raise DistutilsExecError(
-                    "generating lookup config failed: required utility %r missing from PATH" % (prog,))
+                    f"generating lookup config failed: required utility {prog!r} missing from PATH")
 
             f.close()
             byte_compile([path], prefix=python_base)

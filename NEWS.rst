@@ -3,6 +3,21 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.11 (2022-05-24)
+----------------------------
+
+- pkgcore.ebuild.ebuild: warn about deprecated @ECLASS-VARIABLE tag (Ulrich
+  Müller, #337)
+
+- pkgcore.ebuild: properly close resources (Thomas Bracht Laumann Jespersen,
+  #339, #340)
+
+- pkgcore.ebuild.repository: fix inheriting license groups. Fixes e.g. pquery
+  usage on overlays. (Arthur Zamarin, #341)
+
+- metadata.xsd: sync with proj/xml-schema repository (Ulrich Müller, #342)
+
+----------------------------
 pkgcore 0.12.10 (2022-03-18)
 ----------------------------
 

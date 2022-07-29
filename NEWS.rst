@@ -3,6 +3,15 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.12 (2022-07-29)
+----------------------------
+
+- metadata.xsd: drop obsolete gitorious, sourceforge-jp remote-ids (Ulrich
+  Müller, #344)
+
+- metadata.xsd: import hackage, sourcehut remote-ids (Sam James, #348)
+
+----------------------------
 pkgcore 0.12.11 (2022-05-24)
 ----------------------------
 

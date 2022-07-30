@@ -6,11 +6,10 @@ __all__ = (
     "CategoryIterValLazyDict", "PackageMapping", "VersionMapping", "tree"
 )
 
-import os
+from pathlib import Path
 
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import DictMixin, LazyValDict
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 
 from ..ebuild.atom import atom
@@ -196,20 +195,23 @@ class tree:
     def __contains__(self, obj):
         """Determine if a path or a package is in a repo."""
         if isinstance(obj, str):
-            path = os.path.normpath(obj)
+            path = Path(obj)
             try:
-                repo_path = os.path.realpath(getattr(self, 'location'))
+                repo_path = Path(getattr(self, 'location')).resolve()
             except AttributeError:
                 return False
 
             # existing relative path
-            if not path.startswith(os.sep) and os.path.exists(pjoin(repo_path, path)):
+            if not path.is_absolute() and (repo_path / path).exists():
                 return True
 
             # existing full path
-            fullpath = os.path.realpath(os.path.abspath(path))
-            if fullpath.startswith(repo_path) and os.path.exists(fullpath):
-                return True
+            try:
+                fullpath = path.resolve()
+                if fullpath.relative_to(repo_path) and fullpath.exists():
+                    return True
+            except ValueError:
+                pass
 
             return False
         else:

@@ -1,7 +1,5 @@
 from pkgcore.ebuild import eclass
-from snakeoil.osutils import pjoin
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import TempDirMixin
+from snakeoil.contexts import chdir
 
 
 class FakeEclass:
@@ -111,11 +109,10 @@ foo_public_func() { :; }
 '''
 
 
-class TestEclassDoc(TempDirMixin, TestCase):
-    def test_foo_eclass(self):
-        with open(pjoin(self.dir, 'foo.eclass'), 'w') as f:
-            f.write(FOO_ECLASS)
-        doc = eclass.EclassDoc(pjoin(self.dir, 'foo.eclass'))
+class TestEclassDoc:
+    def test_foo_eclass(self, tmp_path):
+        (tmp_path / 'foo.eclass').write_text(FOO_ECLASS)
+        doc = eclass.EclassDoc(str(tmp_path / 'foo.eclass'))
         assert doc.name == 'foo.eclass'
         assert doc.vcsurl == 'https://example.com/foo.eclass'
         assert doc.blurb == 'Test eclass.'
@@ -210,13 +207,14 @@ class TestEclassDoc(TempDirMixin, TestCase):
                                     'output_variable': False,
                                     'description': '::\n\n  Yet another variable.'}
 
-    def test_recursive_provides(self):
-        repo = FakeEclassRepo(self.dir, {
-            'foo': FOO_ECLASS,
-            'bar': make_eclass('bar', provides='deep1 deep2'),
-            'deep1': make_eclass('deep1 deep2'),
-            'deep2': make_eclass('deep2 foo'),
-        })
-        assert (sorted(eclass.EclassDoc(repo.eclass_cache.get_eclass('foo').path,
-                                        repo=repo).provides) ==
-                ['bar', 'deep1', 'deep2'])
+    def test_recursive_provides(self, tmp_path):
+        with chdir(tmp_path):
+            repo = FakeEclassRepo(str(tmp_path), {
+                'foo': FOO_ECLASS,
+                'bar': make_eclass('bar', provides='deep1 deep2'),
+                'deep1': make_eclass('deep1 deep2'),
+                'deep2': make_eclass('deep2 foo'),
+            })
+            assert (sorted(eclass.EclassDoc(repo.eclass_cache.get_eclass('foo').path,
+                                            repo=repo).provides) ==
+                    ['bar', 'deep1', 'deep2'])

@@ -1,261 +1,235 @@
 import os
-import shutil
+from pathlib import Path
 
 import pytest
+
 from pkgcore.fs import contents, fs, livefs, ops
 from snakeoil.data_source import local_source
-from snakeoil.osutils import pjoin
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import TempDirMixin
 
 
-class VerifyMixin:
-
-    def verify(self, obj, kwds, stat):
-        for attr, keyword in (("st_mtime", "mtime"),
-                              ("st_gid", "gid"),
-                              ("st_uid", "uid")):
-            if keyword in kwds:
-                self.assertEqual(getattr(stat, attr), kwds[keyword],
-                                 f"testing {keyword}")
-        if "mode" in kwds:
-            self.assertEqual((stat.st_mode & 0o4777), kwds["mode"])
+def verify(obj, kwds):
+    stat = os.stat(obj.location)
+    for attr, keyword in (("st_mtime", "mtime"),
+                          ("st_gid", "gid"),
+                          ("st_uid", "uid")):
+        if keyword in kwds:
+            assert getattr(stat, attr) == kwds[keyword], f"testing {keyword}"
+    if "mode" in kwds:
+        assert (stat.st_mode & 0o4777) == kwds["mode"]
 
 
-class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, TestCase):
+@pytest.mark.parametrize(("creator_func", "kls"), (
+    pytest.param(os.mkdir, fs.fsDir, id="dir"),
+    pytest.param(lambda s: open(s, "w").close(), fs.fsFile, id="file"),
+))
+def test_default_ensure_perms(tmp_path, creator_func, kls):
+    kwds = dict(mtime=0o1234, uid=os.getuid(), gid=os.getgid(),
+                mode=0o775, dev=None, inode=None)
+    o = kls(str(tmp_path / "blah"), **kwds)
+    creator_func(o.location)
+    assert ops.ensure_perms(o)
+    verify(o, kwds)
 
-    def common_bits(self, creator_func, kls):
-        kwds = {"mtime":0o1234, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0o775, "dev":None, "inode":None}
-        o = kls(pjoin(self.dir, "blah"), **kwds)
-        creator_func(o.location)
-        self.assertTrue(ops.ensure_perms(o))
-        self.verify(o, kwds, os.stat(o.location))
-        kwds["mode"] = 0o770
-        o2 = kls(pjoin(self.dir, "blah"), **kwds)
-        self.assertTrue(ops.ensure_perms(o2))
-        self.verify(o2, kwds, os.stat(o.location))
-        self.assertRaises(
-            OSError,
-            ops.ensure_perms, kls(pjoin(self.dir, "asdf"), **kwds))
+    kwds["mode"] = 0o770
+    o2 = kls(str(tmp_path / "blah"), **kwds)
+    assert ops.ensure_perms(o2)
+    verify(o2, kwds)
 
-    def test_dir(self):
-        self.common_bits(os.mkdir, fs.fsDir)
-
-    def test_file(self):
-        self.common_bits(lambda s:open(s, "w").close(), fs.fsFile)
+    with pytest.raises(OSError):
+        ops.ensure_perms(kls(str(tmp_path / "asdf"), **kwds))
 
 
-class TestDefaultMkdir(TempDirMixin, TestCase):
+def test_default_mkdir(tmp_path):
+    o = fs.fsDir(str(tmp_path / "mkdir_test"), strict=False)
+    assert ops.mkdir(o)
+    old_umask = os.umask(0)
+    try:
+        assert (os.stat(o.location).st_mode & 0o4777) == (0o777 & ~old_umask)
+    finally:
+        os.umask(old_umask)
+    os.rmdir(o.location)
 
-    def test_it(self):
-        o = fs.fsDir(pjoin(self.dir, "mkdir_test"), strict=False)
-        self.assertTrue(ops.mkdir(o))
-        old_umask = os.umask(0)
-        try:
-            self.assertEqual((os.stat(o.location).st_mode & 0o4777), 0o777 & ~old_umask)
-        finally:
-            os.umask(old_umask)
-        os.rmdir(o.location)
-        o = fs.fsDir(pjoin(self.dir, "mkdir_test2"), strict=False, mode=0o750)
-        self.assertTrue(ops.mkdir(o))
-        self.assertEqual(os.stat(o.location).st_mode & 0o4777, 0o750)
+    o = fs.fsDir(str(tmp_path / "mkdir_test2"), strict=False, mode=0o750)
+    assert ops.mkdir(o)
+    assert (os.stat(o.location).st_mode & 0o4777) == 0o750
 
 
-class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
+class TestCopyFile:
 
-    def test_it(self):
-        src = pjoin(self.dir, "copy_test_src")
-        dest = pjoin(self.dir, "copy_test_dest")
-        with open(src, "w") as f:
-            f.writelines("asdf\n" for i in range(10))
+    def test_it(self, tmp_path):
+        content = "\n".join("asdf" for _ in range(10))
+        (src := tmp_path / "copy_test_src").write_text(content)
+        dest = tmp_path / "copy_test_dest"
+
         kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0o664, "data":local_source(src), "dev":None,
+                "mode":0o664, "data":local_source(str(src)), "dev":None,
                 "inode":None}
-        o = fs.fsFile(dest, **kwds)
-        self.assertTrue(ops.copyfile(o))
-        with open(dest, "r") as f:
-            self.assertEqual("asdf\n" * 10, f.read())
-        self.verify(o, kwds, os.stat(o.location))
+        o = fs.fsFile(str(dest), **kwds)
+        assert ops.copyfile(o)
+        assert dest.read_text() == content
+        verify(o, kwds)
 
-    def test_sym_perms(self):
+    def test_sym_perms(self, tmp_path):
         curgid = os.getgid()
         group = [x for x in os.getgroups() if x != curgid]
-        if not group or os.getuid() != 0:
+        if not group and os.getuid() != 0:
             pytest.skip(
                 "requires root privs for this test, or for this user to"
                 "belong to more then one group"
             )
         group = group[0]
-        fp = pjoin(self.dir, "sym")
+        fp = str(tmp_path / "sym")
         o = fs.fsSymlink(fp, mtime=10321, uid=os.getuid(), gid=group,
             mode=0o664, target='target')
-        self.assertTrue(ops.copyfile(o))
-        self.assertEqual(os.lstat(fp).st_gid, group)
-        self.assertEqual(os.lstat(fp).st_uid, os.getuid())
+        assert ops.copyfile(o)
+        assert os.lstat(fp).st_gid == group
+        assert os.lstat(fp).st_uid == os.getuid()
 
-    def test_puke_on_dirs(self):
-        path = pjoin(self.dir, "puke_dir")
-        self.assertRaises(TypeError,
-            ops.copyfile,
-            fs.fsDir(path, strict=False))
+    def test_puke_on_dirs(self, tmp_path: Path):
+        path = str(tmp_path / "puke_dir")
+        with pytest.raises(TypeError):
+            ops.copyfile(fs.fsDir(path, strict=False))
         os.mkdir(path)
-        fp = pjoin(self.dir, "foon")
+        fp = str(tmp_path / "foon")
         open(fp, "w").close()
         f = livefs.gen_obj(fp)
-        self.assertRaises(TypeError,
-            livefs.gen_obj(fp).change_attributes(location=path))
+        with pytest.raises(TypeError):
+            livefs.gen_obj(fp).change_attributes(location=path)()
 
         # test sym over a directory.
-        f = fs.fsSymlink(path, fp, mode=0o644, mtime=0, uid=os.getuid(),
-            gid=os.getgid())
-        self.assertRaises(TypeError, ops.copyfile, f)
+        f = fs.fsSymlink(path, fp, mode=0o644, mtime=0, uid=os.getuid(), gid=os.getgid())
+        with pytest.raises(TypeError):
+            ops.copyfile(f)
         os.unlink(fp)
         os.mkdir(fp)
-        self.assertRaises(ops.CannotOverwrite, ops.copyfile, f)
+        with pytest.raises(ops.CannotOverwrite):
+            ops.copyfile(f)
 
 
-class ContentsMixin(VerifyMixin, TempDirMixin, TestCase):
+class ContentsMixin:
 
     entries_norm1 = {
-        "file1":["reg"],
-        "dir":["dir"],
-        "dir/subdir":["dir"],
-        "dir/file2":["reg"],
-        "ldir":["sym", "dir/subdir"],
-        "dir/lfile":["sym", "../file1"]
-        }
+        "file1": ["reg"],
+        "dir": ["dir"],
+        "dir/subdir": ["dir"],
+        "dir/file2": ["reg"],
+        "ldir": ["sym", "dir/subdir"],
+        "dir/lfile": ["sym", "../file1"],
+    }
 
     entries_rec1 = {
-        "dir":["dir"],
-        "dir/link":["sym", "../dir"]
-        }
+        "dir": ["dir"],
+        "dir/link": ["sym", "../dir"],
+    }
 
     def generate_tree(self, base, entries):
-        s_ents = [(pjoin(base, k), entries[k]) for k in sorted(entries)]
+        base.mkdir()
+        s_ents = [(base / k, entries[k]) for k in sorted(entries)]
         for k, v in s_ents:
             if v[0] == "dir":
-                os.mkdir(k)
+                k.mkdir()
         for k, v in s_ents:
             if v[0] == "dir":
                 pass
             elif v[0] == "reg":
-                open(k, "w").close()
+                k.touch()
             elif v[0] == "sym":
-                os.symlink(v[1], k)
+                k.symlink_to(v[1])
             else:
-                raise Exception(
-                    f"generate_tree doesn't support type {v!r} yet: k {k!r}")
-
-    def gen_dir(self, name):
-        d = os.path.join(self.dir, name)
-        if os.path.exists(d):
-            shutil.rmtree(d)
-        os.mkdir(d)
-        return d
+                pytest.fail(f"generate_tree doesn't support type {v!r} yet: k {k!r}")
+        return str(base)
 
 
-class Test_merge_contents(ContentsMixin):
+class TestMergeContents(ContentsMixin):
 
-    def generic_merge_bits(self, entries):
-        src = self.gen_dir("src")
-        self.generate_tree(src, entries)
+    @pytest.fixture
+    def generic_merge_bits(self, request, tmp_path):
+        entries = getattr(self, request.param)
+        assert isinstance(entries, dict)
+        src = self.generate_tree(tmp_path / "src", entries)
         cset = livefs.scan(src, offset=src)
-        dest = self.gen_dir("dest")
-        self.assertTrue(ops.merge_contents(cset, offset=dest))
-        self.assertEqual(livefs.scan(src, offset=src),
-            livefs.scan(dest, offset=dest))
+        (dest := tmp_path / "dest").mkdir()
+        dest = str(dest)
+        assert ops.merge_contents(cset, offset=dest)
+        assert livefs.scan(src, offset=src) == livefs.scan(dest, offset=dest)
         return src, dest, cset
 
-    def test_callback(self):
-        for attr in dir(self):
-            if not attr.startswith('entries') or 'fail' in attr:
-                continue
-            e = getattr(self, attr)
-            if not isinstance(e, dict):
-                continue
-            src, dest, cset = self.generic_merge_bits(e)
-            new_cset = contents.contentsSet(contents.offset_rewriter(dest, cset))
-            s = set(new_cset)
-            ops.merge_contents(cset, offset=dest, callback=s.remove)
-            self.assertFalse(s)
+    @pytest.mark.parametrize("generic_merge_bits", ("entries_norm1", "entries_rec1"), indirect=True)
+    def test_callback(self, generic_merge_bits):
+        src, dest, cset = generic_merge_bits
+        new_cset = contents.contentsSet(contents.offset_rewriter(dest, cset))
+        s = set(new_cset)
+        ops.merge_contents(cset, offset=dest, callback=s.remove)
+        assert not s
 
-    def test_dangling_symlink(self):
-        src = self.gen_dir("src")
-        self.generate_tree(src, {"dir":["dir"]})
+    def test_dangling_symlink(self, tmp_path):
+        src = self.generate_tree(tmp_path / "src", {"dir": ["dir"]})
         cset = livefs.scan(src, offset=src)
-        dest = self.gen_dir("dest")
-        os.symlink(pjoin(dest, "dest"), pjoin(dest, "dir"))
-        self.assertTrue(ops.merge_contents(cset, offset=dest))
-        self.assertEqual(cset, livefs.scan(src, offset=dest))
+        (dest := tmp_path / "dest").mkdir()
+        (dest / "dir").symlink_to(dest / "dest")
+        assert ops.merge_contents(cset, offset=str(dest))
+        assert cset == livefs.scan(src, offset=str(dest))
 
-    def test_empty_overwrite(self):
-        self.generic_merge_bits(self.entries_norm1)
+    @pytest.mark.parametrize("generic_merge_bits", ("entries_norm1", ), indirect=True)
+    def test_exact_overwrite(self, generic_merge_bits):
+        src, dest, cset = generic_merge_bits
+        assert ops.merge_contents(cset, offset=dest)
 
-    def test_recursive_links(self):
-        self.generic_merge_bits(self.entries_rec1)
-
-    def test_exact_overwrite(self):
-        src, dest, cset = self.generic_merge_bits(self.entries_norm1)
-        self.assertTrue(ops.merge_contents(cset, offset=dest))
-
-    def test_sym_over_dir(self):
-        path = pjoin(self.dir, "sym")
-        fp = pjoin(self.dir, "trg")
-        os.mkdir(path)
+    def test_sym_over_dir(self, tmp_path):
+        (path := tmp_path / "sym").mkdir()
+        fp = tmp_path / "trg"
         # test sym over a directory.
-        f = fs.fsSymlink(path, fp, mode=0o644, mtime=0, uid=os.getuid(),
-            gid=os.getgid())
+        f = fs.fsSymlink(str(path), str(fp), mode=0o644, mtime=0,
+            uid=os.getuid(), gid=os.getgid())
         cset = contents.contentsSet([f])
-        self.assertRaises(ops.FailedCopy, ops.merge_contents, cset)
-        self.assertTrue(fs.isdir(livefs.gen_obj(path)))
-        os.mkdir(fp)
+        with pytest.raises(ops.FailedCopy):
+            ops.merge_contents(cset)
+        assert fs.isdir(livefs.gen_obj(str(path)))
+        fp.mkdir()
         ops.merge_contents(cset)
 
-    def test_dir_over_file(self):
+    def test_dir_over_file(self, tmp_path):
         # according to the spec, dirs can't be merged over files that
         # aren't dirs or symlinks to dirs
-        path = pjoin(self.dir, "file2dir")
-        open(path, 'w').close()
-        d = fs.fsDir(path, mode=0o755, mtime=0, uid=os.getuid(), gid=os.getgid())
+        (path := tmp_path / "file2dir").touch()
+        d = fs.fsDir(str(path), mode=0o755, mtime=0, uid=os.getuid(), gid=os.getgid())
         cset = contents.contentsSet([d])
-        self.assertRaises(ops.CannotOverwrite, ops.merge_contents, cset)
+        with pytest.raises(ops.CannotOverwrite):
+            ops.merge_contents(cset)
 
 
-class Test_unmerge_contents(ContentsMixin):
+class TestUnmergeContents(ContentsMixin):
 
-    def generic_unmerge_bits(self, entries, img="img"):
-        img = self.gen_dir(img)
-        self.generate_tree(img, entries)
+    @pytest.fixture
+    def generic_unmerge_bits(self, request, tmp_path):
+        entries = getattr(self, request.param)
+        assert isinstance(entries, dict)
+        img = self.generate_tree(tmp_path / "img", entries)
         cset = livefs.scan(img, offset=img)
         return img, cset
 
-    def test_callback(self):
-        for attr in dir(self):
-            if not attr.startswith('entries') or 'fail' in attr:
-                continue
-            e = getattr(self, attr)
-            if not isinstance(e, dict):
-                continue
-            img, cset = self.generic_unmerge_bits(e)
-            s = set(contents.offset_rewriter(img, cset))
-            ops.unmerge_contents(cset, offset=img, callback=s.remove)
-            self.assertFalse(s, s)
+    @pytest.mark.parametrize("generic_unmerge_bits", ("entries_norm1", "entries_rec1"), indirect=True)
+    def test_callback(self, generic_unmerge_bits):
+        img, cset = generic_unmerge_bits
+        s = set(contents.offset_rewriter(img, cset))
+        ops.unmerge_contents(cset, offset=img, callback=s.remove)
+        assert not s
 
-    def test_empty_removal(self):
-        img, cset = self.generic_unmerge_bits(self.entries_norm1)
-        self.assertTrue(
-            ops.unmerge_contents(cset, offset=os.path.join(self.dir, "dest")))
+    @pytest.mark.parametrize("generic_unmerge_bits", ("entries_norm1", ), indirect=True)
+    def test_empty_removal(self, tmp_path, generic_unmerge_bits):
+        img, cset = generic_unmerge_bits
+        assert ops.unmerge_contents(cset, offset=str(tmp_path / "dest"))
 
-    def test_exact_removal(self):
-        img, cset = self.generic_unmerge_bits(self.entries_norm1)
-        self.assertTrue(ops.unmerge_contents(cset, offset=img))
-        self.assertFalse(livefs.scan(img, offset=img))
+    @pytest.mark.parametrize("generic_unmerge_bits", ("entries_norm1", ), indirect=True)
+    def test_exact_removal(self, generic_unmerge_bits):
+        img, cset = generic_unmerge_bits
+        assert ops.unmerge_contents(cset, offset=img)
+        assert not livefs.scan(img, offset=img)
 
-    def test_lingering_file(self):
-        img, cset = self.generic_unmerge_bits(self.entries_norm1)
+    @pytest.mark.parametrize("generic_unmerge_bits", ("entries_norm1", ), indirect=True)
+    def test_lingering_file(self, generic_unmerge_bits):
+        img, cset = generic_unmerge_bits
         dirs = [k for k, v in self.entries_norm1.items() if v[0] == "dir"]
-        fp = os.path.join(img, dirs[0], "linger")
-        open(fp, "w").close()
-        self.assertTrue(ops.unmerge_contents(cset, offset=img))
-        self.assertTrue(os.path.exists(fp))
+        (fp := Path(img) / dirs[0] / "linger").touch()
+        assert ops.unmerge_contents(cset, offset=img)
+        assert fp.exists()

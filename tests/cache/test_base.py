@@ -1,8 +1,7 @@
-import operator
+import pytest
 
 from pkgcore.cache import base, bulk, errors
 from snakeoil.chksum import LazilyHashedPath
-from snakeoil.test import TestCase
 
 
 def _mk_chf_obj(**kwargs):
@@ -80,7 +79,7 @@ class DictCacheBulk(bulk):
         return iter(self._data.keys())
 
 
-class BaseTest(TestCase):
+class BaseTest:
 
     cache_keys = ("foo", "_eclasses_")
 
@@ -89,63 +88,64 @@ class BaseTest(TestCase):
             readonly=readonly)
 
     def test_basics(self):
-        self.cache = self.get_db()
-        self.cache['spork'] = {'foo':'bar'}
-        assert {'foo': 'bar'} == self.cache['spork']
-        self.assertRaises(KeyError, operator.getitem, self.cache, 'notaspork')
+        cache = self.get_db()
+        cache['spork'] = {'foo':'bar'}
+        assert {'foo': 'bar'} == cache['spork']
+        with pytest.raises(KeyError):
+            cache['notaspork']
 
-        self.cache['spork'] = {'foo': 42}
-        self.cache['foon'] = {'foo': 42}
-        assert {'foo': 42} == self.cache['spork']
-        assert {'foo': 42} == self.cache['foon']
+        cache['spork'] = {'foo': 42}
+        cache['foon'] = {'foo': 42}
+        assert {'foo': 42} == cache['spork']
+        assert {'foo': 42} == cache['foon']
 
-        assert ['foon', 'spork'] == sorted(self.cache.keys())
-        assert [('foon', {'foo': 42}), ('spork', {'foo': 42})] == sorted(self.cache.items())
-        del self.cache['foon']
-        self.assertRaises(KeyError, operator.getitem, self.cache, 'foon')
+        assert {'foon', 'spork'} == set(cache.keys())
+        assert [('foon', {'foo': 42}), ('spork', {'foo': 42})] == sorted(cache.items())
+        del cache['foon']
+        with pytest.raises(KeyError):
+            cache['foon']
 
-        assert 'spork' in self.cache
-        assert 'foon' not in self.cache
+        assert 'spork' in cache
+        assert 'foon' not in cache
 
-        self.cache['empty'] = {'foo': ''}
-        assert {} == self.cache['empty']
+        cache['empty'] = {'foo': ''}
+        assert not cache['empty']
 
     def test_eclasses(self):
-        self.cache = self.get_db()
-        self.cache['spork'] = {'foo':'bar'}
-        self.cache['spork'] = {'_eclasses_': {'spork': _chf_obj,
+        cache = self.get_db()
+        cache['spork'] = {'foo':'bar'}
+        cache['spork'] = {'_eclasses_': {'spork': _chf_obj,
                                               'foon': _chf_obj}}
-        self.assertRaises(errors.CacheCorruption,
-                          operator.getitem, self.cache, 'spork')
+        assert len(cache['spork']['_eclasses_']) == 2
 
-        self.cache['spork'] = {'_eclasses_': {'spork': _mk_chf_obj(mtime=1),
+        cache['spork'] = {'_eclasses_': {'spork': _mk_chf_obj(mtime=1),
                                               'foon': _mk_chf_obj(mtime=2)}}
-        assert self.cache._data['spork']['_eclasses_'] in ['spork\t1\tfoon\t2', 'foon\t2\tspork\t1']
+        assert cache._data['spork']['_eclasses_'] in ['spork\t1\tfoon\t2', 'foon\t2\tspork\t1']
         assert (
-            sorted([('foon', (('mtime', 2),)), ('spork', (('mtime', 1),))]) ==
-            sorted(self.cache['spork']['_eclasses_']))
+            {('foon', (('mtime', 2),)), ('spork', (('mtime', 1),))} ==
+            set(cache['spork']['_eclasses_']))
 
     def test_readonly(self):
-        self.cache = self.get_db()
-        self.cache['spork'] = {'foo':'bar'}
-        cache = self.get_db(True)
-        cache._data = self.cache._data
-        self.assertRaises(errors.ReadOnly,
-                          operator.delitem, cache, 'spork')
-        self.assertRaises(errors.ReadOnly,
-                          operator.setitem, cache, 'spork', {'foo': 42})
-        assert {'foo': 'bar'} == cache['spork']
+        cache = self.get_db()
+        cache['spork'] = {'foo':'bar'}
+        cache2 = self.get_db(True)
+        cache2._data = cache._data
+        with pytest.raises(errors.ReadOnly):
+            del cache2['spork']
+        with pytest.raises(errors.ReadOnly):
+            cache2['spork'] = {'foo': 42}
+        assert {'foo': 'bar'} == cache2['spork']
 
     def test_clear(self):
         cache = self.get_db()
-        cache['spork'] = {'foo':'bar'}
+        cache['spork'] = {'foo': 'bar'}
         assert {'foo':'bar'} == cache['spork']
         assert list(cache) == ['spork']
-        cache['dork'] = {'foo':'bar2'}
-        cache['dork2'] = {'foo':'bar2'}
-        assert list(sorted(cache)) == sorted(['dork', 'dork2', 'spork'])
+        cache['dork'] = {'foo': 'bar2'}
+        cache['dork2'] = {'foo': 'bar2'}
+        assert set(cache) == {'dork', 'dork2', 'spork'}
         cache.clear()
-        assert list(cache) == []
+        assert not list(cache)
 
     def test_sync_rate(self):
         db = self.get_db()
@@ -160,21 +160,21 @@ class BaseTest(TestCase):
         db.autocommits = False
 
         db.set_sync_rate(2)
-        db["dar"] = {"foo":"blah"}
+        db["dar"] = {"foo": "blah"}
         assert not tracker
-        db["dar2"] = {"foo":"blah"}
+        db["dar2"] = {"foo": "blah"}
         assert len(tracker) == 1
         assert sorted(db) == ["dar", "dar2"]
-        db["dar3"] = {"foo":"blah"}
+        db["dar3"] = {"foo": "blah"}
         assert len(tracker) == 1
 
         # finally ensure sync_rate(1) behaves
         db.set_sync_rate(1)
         # ensure it doesn't flush just for fiddling w/ sync rate
         assert len(tracker) == 1
-        db["dar4"] = {"foo":"blah"}
+        db["dar4"] = {"foo": "blah"}
         assert len(tracker) == 2
-        db["dar5"] = {"foo":"blah"}
+        db["dar5"] = {"foo": "blah"}
         assert len(tracker) == 3
 
 
@@ -187,5 +187,5 @@ class TestBulk(BaseTest):
     def test_filtering(self):
         db = self.get_db()
         # write a key outside of known keys
-        db["dar"] = {"foo2":"dar"}
-        assert list(db["dar"].items()) == []
+        db["dar"] = {"foo2": "dar"}
+        assert not list(db["dar"].items())

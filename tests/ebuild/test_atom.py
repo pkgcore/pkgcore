@@ -548,3 +548,23 @@ class Test_atom(test.TestRestriction):
         self.assertFalse(self.kls("=dev-util/diffball-1").is_simple)
         self.assertFalse(self.kls("dev-util/diffball[x]").is_simple)
         self.assertFalse(self.kls("dev-util/diffball[x?]").is_simple)
+
+    def test_get_atom_without_use_deps(self):
+        for original, wanted in (
+            ("<dev-util/diffball-2", "<dev-util/diffball-2"),
+            ("<dev-util/diffball-2[debug=,test=]", "<dev-util/diffball-2"),
+            ("=dev-util/diffball-2", "=dev-util/diffball-2"),
+            ("=dev-util/diffball-2[debug=,test=]", "=dev-util/diffball-2"),
+            ("=dev-util/diffball-2*", "=dev-util/diffball-2*"),
+            ("=dev-util/diffball-2*[debug=,test=]", "=dev-util/diffball-2*"),
+            ("dev-util/diffball:0", "dev-util/diffball:0"),
+            ("dev-util/diffball:0[debug=,test=]", "dev-util/diffball:0"),
+            ("dev-util/diffball:0/1.12", "dev-util/diffball:0/1.12"),
+            ("dev-util/diffball:0/1.12[debug=,test=]", "dev-util/diffball:0/1.12"),
+            ("!dev-util/diffball", "!dev-util/diffball"),
+            ("!dev-util/diffball[debug=,test=]", "!dev-util/diffball"),
+            ("!!dev-util/diffball", "!!dev-util/diffball"),
+            ("!!dev-util/diffball[debug=,test=]", "!!dev-util/diffball"),
+        ):
+            orig_atom = self.kls(original)
+            assert str(orig_atom.get_atom_without_use_deps) == wanted

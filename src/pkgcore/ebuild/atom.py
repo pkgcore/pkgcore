@@ -463,6 +463,8 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 s = '!' + s
         if self.slot:
             s += f':{self.slot}'
+        if self.subslot:
+            s += f'/{self.subslot}'
         return atom(s)
 
     def intersects(self, other):

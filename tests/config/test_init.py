@@ -1,10 +1,9 @@
 """tests for pkgcore.config's package __init__.py"""
 
-import operator
+import pytest
 
 from pkgcore.config import basics, load_config
 from pkgcore.config.hint import configurable
-from snakeoil.test import TestCase
 from snakeoil.test.mixins import mk_named_tempfile
 
 
@@ -13,49 +12,50 @@ def passthrough(*args, **kwargs):
     return args, kwargs
 
 
-class ConfigLoadingTest(TestCase):
+class TestConfigLoading:
 
-    def setUp(self):
-        self.user_config = mk_named_tempfile()
-        self.user_config.write(
+    @pytest.fixture
+    def user_config(self):
+        user_config = mk_named_tempfile()
+        user_config.write(
             '[foo]\n'
             'class = tests.config.test_init.passthrough\n'
-            )
-        self.user_config.flush()
-        self.system_config = mk_named_tempfile()
-        self.system_config.write(
+        )
+        user_config.flush()
+        yield user_config
+        user_config.close()
+
+    @pytest.fixture
+    def system_config(self):
+        system_config = mk_named_tempfile()
+        system_config.write(
             '[foo]\n'
             'class = also invalid\n'
-            )
-        self.system_config.flush()
+        )
+        system_config.flush()
+        yield system_config
+        system_config.close()
 
-    def tearDown(self):
-        self.user_config.close()
-        self.system_config.close()
-        del self.user_config
-        del self.system_config
+    def test_load_config(self, user_config):
+        manager = load_config(user_conf_file=user_config.name)
+        assert manager.foo['foo'] == ((), {})
 
-    def test_load_config(self):
-        manager = load_config(user_conf_file=self.user_config.name)
-        self.assertEqual(manager.foo['foo'], ((), {}))
-
-        # Test user config overrides system config.
+    def test_user_config_override_system(self, user_config, system_config):
         manager = load_config(
-            user_conf_file=self.user_config.name,
-            system_conf_file=self.system_config.name)
-        self.assertEqual(manager.foo['foo'], ((), {}))
+            user_conf_file=user_config.name,
+            system_conf_file=system_config.name)
+        assert manager.foo['foo'] == ((), {})
 
-        # Test prepends.
+    def test_prepends(self, user_config):
         manager = load_config(
-            user_conf_file=self.user_config.name,
+            user_conf_file=user_config.name,
             prepend_sources=[{'myfoo': basics.HardCodedConfigSection({
                             'inherit': ['foo']})}])
-        self.assertEqual(manager.foo['myfoo'], ((), {}))
+        assert manager.foo['myfoo'] == ((), {})
 
-        # Test disabling loading.
+    def test_disabling_loading(self, user_config):
         manager = load_config(
-            user_conf_file=self.user_config.name,
+            user_conf_file=user_config.name,
             skip_config_files=True)
-        self.assertRaises(
-            KeyError,
-            operator.getitem, manager.foo, 'foo')
+        with pytest.raises(KeyError):
+            manager.foo['foo']

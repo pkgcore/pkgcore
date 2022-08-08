@@ -21,6 +21,10 @@ jobs:
             python-version: '3.10'
             deps: minimal-deps
             experimental: false
+          - os: ubuntu-latest
+            python-version: '3.11.0-beta - 3.11'
+            deps: newest-deps
+            experimental: true
       fail-fast: false
 
     steps:

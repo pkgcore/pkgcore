@@ -248,12 +248,6 @@ def get_repo_news_path(options, out, err):
         return 0
     return 1
 
-
-@BaseCommand.make_command("root? repo_id", bind=portageq_commands,
-    requires_root=False, name='get_repo_news_path')
-def portageq_get_repo_news_path(options, out, err):
-    return get_repo_news_path.function(options, out, err)
-
 def bind_parser(parser, compat=False, name='portageq'):
     subparsers = parser.add_subparsers(description=f"{name} commands")
     l = common_commands[:]

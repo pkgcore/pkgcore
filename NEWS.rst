@@ -3,6 +3,23 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.13 (2022-08-09)
+----------------------------
+
+- Fix checking whether a path is contained within a known repository
+  (specifically: fix the test to not check if path is prefixed with a
+  repository's location. Instead, we check the full path). Previously,
+  ``/usr/portage-dir`` would wrongly be considered within ``/usr/portage``,
+  which is clearly wrong. (Arthur Zamarin, #350)
+
+- Various code cleanups and refactoring (Arthur Zamarin, #351)
+
+- ebuild/atom.py: fix ``atom.no_usedeps`` not including subslot  (Arthur
+  Zamarin, #353)
+
+- Fix and port pkgcore to Python 3.11 (Arthur Zamarin, Sam James, #355)
+
+----------------------------
 pkgcore 0.12.12 (2022-07-29)
 ----------------------------
 

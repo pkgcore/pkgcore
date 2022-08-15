@@ -1,6 +1,6 @@
 #!/usr/bin/env pkgcore-ebuild-helper
 
-shopt -s extdebug
+shopt -s extdebug extglob
 
 if ! ${PKGCORE_PREFIX_SUPPORT:=false}; then
 	ED=${D}
@@ -30,6 +30,7 @@ if [[ -z ${PORTAGE_COMPRESS_SUFFIX} ]]; then
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
 		xz)    suffix="xz";;
+		(p?)zstd suffix="zst";;
 		*)     die "prepalldocs error: please set PORTAGE_COMPRESS_SUFFIX in make.conf";;
 	esac
 fi

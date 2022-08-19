@@ -1,0 +1,160 @@
+# bash completion for pquery
+
+source "/usr/share/bash-completion/helpers/gentoo-common.sh"
+
+_pquery() {
+    local i cmd cur prev words cword split
+    _init_completion || return
+
+    local subcommands=(
+        scan
+        cache
+        replay
+        show
+    )
+
+    local base_options=(
+        -h --help
+        --version
+        --debug
+        -q --quiet
+        -v --verbose
+        --color
+
+        # config options
+        --config
+        --domain
+
+        # repository matching options
+        --raw
+        --unfiltered
+        --virtuals
+        -r --repo
+        -E --ebuild-repos
+        -B --binary-repos
+        -I --installed
+        -A --all-repos
+
+        # package matching options
+        --all
+        --has-use
+        --license
+        --revdep
+        --revdep-pkgs
+        --restrict-revdep
+        --restrict-revdep-pkgs
+        -S --description
+        --eapi
+        --owns
+        --owns-re
+        --maintainer
+        --maintainer-name
+        --maintainer-email
+        --environment
+        --pkgset
+        -u --upgrade
+
+        # output options
+        -1, --first
+        -a, --atom
+        --cpv
+        -R
+        --slot
+        -n --no-version
+        --min
+        --max
+        --blame
+        --size
+        --contents
+        --highlight-dep
+        --print-revdep
+        --attr
+        --force-attr
+        --one-attr
+        --force-one-attr
+    )
+
+    local boolean_options=(
+        true
+        false
+    )
+
+    local attributes=(
+        all allmetadata
+
+        path repo source_repository
+        longdescription maintainers
+        category package fullver revision version
+        environment cbuild chost ctarget
+        inherited defined_phases
+
+        eapi description homepage
+        distfiles files uris fetchables
+        license slot subslot keywords iuse required_use use restrict properties
+
+        alldepends depend bdepend idepend pdepend rdepend
+        raw_alldepends raw_depend raw_bdepend raw_idepend raw_pdepend raw_rdepend
+    )
+
+    # find repo location
+    local REPO="$(git rev-parse --show-toplevel)"
+    for ((i = 1; i < ${COMP_CWORD}; i++)); do
+        case "${COMP_WORDS[i]}" in
+            -r | --repo)
+                REPO=$(_parsereposconf "${COMP_WORDS[i+1]}" location)
+                : ${REPO:=${COMP_WORDS[i+1]}}
+                ;;
+        esac
+    done
+
+    case ${prev} in
+        --color)
+            COMPREPLY=($(compgen -W "${boolean_options[*]}" -- "${cur}"))
+            ;;
+        --config)
+            COMPREPLY=($(compgen -f -- "${cur}"))
+            ;;
+        --domain)
+            COMPREPLY=()
+            ;;
+        --has-use | --license | --revdep | --revdep-pkgs | --restrict-revdep | --restrict-revdep-pkgs | \
+        -S | --description | --eapi | --owns | --owns-re | --environment | --pkgset | \
+        --maintainer | --maintainer-name | --maintainer-email)
+            COMPREPLY=()
+            ;;
+        --virtuals)
+            COMPREPLY=($(compgen -W "only disable" -- "${cur}"))
+            ;;
+        -r | --repo)
+            COMPREPLY=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))
+            COMPREPLY+=($(compgen -d -- "${cur}"))
+            ;;
+        --highlight-dep | --print-revdep)
+            COMPREPLY=()
+            ;;
+        --attr | --force-attr | --one-attr | --force-one-attr)
+            COMPREPLY=($(compgen -W "${attributes[*]}" -- "${cur}"))
+            ;;
+        --highlight-dep | --print-revdep)
+            COMPREPLY=()
+            ;;
+        *)
+            if [[ ${cur} == -* ]]; then
+                COMPREPLY+=($(compgen -W "${base_options[*]}" -- "${cur}"))
+            else
+                _list_repo_atoms() {
+                    eval cd "${REPO}" || return
+                    if [[ $cur == */* ]]; then
+                        compgen -W "$(compgen -G "${cur}*" )" -- "${cur}"
+                    else
+                        compgen -W "$(compgen -G "${cur}*" -S / )" -- "${cur}"
+                    fi
+                }
+                COMPREPLY+=( $(_list_repo_atoms) )
+            fi
+            ;;
+    esac
+}
+complete -F _pquery pquery
+
+# vim: set ft=bash sw=4 et sts=4 :

@@ -241,6 +241,7 @@ setup(**dict(
     data_files=list(chain(
         pkgdist.data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
         pkgdist.data_mapping(DATA_INSTALL_OFFSET, 'data'),
+        pkgdist.data_mapping('share/bash-completion/completions', 'shell/bash/completion'),
         pkgdist.data_mapping('share/zsh/site-functions', 'shell/zsh/completion'),
         pkgdist.data_mapping(
             os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',

@@ -69,7 +69,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
     # overrided in child class if it's supported
     evaluate_depset = None
 
-    def __init__(self, atom, negate_vers=False, eapi='-1'):
+    def __init__(self, atom: str, negate_vers: bool=False, eapi: str='-1'):
         """
         :param atom: string, see gentoo ebuild atom syntax
         :keyword negate_vers: boolean controlling whether the version should be
@@ -119,8 +119,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                     if not valid_use_flag.match(x):
                         raise errors.MalformedAtom(orig_atom, f'invalid USE flag: {x!r}')
                 except IndexError:
-                    raise errors.MalformedAtom(
-                        orig_atom, 'empty use dep detected')
+                    raise errors.MalformedAtom(orig_atom, 'empty use dep detected')
             if override_kls:
                 sf(self, '__class__', transitive_use_atom)
             atom = atom[0:use_start]+atom[use_end + 1:]
@@ -131,15 +130,12 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             if i2 != -1:
                 repo_id = atom[i2 + 2:]
                 if not repo_id:
-                    raise errors.MalformedAtom(
-                        orig_atom, "repo_id must not be empty")
+                    raise errors.MalformedAtom(orig_atom, "repo_id must not be empty")
                 elif repo_id[0] in '-':
-                    raise errors.MalformedAtom(
-                        orig_atom,
+                    raise errors.MalformedAtom(orig_atom,
                         f"invalid first char of repo_id '{repo_id}' (must not begin with a hyphen)")
                 elif not valid_repo_chars.issuperset(repo_id):
-                    raise errors.MalformedAtom(
-                        orig_atom,
+                    raise errors.MalformedAtom(orig_atom,
                         f"repo_id may contain only [a-Z0-9_-/], found {repo_id!r}")
                 atom = atom[:i2]
                 sf(self, "repo_id", repo_id)
@@ -151,16 +147,14 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             if not slot:
                 # if the slot char came in only due to repo_id, force slots to None
                 if i2 == -1:
-                    raise errors.MalformedAtom(
-                        orig_atom, "Empty slot targets aren't allowed")
+                    raise errors.MalformedAtom(orig_atom, "Empty slot targets aren't allowed")
                 slot = None
             else:
                 slots = (slot,)
                 if eapi not in ('0', '1', '2', '3', '4'):
                     if slot[0:1] in ("*", "="):
                         if len(slot) > 1:
-                            raise errors.MalformedAtom(
-                                orig_atom,
+                            raise errors.MalformedAtom(orig_atom,
                                 "Slot operators '*' and '=' do not take slot targets")
                         slot_operator = slot
                         slot, slots = None, ()
@@ -170,24 +164,20 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                             slot = slot[:-1]
                         slots = slot.split('/', 1)
                 elif eapi == '0':
-                    raise errors.MalformedAtom(
-                        orig_atom,
+                    raise errors.MalformedAtom(orig_atom,
                         "slot dependencies aren't allowed in EAPI 0")
 
                 for chunk in slots:
                     if not chunk:
-                        raise errors.MalformedAtom(
-                            orig_atom,
+                        raise errors.MalformedAtom(orig_atom,
                             "Empty slot targets aren't allowed")
 
                     if chunk[0] in '-.':
-                        raise errors.MalformedAtom(
-                            orig_atom,
+                        raise errors.MalformedAtom(orig_atom,
                             "Slot targets must not start with a hypen or dot: {chunk!r}")
                     elif not valid_slot_chars.issuperset(chunk):
                         invalid_chars = ', '.join(map(repr, sorted(set(chunk).difference(valid_slot_chars))))
-                        raise errors.MalformedAtom(
-                            orig_atom,
+                        raise errors.MalformedAtom(orig_atom,
                             f"Invalid character(s) in slot target: {invalid_chars}")
 
                 if len(slots) == 2:
@@ -240,22 +230,18 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         if eapi == '0':
             for x in ('use', 'slot'):
                 if getattr(self, x) is not None:
-                    raise errors.MalformedAtom(
-                        orig_atom,
+                    raise errors.MalformedAtom(orig_atom,
                         f"{x} atoms aren't supported for EAPI 0")
         elif eapi == '1':
             if self.use is not None:
-                raise errors.MalformedAtom(
-                    orig_atom,
+                raise errors.MalformedAtom(orig_atom,
                     "use atoms aren't supported for EAPI < 2")
         if eapi != '-1':
             if self.repo_id is not None:
-                raise errors.MalformedAtom(
-                    orig_atom,
+                raise errors.MalformedAtom(orig_atom,
                     f"repo_id atoms aren't supported for EAPI {eapi}")
         if use_start != -1 and slot_start != -1 and use_start < slot_start:
-            raise errors.MalformedAtom(
-                orig_atom,
+            raise errors.MalformedAtom(orig_atom,
                 "slot restriction must proceed use")
         try:
             sf(self, "_cpv", cpv.CPV(self.cpvstr, versioned=bool(self.op)))
@@ -264,15 +250,12 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
         if self.op:
             if self.version is None:
-                raise errors.MalformedAtom(
-                    orig_atom, "operator requires a version")
+                raise errors.MalformedAtom(orig_atom, "operator requires a version")
             elif self.op == '~' and self.revision:
-                raise errors.MalformedAtom(
-                    orig_atom,
+                raise errors.MalformedAtom(orig_atom,
                     "~ revision operater cannot be combined with a revision")
         elif self.version is not None:
-            raise errors.MalformedAtom(
-                orig_atom, 'versioned atom requires an operator')
+            raise errors.MalformedAtom(orig_atom, 'versioned atom requires an operator')
         sf(self, "_hash", hash(orig_atom))
         sf(self, "negate_vers", negate_vers)
 
@@ -306,8 +289,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             attrs.append(f'subslot={self.subslot!r}')
         if self.repo_id is not None:
             attrs.append(f'repo_id={self.repo_id!r}')
-        return '<%s %s @#%x>' % (
-            self.__class__.__name__, ' '.join(attrs), id(self))
+        return f'<{self.__class__.__name__} {" ".join(attrs)} @#{id(self):x}>'
 
     def __reduce__(self):
         return (atom, (str(self), self.negate_vers))

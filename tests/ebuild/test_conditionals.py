@@ -1,14 +1,14 @@
+import pytest
+
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import DepsetParseError
 from pkgcore.restrictions import boolean, packages
-from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
-from snakeoil.test import TestCase
 
 
-class base(TestCase):
+class base:
 
     class kls(conditionals.DepSet):
         __slots__ = ()
@@ -19,27 +19,26 @@ class base(TestCase):
         if element_func is not None:
             kwds["element_func"] = element_func
         if operators is None:
-            operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
+            operators = {"": boolean.AndRestriction, "||": boolean.OrRestriction}
         return self.kls.parse(string, element_kls, operators=operators, **kwds)
 
 
 class TestDepSetParsing(base):
 
-    def f(self, x):
-        self.assertRaises(DepsetParseError, self.gen_depset, x)
-
-    # generate a lot of parse error assertions.
-    for idx, x in enumerate(("( )", "( a b c", "(a b c )",
-        "( a b c)", "()", "x?( a )",
-        "?x (a)", "x? (a )", "x? (a)", "x? ( a b)",
+    @pytest.mark.parametrize("depset", (
+        "( )", "( a b c", "(a b c )",
+        "( a b c)", "x?( a )",
+        "x? (a )", "x? (a)", "x? ( a b)",
         "x? ( x? () )", "x? ( x? (a)", "(", ")", "x?",
         "||(", "||()", "||( )", "|| ()",
         "|| (", "|| )", "||)",  "|| ( x? ( )",
-        "|| ( x?() )", "|| (x )", "|| ( x)",
-        "a|", "a?", "a(b", "a)", "a||b",
-        "a(", "a)b", "x? y", "( x )?", "||?")):
-        locals()["test_DepsetParseError_case%i" % (idx + 1)] = post_curry(f, x)
-    del x
+        "|| (x )", "|| ( x)",
+        "a|", "a?", "a||b",
+        "x? y", "( x )?", "||?"
+    ))
+    def test_DepsetParseError(self, depset):
+        with pytest.raises(DepsetParseError):
+            self.gen_depset(depset)
 
     @staticmethod
     def mangle_cond_payload(p):
@@ -69,7 +68,7 @@ class TestDepSetParsing(base):
                     break
             else:
                 if isinstance(x, packages.Conditional):
-                    self.assertTrue(x.attr == "use")
+                    assert x.attr == "use"
                     conditionals.insert(
                         depth, list(self.mangle_cond_payload(x.restriction)))
                     yield set(iflatten_instance(conditionals[:depth + 1]))
@@ -79,14 +78,32 @@ class TestDepSetParsing(base):
                     depth += 1
                 else:
                     if x == ")":
-                        self.assertTrue(depth)
+                        assert depth
                         depth -= 1
                     yield x
-        self.assertFalse(depth)
+        assert not depth
 
-    def check_depset(self, s, func=base.gen_depset):
-        if isinstance(s, (list, tuple)):
-            s, v = s
+    depsets = (
+        "a b",
+        ("", []),
+        ("( a b )", ("&&", "(", "a", "b", ")")),
+        "|| ( a b )",
+        ("a || ( a ( b  ) c || ( d )  )",
+            ["a", "||", "(", "a", "b", "c", "d", ")"]),
+        (" x? ( a  b )", (["x"], "(", "a", "b", ")")),
+        ("x? ( y? ( a ) )", (["x"], "(", ["x", "y"], "(", "a", ")", ")")),
+        ("|| ( || ( a b ) )", ["||", "(", "a", "b", ")"]),
+        "|| ( || ( a b ) c )",
+        ("x? ( a !y? ( || ( b c ) d ) e ) f1 f? ( g h ) i", (
+            ["x"], "(", "a", ["x", "!y"], "(", "||", "(", "b",
+            "c", ")", "d", ")", "e", ")", "f1",
+            ["f"], "(", "g", "h", ")", "i"))
+    )
+
+    @pytest.mark.parametrize("depset", depsets)
+    def test_parse_depset(self, depset):
+        if isinstance(depset, (list, tuple)):
+            depset, v = depset
             v2 = []
             for idx, x in enumerate(v):
                 if isinstance(x, (list, tuple)):
@@ -95,14 +112,15 @@ class TestDepSetParsing(base):
                     v2.append(x)
             v = v2
         else:
-            v = s.split()
-        got = list(self.flatten_restricts(func(self, s)))
+            v = depset.split()
+        got = list(self.flatten_restricts(base.gen_depset(self, depset)))
         wanted = list(v)
-        self.assertEqual(got, v, msg="given {s!r}\nexpected {wanted!r} but got {got!r}")
+        assert got == v, "given {s!r}\nexpected {wanted!r} but got {got!r}"
 
-    def check_str(self, s, func=base.gen_depset):
-        if isinstance(s, (list, tuple)):
-            s, v = s
+    @pytest.mark.parametrize("depset", depsets)
+    def test_depset_str(self, depset):
+        if isinstance(depset, (list, tuple)):
+            depset, v = depset
             v2 = []
             for x in v:
                 if isinstance(x, str):
@@ -111,64 +129,26 @@ class TestDepSetParsing(base):
                     v2.append(x[-1] + '?')
             v = ' '.join(v2)
         else:
-            v = ' '.join(s.split())
+            v = ' '.join(depset.split())
         v = ' '.join(v.replace("&&", "").split())
-        self.assertEqual(str(func(self, s)), v)
-
-    # generate a lot of assertions of parse results.
-    # if it's a list, first arg is string, second is results, if
-    # string, the results for testing are determined by splitting the string
-    for idx, x in enumerate([
-        "a b",
-        ( "",   []),
-
-        ( "( a b )", ("&&", "(", "a", "b", ")")),
-
-        "|| ( a b )",
-
-        ( "a || ( a ( b  ) c || ( d )  )",
-            ["a", "||", "(", "a", "b", "c", "d", ")"]),
-
-        ( " x? ( a  b )",
-            (["x"], "(", "a", "b", ")")),
-
-        ( "x? ( y? ( a ) )",
-            (["x"], "(", ["x", "y"], "(", "a", ")", ")")),
-
-        ("|| ( || ( a b ) )", ["||", "(", "a", "b", ")"]),
-
-        "|| ( || ( a b ) c )",
-
-        ( "x? ( a !y? ( || ( b c ) d ) e ) f1 f? ( g h ) i",
-            (
-            ["x"], "(", "a", ["x", "!y"], "(", "||", "(", "b",
-            "c", ")", "d", ")", "e", ")", "f1",
-            ["f"], "(", "g", "h", ")", "i"
-            )
-        )]):
-
-        locals()["test_parse_case%i" % (idx + 1)] = post_curry(check_depset, x)
-        locals()["test_str_case%i" % (idx + 1)] = post_curry(check_str, x)
+        assert str(base.gen_depset(self, depset)) == v
 
     def check_known_conditionals(self, text, conditionals, **kwds):
         d = self.gen_depset(text, **kwds)
-        self.assertEqual(sorted(d.known_conditionals),
-            sorted(conditionals.split()))
+        assert sorted(d.known_conditionals) == sorted(conditionals.split())
         # ensure it does the lookup *once*
         object.__setattr__(d, 'restrictions', ())
-        self.assertFalse(d.restrictions)
-        self.assertEqual(sorted(d.known_conditionals),
-            sorted(conditionals.split()))
+        assert not d.restrictions
+        assert sorted(d.known_conditionals) == sorted(conditionals.split())
 
-    for idx, (x, c) in enumerate([
-        ["a? ( b )", "a"],
-        ["a? ( b a? ( c ) )", "a"],
-        ["a b c d e ( f )", ""],
-        ["!a? ( b? ( c ) )", "a b"]
-        ]):
-        locals()["test_known_conditionals_case%i" % (idx + 1)] = post_curry(
-            check_known_conditionals, x, c)
-    del x, c
+    @pytest.mark.parametrize(("text", "conditionals"), (
+        ("a? ( b )", "a"),
+        ("a? ( b a? ( c ) )", "a"),
+        ("a b c d e ( f )", ""),
+        ("!a? ( b? ( c ) )", "a b"),
+    ))
+    def test_known_conditionals(self, text, conditionals):
+        self.check_known_conditionals(text, conditionals)
 
     def test_known_conditionals_transitive_use(self):
         self.check_known_conditionals(
@@ -180,14 +160,11 @@ class TestDepSetParsing(base):
                 transitive_use_atoms=True)
 
     def test_element_func(self):
-        self.assertEqual(
-            self.gen_depset("asdf fdas", element_func=post_curry(str)).element_class,
-            "".__class__)
+        assert self.gen_depset("asdf fdas", element_func=str).element_class == "".__class__
 
     def test_disabling_or(self):
-        self.assertRaises(
-            DepsetParseError, self.gen_depset, "|| ( a b )",
-            {"operators":{"":boolean.AndRestriction}})
+        with pytest.raises(DepsetParseError):
+            self.gen_depset("|| ( a b )", {"operators": {"": boolean.AndRestriction}})
 
     def test_atom_interaction(self):
         self.gen_depset("a/b[x(+)]", element_func=atom)
@@ -196,19 +173,18 @@ class TestDepSetParsing(base):
 class TestDepSetConditionalsInspection(base):
 
     def test_sanity_has_conditionals(self):
-        self.assertFalse(bool(self.gen_depset("a b").has_conditionals))
-        self.assertFalse(bool(
-                self.gen_depset("( a b ) || ( c d )").has_conditionals))
-        self.assertTrue(bool(self.gen_depset("x? ( a )").has_conditionals))
-        self.assertTrue(bool(self.gen_depset("( x? ( a ) )").has_conditionals))
-        self.assertTrue(bool(self.gen_depset("|| ( a/b[c=] b/d )", element_kls=atom,
-            transitive_use_atoms=True).has_conditionals))
+        assert not bool(self.gen_depset("a b").has_conditionals)
+        assert not bool(self.gen_depset("( a b ) || ( c d )").has_conditionals)
+        assert bool(self.gen_depset("x? ( a )").has_conditionals)
+        assert bool(self.gen_depset("( x? ( a ) )").has_conditionals)
+        assert bool(self.gen_depset("|| ( a/b[c=] b/d )", element_kls=atom,
+            transitive_use_atoms=True).has_conditionals)
 
     def flatten_cond(self, c):
         l = set()
         for x in c:
             if isinstance(x, boolean.base):
-                self.assertEqual(len(x.dnf_solutions()), 1)
+                assert len(x.dnf_solutions()) == 1
                 f = x.dnf_solutions()[0]
             else:
                 f = [x]
@@ -221,7 +197,7 @@ class TestDepSetConditionalsInspection(base):
             l.add(frozenset(t))
         return l
 
-    def check_conds(self, s, r, msg=None, element_kls=str, **kwds):
+    def check_conds(self, s, r, element_kls=str, **kwds):
         nc = {k: self.flatten_cond(v) for k, v in
               self.gen_depset(s, element_kls=element_kls, **kwds).node_conds.items()}
         d = {element_kls(k): v for k, v in r.items()}
@@ -231,35 +207,34 @@ class TestDepSetConditionalsInspection(base):
             elif isinstance(v, (tuple, list)):
                 d[k] = set(map(frozenset, v))
 
-        self.assertEqual(nc, d, msg)
+        assert nc == d
 
-    for idx, s in enumerate((
+    @pytest.mark.parametrize(("text", "result"), (
         ("x? ( y )", {"y":"x"}),
         ("x? ( y ) z? ( y )", {"y":["z", "x"]}),
         ("x? ( z? ( w? ( y ) ) )", {"y":"w z x"}),
         ("!x? ( y )", {"y":"!x"}),
         ("!x? ( z? ( y a ) )", {"y":"!x z", "a":"!x z"}),
         ("x ( y )", {}),
-        ("x ( y? ( z ) )", {"z":"y"}, "needs to dig down as deep as required"),
-        ("x y? ( x )", {}, "x isn't controlled by a conditional, shouldn't be "
-         "in the list"),
-        ("|| ( y? ( x ) x )", {}, "x cannot be filtered down since x is "
-         "accessible via non conditional path"),
+        ("x ( y? ( z ) )", {"z":"y"}), # needs to dig down as deep as required
+        ("x y? ( x )", {}), # x isn't controlled by a conditional, shouldn't be in the list
+        ("|| ( y? ( x ) x )", {}), # x cannot be filtered down since x is accessible via non conditional path
         ("|| ( y? ( x ) z )", {"x":"y"}),
-        )):
-        locals()["test_node_conds_case%i" % (idx + 1)] = post_curry(check_conds, *s)
+    ))
+    def test_node_conds(self, text, result):
+        self.check_conds(text, result)
 
-    for idx, s in enumerate((
+    @pytest.mark.parametrize(("text", "result"), (
         ("a/b[c=]", {"a/b[c]":"c", "a/b[-c]":"!c"}),
-        )):
-        locals()["test_node_conds_atom_%i" % (idx + 1)] = post_curry(check_conds,
-            element_kls=atom, transitive_use_atoms=True, *s)
+    ))
+    def test_node_conds_atom(self, text, result):
+        self.check_conds(text, result, element_kls=atom, transitive_use_atoms=True)
 
 
 class TestDepSetEvaluate(base):
 
     def test_evaluation(self):
-        flag_set = list(sorted("x%i" % (x,) for x in range(2000)))
+        flag_set = list(sorted(f"x{x}" for x in range(2000)))
         for vals in (
             ("y", "x? ( y ) !x? ( z )", "x"),
             ("z", "x? ( y ) !x? ( z )"),
@@ -311,8 +286,7 @@ class TestDepSetEvaluate(base):
             orig = self.gen_depset(src, element_kls=kls, **kwds)
             collapsed = orig.evaluate_depset(use,
                 tristate_filter=tristate)
-            self.assertEqual(str(collapsed), result, msg=
-                "expected %r got %r\nraw depset: %r\nuse: %r, tristate: %r" %
-                    (result, str(collapsed), src, use, tristate))
+            assert str(collapsed) == result, \
+                f"expected {result!r} got {collapsed!r}\nraw depset: {src!r}\nuse: {use!r}, tristate: {tristate!r}"
             if not ('?' in src or kwds.get("transitive_use_atoms")):
-                self.assertIdentical(orig, collapsed)
+                assert orig is collapsed

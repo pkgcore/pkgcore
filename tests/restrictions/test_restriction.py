@@ -1,7 +1,10 @@
 from functools import partial
 
+import pytest
+
 from pkgcore.restrictions import restriction
-from pkgcore.test import TestRestriction
+
+from .utils import TestRestriction
 
 
 class SillyBool(restriction.base):
@@ -16,18 +19,19 @@ class SillyBool(restriction.base):
         return not self.negate
 
 
-class BaseTest(TestRestriction):
+class TestBase(TestRestriction):
 
     bool_kls = SillyBool
 
     def test_base(self):
         base = restriction.base()
-        self.assertEqual(len(base), 1)
+        assert len(base) == 1
         # Just check repr and str do not raise
-        self.assertTrue(str(base))
-        self.assertTrue(repr(base))
-        self.assertTrue(hash(base))
-        self.assertRaises(NotImplementedError, base.match)
+        assert str(base)
+        assert repr(base)
+        assert hash(base)
+        with pytest.raises(NotImplementedError):
+            base.match()
 
     def test_it(self):
         true = self.bool_kls(negate=False)
@@ -43,7 +47,7 @@ class BaseTest(TestRestriction):
         self.assertForceFalse(false, args)
 
 
-class AlwaysBoolTest(TestRestriction):
+class TestAlwaysBool(TestRestriction):
 
     bool_kls = partial(restriction.AlwaysBool, 'foo')
 
@@ -58,16 +62,14 @@ class AlwaysBoolTest(TestRestriction):
         self.assertNotForceTrue(false_r, true_r)
         self.assertForceFalse(false_r, true_r)
 
-        self.assertEqual(str(true_r), "always 'True'")
-        self.assertEqual(str(false_r), "always 'False'")
-        self.assertNotEqual(hash(true_r), hash(false_r))
-        self.assertEqual(hash(true_r),
-            hash(self.bool_kls(True)))
-        self.assertEqual(hash(false_r),
-            hash(self.bool_kls(False)))
-        self.assertEqual(true_r, self.bool_kls(True))
-        self.assertEqual(false_r, self.bool_kls(False))
-        self.assertNotEqual(true_r, false_r)
+        assert str(true_r) == "always 'True'"
+        assert str(false_r) == "always 'False'"
+        assert hash(true_r) != hash(false_r)
+        assert hash(true_r) == hash(self.bool_kls(True))
+        assert hash(false_r) == hash(self.bool_kls(False))
+        assert true_r == self.bool_kls(True)
+        assert false_r == self.bool_kls(False)
+        assert true_r != false_r
 
 
 class NoneMatch(restriction.base):
@@ -86,7 +88,7 @@ class NoneMatch(restriction.base):
         return 'NoneMatch'
 
 
-class AnyMatchTest(TestRestriction):
+class TestAnyMatch(TestRestriction):
 
     def test_basic(self):
         for negate in (False, True):
@@ -96,5 +98,5 @@ class AnyMatchTest(TestRestriction):
             self.assertNotMatch(inst, (), negated=negate)
 
             # just test these do not traceback
-            self.assertTrue(repr(inst))
-            self.assertTrue(str(inst))
+            assert repr(inst)
+            assert str(inst)

@@ -1,5 +1,6 @@
+import pytest
+
 from pkgcore.restrictions import boolean, restriction
-from snakeoil.test import TestCase
 
 true = restriction.AlwaysBool(node_type='foo', negate=True)
 false = restriction.AlwaysBool(node_type='foo', negate=False)
@@ -20,25 +21,31 @@ class base:
     kls = None
 
     def test_invalid_restrictions(self):
-        self.assertRaises(TypeError, self.kls, 42, node_type='foo')
+        with pytest.raises(TypeError):
+            self.kls(42, node_type='foo')
         base = self.kls(node_type='foo')
-        self.assertRaises(TypeError, base.add_restriction, 42)
-        self.assertRaises(TypeError, base.add_restriction)
+        with pytest.raises(TypeError):
+            base.add_restriction(42)
+        with pytest.raises(TypeError):
+            base.add_restriction()
 
     def test_init_finalize(self):
         final = self.kls(true, node_type='foo', finalize=True)
         # since it becomes a tuple, throws a AttributeError
-        self.assertRaises(TypeError, final.add_restriction, false)
+        with pytest.raises(TypeError):
+            final.add_restriction(false)
 
         final = self.kls(true, node_type='foo')
         # since it becomes a tuple, throws a AttributeError
-        self.assertRaises(TypeError, final.add_restriction, false)
+        with pytest.raises(TypeError):
+            final.add_restriction(false)
 
     def test_finalize(self):
         base = self.kls(true, node_type='foo', finalize=False)
         base.add_restriction(false)
         base.finalize()
-        self.assertRaises(TypeError, base.add_restriction, true)
+        with pytest.raises(TypeError):
+            base.add_restriction(true)
 
     def test_change_restrictions(self):
         base = self.kls(true, false)
@@ -47,17 +54,17 @@ class base:
         assert self.kls(false, true, negate=True) == base.change_restrictions(false, true, negate=True)
 
     def test_add_restriction(self):
-        self.assertRaises(TypeError,
-            self.kls(true, finalize=True).add_restriction, false)
-        self.assertRaises(TypeError,
-            self.kls(node_type='foon').add_restriction, false)
+        with pytest.raises(TypeError):
+            self.kls(true, finalize=True).add_restriction(false)
+        with pytest.raises(TypeError):
+            self.kls(node_type='foon').add_restriction(false)
         k = self.kls(finalize=False)
         k.add_restriction(false)
         assert k.restrictions == [false]
 
     # TODO total_len? what does it do?
 
-class BaseTest(base, TestCase):
+class TestBase(base):
 
     kls = boolean.base
 
@@ -65,15 +72,18 @@ class BaseTest(base, TestCase):
         base = self.kls(true, false, node_type='foo')
         assert len(base) == 2
         assert list(base) == [true, false]
-        self.assertRaises(NotImplementedError, base.match, false)
+        with pytest.raises(NotImplementedError):
+            base.match(false)
         # TODO is the signature for these correct?
-        self.assertRaises(NotImplementedError, base.force_False, false)
-        self.assertRaises(NotImplementedError, base.force_True, false)
-        self.assertIdentical(base[1], false)
+        with pytest.raises(NotImplementedError):
+            base.force_False(false)
+        with pytest.raises(NotImplementedError):
+            base.force_True(false)
+        assert base[1] is false
 
 
 # TODO these tests are way too limited
-class AndRestrictionTest(base, TestCase):
+class TestAndRestriction(base):
 
     kls = boolean.AndRestriction
 
@@ -104,10 +114,10 @@ class AndRestrictionTest(base, TestCase):
                     true, true,
                     boolean.OrRestriction(false, true)).cnf_solutions()) ==
             list([[true], [true], [false, true]]))
-        assert self.kls().cnf_solutions() == []
+        assert not self.kls().cnf_solutions()
 
 
-class OrRestrictionTest(base, TestCase):
+class TestOrRestriction(base):
 
     kls = boolean.OrRestriction
 
@@ -149,10 +159,10 @@ class OrRestrictionTest(base, TestCase):
                     true).cnf_solutions()[0]) ==
             set([true, false, true]))
 
-        assert self.kls().cnf_solutions() == []
+        assert not self.kls().cnf_solutions()
 
 
-class JustOneRestrictionTest(base, TestCase):
+class TestJustOneRestriction(base):
 
     kls = boolean.JustOneRestriction
 

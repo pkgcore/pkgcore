@@ -1,5 +1,7 @@
+import pytest
+
 from pkgcore.restrictions.delegated import delegate
-from pkgcore.test import TestRestriction
+from .utils import TestRestriction
 
 
 class Test_delegate(TestRestriction):
@@ -7,7 +9,8 @@ class Test_delegate(TestRestriction):
     kls = delegate
 
     def test_it(self):
-        self.assertRaises(TypeError, self.kls, None, None)
+        with pytest.raises(TypeError):
+            self.kls(None, None)
         y = True
         l = []
         def f(x, mode):
@@ -18,9 +21,7 @@ class Test_delegate(TestRestriction):
 
         for negated in (False, True):
             def assertIt(got, expected):
-                self.assertEqual(
-                    got, expected,
-                    msg=f"got={got!r}, expected={expected!r}, negate={negated!r}")
+                assert got == expected, f"got={got!r}, expected={expected!r}, negate={negated!r}"
             y = True
             l[:] = []
             o = self.kls(f, negate=negated)
@@ -37,4 +38,4 @@ class Test_delegate(TestRestriction):
                     'match', 'force_True', 'force_False'])
 
     def test_caching(self):
-        self.assertFalse(self.kls.inst_caching, False)
+        assert not self.kls.inst_caching

@@ -323,6 +323,9 @@ class PortageConfig(DictMixin):
                 logger.warning(f"repos.conf: parsing {fp!r}: overriding DEFAULT section")
             main_defaults.update(defaults)
 
+            if not repo_confs:
+                logger.warning(f"repos.conf: parsing {fp!r}: file is empty")
+
             for name, repo_conf in repo_confs.items():
                 if name in repos:
                     logger.warning(f"repos.conf: parsing {fp!r}: overriding {name!r} repo")

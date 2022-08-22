@@ -133,7 +133,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     _repo_map = None
 
     def __init__(self, path, pms_strict=True):
-        self.path = path.rstrip(os.path.sep)
+        self.path = str(path).rstrip(os.path.sep)
         if not os.path.isdir(self.path):
             raise NonexistentProfile(self.path)
         self.pms_strict = pms_strict

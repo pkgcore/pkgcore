@@ -1,11 +1,8 @@
-import os
+import pytest
 
 from pkgcore.fs import livefs
 from pkgcore.fs.contents import contentsSet
-from pkgcore.merge import engine
-from snakeoil.osutils import pjoin
-from snakeoil.test import TestCase
-from snakeoil.test.mixins import tempdir_decorator
+from pkgcore.merge.engine import MergeEngine
 
 from ..fs.fs_util import fsDir, fsFile, fsSymlink
 from .util import fake_engine
@@ -21,7 +18,7 @@ class fake_pkg:
         return f"fake_pkg: {self.label}"
 
 
-class Test_MergeEngineCsets(TestCase):
+class TestMergeEngineCsets:
 
     simple_cset = list(fsFile(x) for x in ("/foon", "/usr/dar", "/blah"))
     simple_cset.extend(fsDir(x) for x in ("/usr", "/usr/lib"))
@@ -29,24 +26,22 @@ class Test_MergeEngineCsets(TestCase):
     simple_cset.append(fsSymlink("/broken-symlink", "dar"))
     simple_cset = contentsSet(simple_cset, mutable=False)
 
-    kls = engine.MergeEngine
-
     def assertCsetEqual(self, cset1, cset2):
         if not isinstance(cset1, contentsSet):
             cset1 = contentsSet(cset1)
         if not isinstance(cset2, contentsSet):
             cset2 = contentsSet(cset2)
-        self.assertEqual(cset1, cset2, reflective=False)
+        assert cset1 == cset2
 
     def assertCsetNotEqual(self, cset1, cset2):
         if not isinstance(cset1, contentsSet):
             cset1 = contentsSet(cset1)
         if not isinstance(cset2, contentsSet):
             cset2 = contentsSet(cset2)
-        self.assertNotEqual(cset1, cset2, reflective=False)
+        assert cset1 == cset2
 
     def run_cset(self, target, engine, *args):
-        return getattr(self.kls, target)(engine, engine.csets, *args)
+        return getattr(MergeEngine, target)(engine, engine.csets, *args)
 
     def test_generate_offset_cset(self):
         engine = fake_engine(csets={"new_cset":self.simple_cset},
@@ -62,10 +57,10 @@ class Test_MergeEngineCsets(TestCase):
             run(engine, 'new_cset'))
 
     def test_get_pkg_contents(self):
-        new_cset = self.kls.get_pkg_contents(None, None, fake_pkg(self.simple_cset))
+        new_cset = MergeEngine.get_pkg_contents(None, None, fake_pkg(self.simple_cset))
         self.assertCsetEqual(self.simple_cset, new_cset)
         # must differ; shouldn't be modifying the original cset
-        self.assertNotIdentical(self.simple_cset, new_cset)
+        assert self.simple_cset is not new_cset
 
     def test_get_remove_cset(self):
         files = contentsSet(self.simple_cset.iterfiles(invert=True))
@@ -81,48 +76,44 @@ class Test_MergeEngineCsets(TestCase):
         self.assertCsetEqual(files,
             self.run_cset('get_replace_cset', engine))
 
-    @tempdir_decorator
-    def test_rewrite_awareness(self):
+    def test_rewrite_awareness(self, tmp_path):
         src = contentsSet(self.simple_cset)
         src.add(fsFile("/usr/lib/donkey"))
         trg = src.difference(["/usr/lib/donkey"])
         trg.add(fsFile("/usr/lib64/donkey"))
-        trg = trg.insert_offset(self.dir)
-        os.mkdir(pjoin(self.dir, 'usr'))
-        os.mkdir(pjoin(self.dir, 'usr', 'lib64'))
-        os.symlink('lib64', pjoin(self.dir, 'usr', 'lib'))
+        trg = trg.insert_offset(str(tmp_path))
+        (tmp_path / 'usr' / 'lib64').mkdir(parents=True)
+        (tmp_path / 'usr' / 'lib').symlink_to("lib64")
         pkg = fake_pkg(src)
-        engine = self.kls.install(self.dir, pkg, offset=self.dir)
+        engine = MergeEngine.install(str(tmp_path), pkg, offset=str(tmp_path))
         result = engine.csets['resolved_install']
-        self.assertEqual(sorted(result.iterfiles()), sorted(trg.iterfiles()))
+        assert set(result.iterfiles()) == set(trg.iterfiles())
 
-    @tempdir_decorator
-    def test_symlink_awareness(self):
+    @pytest.mark.skip("contentset should handle this")
+    def test_symlink_awareness(self, tmp_path):
         src = contentsSet(self.simple_cset)
         src.add(fsFile("/usr/lib/blah/donkey"))
         trg = src.difference(["/usr/lib/blah/donkey"])
         trg.add(fsFile("/blah/donkey"))
-        trg = trg.insert_offset(self.dir)
+        trg = trg.insert_offset(str(tmp_path))
         pkg = fake_pkg(src)
-        engine = self.kls.install(self.dir, pkg, offset=self.dir)
+        engine = MergeEngine.install(str(tmp_path), pkg, offset=str(tmp_path))
         result = engine.csets['new_cset']
-        self.assertEqual(sorted(result.iterfiles()), sorted(trg.iterfiles()))
-    test_symlink_awareness.skip = "contentset should handle this"
+        assert set(result.iterfiles()) == set(trg.iterfiles())
 
-    @tempdir_decorator
-    def test__get_livefs_intersect_cset(self):
-        old_cset = self.simple_cset.insert_offset(self.dir)
+    def test_get_livefs_intersect_cset(self, tmp_path):
+        old_cset = self.simple_cset.insert_offset(str(tmp_path))
         # have to add it; scan adds the root node
-        old_cset.add(fsDir(self.dir))
-        os.mkdir(pjoin(self.dir, "usr"))
-        open(pjoin(self.dir, "usr", "dar"), 'w').close()
-        open(pjoin(self.dir, 'foon'), 'w').close()
+        old_cset.add(fsDir(str(tmp_path)))
+        (tmp_path / 'usr').mkdir()
+        (tmp_path / 'usr' / 'dar').touch()
+        (tmp_path / 'foon').touch()
         # note that this *is* a sym in the cset; adding this specific
         # check so that if the code differs, the test breaks, and the tests
         # get updated (additionally, folks may not be aware of the potential)
-        open(pjoin(self.dir, 'broken-symlink'), 'w').close()
+        (tmp_path / 'broken-symlink').touch()
         engine = fake_engine(csets={'test':old_cset})
-        existent = livefs.scan(self.dir)
+        existent = livefs.scan(str(tmp_path))
         generated = self.run_cset('_get_livefs_intersect_cset', engine,
             'test')
-        self.assertEqual(generated, existent)
+        assert generated == existent

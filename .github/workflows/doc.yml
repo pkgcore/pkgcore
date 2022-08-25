@@ -9,25 +9,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
-        python-version: "3.10"
-
-    - name: Configure pip cache
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('requirements/*') }}
-        restore-keys: ${{ runner.os }}-pip-
+        python-version: '3.10'
+        cache: 'pip'
+        cache-dependency-path: requirements/*.txt
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements/dev.txt
-        pip install -r requirements/docs.txt
+        pip install -r requirements/dev.txt -r requirements/docs.txt
 
     - name: Build sphinx documentation
       run: |
@@ -36,9 +30,9 @@ jobs:
         touch build/sphinx/html/.nojekyll
 
     - name: Deploy docs to gh-pages
-      uses: JamesIves/github-pages-deploy-action@3.7.1
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        BRANCH: gh-pages
-        FOLDER: build/sphinx/html
-        SINGLE_COMMIT: true
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: gh-pages
+        folder: build/sphinx/html
+        single-commit: true

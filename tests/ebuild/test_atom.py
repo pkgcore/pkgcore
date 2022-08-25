@@ -97,6 +97,10 @@ class TestAtom(TestRestriction):
             "dev-util/diffball-1*")
         pytest.raises(errors.MalformedAtom, self.kls,
             "dev-util/diffball-1.*")
+        pytest.raises(errors.MalformedAtom, self.kls,
+            "~dev-util/diffball-1*")
+        pytest.raises(errors.MalformedAtom, self.kls,
+            "~dev-util/diffball-1.*")
 
         a = self.kls("=dev-util/diffball-1.2*")
         self.assertMatch(a, FakePkg("dev-util/diffball-1.2"))
@@ -155,11 +159,11 @@ class TestAtom(TestRestriction):
         self.assertMatch(a, CPV.versioned(f"{astr}-1-r1"))
         self.assertMatch(a, CPV.versioned(f"{astr}-1-r0"))
         self.assertNotMatch(a, CPV.versioned(f"{astr}-2"))
-        pytest.raises(errors.MalformedAtom, self.kls, "~{astr}-r1")
-        pytest.raises(errors.MalformedAtom, self.kls, "~{astr}-r2")
+        pytest.raises(errors.MalformedAtom, self.kls, f"~{astr}-1-r1")
+        pytest.raises(errors.MalformedAtom, self.kls, f"~{astr}-1-r2")
         # special case- yes -r0 effectively is None, but -r shouldn't be used
         # with ~
-        pytest.raises(errors.MalformedAtom, self.kls, "~{astr}-r0")
+        pytest.raises(errors.MalformedAtom, self.kls, f"~{astr}-1-r0")
 
     @pytest.mark.parametrize(("eapi", "defaults"), (
         (2, False), (3, False),
@@ -261,6 +265,7 @@ class TestAtom(TestRestriction):
         "dev-util/foo:-1",
         "dev-util/foo:.1",
         "dev-util/foo:1@2",
+        "dev-util/foo[bar]:1",
     ))
     def test_slot_malformed_atom(self, atom):
         with pytest.raises(errors.MalformedAtom):

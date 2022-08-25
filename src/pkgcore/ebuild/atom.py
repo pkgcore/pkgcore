@@ -88,7 +88,10 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         if use_start != -1:
             # use dep
             use_end = atom.find("]", use_start)
-            if use_end == -1:
+            if use_start < slot_start:
+                raise errors.MalformedAtom(orig_atom,
+                    "slot restriction must proceed use")
+            elif use_end == -1:
                 raise errors.MalformedAtom(
                     orig_atom, "use restriction isn't completed")
             elif use_end != len(atom) - 1:
@@ -240,9 +243,6 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             if self.repo_id is not None:
                 raise errors.MalformedAtom(orig_atom,
                     f"repo_id atoms aren't supported for EAPI {eapi}")
-        if use_start != -1 and slot_start != -1 and use_start < slot_start:
-            raise errors.MalformedAtom(orig_atom,
-                "slot restriction must proceed use")
         try:
             sf(self, "_cpv", cpv.CPV(self.cpvstr, versioned=bool(self.op)))
         except errors.InvalidCPV as e:

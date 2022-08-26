@@ -2,7 +2,7 @@ from functools import partial
 from io import BytesIO
 
 from pkgcore.config import basics
-from pkgcore.config.hint import ConfigHint, configurable
+from pkgcore.config.hint import ConfigHint
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.operations.repo import install, operations, replace, uninstall
 from pkgcore.repository import syncable, util
@@ -11,7 +11,6 @@ from pkgcore.sync import base
 from pkgcore.test.scripts.helpers import ArgParseMixin
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.mappings import AttrAccessible
-from snakeoil.test import TestCase
 
 Options = AttrAccessible
 
@@ -32,7 +31,7 @@ class fake_operations(operations):
             replace, self.repo, oldpkg, newpkg, observer)
 
 
-class fake_repo(util.SimpleTree):
+class FakeRepo(util.SimpleTree):
 
     operations_kls = fake_operations
 
@@ -40,15 +39,14 @@ class fake_repo(util.SimpleTree):
         self.installed = []
         self.replaced = []
         self.uninstalled = []
-        util.SimpleTree.__init__(
-            self, data, pkg_klass=partial(fake_pkg, self), repo_id=repo_id)
+        super().__init__(data, pkg_klass=partial(fake_pkg, self), repo_id=repo_id)
         self.livefs = livefs
         self.frozen = frozen
 
 
 def make_repo_config(repo_data, livefs=False, frozen=False, repo_id=None):
     def repo():
-        return fake_repo(repo_data, livefs=livefs, frozen=frozen, repo_id=repo_id)
+        return FakeRepo(repo_data, livefs=livefs, frozen=frozen, repo_id=repo_id)
     repo.pkgcore_config_type = ConfigHint(typename='repo')
     return basics.HardCodedConfigSection({'class':repo})
 
@@ -61,7 +59,7 @@ class FakeDomain:
                                      typename='domain')
 
     def __init__(self, repos, binpkg, vdb):
-        object.__init__(self)
+        super().__init__()
         self.repos = repos
         self.source_repos_raw = util.RepositoryGroup(repos)
         self.installed_repos = util.RepositoryGroup(vdb)
@@ -86,7 +84,7 @@ def make_domain(repo=None, binpkg=None, vdb=None):
         'binpkg': [binpkg_config],
         'vdb': [vdb_config],
         'default': True,
-        })
+    })
 
 
 class FakeSyncer(base.Syncer):
@@ -117,43 +115,36 @@ failure_section = basics.HardCodedConfigSection({'class': SyncableRepo,
                                                  'succeed': False})
 
 
-class TestSync(TestCase, ArgParseMixin):
+class TestSync(ArgParseMixin):
 
     _argparser = pmaint.sync
 
     def test_parser(self):
         values = self.parse(repo=success_section)
-        self.assertEqual(['repo'], [x[0] for x in values.repos])
+        assert ['repo'] ==  [x[0] for x in values.repos]
         values = self.parse('repo', repo=success_section)
-        self.assertEqual(['repo'], [x[0] for x in values.repos])
+        assert ['repo'] ==  [x[0] for x in values.repos]
 
     def test_sync(self):
-        config = self.assertOut(
-            [
-                "*** syncing myrepo",
-                "*** synced myrepo",
-                ],
-            myrepo=success_section)
-        self.assertTrue(config.repo_config['myrepo']._syncer.synced)
-        self.assertOut(
-            [
-                "*** syncing myrepo",
-                "!!! failed syncing myrepo",
-                ],
-            myrepo=failure_section)
-        self.assertOutAndErr(
-            [
-                "*** syncing goodrepo",
-                "*** synced goodrepo",
-                "*** syncing badrepo",
-                "!!! failed syncing badrepo",
-                "",
-                "*** sync results:",
-                "*** synced: goodrepo",
-                "!!! failed: badrepo",
-                ], [],
-            'goodrepo', 'badrepo',
-            goodrepo=success_section, badrepo=failure_section)
+        config = self.assertOut([
+            "*** syncing myrepo",
+            "*** synced myrepo",
+        ], myrepo=success_section)
+        assert config.repo_config['myrepo']._syncer.synced
+        self.assertOut([
+            "*** syncing myrepo",
+            "!!! failed syncing myrepo",
+        ], myrepo=failure_section)
+        self.assertOutAndErr([
+            "*** syncing goodrepo",
+            "*** synced goodrepo",
+            "*** syncing badrepo",
+            "!!! failed syncing badrepo",
+            "",
+            "*** sync results:",
+            "*** synced: goodrepo",
+            "!!! failed: badrepo",
+        ], [], 'goodrepo', 'badrepo', goodrepo=success_section, badrepo=failure_section)
 
 
 class fake_pkg(CPV):
@@ -176,7 +167,7 @@ def derive_op(name, op, *a, **kw):
     return new_op(*a, **kw)
 
 
-class TestCopy(TestCase, ArgParseMixin):
+class TestCopy(ArgParseMixin):
 
     _argparser = pmaint.copy
 
@@ -191,39 +182,33 @@ class TestCopy(TestCase, ArgParseMixin):
             'fake_binpkg', '--source-repo', 'fake_vdb',
             '*',
             domain=make_domain(vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
-            )
-        self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual(list(map(str, config.target_repo.installed)),
-            ['sys-apps/portage-2.1', 'sys-apps/portage-2.3'])
-        self.assertEqual(config.target_repo.uninstalled,
-            config.target_repo.replaced,
-            msg="uninstalled should be the same as replaced; empty")
+        )
+        assert ret == 0, "expected non zero exit code"
+        assert list(map(str, config.target_repo.installed)) == ['sys-apps/portage-2.1', 'sys-apps/portage-2.3']
+        assert config.target_repo.uninstalled == config.target_repo.replaced, \
+            "uninstalled should be the same as replaced; empty"
 
         d = {'sys-apps':{'portage':['2.1', '2.2']}}
         ret, config, out = self.execute_main(
             'fake_binpkg', '--source-repo', 'fake_vdb',
             '=sys-apps/portage-2.1',
             domain=make_domain(binpkg=d, vdb=d),
-            )
-        self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual([list(map(str, x)) for x in config.target_repo.replaced],
-            [['sys-apps/portage-2.1', 'sys-apps/portage-2.1']])
-        self.assertEqual(config.target_repo.uninstalled,
-            config.target_repo.installed,
-            msg="installed should be the same as uninstalled; empty")
+        )
+        assert ret == 0, "expected non zero exit code"
+        assert [list(map(str, x)) for x in config.target_repo.replaced] == [['sys-apps/portage-2.1', 'sys-apps/portage-2.1']]
+        assert config.target_repo.uninstalled == config.target_repo.installed, \
+            "installed should be the same as uninstalled; empty"
 
     def test_ignore_existing(self):
         ret, config, out = self.execute_main(
             'fake_binpkg', '--source-repo', 'fake_vdb',
             '*', '--ignore-existing',
             domain=make_domain(vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
-            )
-        self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual(list(map(str, config.target_repo.installed)),
-            ['sys-apps/portage-2.1', 'sys-apps/portage-2.3'])
-        self.assertEqual(config.target_repo.uninstalled,
-            config.target_repo.replaced,
-            msg="uninstalled should be the same as replaced; empty")
+        )
+        assert ret == 0, "expected non zero exit code"
+        assert list(map(str, config.target_repo.installed)) == ['sys-apps/portage-2.1', 'sys-apps/portage-2.3']
+        assert config.target_repo.uninstalled == config.target_repo.replaced, \
+            "uninstalled should be the same as replaced; empty"
 
         ret, config, out = self.execute_main(
             'fake_binpkg', '--source-repo', 'fake_vdb',
@@ -231,16 +216,14 @@ class TestCopy(TestCase, ArgParseMixin):
             domain=make_domain(
                 binpkg={'sys-apps':{'portage':['2.1']}},
                 vdb={'sys-apps':{'portage':['2.1', '2.3']}}),
-            )
-        self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual(list(map(str, config.target_repo.installed)),
-            ['sys-apps/portage-2.3'])
-        self.assertEqual(config.target_repo.uninstalled,
-            config.target_repo.replaced,
-            msg="uninstalled should be the same as replaced; empty")
+        )
+        assert ret == 0, "expected non zero exit code"
+        assert list(map(str, config.target_repo.installed)) == ['sys-apps/portage-2.3']
+        assert config.target_repo.uninstalled == config.target_repo.replaced, \
+            "uninstalled should be the same as replaced; empty"
 
 
-class TestRegen(TestCase, ArgParseMixin):
+class TestRegen(ArgParseMixin):
 
     _argparser = pmaint.regen
 
@@ -248,5 +231,5 @@ class TestRegen(TestCase, ArgParseMixin):
 
         options = self.parse(
             'fake', '--threads', '2', domain=make_domain())
-        self.assertTrue(isinstance(options.repos[0], util.SimpleTree))
-        self.assertEqual(options.threads, 2)
+        assert isinstance(options.repos[0], util.SimpleTree)
+        assert options.threads == 2

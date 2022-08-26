@@ -1,11 +1,8 @@
-import sys
-
 import pytest
 from pkgcore.config import basics, errors
 from pkgcore.config.hint import configurable
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts.helpers import ArgParseMixin
-from snakeoil.test import TestCase
 
 
 @configurable({'reff': 'ref:spork'})
@@ -83,7 +80,7 @@ class DescribeClassTest(ArgParseMixin):
             'tests.scripts.test_pconfig.broken_type')
 
 
-class ClassesTest(TestCase, ArgParseMixin):
+class TestClasses(ArgParseMixin):
 
     _argparser = pconfig.classes
 
@@ -125,7 +122,7 @@ class ClassesTest(TestCase, ArgParseMixin):
                             'class': pseudospork})}))
 
 
-class DumpTest(TestCase, ArgParseMixin):
+class TestDump(ArgParseMixin):
 
     _argparser = pconfig.dump
 
@@ -226,7 +223,7 @@ class DumpTest(TestCase, ArgParseMixin):
             )
 
 
-class UncollapsableTest(TestCase, ArgParseMixin):
+class TestUncollapsable(ArgParseMixin):
 
     _argparser = pconfig.uncollapsable
 
@@ -249,7 +246,7 @@ class UncollapsableTest(TestCase, ArgParseMixin):
             )
 
 
-class ConfigurablesTest(TestCase, ArgParseMixin):
+class TestConfigurables(ArgParseMixin):
 
     _argparser = pconfig.configurables
 
@@ -277,7 +274,7 @@ class WeirdSection(basics.ConfigSection):
             None, None]
 
 
-class DumpUncollapsedTest(TestCase, ArgParseMixin):
+class TestDumpUncollapsed(ArgParseMixin):
 
     _argparser = pconfig.dump_uncollapsed
 

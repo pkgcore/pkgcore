@@ -3,7 +3,6 @@ from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.scripts import pebuild
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.test.scripts.helpers import ArgParseMixin
-from snakeoil.test import TestCase
 
 
 class FakeDomain:
@@ -29,13 +28,13 @@ def fake_repo():
 
 
 domain_config = basics.HardCodedConfigSection({
-        'class': FakeDomain,
-        'repo': basics.HardCodedConfigSection({'class': fake_repo}),
-        'default': True,
-        })
+    'class': FakeDomain,
+    'repo': basics.HardCodedConfigSection({'class': fake_repo}),
+    'default': True,
+})
 
 
-class CommandlineTest(TestCase, ArgParseMixin):
+class TestCommandline(ArgParseMixin):
 
     _argparser = pebuild.argparser
 
@@ -45,4 +44,4 @@ class CommandlineTest(TestCase, ArgParseMixin):
 
         # working initialization
         config = self.parse('sys-apps/coreutils', 'bar', 'baz', domain=domain_config)
-        self.assertEqual(config.phase, ['bar', 'baz'])
+        assert config.phase == ['bar', 'baz']

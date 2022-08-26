@@ -2,7 +2,6 @@ from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint
 from pkgcore.scripts import pclonecache
 from pkgcore.test.scripts.helpers import ArgParseMixin
-from snakeoil.test import TestCase
 
 
 class Cache:
@@ -13,7 +12,7 @@ class Cache:
         self.readonly = self.frozen = readonly
 
 
-class CommandlineTest(TestCase, ArgParseMixin):
+class TestCommandline(ArgParseMixin):
 
     _argparser = pclonecache.argparser
 

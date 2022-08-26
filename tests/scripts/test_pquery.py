@@ -4,7 +4,6 @@ from pkgcore.ebuild import atom
 from pkgcore.repository import util
 from pkgcore.scripts import pquery
 from pkgcore.test.scripts.helpers import ArgParseMixin
-from snakeoil.test import TestCase
 
 
 class FakeDomain:
@@ -30,14 +29,14 @@ def fake_vdb():
 
 
 domain_config = basics.HardCodedConfigSection({
-        'class': FakeDomain,
-        'repos': [basics.HardCodedConfigSection({'class': fake_repo})],
-        'vdb': [basics.HardCodedConfigSection({'class': fake_vdb})],
-        'default': True,
-        })
+    'class': FakeDomain,
+    'repos': [basics.HardCodedConfigSection({'class': fake_repo})],
+    'vdb': [basics.HardCodedConfigSection({'class': fake_vdb})],
+    'default': True,
+})
 
 
-class CommandlineTest(TestCase, ArgParseMixin):
+class TestCommandline(ArgParseMixin):
 
     _argparser = pquery.argparser
 
@@ -54,21 +53,19 @@ class CommandlineTest(TestCase, ArgParseMixin):
             '--all')
 
     def test_no_description(self):
-        self.assertOut(
-            [' * spork/foon-2',
-             '     repo: MISSING',
-             '     description: MISSING',
-             '     homepage: MISSING',
-             '     license: MISSING',
-             '',
-             ],
-            '-v', '--max', '--all',
-            test_domain=domain_config)
+        self.assertOut([
+            ' * spork/foon-2',
+            '     repo: MISSING',
+            '     description: MISSING',
+            '     homepage: MISSING',
+            '     license: MISSING',
+            '',
+        ], '-v', '--max', '--all', test_domain=domain_config)
 
     def test_atom(self):
         config = self.parse(
             '--print-revdep', 'a/spork', '--all', domain=domain_config)
-        self.assertEqual([atom.atom('a/spork')], config.print_revdep)
+        assert config.print_revdep == [atom.atom('a/spork')]
 
     def test_no_contents(self):
         self.assertOut([], '--contents', '--all', test_domain=domain_config)

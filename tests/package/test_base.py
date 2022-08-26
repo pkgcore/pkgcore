@@ -1,7 +1,7 @@
 from functools import partial
+from types import SimpleNamespace
 
 from pkgcore.package import base
-from pkgcore.test import malleable_obj
 from snakeoil.test import TestCase
 
 
@@ -14,7 +14,7 @@ def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):
     d["cpvstr"] = f"{cat}/{pkg}-{ver}"
     d['built'] = False
     d.update(attrs)
-    return malleable_obj(**d)
+    return SimpleNamespace(**d)
 
 
 class mixin:

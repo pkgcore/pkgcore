@@ -1,13 +1,13 @@
 import os
 import textwrap
 from functools import partial
+from types import SimpleNamespace
 
 import pytest
 from pkgcore import fetch
 from pkgcore.ebuild import digest, ebuild_src, repo_objs
 from pkgcore.ebuild.eapi import EAPI, get_eapi
 from pkgcore.package import errors
-from pkgcore.test import malleable_obj
 from snakeoil.currying import post_curry
 from snakeoil.data_source import data_source, local_source
 from snakeoil.osutils import pjoin
@@ -536,20 +536,20 @@ class TestPackageFactory:
     def test_get_ebuild_src(self):
         assert (
             self.mkinst(
-                repo=malleable_obj(_get_ebuild_src=lambda s: f"lincoln haunts me: {s}")
-                ).get_ebuild_src("1") ==
+                repo=SimpleNamespace(_get_ebuild_src=lambda s: f"lincoln haunts me: {s}")
+            ).get_ebuild_src("1") ==
             "lincoln haunts me: 1")
 
     def test_get_ebuild_mtime(self, tmpdir):
         f = pjoin(str(tmpdir), "temp-0.ebuild")
         open(f, 'w').close()
         mtime = self.mkinst(
-            repo=malleable_obj(_get_ebuild_path=lambda s: f))._get_ebuild_mtime(None)
+            repo=SimpleNamespace(_get_ebuild_path=lambda s: f))._get_ebuild_mtime(None)
         assert mtime == os.stat(f).st_mtime
 
     def test_get_metadata(self):
         ec = FakeEclassCache('/nonexistent/path')
-        pkg = malleable_obj(_mtime_=100, cpvstr='dev-util/diffball-0.71', path='bollocks')
+        pkg = SimpleNamespace(_mtime_=100, cpvstr='dev-util/diffball-0.71', path='bollocks')
 
         class fake_cache(dict):
             readonly = False

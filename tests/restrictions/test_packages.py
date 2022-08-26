@@ -1,8 +1,7 @@
-import pytest
+from types import SimpleNamespace
 
-from pkgcore import log
+import pytest
 from pkgcore.restrictions import packages, values
-from pkgcore.test import callback_logger, malleable_obj, silence_logging
 from snakeoil.mappings import AttrAccessible
 
 from .utils import TestRestriction
@@ -26,26 +25,24 @@ class TestPackageRestriction(TestRestriction):
 
     kls = staticmethod(kls)
 
-    @silence_logging(log.logging.root)
-    def test_matching(self):
+    def test_matching(self, caplog):
         strexact = values.StrExactMatch
 
-        args = malleable_obj(category="foon", package="dar")
+        args = SimpleNamespace(category="foon", package="dar")
         self.assertMatches(self.kls("category", strexact("foon")), args)
         self.assertMatches(self.kls("package", strexact("dar")), args)
         self.assertNotMatches(self.kls("package", strexact("dar"), negate=True), args)
         self.assertNotMatches(self.kls("package", strexact("foon")), args)
 
         self.assertMatches(self.kls("package", strexact("foon"), negate=True), args)
-        excepts = []
-        # no msg should be thrown, it wasn't an unexpected exception
 
-        log.logging.root.addHandler(callback_logger(excepts.append))
+        # no msg should be thrown, it wasn't an unexpected exception
+        caplog.clear()
         self.assertNotMatches(self.kls("foon", AlwaysSelfIntersect), args)
-        assert not excepts
+        assert not caplog.records
 
         self.assertMatches(self.kls("foon", AlwaysSelfIntersect, negate=True), args)
-        assert not excepts
+        assert not caplog.records
 
         class foo:
             def __getattr__(self, attr):
@@ -57,10 +54,10 @@ class TestPackageRestriction(TestRestriction):
             "RuntimeError":RuntimeError, "SystemExit":SystemExit}
 
         for mode in ("match", "force_True", "force_False"):
-            excepts[:] = []
+            caplog.clear()
             with pytest.raises(AttributeError):
                 getattr(self.kls("foon", AlwaysSelfIntersect), mode)(foo())
-            assert len(excepts) == 1, f"expected one exception, got {excepts!r}"
+            assert len(caplog.records) == 1
 
             # ensure various exceptions are passed through
             for k in (KeyboardInterrupt, RuntimeError, SystemExit):

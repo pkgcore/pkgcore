@@ -1,4 +1,3 @@
-import logging
 import os
 import shutil
 import sys
@@ -6,7 +5,6 @@ import tempfile
 from unittest import mock
 
 from pkgcore import plugin
-from pkgcore.test import silence_logging
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import stable_unique
 
@@ -155,7 +153,6 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def test_no_unneeded_import(self):
         self._runit(self._test_no_unneeded_import)
 
-    @silence_logging(logging.root)
     def test_cache_corruption(self):
         print(plugin.const)
         print('wheeeeee')
@@ -198,7 +195,6 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._global_cache.clear()
         self._test_plug()
 
-    @silence_logging(logging.root)
     def test_priority_caching(self):
         plug3 = open(pjoin(self.packdir, 'plug3.py'), 'w')
         try:
@@ -278,7 +274,6 @@ pkgcore_plugins = {
         assert 'mod_testplug.plug5' in sys.modules, 'plug4 not loaded'
         assert 'mod_testplug.plug6' not in sys.modules, 'plug6 loaded'
 
-    @silence_logging(logging.root)
     def test_header_change_invalidates_cache(self):
         # Write the cache
         plugin._global_cache.clear()

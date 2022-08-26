@@ -1,5 +1,6 @@
 from collections import OrderedDict
 from functools import partial
+from types import SimpleNamespace
 
 import pytest
 from pkgcore.ebuild.atom import atom
@@ -8,7 +9,6 @@ from pkgcore.operations.repo import operations
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import boolean, packages, values
-from pkgcore.test import malleable_obj
 from snakeoil.currying import post_curry
 
 
@@ -118,7 +118,7 @@ class TestPrototype:
                 'category', values.StrExactMatch('dev-util', negate=True)))) == \
             sorted(VersionedCPV(x) for x in ("dev-lib/fake-1.0", "dev-lib/fake-1.0-r1"))
 
-        obj = malleable_obj(livefs=False)
+        obj = SimpleNamespace(livefs=False)
         pkg_cls = post_curry(MutatedPkg, {'repo': obj})
         assert \
             sorted(self.repo.itermatch(boolean.AndRestriction(boolean.OrRestriction(

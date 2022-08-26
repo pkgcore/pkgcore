@@ -1,5 +1,4 @@
 from pkgcore.package import base, metadata
-from snakeoil.test import TestCase
 
 
 def make_pkg_kls(attrs=(), callbacks={}):
@@ -26,7 +25,7 @@ def make_pkg_kls(attrs=(), callbacks={}):
     return metadata_pkg
 
 
-class TestMetadataPackage(TestCase):
+class TestMetadataPackage:
 
     def test_init(self):
         class repo:
@@ -34,13 +33,13 @@ class TestMetadataPackage(TestCase):
 
         kls = make_pkg_kls()
         o = kls(repo, "monkeys", dar=1)
-        self.assertEqual(o._parent, repo)
-        self.assertEqual(o.repo, "foon")
-        self.assertEqual(o._args, ("monkeys",))
-        self.assertEqual(o._kwds, {"dar":1})
-        self.assertEqual(o._fetch_called, False)
+        assert o._parent == repo
+        assert o.repo == "foon"
+        assert o._args == ("monkeys",)
+        assert o._kwds == {"dar": 1}
+        assert not o._fetch_called
 
     def test_getdata(self):
         kls = make_pkg_kls()
         o = kls(None, data={'a': 'b'})
-        self.assertEqual(o.data, {'a': 'b'})
+        assert o.data == {'a': 'b'}

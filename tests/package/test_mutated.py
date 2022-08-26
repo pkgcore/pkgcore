@@ -1,10 +1,10 @@
 from functools import partial
 
+import pytest
 from pkgcore.package.base import base, dynamic_getattr_dict
 from pkgcore.package.mutated import MutatedPkg
 from snakeoil.compatibility import cmp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
-from snakeoil.test import TestCase
 
 
 def passthru(val, self):
@@ -31,7 +31,7 @@ class FakePkg(base):
     inject_richcmp_methods_from_cmp(locals())
 
 
-class TestMutatedPkg(TestCase):
+class TestMutatedPkg:
 
     def make_fakepkg(self, pkg="dar", ver=1, data=None):
         if data is None:
@@ -40,7 +40,7 @@ class TestMutatedPkg(TestCase):
 
     def test_raw_pkg(self):
         pkg = self.make_fakepkg()
-        self.assertIdentical(MutatedPkg(pkg, {})._raw_pkg, pkg)
+        assert MutatedPkg(pkg, {})._raw_pkg is pkg
 
     def test_cmp(self):
         pkg1 = self.make_fakepkg()
@@ -49,13 +49,14 @@ class TestMutatedPkg(TestCase):
         mpkg2 = MutatedPkg(pkg2, {})
 
         for lpkg in (pkg1, mpkg1):
-            self.assertTrue(cmp(lpkg, mpkg2) < 0)
-            self.assertTrue(cmp(mpkg2, lpkg) > 0)
-        self.assertEqual(mpkg1, mpkg1)
-        self.assertEqual(pkg1, mpkg1)
+            assert cmp(lpkg, mpkg2) < 0
+            assert cmp(mpkg2, lpkg) > 0
+        assert mpkg1 == mpkg1
+        assert pkg1 == mpkg1
 
     def test_getattr(self):
         pkg = self.make_fakepkg()
-        self.assertEqual(MutatedPkg(pkg, {}).a, 1)
-        self.assertEqual(MutatedPkg(pkg, {"a":2}).a, 2)
-        self.assertRaises(AttributeError, MutatedPkg(pkg, {}).__getattr__, "b")
+        assert MutatedPkg(pkg, {}).a == 1
+        assert MutatedPkg(pkg, {"a":2}).a == 2
+        with pytest.raises(AttributeError):
+            getattr(MutatedPkg(pkg, {}), "b")

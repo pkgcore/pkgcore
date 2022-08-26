@@ -1,20 +1,19 @@
 from functools import partial
 from types import SimpleNamespace
 
+import pytest
 from pkgcore.package import base
-from snakeoil.test import TestCase
 
 
 def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):
-    d = {}
-    d['category'] = cat
-    d['pkg'] = pkg
-    d['ver'] = ver
-    d['key'] = f"{cat}/{pkg}"
-    d["cpvstr"] = f"{cat}/{pkg}-{ver}"
-    d['built'] = False
-    d.update(attrs)
-    return SimpleNamespace(**d)
+    return SimpleNamespace(**({
+        'category': cat,
+        'pkg': pkg,
+        'ver': ver,
+        'key': f"{cat}/{pkg}",
+        "cpvstr": f"{cat}/{pkg}-{ver}",
+        "built": False,
+    } | attrs))
 
 
 class mixin:
@@ -23,24 +22,27 @@ class mixin:
         raise NotImplementedError(self, "mk_inst")
 
     def test_setattr(self):
-        self.assertRaises(AttributeError, setattr,
-            self.mk_inst(), "asdf", 1)
+        with pytest.raises(AttributeError):
+            setattr(self.mk_inst(), "asdf", 1)
 
     def test_delattr(self):
-        self.assertRaises(AttributeError, delattr,
-            self.mk_inst(), "asdf")
+        with pytest.raises(AttributeError):
+            delattr(self.mk_inst(), "asdf")
 
 
-class TestBasePkg(mixin, TestCase):
+class TestBasePkg(mixin):
 
     mk_inst = kls = staticmethod(base.base)
 
     def test_properties(self):
         o = self.kls()
         for f in ("versioned_atom", "unversioned_atom"):
-            self.assertRaises(NotImplementedError, getattr, o, f)
-            self.assertRaises(AttributeError, o.__setattr__, f, "a")
-            self.assertRaises(AttributeError, o.__delattr__, f)
+            with pytest.raises(NotImplementedError):
+                getattr(o, f)
+            with pytest.raises(AttributeError):
+                o.__setattr__(f, "a")
+            with pytest.raises(AttributeError):
+                o.__delattr__(f)
 
     def test_getattr(self):
         class Class(base.base):
@@ -52,12 +54,12 @@ class TestBasePkg(mixin, TestCase):
 
         o = Class()
         for x in range(10):
-            self.assertEqual(getattr(o, str(x)), x)
-        self.assertEqual(o.a, "foo")
-        self.assertEqual(self.mk_inst().built, False)
+            assert getattr(o, str(x)) == x
+        assert o.a == "foo"
+        assert not self.mk_inst().built
 
 
-class TestWrapper(mixin, TestCase):
+class TestWrapper(mixin):
 
     kls = base.wrapper
 
@@ -73,8 +75,7 @@ class TestWrapper(mixin, TestCase):
 
     def test_built_passthru(self):
         # test pass thrus
-        self.assertEqual(self.mk_inst().built, False)
-        self.assertEqual(self.mk_inst(built=True).built, True)
+        assert not self.mk_inst().built
+        assert self.mk_inst(built=True).built
         # verify that wrapping will override it
-        self.assertEqual(self.mk_inst(overrides={'built':False},
-            built=True).built, False)
+        assert not self.mk_inst(overrides={'built':False}, built=True).built

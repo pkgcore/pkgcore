@@ -4,7 +4,6 @@ import tempfile
 from pkgcore import gpg
 from pkgcore.ebuild import digest
 from snakeoil.data_source import local_source
-from snakeoil.test import TestCase
 
 # "Line too long" (and our custom more aggressive version of that)
 # pylint: disable-msg=C0301,CPC01
@@ -49,7 +48,7 @@ for x in pure_manifest2.split("\n"):
     del chksum, l, i
 
 
-class TestManifest(TestCase):
+class TestManifest:
 
     convert_source = staticmethod(lambda x:x)
 
@@ -78,11 +77,11 @@ class TestManifest(TestCase):
         for dtype, d in (("DIST", dist), ("AUX", aux),
             ("EBUILD", ebuild), ("MISC", misc)):
             req_d = pure_manifest2_chksums[dtype]
-            self.assertEqual(sorted(req_d), sorted(d))
+            assert set(req_d) == set(d)
             for k, v in req_d.items():
                 i1 = sorted(v)
                 i2 = sorted(d[k].items())
-                self.assertEqual(i1, i2, msg="{i1!r} != {i2!r}\nfor {dtype} {k}")
+                assert i1 == i2
 
 
 class TestManifestDataSource(TestManifest):

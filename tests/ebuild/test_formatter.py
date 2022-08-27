@@ -1,9 +1,6 @@
-import difflib
-
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.formatter import BasicFormatter, PkgcoreFormatter, PortageFormatter
 from pkgcore.test.misc import FakePkg, FakeRepo
-from snakeoil.test import TestCase
 from snakeoil.test.argparse_helpers import Bold, Color, FakeStreamFormatter, Reset
 
 
@@ -35,7 +32,8 @@ class FakeOp:
 class BaseFormatterTest:
     prefix = ()
     suffix = ('\n',)
-    def setUp(self):
+
+    def setup_method(self):
         self.fakeout = FakeStreamFormatter()
         self.fakeerr = FakeStreamFormatter()
         self.formatter = self.newFormatter()
@@ -47,14 +45,12 @@ class BaseFormatterTest:
                 autoline = self.fakeout.autoline
                 try:
                     ret = self.formatterClass.format(internal_self, *args, **kwds)
-                except Exception as e:
-                    self.assertEqual(
-                        autoline, self.fakeout.autoline,
-                        msg="exception thrown {e}, autoline was {autoline}, now is {self.fakeout.autoline}")
+                except Exception as exc:
+                    assert autoline == self.fakeout.autoline, \
+                        f"exception thrown {exc}, autoline was {autoline}, now is {self.fakeout.autoline}"
                     raise
-                self.assertEqual(
-                    autoline, self.fakeout.autoline,
-                    msg="autoline was {autoline}, now is {self.fakeout.autoline}")
+                assert autoline == self.fakeout.autoline, \
+                    f"autoline was {autoline}, now is {self.fakeout.autoline}"
                 return ret
         return state_verifying_class
 
@@ -70,12 +66,12 @@ class BaseFormatterTest:
 
     def assertOut(self, *args, **kwargs):
 
-        stringlist = []
-        objectlist = []
+        strings = []
+        objects = []
 
         args = list(args)
 
-        prefix = kwargs.setdefault("prefix", self.prefix)
+        prefix = kwargs.get("prefix", self.prefix)
         if isinstance(prefix, tuple):
             args = list(prefix) + args
         elif isinstance(prefix, list):
@@ -83,7 +79,7 @@ class BaseFormatterTest:
         else:
             args.insert(0, prefix)
 
-        suffix = kwargs.setdefault("suffix", self.suffix)
+        suffix = kwargs.get("suffix", self.suffix)
         if isinstance(suffix, tuple):
             args = args + list(suffix)
         elif isinstance(suffix, list):
@@ -93,24 +89,20 @@ class BaseFormatterTest:
 
         for arg in args:
             if isinstance(arg, str):
-                stringlist.append(arg.encode('ascii'))
+                strings.append(arg.encode('utf-8'))
             elif isinstance(arg, bytes):
-                stringlist.append(arg)
+                strings.append(arg)
             else:
-                objectlist.append(b''.join(stringlist))
-                stringlist = []
-                objectlist.append(arg)
-        objectlist.append(b''.join(stringlist))
+                objects.append(b''.join(strings))
+                strings = []
+                objects.append(arg)
+        objects.append(b''.join(strings))
 
         # Hack because a list with an empty string in is True
-        if objectlist == [b'']:
-            objectlist = []
+        if objects == [b'']:
+            objects = []
 
-        self.assertEqual(self.fakeout.stream, objectlist, '\n' + '\n'.join(
-                difflib.unified_diff(
-                    list(repr(s) for s in objectlist),
-                    list(repr(s) for s in self.fakeout.stream),
-                    'expected', 'actual', lineterm='')))
+        assert self.fakeout.stream == objects
         self.fakeout.resetstream()
 
     def test_end(self):
@@ -121,7 +113,7 @@ class BaseFormatterTest:
         self.assertOut(suffix=())
 
 
-class TestBasicFormatter(BaseFormatterTest, TestCase):
+class TestBasicFormatter(BaseFormatterTest):
 
     formatterClass = BasicFormatter
 
@@ -137,7 +129,7 @@ class TestBasicFormatter(BaseFormatterTest, TestCase):
         self.assertOut('app-arch/bzip2')
 
 
-class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
+class TestPkgcoreFormatter(BaseFormatterTest):
 
     formatterClass = PkgcoreFormatter
 
@@ -175,12 +167,12 @@ class CountingFormatterTest(BaseFormatterTest):
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault('verbosity', 1)
-        return BaseFormatterTest.newFormatter(self, **kwargs)
+        return super().newFormatter(**kwargs)
 
     def assertEnd(self, *args, **kwargs):
         kwargs.setdefault('prefix', self.endprefix)
         kwargs.setdefault('suffix', self.endsuffix)
-        BaseFormatterTest.assertOut(self, *args, **kwargs)
+        super().assertOut(*args, **kwargs)
 
     def test_end(self):
         self.formatter.end()
@@ -295,11 +287,11 @@ class CountingFormatterTest(BaseFormatterTest):
             '\nTotal: 5 packages (1 new, 1 upgrade, 1 downgrade, 1 in new slot, 1 reinstall)')
 
 
-class TestPortageFormatter(BaseFormatterTest, TestCase):
+class TestPortageFormatter(BaseFormatterTest):
 
     formatterClass = PortageFormatter
 
-    def setUp(self):
+    def setup_method(self):
         pkg = FakeMutatedPkg('app-arch/bzip2-1.0.1-r1', slot='0')
         masked_atom = atom('>=app-arch/bzip2-2.0')
         self.domain_settings = {"ACCEPT_KEYWORDS": ("amd64",)}
@@ -310,12 +302,12 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             repo_id='repo2', location='/var/gentoo/repos/repo2',
             domain_settings=self.domain_settings)
         self.vdb = FakeRepo(repo_id='vdb', pkgs=[pkg])
-        BaseFormatterTest.setUp(self)
+        super().setup_method()
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault('quiet_repo_display', False)
         kwargs.setdefault('installed_repos', self.vdb)
-        return BaseFormatterTest.newFormatter(self, **kwargs)
+        return super().newFormatter(**kwargs)
 
     def repo_id(self, repo):
         if getattr(self.formatter, 'verbosity', 0):
@@ -583,7 +575,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
     def newFormatter(self, **kwargs):
         kwargs.setdefault("verbosity", 1)
         kwargs.setdefault("unstable_arch", "~amd64")
-        return TestPortageFormatter.newFormatter(self, **kwargs)
+        return super().newFormatter(**kwargs)
 
     def test_install_symbol_unkeyworded(self):
         self.formatter.format(
@@ -751,14 +743,14 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
 class TestPortageVerboseRepoIdFormatter(TestPortageVerboseFormatter):
     suffix = [Color("fg", "cyan"), ' [1]\n']
 
-    def setUp(self):
-        TestPortageVerboseFormatter.setUp(self)
+    def setup_method(self):
+        super().setup_method()
         self.repo3 = FakeRepo(
             location='/var/gentoo/repos/repo3', domain_settings=self.domain_settings)
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault("quiet_repo_display", True)
-        return TestPortageVerboseFormatter.newFormatter(self, **kwargs)
+        return super().newFormatter(**kwargs)
 
     def repo_id(self, repo):
         return ''

@@ -79,7 +79,7 @@ class DictCacheBulk(bulk):
         return iter(self._data.keys())
 
 
-class BaseTest:
+class TestBase:
 
     cache_keys = ("foo", "_eclasses_")
 
@@ -178,7 +178,7 @@ class BaseTest:
         assert len(tracker) == 3
 
 
-class TestBulk(BaseTest):
+class TestBulk(TestBase):
 
     def get_db(self, readonly=False):
         return DictCacheBulk(auxdbkeys=self.cache_keys,

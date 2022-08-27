@@ -6,14 +6,13 @@ from pkgcore.package import base
 
 
 def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):
-    return SimpleNamespace(**({
-        'category': cat,
-        'pkg': pkg,
-        'ver': ver,
-        'key': f"{cat}/{pkg}",
-        "cpvstr": f"{cat}/{pkg}-{ver}",
-        "built": False,
-    } | attrs))
+    attrs.setdefault('category', cat)
+    attrs.setdefault('pkg', pkg)
+    attrs.setdefault('ver', ver)
+    attrs.setdefault('key', f"{cat}/{pkg}")
+    attrs.setdefault('cpvstr', f"{cat}/{pkg}-{ver}")
+    attrs.setdefault('built', False)
+    return SimpleNamespace(**attrs)
 
 
 class mixin:

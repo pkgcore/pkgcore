@@ -57,7 +57,7 @@ master_doc = 'index'
 # General information about the project.
 project = pkgdist.MODULE_NAME
 authors = ''
-copyright = '2006-2019, pkgcore contributors'
+copyright = '2006-2022, pkgcore contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -111,7 +111,7 @@ if on_rtd:
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = 'sphinxdoc'
+html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the

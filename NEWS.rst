@@ -3,6 +3,23 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.14 (2022-09-16)
+----------------------------
+
+- ebd: helpers: allow zstd for prepalldocs/prepinfo/prepman (Sam James, #358)
+
+- pquery: fix ``--maintainer maintainer-needed`` (Arthur Zamarin, #359)
+
+- Modernize all the tests to use pytest (Arthur Zamarin)
+
+- ebuild: improve malformed atom error messages (Arthur Zamarin)
+
+- bash completion: add for pquery (Arthur Zamarin, #360)
+
+- metadata.xsd: import ``savannah``, ``savannah-non-gnu``,
+  ``freedesktop-gitlab``, ``gnome-gitlab`` remote-ids (Matt Turner, #363)
+
+----------------------------
 pkgcore 0.12.13 (2022-08-09)
 ----------------------------
 

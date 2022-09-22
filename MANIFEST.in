@@ -1,9 +1,0 @@
-include LICENSE *.py *.rst
-include pytest.ini tox.ini pyproject.toml .coveragerc
-recursive-include bin *
-recursive-include data *
-recursive-include doc *
-recursive-include examples *
-recursive-include requirements *
-recursive-include tests *
-global-exclude *.pyc *.pyo __pycache__

@@ -18,12 +18,11 @@ from importlib import import_module
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-libdir = os.path.abspath(os.path.join('..', 'build', 'lib'))
-if os.path.exists(libdir):
-    sys.path.insert(0, libdir)
+sys.path.insert(0, os.path.abspath('../src/'))
 
 os.environ['PKGDIST_REPODIR'] = os.path.abspath('..')
 from snakeoil.dist import distutils_extensions as pkgdist
+from snakeoil.dist.generate_docs import generate_man, generate_html
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 
@@ -36,7 +35,7 @@ on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    'sphinx.ext.extlinks',
+    'sphinx.ext.extlinks', 'sphinx.ext.autosummary',
     'sphinx.ext.autodoc', 'sphinx.ext.doctest',
     'sphinx.ext.intersphinx', 'sphinx.ext.todo', 'sphinx.ext.coverage',
     'sphinx.ext.ifconfig', 'sphinx.ext.viewcode',
@@ -55,7 +54,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = pkgdist.MODULE_NAME
+project = 'pkgcore'
 authors = ''
 copyright = '2006-2022, pkgcore contributors'
 
@@ -227,25 +226,32 @@ latex_documents = [
 
 
 # -- Options for manual page output --------------------------------------------
+generate_man(os.path.abspath('..'), '', 'pkgcore')
+generate_html(os.path.abspath('..'), os.path.abspath('../src'), 'pkgcore')
 
-bin_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bin')
-scripts = os.listdir(bin_path)
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
-# Note that filter-env is specially specified, since the command is installed
-# as 'filter-env', but due to python namespace contraints, it uses a '_'
-# instead.
+with open('../pyproject.toml', 'rb') as file:
+    pyproj = tomllib.load(file)
+
 generated_man_pages = [
-    ('%s.scripts.' % (project,) + s.replace('-', '_'), s) for s in scripts
+    (entry.split(':')[0], name) for name, entry in pyproj['project']['scripts'].items()
+]
+authors_list = [
+    f'{author["name"]} <{author["email"]}>' for author in pyproj['project']['authors']
 ]
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('man/%s' % script, script, import_module(module).__doc__.strip().split('\n', 1)[0], [], 1)
+    (f'man/{script}', script, import_module(module).__doc__.strip().split('\n', 1)[0], authors_list, 1)
     for module, script in generated_man_pages
 ]
 
-man_pages.append(('man/pkgcore', 'pkgcore', 'a framework for package management', [], 5))
+man_pages.append(('man/pkgcore', 'pkgcore', 'a framework for package management', authors_list, 5))
 
 # -- Options for Epub output ---------------------------------------------------
 

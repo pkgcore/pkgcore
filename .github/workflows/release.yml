@@ -4,6 +4,7 @@ on:
   push:
     branches: [deploy]
     tags: [v*]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -13,31 +14,30 @@ jobs:
       uses: actions/checkout@v3
 
     - name: Set up Python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: "3.10"
         cache: 'pip'
-        cache-dependency-path: |
-          requirements/dist.txt
-          requirements/test.txt
+        cache-dependency-path: pyproject.toml
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements/dist.txt -r requirements/test.txt
+        pip install build ".[test,doc]"
 
     - name: Test with pytest
       env:
         PY_COLORS: 1 # forcibly enable pytest colors
-      run: python setup.py test
+      run: pytest
 
     - name: Build sdist
       run: |
         git clean -fxd
-        python setup.py sdist
+        make man
+        make sdist
 
     - name: Build wheel
-      run: python setup.py bdist_wheel
+      run: make wheel
 
     - name: Output dist file info
       run: |

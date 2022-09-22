@@ -32,9 +32,13 @@ def run(script_name):
     sys.exit(tool())
 
 
-if __name__ == '__main__':
+def main():
     # We're in a git repo or tarball so add the src dir to the system path.
     # Note that this assumes a certain module layout.
     src_dir = os.path.realpath(__file__).rsplit(os.path.sep, 3)[0]
     sys.path.insert(0, src_dir)
-    run(os.path.basename(__file__))
+    run(os.path.basename(sys.argv[0]))
+
+
+if __name__ == '__main__':
+    main()

@@ -26,17 +26,15 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-        cache: 'pip'
-        cache-dependency-path: requirements/*.txt
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements/dev.txt -r requirements/docs.txt
+        pip install ".[doc]"
 
     - name: Build sphinx documentation
       run: |
-        python setup.py build_docs
+        make html
         # notify github this isn't a jekyll site
         touch build/sphinx/html/.nojekyll
 

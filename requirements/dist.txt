@@ -1,4 +1,0 @@
-# deps for building sdist/wheels for pypi
--r install.txt
--r docs.txt
-wheel

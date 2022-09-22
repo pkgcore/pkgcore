@@ -1,11 +1,85 @@
 [build-system]
 requires = [
-	"wheel", "setuptools",
-	"snakeoil @ https://github.com/pkgcore/snakeoil/archive/master.tar.gz",
+	"flit_core >=3.8,<4",
+	"snakeoil",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "py_build"
+backend-path = ["."]
+
+[project]
+name = "pkgcore"
+description = "package managing framework"
+readme = "README.rst"
+license = {file = "LICENSE"}
+requires-python = "~=3.9"
+authors = [
+	{name = "Tim Harder", email = "radhermit@gmail.com"},
+	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
+]
+maintainers = [
+	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
+]
+classifiers = [
+	"License :: OSI Approved :: BSD License",
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.10",
+	"Programming Language :: Python :: 3.11",
+]
+dynamic = ["version"]
+
+dependencies = [
+	"snakeoil~=0.10.0",
+	"lxml",
+]
+
+[project.optional-dependencies]
+test = [
+	"pytest>=6.0",
+	"pytest-cov",
+]
+doc = [
+	"sphinx",
+	"tomli; python_version < '3.11'"
+]
+
+[project.urls]
+Homepage = "https://github.com/pkgcore/pkgcore"
+Documentation = "https://pkgcore.github.io/pkgcore/"
+Source = "https://github.com/pkgcore/pkgcore"
+
+[project.scripts]
+patom = "pkgcore.scripts.__init__:main"
+pclean = "pkgcore.scripts.__init__:main"
+pclonecache = "pkgcore.scripts.__init__:main"
+pconfig = "pkgcore.scripts.__init__:main"
+pebuild = "pkgcore.scripts.__init__:main"
+pinspect = "pkgcore.scripts.__init__:main"
+pmaint = "pkgcore.scripts.__init__:main"
+pmerge = "pkgcore.scripts.__init__:main"
+pplugincache = "pkgcore.scripts.__init__:main"
+pquery = "pkgcore.scripts.__init__:main"
+
+[tool.flit.external-data]
+directory = "data"
+
+[tool.flit.sdist]
+include = [
+	"tox.ini", ".coveragerc", "Makefile", "py_build.py",
+	"NEWS.rst", "doc", "tests", "examples", "bin",
+	"build/sphinx/man/*.1", "build/sphinx/man/*.5",
+]
+exclude = [
+	".github/", ".gitignore",
+	"doc/api/", "doc/generated/",
+]
+
+[project.entry-points.pytest11]
+pkgcore = "pkgcore.pytest.plugin"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
-addopts = "-ra"
+addopts = "-vv -ra -l"
 testpaths = ["tests"]
+markers = [
+	"net: tests that require network access (must enable --network option to run)",
+]

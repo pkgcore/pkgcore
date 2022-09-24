@@ -27,7 +27,7 @@ import traceback
 from functools import partial, wraps
 from itertools import chain
 
-from snakeoil import bash, fileutils, klass
+from snakeoil import bash, klass
 from snakeoil.osutils import pjoin
 from snakeoil.process import spawn
 
@@ -722,7 +722,8 @@ class EbuildProcessor:
         old_umask = os.umask(0o002)
         if tmpdir:
             path = pjoin(tmpdir, 'ebd-env-transfer')
-            fileutils.write_file(path, 'wb', data.encode())
+            with open(path, 'w') as file:
+                file.write(data)
             self.write(f"start_receiving_env file {path}")
         else:
             self.write(

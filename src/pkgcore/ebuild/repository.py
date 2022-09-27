@@ -50,6 +50,17 @@ class repo_operations(_repo_ops.operations):
 
         if distdir is None:
             distdir = domain.distdir
+
+        try:
+            os.makedirs(distdir, exist_ok=True)
+        except OSError as exc:
+            observer.error(f'failed to create distdir {distdir!r}: {exc.strerror}')
+            return ('failed to create distdir', )
+
+        if not os.access(distdir, os.W_OK):
+            observer.error(f'no write access to distdir: {distdir!r}')
+            return ('no write access to distdir', )
+
         ret = set()
 
         matches = self.repo.itermatch(restriction, sorter=sorted)

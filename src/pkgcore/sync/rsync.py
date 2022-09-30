@@ -69,7 +69,7 @@ class rsync_syncer(base.ExternalSyncer):
         self.opts.extend(extra_opts)
         if compress:
             self.opts.append("--compress")
-        self.opts.append("--contimeout=%i" % int(conn_timeout))
+        self.opts.append(f"--contimeout={int(conn_timeout)}")
         self.excludes = list(self.default_excludes) + list(excludes)
         self.includes = list(self.default_includes) + list(includes)
         self.retries = int(retries)

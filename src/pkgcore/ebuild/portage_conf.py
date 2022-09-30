@@ -522,7 +522,7 @@ class PortageConfig(DictMixin):
 
         timeout = options.pop('PORTAGE_RSYNC_INITIAL_TIMEOUT', None)
         if timeout is not None:
-            base['connection_timeout'] = timeout
+            base['conn_timeout'] = timeout
 
         retries = options.pop('PORTAGE_RSYNC_RETRIES', None)
         if retries is not None:

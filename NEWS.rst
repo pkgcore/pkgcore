@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.15 (2022-09-30)
+----------------------------
+
+- Better reporting of issues during manifest operation over a repository
+  (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.14 (2022-09-16)
 ----------------------------
 

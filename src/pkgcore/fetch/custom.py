@@ -57,7 +57,8 @@ class fetcher(base.fetcher):
             self.required_chksums = required_chksums
 
         def rewrite_command(string):
-            new_command = string.replace("${DISTDIR}", self.distdir)
+            new_command = string.replace("\\$", "$")
+            new_command = new_command.replace("${DISTDIR}", self.distdir)
             new_command = new_command.replace("$DISTDIR", self.distdir)
             new_command = new_command.replace("${URI}", "%(URI)s")
             new_command = new_command.replace("$URI", "%(URI)s")
@@ -104,14 +105,14 @@ class fetcher(base.fetcher):
             try:
                 self._verify(path, target)
                 return path
-            except errors.MissingDistfile as e:
+            except errors.MissingDistfile as exc:
                 command = self.command
-                last_exc = e
+                last_exc = exc
             except errors.ChksumFailure:
                 raise
-            except errors.FetchFailed as e:
-                last_exc = e
-                if not e.resumable:
+            except errors.FetchFailed as exc:
+                last_exc = exc
+                if not exc.resumable:
                     try:
                         os.unlink(path)
                         command = self.command

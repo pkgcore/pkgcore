@@ -25,7 +25,7 @@ from snakeoil.strings import pluralism
 from .. import fetch
 from ..config.hint import ConfigHint, configurable
 from ..log import logger
-from ..operations import repo as _repo_ops
+from ..operations import OperationError, repo as _repo_ops
 from ..package import errors as pkg_errors
 from ..repository import configured, errors, prototype, util
 from ..repository.virtual import RestrictionRepo
@@ -50,16 +50,6 @@ class repo_operations(_repo_ops.operations):
 
         if distdir is None:
             distdir = domain.distdir
-
-        try:
-            os.makedirs(distdir, exist_ok=True)
-        except OSError as exc:
-            observer.error(f'failed to create distdir {distdir!r}: {exc.strerror}')
-            return ('failed to create distdir', )
-
-        if not os.access(distdir, os.W_OK):
-            observer.error(f'no write access to distdir: {distdir!r}')
-            return ('no write access to distdir', )
 
         ret = set()
 
@@ -115,9 +105,23 @@ class repo_operations(_repo_ops.operations):
 
             # fetch distfiles
             pkg_ops = domain.pkg_operations(pkg, observer=observer)
-            if not pkg_ops.fetch(list(fetchables.values()), observer, distdir=distdir):
-                ret.add(key)
-                continue
+            try:
+                if not pkg_ops.fetch(list(fetchables.values()), observer, distdir=distdir):
+                    ret.add(key)
+                    continue
+            except OperationError:
+                # check for special cases of fetch failures
+                try:
+                    os.makedirs(distdir, exist_ok=True)
+                except OSError as exc:
+                    observer.error(f'failed to create distdir {distdir!r}: {exc.strerror}')
+                    return ('failed to create distdir', )
+
+                if not os.access(distdir, os.W_OK):
+                    observer.error(f'no write access to distdir: {distdir!r}')
+                    return ('no write access to distdir', )
+
+                raise
 
             # calculate checksums for fetched distfiles
             try:

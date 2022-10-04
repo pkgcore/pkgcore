@@ -3,6 +3,18 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.16 (2022-10-04)
+----------------------------
+
+- portage_conf: fix timeout settings for rsync (#368, Arthur Zamarin)
+
+- fetch.custom: fix commands with `\` variable escaping (Arthur Zamarin)
+  https://github.com/pkgcore/pkgdev/issues/94
+
+- repository: check issues with distdir only if fetch failed (Arthur Zamarin)
+  https://github.com/pkgcore/pkgdev/issues/99
+
+----------------------------
 pkgcore 0.12.15 (2022-09-30)
 ----------------------------
 

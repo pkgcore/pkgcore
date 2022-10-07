@@ -452,6 +452,27 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             return local_source(path)
         return None
 
+    @load_property("package.bashrc", allow_recurse=True)
+    def pkg_bashrc(self, data):
+        repo_config = self.repoconfig
+        if repo_config is None or 'profile-bashrcs' not in repo_config.profile_formats:
+            return ()
+
+        d = defaultdict(list)
+        for line, lineno, relpath in data:
+            l = line.split()
+            try:
+                a = self.eapi_atom(l[0])
+            except ebuild_errors.MalformedAtom as exc:
+                logger.error(f'{relpath!r}, line {lineno}: parsing error: {exc}')
+                continue
+            if len(l) == 1:
+                logger.error(f'{relpath!r}, line {lineno}: missing bashrc files: {line!r}')
+                continue
+            for filename in l[1:]:
+                d[a].append(local_source(pjoin(self.path, 'bashrc', filename)))
+        return tuple((k, tuple(v)) for k, v in d.items())
+
     @load_property('eapi', fallback='0')
     def eapi(self, data):
         # handle fallback
@@ -522,6 +543,7 @@ class EmptyRootNode(ProfileNode):
     deprecated = None
     pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = misc.ChunkedDataDict()
     forced_use.freeze()
+    pkg_bashrc = ()
     pkg_use_force = pkg_use_mask = ImmutableDict()
     pkg_provided = system = profile_set = ((), ())
 
@@ -746,6 +768,10 @@ class ProfileStack:
     @klass.jit_attr
     def bashrcs(self):
         return tuple(x.bashrc for x in self.stack if x.bashrc is not None)
+
+    @klass.jit_attr
+    def pkg_bashrcs(self):
+        return tuple(chain.from_iterable(x.pkg_bashrc for x in self.stack))
 
     bashrc = klass.alias_attr("bashrcs")
     path = klass.alias_attr("node.path")

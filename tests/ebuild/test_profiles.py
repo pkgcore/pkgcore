@@ -545,6 +545,17 @@ class TestPmsProfileNode(profile_mixin):
         self.write_file(tmp_path, "profile.bashrc", '')
         assert self.klass(path).bashrc is not None
 
+    def test_pkg_bashrc(self, tmp_path, caplog):
+        path = tmp_path / self.profile
+        assert not self.klass(path).pkg_bashrc
+        self.write_file(tmp_path, "package.bashrc", "@dsfg", profile=self.profile)
+        assert not self.klass(path).pkg_bashrc
+        self.write_file(tmp_path, "package.bashrc", "dev-util/foo", profile=self.profile)
+        assert not self.klass(path).pkg_bashrc
+        self.write_file(tmp_path, "package.bashrc", "dev-util/foo file1 file2\ndev-util/bar file3", profile=self.profile)
+        assert not self.klass(path).pkg_bashrc
+        assert not caplog.text
+
 
 class TestPortage1ProfileNode(TestPmsProfileNode):
 
@@ -591,6 +602,51 @@ class TestPortage2ProfileNode(TestPortage1ProfileNode):
         (tmp_path / "profiles" / "repo_name").write_bytes(binascii.b2a_hex(os.urandom(10)))
         (tmp_path / "metadata").mkdir()
         (tmp_path / "metadata" / "layout.conf").write_text("masters = ''\nprofile-formats = portage-2")
+
+
+class TestProfileBashrcProfileNode(TestPmsProfileNode):
+
+    profile = os.path.join("profiles", "default")
+
+    def assert_pkg_bashrc(self, actual, expected):
+        assert expected == {
+            str(k): [s.path for s in v]
+            for k, v in actual
+        }
+
+    def setup_repo(self, tmp_path):
+        (tmp_path / "profiles" / "repo_name").write_bytes(binascii.b2a_hex(os.urandom(10)))
+        (tmp_path / "metadata").mkdir()
+        (tmp_path / "metadata" / "layout.conf").write_text("masters = ''\nprofile-formats = profile-bashrcs")
+
+    def test_pkg_bashrc(self, tmp_path, caplog):
+        path = tmp_path / self.profile
+        assert not self.klass(path).pkg_bashrc
+        self.parsing_checks(tmp_path, "package.bashrc", "pkg_bashrc")
+        assert not caplog.text
+
+        caplog.clear()
+        self.write_file(tmp_path, "package.bashrc", "@dsfg", profile=self.profile)
+        assert not self.klass(path).pkg_bashrc
+        assert "line 1: parsing error: invalid package atom: '@dsfg'" in caplog.text
+
+        caplog.clear()
+        self.write_file(tmp_path, "package.bashrc", "dev-util/foo", profile=self.profile)
+        assert not self.klass(path).pkg_bashrc
+        assert "line 1: missing bashrc files: 'dev-util/foo'" in caplog.text
+
+        caplog.clear()
+        self.write_file(tmp_path, "package.bashrc", "dev-util/foo file1", profile=self.profile)
+        self.assert_pkg_bashrc(self.klass(path).pkg_bashrc, {"dev-util/foo": [str(path / "bashrc/file1")]})
+        assert not caplog.text
+
+        caplog.clear()
+        self.write_file(tmp_path, "package.bashrc", "dev-util/foo file1 file2\ndev-util/bar file3", profile=self.profile)
+        self.assert_pkg_bashrc(self.klass(path).pkg_bashrc, {
+            "dev-util/foo": [str(path / "bashrc/file1"), str(path / "bashrc/file2")],
+            "dev-util/bar": [str(path / "bashrc/file3")],
+        })
+        assert not caplog.text
 
 
 class TestProfileSetProfileNode(TestPmsProfileNode):

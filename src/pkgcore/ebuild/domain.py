@@ -596,10 +596,11 @@ class domain(config_domain):
         return self
 
     def get_package_bashrcs(self, pkg):
-        for source in self.profile.bashrcs:
-            yield source
-        for source in self.bashrcs:
-            yield source
+        yield from self.profile.bashrcs
+        for restrict, bashrcs in self.profile.pkg_bashrcs:
+            if restrict.match(pkg):
+                yield from bashrcs
+        yield from self.bashrcs
         if not os.path.exists(self.ebuild_hook_dir):
             return
         # matching portage behavior... it's whacked.

@@ -187,6 +187,15 @@ class bashrcs(_base, metaclass=_register_command):
             out.write(bashrc.path)
 
 
+class package_bashrc(_base, metaclass=_register_command):
+    """inspect package.bashrc"""
+
+    def __call__(self, namespace, out, err):
+        for package, bashrcs in namespace.profile.pkg_bashrcs:
+            bashrcs = ", ".join(s.path for s in bashrcs)
+            out.write(f'{package}: {bashrcs}')
+
+
 class keywords(_base, metaclass=_register_command):
     """inspect package.keywords"""
 

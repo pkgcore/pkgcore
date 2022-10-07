@@ -682,7 +682,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
     default_hashes = ('size', 'blake2b', 'sha512')
     default_required_hashes = ('size', 'blake2b')
-    supported_profile_formats = ('pms', 'portage-1', 'portage-2', 'profile-set')
+    supported_profile_formats = ('pms', 'portage-1', 'portage-2', 'profile-bashrcs', 'profile-set')
     supported_cache_formats = ('md5-dict', 'pms')
 
     __inst_caching__ = True

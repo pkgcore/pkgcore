@@ -6,13 +6,6 @@ _pquery() {
     local i cmd cur prev words cword split
     _init_completion || return
 
-    local subcommands=(
-        scan
-        cache
-        replay
-        show
-    )
-
     local base_options=(
         -h --help
         --version

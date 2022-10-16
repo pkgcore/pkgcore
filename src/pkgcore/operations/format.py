@@ -4,7 +4,7 @@ build operation
 
 __all__ = (
     'build_base', 'install', 'uninstall', 'replace', 'fetch_base',
-    'empty_build_op', 'FailedDirectory', 'GenericBuildError',
+    'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'FetchError',
 )
 
 import os
@@ -133,8 +133,10 @@ class operations(_operations_mod.base):
                 build_ops = self.domain.build_pkg(pkgwrap, observer, failed=True)
                 build_ops.nofetch()
                 build_ops.cleanup(force=True)
-            observer.error('failed fetching files: %s::%s', self.pkg.cpvstr, self.pkg.repo.repo_id)
-            raise GenericBuildError('failed fetching required distfiles')
+            for fetchable in failures:
+                observer.error('failed fetching %s', fetchable.uri)
+            observer.error('failed fetching files for package %s::%s', self.pkg.unversioned_atom, self.pkg.repo.repo_id)
+            raise FetchError(failures)
 
         self.verified_files = verified
         return True
@@ -335,3 +337,9 @@ class GenericBuildError(BuildError):
     def __init__(self, err):
         super().__init__(f"failed build operation: {err}")
         self.err = str(err)
+
+
+class FetchError(BuildError):
+    def __init__(self, failures):
+        super().__init__("failed fetching required distfiles")
+        self.err = str(failures)

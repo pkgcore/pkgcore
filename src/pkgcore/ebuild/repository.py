@@ -61,22 +61,25 @@ class repo_operations(_repo_ops.operations):
             # check for pkgs masked by bad metadata
             if bad_metadata := self.repo._bad_masked.match(pkgs[0].unversioned_atom):
                 for pkg in bad_metadata:
-                    e = pkg.data
-                    error_str = f"{pkg.cpvstr}: {e.msg(verbosity=observer.verbosity)}"
+                    exc = pkg.data
+                    error_str = f"{pkg.cpvstr}: {exc.msg(verbosity=observer.verbosity)}"
                     observer.error(error_str)
                     ret.add(pkg.key)
                 continue
 
-            # all pkgdir fetchables
-            pkgdir_fetchables = {}
-            for pkg in pkgs:
-                pkgdir_fetchables.update({
+            all_pkgdir_fetchables = {
+                pkg: {
                     fetchable.filename: fetchable for fetchable in
                     iflatten_instance(pkg.generate_fetchables(
                         allow_missing_checksums=True,
                         skip_default_mirrors=(not mirrors)),
                         fetch.fetchable)
-                })
+                } for pkg in self.repo.itermatch(pkgs[0].unversioned_atom)
+            }
+
+            # all pkgdir fetchables
+            pkgdir_fetchables = dict(chain.from_iterable(
+                all_pkgdir_fetchables[pkg].items() for pkg in pkgs))
 
             # fetchables targeted for (re-)manifest generation
             fetchables = {}
@@ -92,10 +95,10 @@ class repo_operations(_repo_ops.operations):
                 if os.path.exists(manifest.path):
                     try:
                         os.remove(manifest.path)
-                    except EnvironmentError as e:
+                    except EnvironmentError as exc:
                         observer.error(
                             'failed removing old manifest: '
-                            f'{key}::{self.repo.repo_id}: {e}')
+                            f'{key}::{self.repo.repo_id}: {exc}')
                         ret.add(key)
                 continue
 
@@ -104,7 +107,7 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # fetch distfiles
-            pkg_ops = domain.pkg_operations(pkg, observer=observer)
+            pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
             try:
                 if not pkg_ops.fetch(list(fetchables.values()), observer, distdir=distdir):
                     ret.add(key)
@@ -129,15 +132,19 @@ class repo_operations(_repo_ops.operations):
                     chksums = chksum.get_chksums(
                         pjoin(distdir, fetchable.filename), *write_chksums)
                     fetchable.chksums = dict(zip(write_chksums, chksums))
-            except chksum.MissingChksumHandler as e:
-                observer.error(f'failed generating chksum: {e}')
+            except chksum.MissingChksumHandler as exc:
+                observer.error(f'failed generating chksum: {exc}')
                 ret.add(key)
                 break
 
             if key not in ret:
-                fetchables.update(pkgdir_fetchables)
+                all_fetchables = {filename: fetchable
+                    for fetchables in all_pkgdir_fetchables.values()
+                    for filename, fetchable in fetchables.items()
+                    if required_chksums.issubset(fetchable.chksums)}
+                all_fetchables.update(fetchables)
                 observer.info(f"generating manifest: {key}::{self.repo.repo_id}")
-                manifest.update(sorted(fetchables.values()), chfs=write_chksums)
+                manifest.update(sorted(all_fetchables.values()), chfs=write_chksums)
 
         return ret
 

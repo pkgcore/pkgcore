@@ -4,7 +4,6 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.repository import util
 from pkgcore.restrictions import boolean, packages, restriction, values
 from pkgcore.util import parserestrict
-from snakeoil.currying import post_curry
 
 
 class TestMatch:
@@ -53,22 +52,16 @@ class TestExtendedRestrictionGeneration:
         else:
             self.verify_text(restrict.restriction, token)
 
-    def generic_single_restrict_check(self, iscat):
-        if iscat:
-            sfmts = ["%s/*"]
-            attr = "category"
-        else:
-            sfmts = ["*/%s", "%s"]
-            attr = "package"
-
-        for sfmt in sfmts:
-            for raw_token in ("package", "*bsdiff", "bsdiff*"):
-                token = sfmt % raw_token
-                i = parserestrict.parse_match(token)
-                self.verify_restrict(i, attr, raw_token)
-
-    test_category = post_curry(generic_single_restrict_check, True)
-    test_package = post_curry(generic_single_restrict_check, False)
+    @pytest.mark.parametrize(("attr", "sfmt"), (
+        ("category", "%s/*"),
+        ("package", "*/%s"),
+        ("package", "%s"),
+    ))
+    @pytest.mark.parametrize("raw_token", ("package", "*bsdiff", "bsdiff*"))
+    def test_single_restrict_check(self, raw_token, attr, sfmt):
+        token = sfmt % raw_token
+        i = parserestrict.parse_match(token)
+        self.verify_restrict(i, attr, raw_token)
 
     def test_combined(self):
         assert isinstance(parserestrict.parse_match("dev-util/diffball"), atom), "dev-util/diffball"
@@ -175,15 +168,15 @@ class TestExtendedRestrictionGeneration:
         assert isinstance(o[1], restricts.SubSlotDep), subslot
         self.verify_restrict(o[2], "package", token.split(":")[0])
 
-    def test_exceptions(self):
-        for token in (
-                "!dev-util/diffball",
-                "dev-util/diffball-0.4",
-                "=dev-util/*diffball-0.4*",
-                "::gentoo",
-                ):
-            with pytest.raises(parserestrict.ParseError):
-                parserestrict.parse_match(token)
+    @pytest.mark.parametrize("token", (
+        "!dev-util/diffball",
+        "dev-util/diffball-0.4",
+        "=dev-util/*diffball-0.4*",
+        "::gentoo",
+    ))
+    def test_exceptions(self, token):
+        with pytest.raises(parserestrict.ParseError):
+            parserestrict.parse_match(token)
 
 
 class TestParsePV:

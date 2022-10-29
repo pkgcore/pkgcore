@@ -1,4 +1,3 @@
-import sys
 import textwrap
 from io import StringIO
 

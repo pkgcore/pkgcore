@@ -260,12 +260,23 @@ class TestBase:
             self.get_pkg({'KEYWORDS': '~amd64 ~x86 ~amd64-fbsd'}).sorted_keywords ==
             ('~amd64', '~x86', '~amd64-fbsd'))
 
-    def generic_check_depends(self, depset, attr, expected=None,
-                              data_name=None, eapi='0'):
+    @pytest.mark.parametrize(('depset', 'attr', 'expected', 'eapi'), (
+        pytest.param('dev-util/diffball || ( dev-util/foo x86? ( dev-util/bsdiff ) )', 'depend', None, '0', id='depend'),
+        pytest.param('dev-util/diffball || ( dev-util/foo x86? ( dev-util/bsdiff ) )', 'rdepend', None, '0', id='rdepend'),
+        pytest.param('dev-util/diffball x86? ( virtual/boo )', 'pdepend', None, '0', id='pdepend'),
+        # BDEPEND in EAPI 7
+        pytest.param('dev-util/diffball x86? ( virtual/boo )', 'bdepend', None, '7', id='bdepend'),
+        # BDEPEND is ignored in EAPIs <= 6
+        pytest.param('dev-util/diffball x86? ( virtual/boo )', 'bdepend', '', '0', id='no_bdepend'),
+        # IDEPEND in EAPI 8
+        pytest.param('dev-util/diffball x86? ( virtual/boo )', 'idepend', None, '8', id='idepend'),
+        # IDEPEND is ignored in EAPIs <= 7
+        pytest.param('dev-util/diffball x86? ( virtual/boo )', 'idepend', '', '0', id='no_idepend'),
+    ))
+    def test_check_depends(self, depset, attr, expected, eapi):
         if expected is None:
             expected = depset
-        if data_name is None:
-            data_name = attr.upper()
+        data_name = attr.upper()
         o = self.get_pkg({data_name: depset, 'EAPI': eapi})
         assert str(getattr(o, attr)) == expected
         o = self.get_pkg({data_name: '', 'EAPI': eapi})
@@ -273,26 +284,6 @@ class TestBase:
         if expected:
             with pytest.raises(errors.MetadataException):
                 getattr(self.get_pkg({data_name: '|| ( ', 'EAPI': eapi}), attr)
-
-    for x in ('depend', 'rdepend'):
-        locals()[f'test_{x}'] = post_curry(generic_check_depends,
-            'dev-util/diffball || ( dev-util/foo x86? ( dev-util/bsdiff ) )',
-             x)
-    del x
-    test_pdepend = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )', 'pdepend')
-    # BDEPEND in EAPI 7
-    test_bdepend = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )', 'bdepend', eapi='7')
-    # BDEPEND is ignored in EAPIs <= 6
-    test_no_bdepend = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )', 'bdepend', expected='', eapi='0')
-    # IDEPEND in EAPI 8
-    test_idepend = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )', 'idepend', eapi='8')
-    # IDEPEND is ignored in EAPIs <= 7
-    test_no_idepend = post_curry(generic_check_depends,
-        'dev-util/diffball x86? ( virtual/boo )', 'idepend', expected='', eapi='0')
 
     def test_fetchables(self):
         l = []
@@ -491,16 +482,13 @@ class TestPackage(TestBase):
         return self.get_pkg(
             pre_args=(repo_objs.SharedPkgData(metadata_xml, manifest),))
 
-    def generic_metadata_xml(self, attr):
+    @pytest.mark.parametrize("attr", ("longdescription", "maintainers"))
+    def test_metadata_xml(self, attr):
         m = repo_objs.MetadataXml(None)
         object.__setattr__(m, "_"+attr, "foon")
         object.__setattr__(m, "_source", None)
         o = self.make_shared_pkg_data(metadata_xml=m)
         assert getattr(o, attr) == "foon"
-
-    for x in ("longdescription", "maintainers"):
-        locals()[f"test_{x}"] = post_curry(generic_metadata_xml, x)
-    del x
 
     def test_manifest(self):
         m = digest.Manifest(None)

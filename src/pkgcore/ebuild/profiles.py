@@ -329,6 +329,9 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             if len(l) == 1:
                 logger.error(f'{relpath!r}, line {lineno}: missing USE flag(s): {line!r}')
                 continue
+            if any(s.endswith(':') for s in l[1:]):
+                logger.error(f'{relpath!r}, line {lineno}: USE_EXPAND syntax is invalid in this context: {line!r}')
+                continue
             d[a.key].append(misc.chunked_data(a, *split_negations(l[1:])))
 
         return ImmutableDict((k, misc._build_cp_atom_payload(v, atom(k)))

@@ -392,7 +392,7 @@ __execute_phases() {
 		PKGCORE_SUPPRESS_BASHRCS=false
 
 		case ${EBUILD_PHASE} in
-			nofetch|pretend)
+			nofetch|pretend|uptodate)
 				PKGCORE_SUPPRESS_BASHRCS=true
 				__init_environ
 

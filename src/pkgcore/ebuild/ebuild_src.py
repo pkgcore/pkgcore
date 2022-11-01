@@ -344,7 +344,8 @@ class base(metadata.package):
     @property
     def mandatory_phases(self):
         return frozenset(
-            chain(self.defined_phases, self.eapi.default_phases))
+            chain(self.defined_phases, self.eapi.default_phases,
+                  ['uptodate']))
 
     @property
     def live(self):

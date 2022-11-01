@@ -3,9 +3,7 @@ include pytest.ini tox.ini pyproject.toml .coveragerc
 recursive-include bin *
 recursive-include data *
 recursive-include doc *
-recursive-include ebd *
 recursive-include examples *
 recursive-include requirements *
-recursive-include shell *
 recursive-include tests *
 global-exclude *.pyc *.pyo __pycache__

@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 
-import glob
 import os
 import subprocess
 import sys
-from itertools import chain
 
 from setuptools import setup
 from setuptools._distutils import log
@@ -21,6 +19,7 @@ CONFIG_INSTALL_OFFSET = os.path.join(DATA_INSTALL_OFFSET, 'config')
 LIBDIR_INSTALL_OFFSET = 'lib/pkgcore'
 EBD_INSTALL_OFFSET = os.path.join(LIBDIR_INSTALL_OFFSET, 'ebd')
 
+EBD_SCRIPTS_DIR = os.path.join(pkgdist.REPODIR, 'data/lib/pkgcore/ebd')
 
 class sdist(pkgdist.sdist):
     """sdist wrapper to bundle generated files for release."""
@@ -30,12 +29,12 @@ class sdist(pkgdist.sdist):
         import shutil
 
         # generate function lists so they don't need to be created on install
-        write_pkgcore_ebd_funclists(root='/', target='ebd/.generated')
-        write_pkgcore_ebd_cmdlists(root='/', target='ebd/.generated')
-        write_pkgcore_ebd_eapi_libs(root='/', target='ebd/.generated')
+        write_pkgcore_ebd_funclists(root='/', target='data/lib/pkgcore/ebd/.generated')
+        write_pkgcore_ebd_cmdlists(root='/', target='data/lib/pkgcore/ebd/.generated')
+        write_pkgcore_ebd_eapi_libs(root='/', target='data/lib/pkgcore/ebd/.generated')
         shutil.copytree(
-            os.path.join(pkgdist.REPODIR, 'ebd', '.generated'),
-            os.path.join(base_dir, 'ebd', '.generated'))
+            os.path.join(pkgdist.REPODIR, 'data/lib/pkgcore/ebd/.generated'),
+            os.path.join(base_dir, 'data/lib/pkgcore/ebd/.generated'))
 
         pkgdist.sdist.make_release_tree(self, base_dir, files)
 
@@ -84,7 +83,7 @@ def write_pkgcore_ebd_funclists(root, target):
     log.info(f'writing ebd global function list: {path!r}')
     with open(path, 'w') as f:
         if subprocess.call(
-                [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_global_func_list')],
+                [os.path.join(EBD_SCRIPTS_DIR, 'generate_global_func_list')],
                 cwd=ebd_dir, stdout=f):
             raise DistutilsExecError("generating global function list failed")
 
@@ -97,7 +96,7 @@ def write_pkgcore_ebd_funclists(root, target):
             log.info(f'writing EAPI {eapi} function list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
-                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_func_list'), eapi],
+                        [os.path.join(EBD_SCRIPTS_DIR, 'generate_eapi_func_list'), eapi],
                         cwd=ebd_dir, stdout=f):
                     raise DistutilsExecError(f"generating EAPI {eapi} function list failed")
 
@@ -110,6 +109,7 @@ def write_pkgcore_ebd_cmdlists(root, target):
     os.makedirs(os.path.join(ebd_dir, 'cmds'), exist_ok=True)
 
     # generate EAPI specific command lists
+    script = os.path.join(EBD_SCRIPTS_DIR, 'generate_eapi_cmd_list')
     with pkgdist.syspath(pkgdist.PACKAGEDIR):
         from pkgcore.ebuild.eapi import EAPI
         for eapi_obj in EAPI.known_eapis.values():
@@ -120,7 +120,7 @@ def write_pkgcore_ebd_cmdlists(root, target):
             log.info(f'writing EAPI {eapi} banned command list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
-                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-b', eapi],
+                        [script, '-b', eapi],
                         cwd=ebd_dir, stdout=f):
                     raise DistutilsExecError(f'generating EAPI {eapi} banned command list failed')
 
@@ -128,7 +128,7 @@ def write_pkgcore_ebd_cmdlists(root, target):
             log.info(f'writing EAPI {eapi} deprecated command list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
-                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-d', eapi],
+                        [script, '-d', eapi],
                         cwd=ebd_dir, stdout=f):
                     raise DistutilsExecError(f'generating EAPI {eapi} deprecated command list failed')
 
@@ -136,7 +136,7 @@ def write_pkgcore_ebd_cmdlists(root, target):
             log.info(f'writing EAPI {eapi} internal command list: {path!r}')
             with open(path, 'w') as f:
                 if subprocess.call(
-                        [os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_cmd_list'), '-i', eapi],
+                        [script, '-i', eapi],
                         cwd=ebd_dir, stdout=f):
                     raise DistutilsExecError(f'generating EAPI {eapi} internal command list failed')
 
@@ -147,7 +147,7 @@ def write_pkgcore_ebd_eapi_libs(root, target):
     if root != '/':
         ebd_dir = os.path.join(root, target.lstrip('/'))
 
-    script = os.path.join(pkgdist.REPODIR, 'ebd', 'generate_eapi_lib')
+    script = os.path.join(EBD_SCRIPTS_DIR, 'generate_eapi_lib')
     with pkgdist.syspath(pkgdist.PACKAGEDIR):
         from pkgcore.ebuild.eapi import EAPI
         for eapi_obj in EAPI.known_eapis.values():
@@ -238,16 +238,7 @@ setup(**dict(
     author='Tim Harder',
     author_email='radhermit@gmail.com',
     entry_points={'pytest11': ['pkgcore = pkgcore.pytest.plugin']},
-    data_files=list(chain(
-        pkgdist.data_mapping(EBD_INSTALL_OFFSET, 'ebd'),
-        pkgdist.data_mapping(DATA_INSTALL_OFFSET, 'data'),
-        pkgdist.data_mapping('share/bash-completion/completions', 'shell/bash/completion'),
-        pkgdist.data_mapping('share/zsh/site-functions', 'shell/zsh/completion'),
-        pkgdist.data_mapping(
-            os.path.join(LIBDIR_INSTALL_OFFSET, 'shell'), 'shell',
-            skip=glob.glob('shell/*/completion'),
-        ),
-    )),
+    data_files=list(pkgdist.data_mapping('.', 'data')),
     cmdclass=dict(
         pkgdist_cmds,
         sdist=sdist,

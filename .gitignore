@@ -6,6 +6,7 @@ src/**/*.so
 
 # generated function lists
 ebd/.generated
+data/lib/pkgcore/ebd/.generated
 
 src/pkgcore/plugins/plugincache
 /build
@@ -13,7 +14,7 @@ src/pkgcore/plugins/plugincache
 /dist
 /.tox
 /.coverage
-/*.egg-info
+*.egg-info
 _trial_temp
 /doc/dev-notes/index.rst
 /doc/dev-notes/*/index.rst

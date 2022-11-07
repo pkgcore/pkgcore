@@ -226,7 +226,7 @@ class EbuildRepo:
         eapi = kwargs.pop('eapi', '7')
         slot = kwargs.pop('slot', '0')
         desc = kwargs.pop('description', 'stub package description')
-        homepage = kwargs.pop('homepage', 'https://github.com/pkgcore/pkgcheck')
+        homepage = kwargs.pop('homepage', 'https://pkgcore.github.io/pkgcheck')
         license = kwargs.pop('license', 'blank')
 
         ebuild_path = pjoin(ebuild_dir, f'{cpv.package}-{cpv.fullver}.ebuild')

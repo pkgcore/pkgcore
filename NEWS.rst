@@ -3,6 +3,29 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.17 (2022-11-10)
+----------------------------
+
+- profiles: support package.bashrc files as an extension (#370, Arthur Zamarin)
+
+- patom: new command for working with atoms, like qatom (#362, Arthur Zamarin)
+
+- ebuild.repository: fix manifest entries generation with precise restricts
+  (#371, Arthur Zamarin)
+
+- operations.fetch: better error messages when fetching fails (Arthur Zamarin)
+  https://github.com/pkgcore/pkgdev/issues/86
+
+- ebuild.profiles: error out when USE_EXPAND syntax is used in package.mask
+  (Arthur Zamarin)
+  https://github.com/pkgcore/pkgcheck/issues/370
+
+- drop Python 3.8 support (Arthur Zamarin)
+
+- Use flit with custom wrapper as build backend (#372, #374, Arthur Zamarin,
+  with special thanks to Michał Górny for reviewing and helping with it)
+
+----------------------------
 pkgcore 0.12.16 (2022-10-04)
 ----------------------------
 

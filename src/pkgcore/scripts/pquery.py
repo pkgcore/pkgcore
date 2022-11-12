@@ -269,7 +269,7 @@ def format_attr(config, out, pkg, attr):
                 if not node.uri:
                     return False
                 if len(node.uri) == 1:
-                    out.write(node.uri[0], autoline=False)
+                    out.write(next(iter(node.uri)), autoline=False)
                     return False
                 out.write('|| (')
                 out.first_prefix.append('    ')

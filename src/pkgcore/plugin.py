@@ -101,9 +101,10 @@ def _read_cache_file(package, cache_path):
     if not cache_data:
         return {}
     try:
+        file_mtime = os.path.getmtime(cache_path) + 1  # 1 second of grace time
         for line in cache_data:
             module, mtime, entries = line.split(':', 2)
-            mtime = int(mtime)
+            mtime = max(file_mtime, int(mtime))
             # Needed because ''.split(':') == [''], not []
             if not entries:
                 entries = set()

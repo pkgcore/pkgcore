@@ -110,7 +110,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._global_cache.clear()
         method()
         method()
-        assert mtime == \
+        assert mtime <= \
             os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
         # We cannot write this since it contains an unimportable plugin.
         assert not os.path.exists(pjoin(self.packdir2, plugin.CACHE_FILENAME))
@@ -175,7 +175,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
             pjoin(self.packdir, plugin.CACHE_FILENAME))
         plugin._global_cache.clear()
         self._test_plug()
-        assert good_mtime == os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
+        assert good_mtime <= os.path.getmtime(pjoin(self.packdir, plugin.CACHE_FILENAME))
         assert good_mtime != corrupt_mtime
 
     def test_rewrite_on_remove(self):

@@ -1,5 +1,5 @@
 PYTHON ?= python
-SPHINX_BUILD ?= sphinx-build
+SPHINX_BUILD ?= $(PYTHON) -m sphinx.cmd.build
 
 .PHONY: man html
 man html:
@@ -11,5 +11,5 @@ sdist wheel:
 
 .PHONY: clean
 clean:
-	$(RM) -r build/sphinx doc/api dist
+	$(RM) -r build/sphinx doc/api doc/generated dist
 	$(MAKE) -C data/lib/pkgcore/ebd clean

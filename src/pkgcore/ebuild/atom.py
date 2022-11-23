@@ -253,7 +253,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 raise errors.MalformedAtom(orig_atom, "operator requires a version")
             elif self.op == '~' and self.revision:
                 raise errors.MalformedAtom(orig_atom,
-                    "~ revision operater cannot be combined with a revision")
+                    "~ revision operator cannot be combined with a revision")
         elif self.version is not None:
             raise errors.MalformedAtom(orig_atom, 'versioned atom requires an operator')
         sf(self, "_hash", hash(orig_atom))

@@ -116,8 +116,8 @@ class Syncer:
                 uri[1] = f"{proto[0]}//{uri[1]}"
 
             return pwd.getpwnam(uri[0]).pw_uid, os_data.gid, uri[1]
-        except KeyError as e:
-            raise MissingLocalUser(raw_uri, str(e))
+        except KeyError as exc:
+            raise MissingLocalUser(raw_uri, str(exc))
 
     def sync(self, verbosity=None, force=False):
         if self.disabled:
@@ -168,9 +168,9 @@ class ExternalSyncer(Syncer):
     def require_binary(bin_name, fatal=True):
         try:
             return process.find_binary(bin_name)
-        except process.CommandNotFound as e:
+        except process.CommandNotFound as exc:
             if fatal:
-                raise MissingBinary(bin_name, str(e))
+                raise MissingBinary(bin_name, str(exc))
             return None
 
     @classmethod
@@ -198,8 +198,7 @@ class ExternalSyncer(Syncer):
         if len(chunks) == 1:
             return uri
         try:
-            return "%s//%s::%s" % (
-                chunks[0], pwd.getpwuid(os.stat(path).st_uid)[0], chunks[1])
+            return f"{chunks[0]}//{pwd.getpwuid(os.stat(path).st_uid)[0]}::{chunks[1]}"
         except KeyError:
             # invalid uid, reuse the uri
             return uri
@@ -213,8 +212,8 @@ class VcsSyncer(ExternalSyncer):
         except FileNotFoundError:
             command = self._initial_pull() + self.opts
             chdir = None
-        except EnvironmentError as e:
-            raise PathError(self.basedir, e.strerror) from e
+        except EnvironmentError as exc:
+            raise PathError(self.basedir, exc.strerror) from exc
         else:
             if not stat.S_ISDIR(st.st_mode):
                 raise PathError(self.basedir, "isn't a directory")
@@ -243,9 +242,9 @@ class VcsSyncer(ExternalSyncer):
     typename='syncer')
 def GenericSyncer(basedir, uri, **kwargs):
     """Syncer using the plugin system to find a syncer based on uri."""
-    plugins = list(
+    plugins = [
         (plug.supports_uri(uri), plug)
-        for plug in plugin.get_plugins('syncer'))
+        for plug in plugin.get_plugins('syncer')]
     plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
         raise UriError(uri, "no known syncer support")

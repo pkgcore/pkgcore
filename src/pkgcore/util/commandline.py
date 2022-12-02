@@ -24,7 +24,6 @@ from snakeoil.strings import pluralism
 
 from .. import const
 from ..config import load_config
-from ..plugin import get_plugins
 from ..repository import errors as repo_errors
 from ..restrictions import packages, restriction
 from . import parserestrict
@@ -531,8 +530,8 @@ class _ConfigArg(argparse._StoreAction):
 class ArgumentParser(arghparse.ArgumentParser):
 
     def __init__(self, suppress=False, help=True, config=True,
-                 domain=True, script=None, **kwds):
-        super().__init__(suppress=suppress, script=script, **kwds)
+                 domain=True, global_config=(), **kwds):
+        super().__init__(suppress=suppress, **kwds)
         self.register('action', 'parsers', _SubParser)
 
         if not suppress:
@@ -550,26 +549,8 @@ class ArgumentParser(arghparse.ArgumentParser):
                         loading the system config entirely if one exists.
                     """)
 
-                if script is not None:
-                    try:
-                        _, script_module = script
-                    except TypeError:
-                        raise ValueError(
-                            "invalid script parameter, should be (__file__, __name__)")
-                    project = script_module.split('.')[0]
-                else:
-                    project = __name__.split('.')[0]
-
-                # TODO: figure out a better method for plugin registry/loading
-                kwargs = {}
-                try:
-                    plugins = import_module('.plugins', project)
-                    kwargs['global_config'] = get_plugins('global_config', plugins)
-                except ImportError:
-                    # project doesn't bundle plugins
-                    pass
                 self.set_defaults(config=arghparse.DelayedValue(
-                    partial(store_config, **kwargs)))
+                    partial(store_config, global_config=global_config)))
 
             if domain:
                 _mk_domain(config_opts, help)

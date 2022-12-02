@@ -14,6 +14,7 @@ from snakeoil.cli.exceptions import ExitException
 from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
+from ..config.basics import ConfigSectionFromStringDict
 from ..ebuild import resolver, restricts
 from ..ebuild.atom import atom
 from ..ebuild.misc import run_sanity_checks
@@ -26,8 +27,24 @@ from ..restrictions import packages
 from ..restrictions.boolean import OrRestriction
 from ..util import commandline, parserestrict
 
+pmerge_config = ({
+    'basic': ConfigSectionFromStringDict({
+        'class': 'pkgcore.ebuild.formatter.BasicFormatter',
+    }),
+    'pkgcore': ConfigSectionFromStringDict({
+        'class': 'pkgcore.ebuild.formatter.PkgcoreFormatter',
+    }),
+    'portage': ConfigSectionFromStringDict({
+        'class': 'pkgcore.ebuild.formatter.PortageFormatter',
+        'default': 'True',
+    }),
+    'portage-verbose': ConfigSectionFromStringDict({
+        'class': 'pkgcore.ebuild.formatter.PortageVerboseFormatter',
+    }),
+},)
+
 argparser = commandline.ArgumentParser(
-    domain=True, description=__doc__, script=(__file__, __name__))
+    domain=True, description=__doc__, script=(__file__, __name__), global_config=pmerge_config)
 argparser.add_argument(
     nargs='*', dest='targets', metavar='TARGET',
     action=commandline.StoreTarget, use_sets='sets',

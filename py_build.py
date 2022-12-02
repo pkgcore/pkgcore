@@ -50,18 +50,11 @@ def write_verinfo(cleanup_files):
     path.write_text(f"version_info={get_git_version(Path.cwd())!r}")
 
 
-def prepare_pkgcore(callback, consts: bool, plugincache: bool):
+def prepare_pkgcore(callback, consts: bool):
     cleanup_files = []
     try:
         with sys_path():
             write_verinfo(cleanup_files)
-
-            # Install module plugincache
-            if plugincache:
-                from pkgcore import plugin, plugins
-                print('Generating plugin cache')
-                cleanup_files.append(path := Path.cwd() / "src/pkgcore/plugins")
-                plugin.initialize_cache(plugins, force=True, cache_dir=path)
 
             # Install configuration data so pkgcore knows where to find its content,
             # rather than assuming it is running from a tarball/git repo.
@@ -84,16 +77,16 @@ def prepare_pkgcore(callback, consts: bool, plugincache: bool):
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
     callback = partial(buildapi.build_wheel, wheel_directory, config_settings, metadata_directory)
-    return prepare_pkgcore(callback, consts=True, plugincache=True)
+    return prepare_pkgcore(callback, consts=True)
 
 
 def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds an "editable" wheel, places it in wheel_directory"""
     callback = partial(buildapi.build_editable, wheel_directory, config_settings, metadata_directory)
-    return prepare_pkgcore(callback, consts=False, plugincache=True)
+    return prepare_pkgcore(callback, consts=False)
 
 
 def build_sdist(sdist_directory, config_settings=None):
     """Builds an sdist, places it in sdist_directory"""
     callback = partial(buildapi.build_sdist, sdist_directory, config_settings)
-    return prepare_pkgcore(callback, consts=False, plugincache=False)
+    return prepare_pkgcore(callback, consts=False)

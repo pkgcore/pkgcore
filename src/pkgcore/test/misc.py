@@ -2,7 +2,6 @@
 
 from snakeoil.mappings import AttrAccessible
 
-from .. import plugin
 from ..ebuild.atom import atom
 from ..ebuild.conditionals import DepSet
 from ..ebuild.cpv import CPV
@@ -14,7 +13,7 @@ from ..package.metadata import factory
 from ..repository.util import SimpleTree
 from ..restrictions import packages
 
-default_arches = set(["x86", "ppc", "amd64", "ia64"])
+default_arches = {"x86", "ppc", "amd64", "ia64"}
 
 Options = AttrAccessible
 
@@ -88,7 +87,7 @@ class FakeRepo:
     def __contains__(self, obj):
         """Determine if a path or a package is in a repo."""
         if isinstance(obj, str):
-            if self.location and path.startswith(self.location):
+            if self.location and obj.startswith(self.location):
                 return True
             return False
         else:
@@ -125,28 +124,6 @@ class FakePkg(FakePkgBase):
         object.__setattr__(self, 'eapi', get_eapi(eapi, False))
         if iuse is not None:
             object.__setattr__(self, "iuse", set(iuse))
-
-
-class DisablePlugins:
-
-    default_state = {}
-    wipe_plugin_state = True
-
-    def force_plugin_state(self, wipe=True, **packages):
-        if wipe:
-            plugin._cache.clear()
-        plugin._cache.update(packages)
-
-    def setUp(self):
-        self._plugin_orig_initialize = plugin.initialize_cache
-        self._plugin_orig_cache = plugin._cache.copy()
-        if self.wipe_plugin_state:
-            plugin._cache = {}
-        plugin.initialize_cache = lambda p: ()
-
-    def tearDown(self):
-        plugin._cache = self._plugin_orig_cache
-        plugin.initialize_cache = self._plugin_orig_initialize
 
 
 # misc setup code for generating glsas for testing

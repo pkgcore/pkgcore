@@ -5,10 +5,10 @@ import traceback
 from functools import partial
 
 from snakeoil.errors import dump_error
+from snakeoil.test.mixins import PythonNamespaceWalker
 
 from ..config import basics, errors
 from ..ebuild import atom
-from ..plugin import get_plugins
 from ..util import commandline
 
 
@@ -207,6 +207,27 @@ def dump_main(options, out, err):
         out.write('}')
 
 
+def all_configurables():
+    class walker(PythonNamespaceWalker):
+
+        ignore_all_import_failures = True
+
+        def _default_module_blacklister(self, target):
+            if target.startswith(("pkgcore.test.", 'pkgcore.plugins.')) \
+                    or 'pkgcore.test' == target:
+                return True
+            return super()._default_module_blacklister(target)
+
+    return (
+        obj
+        for module in walker().walk_namespace('pkgcore')
+        for name in dir(module)
+        if getattr(obj := getattr(module, name), 'pkgcore_config_type', None) is not None
+        if not getattr(obj, 'disabled', False)
+        if not getattr(obj, '_plugin_disabled_check', lambda: False)()
+    )
+
+
 configurables = subparsers.add_parser(
     "configurables", parents=shared_options,
     description='list registered configurables (may not be complete)')
@@ -223,7 +244,7 @@ def configurables_main(options, out, err):
         return "%s.%s" % (getattr(obj, '__module__', ''),
                           getattr(obj, '__name__', ''))
 
-    for configurable in sorted(get_plugins('configurable'), key=key_func):
+    for configurable in sorted(all_configurables(), key=key_func):
         type_obj = basics.ConfigType(configurable)
         if options.typename is not None and type_obj.name != options.typename:
             continue

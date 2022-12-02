@@ -62,7 +62,7 @@ def prepare_pkgcore(callback, consts: bool):
                 write_pkgcore_lookup_configs(cleanup_files)
 
             # generate function lists so they don't need to be created on install
-            if subprocess.call(['make', f'PYTHON={sys.executable}'], cwd=Path.cwd() / 'data/lib/pkgcore/ebd'):
+            if subprocess.call(['make', f'PYTHON={sys.executable}', 'PYTHONPATH=' + ':'.join(sys.path)], cwd=Path.cwd() / 'data/lib/pkgcore/ebd'):
                 raise Exception("Running makefile failed")
 
             return callback()

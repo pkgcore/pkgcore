@@ -7,10 +7,11 @@ __all__ = (
 import os
 import pwd
 import stat
+from importlib import import_module
 
 from snakeoil import process
 
-from .. import os_data, plugin
+from .. import os_data
 from ..config.hint import ConfigHint, configurable
 from ..exceptions import PkgcoreUserException
 
@@ -93,17 +94,16 @@ class Syncer:
         """
         uri = raw_uri.split("::", 1)
         if len(uri) == 1:
-            if self.usersync:
-                if os.path.exists(self.basedir):
-                    stat = os.stat(self.basedir)
-                    uid = stat.st_uid
-                    gid = stat.st_gid
-                else:
-                    uid = os_data.portage_uid
-                    gid = os_data.portage_gid
-            else:
+            if not self.usersync:
                 uid = os_data.uid
                 gid = os_data.gid
+            elif os.path.exists(self.basedir):
+                stat = os.stat(self.basedir)
+                uid = stat.st_uid
+                gid = stat.st_gid
+            else:
+                uid = os_data.portage_uid
+                gid = os_data.portage_gid
 
             return uid, gid, raw_uri
         try:
@@ -237,6 +237,20 @@ class VcsSyncer(ExternalSyncer):
         raise NotImplementedError(self, "_update_existing")
 
 
+def _load_syncers():
+    syncers = ('bzr', 'cvs', 'darcs', 'git', 'git_svn', 'hg', 'sqfs', 'svn', 'tar')
+    for syncer in syncers:
+        try:
+            syncer_cls: type[Syncer] = getattr(import_module(f'pkgcore.sync.{syncer}'), f'{syncer}_syncer')
+        except (ImportError, AttributeError):
+            continue
+        if syncer_cls.disabled:
+            continue
+        if (f := getattr(syncer_cls, '_plugin_disabled_check', None)) is not None and f():
+            continue
+        yield syncer_cls
+
+
 @configurable(
     {'basedir': 'str', 'uri': 'str', 'usersync': 'bool', 'opts': 'str'},
     typename='syncer')
@@ -244,7 +258,7 @@ def GenericSyncer(basedir, uri, **kwargs):
     """Syncer using the plugin system to find a syncer based on uri."""
     plugins = [
         (plug.supports_uri(uri), plug)
-        for plug in plugin.get_plugins('syncer')]
+        for plug in _load_syncers()]
     plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
         raise UriError(uri, "no known syncer support")
@@ -267,7 +281,7 @@ def DisabledSync(basedir, *args, **kwargs):
 
 @configurable({'basedir': 'str', 'usersync': 'bool'}, typename='syncer')
 def AutodetectSyncer(basedir, **kwargs):
-    for syncer_cls in plugin.get_plugins('syncer'):
+    for syncer_cls in _load_syncers():
         if args := syncer_cls.is_usable_on_filepath(basedir):
             return syncer_cls(basedir, *args, **kwargs)
     return DisabledSyncer(basedir, **kwargs)

@@ -27,9 +27,9 @@ from snakeoil.osutils import normpath
 
 from ..fs import contents, livefs
 from ..operations import observer as observer_mod
-from ..plugin import get_plugins
 from . import errors
 from .const import INSTALL_MODE, REPLACE_MODE, UNINSTALL_MODE
+from .triggers import default_plugins_triggers
 
 
 def alias_cset(alias, engine, csets):
@@ -118,9 +118,8 @@ class MergeEngine:
 
         if not disable_plugins:
             # merge in default triggers first.
-            for trigger in get_plugins('triggers'):
-                t = trigger()
-                t.register(self)
+            for trigger in default_plugins_triggers():
+                trigger().register(self)
 
         # merge in overrides
         for hook, triggers in hooks.items():

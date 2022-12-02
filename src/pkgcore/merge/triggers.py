@@ -868,3 +868,12 @@ class BinaryDebug(ThreadedTrigger):
         self._modified.difference_update(cset)
         cset.update(self._modified)
         del self._modified
+
+
+def default_plugins_triggers() -> tuple[type[base]]:
+    triggers = (
+        ldconfig, merge, unmerge,
+        fix_uid_perms, fix_gid_perms, fix_set_bits, detect_world_writable,
+        InfoRegen, CommonDirectoryModes, BaseSystemUnmergeProtection,
+    )
+    return tuple(sorted(triggers, reverse=True, key=lambda x: (x.priority, x.__name__)))

@@ -384,7 +384,7 @@ class EclassDoc(AttrDict):
         # TODO: support this via pkgcore's ebd
         # source eclass to determine PROPERTIES
         p = subprocess.run(
-            ['bash', '-c',
+            ['env', '-i', 'bash', '-c',
                 f'source {shlex.quote(path)}; '
                 f'compgen -A function; '
                 f'echo "#"; '

@@ -421,7 +421,7 @@ def package_func(options, out, err):
     domain = options.domain
     for pkg in domain.installed_repos.combined.itermatch(options.query):
         matched = True
-        ops = domain.pkg_operations(pkg)
+        ops = domain.get_pkg_operations(pkg)
         if not ops.supports("configure"):
             out.write(f"package {pkg}: nothing to configure, ignoring")
             continue

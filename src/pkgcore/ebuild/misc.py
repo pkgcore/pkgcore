@@ -598,7 +598,7 @@ def run_sanity_checks(pkgs, domain, threads=None):
     sanity_failures = defaultdict(list)
     # TODO: parallelize this across separate processes
     for pkg in pkgs:
-        pkg_ops = domain.pkg_operations(pkg)
+        pkg_ops = domain.get_pkg_operations(pkg)
         if pkg_ops.supports("sanity_check") and (failures := pkg_ops.sanity_check()):
             sanity_failures[pkg] = failures
     return sanity_failures

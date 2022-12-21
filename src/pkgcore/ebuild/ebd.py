@@ -788,7 +788,7 @@ class buildable(ebd, setup_mixin, format.build):
     def _setup_distfiles(self):
         # fetch distfiles
         if not self.verified_files:
-            ops = self.domain.pkg_operations(self.pkg, observer=self.observer)
+            ops = self.domain.get_pkg_operations(self.pkg, observer=self.observer)
             if ops.fetch():
                 # this break encapsulation and should be refactored.  Trace
                 # f35f2 and 6561eac for where this was refactored.

@@ -274,6 +274,19 @@ output_options.add_argument(
         closely emulates portage output and is used by default.
     """)
 
+debug_options = argparser.add_argument_group("resolver debugging options")
+debug_options.add_argument(
+    '--pdb-intercept', dest='pdb_intercept', metavar='TARGET[,TARGET,...]',
+    action=commandline.StoreTarget, separator=',',
+    help='trigger a pdb.set_trace() for any resolver decisions that match this restriction',
+    docs="""
+        Comma-seperated list of targets to trigger a pdb.set_trace() within resolver code for investigation.
+
+        This is primarily used for debugging resolver implementation, being able to walk through
+        what it has decided and why.
+    """
+)
+
 
 class AmbiguousQuery(parserestrict.ParseError):
     """Exception for multiple matches where a single match is required."""
@@ -729,6 +742,8 @@ def main(options, out, err):
 #    from guppy import hpy
 #    hp = hpy()
 #    hp.setrelheap()
+
+    extra_kwargs['pdb_intercept'] = tuple(x[1] for x in options.pdb_intercept)
 
     resolver_inst = options.resolver_kls(
         vdbs=installed_repos, dbs=source_repos,

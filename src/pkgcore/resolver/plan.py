@@ -251,7 +251,8 @@ class merge_plan:
 
     def __init__(self, dbs, per_repo_strategy, global_strategy=None,
                  depset_reorder_strategy=None, process_built_depends=False,
-                 drop_cycles=False, debug=False, debug_handle=None):
+                 drop_cycles=False, debug=False, debug_handle=None,
+                 pdb_intercept=None):
         if debug:
             if debug_handle is None:
                 debug_handle = sys.stdout
@@ -259,6 +260,12 @@ class merge_plan:
         else:
             # don't run debug func when debugging is disabled
             self._dprint = lambda *args, **kwargs: None
+
+        if not pdb_intercept:
+            pdb_intercept = packages.AlwaysFalse
+        elif not isinstance(pdb_intercept, packages.PackageRestriction):
+            pdb_intercept = packages.AndRestriction(*pdb_intercept)
+        self.pdb_intercept = pdb_intercept
 
         if not isinstance(dbs, (util.RepositoryGroup, list, tuple)):
             dbs = [dbs]
@@ -563,6 +570,8 @@ class merge_plan:
         :return: 3 possible; None (not viable), True (presolved),
           :obj:`caching_iter` (not solved, but viable), :obj:`choice_point`
         """
+        if self.pdb_intercept.match(atom):
+            import pdb;pdb.set_trace()
         choices = ret = None
         if atom in self.insoluble:
             ret = ((False, "globally insoluble"),{})

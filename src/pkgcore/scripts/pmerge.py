@@ -286,6 +286,23 @@ debug_options.add_argument(
         what it has decided and why.
     """
 )
+debug_options.add_argument(
+    '--disable-resolver-target-sorting', dest='force_stable_ordering_of_targets',
+    action='store_false', default=True,
+    help='disable stabilization of resolver graph processing',
+    docs="""
+        Resolution of package dependencies can grossly vary depending on which nodes you start from.
+
+        Pmerge by default sorts the targets it's asked to resolve; this in turn stabilizes the resolvers
+        output.  This option allows disabling that sort.
+
+        This should be only used if you're debugging the resolver and wish to effectively fuzz the resolvers
+        ability to find solutions; for a properly working resolver if a solution can be found, it *must*
+        be found.  If a solution can't be found, then this flag should also result in no solution found.
+
+        Any deviation from this is a bug in the resolver and should be reported.
+    """
+)
 
 
 class AmbiguousQuery(parserestrict.ParseError):
@@ -640,6 +657,7 @@ def main(options, out, err):
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
+        # TODO: this logic should be updated to honor self.force_stable_ordering_of_targets
         if not options.oneshot:
             if world_set is None:
                 argparser.error("disable world updating via --oneshot, "
@@ -702,6 +720,8 @@ def main(options, out, err):
         return 1
 
     atoms = stable_unique(atoms)
+    if options.force_stable_ordering_of_targets:
+        atoms = sorted(atoms)
 
     if options.clean and not options.oneshot:
         if world_set is None:

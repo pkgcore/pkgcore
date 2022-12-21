@@ -155,8 +155,8 @@ class SubSlotDep(packages.PackageRestriction):
     __slots__ = ()
     __inst_caching__ = True
 
-    def __init__(self, slot, **kwds):
-        v = values.StrExactMatch(slot)
+    def __init__(self, subslot, **kwds):
+        v = values.StrExactMatch(subslot)
         super().__init__('subslot', v, negate=kwds.get('negate', False))
 
 

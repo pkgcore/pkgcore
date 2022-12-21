@@ -250,7 +250,7 @@ class base(metadata.package):
             if line[0:1] in ('', '#'):
                 continue
             if (mo := _EAPI_str_regex.match(line)) and (eapi_str := mo.group('EAPI')):
-                eapi = _EAPI_regex.match(line).group('EAPI')
+                eapi = eapi_str
             break
         i.close()
         try:

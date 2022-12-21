@@ -114,7 +114,7 @@ class repo_operations(_repo_ops.operations):
                 continue
 
             # fetch distfiles
-            pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
+            pkg_ops = domain.get_pkg_operations(pkgs[0], observer=observer)
             try:
                 if not pkg_ops.fetch(
                     list(fetchables.values()), observer, distdir=distdir

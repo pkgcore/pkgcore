@@ -1140,7 +1140,7 @@ def main(options, out, err):
                 if not options.fetchonly and options.debug:
                     out.write("Forcing a clean of workdir")
 
-                pkg_ops = domain.pkg_operations(op.pkg, observer=build_obs)
+                pkg_ops = domain.get_pkg_operations(op.pkg, observer=build_obs)
                 out.write(
                     f"\n{len(op.pkg.distfiles)} file{pluralism(op.pkg.distfiles)} required-"
                 )
@@ -1172,7 +1172,7 @@ def main(options, out, err):
                         continue
                     pkg = result
                     cleanup.append(pkg.release_cached_data)
-                    pkg_ops = domain.pkg_operations(pkg, observer=build_obs)
+                    pkg_ops = domain.get_pkg_operations(pkg, observer=build_obs)
                     cleanup.append(buildop.cleanup)
 
                 cleanup.append(partial(pkg_ops.run_if_supported, "cleanup"))

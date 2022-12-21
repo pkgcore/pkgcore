@@ -40,13 +40,18 @@ class domain:
     def triggers(self):
         return tuple(self._triggers)
 
-    def pkg_operations(self, pkg, observer=None):
+    def get_pkg_operations(self, pkg, observer=None):
+        """Get the manager of package operations for the given package
+
+        If you wish to modify a package- invoke setup, install, etc- this is what's responsible
+        for giving you a common interface despite the format implementation varying.
+        """
         domain = self.get_package_domain(pkg)
         return pkg.operations(domain, observer=observer)
 
     def build_pkg(self, pkg, observer=None, failed=False, clean=True, **kwargs):
         domain = self.get_package_domain(pkg)
-        return domain.pkg_operations(pkg, observer=observer).build(
+        return domain.get_pkg_operations(pkg, observer=observer).build(
             observer=observer, failed=failed, clean=clean, **kwargs
         )
 

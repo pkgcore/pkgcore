@@ -497,7 +497,7 @@ class merge_plan:
                 continue
             additions += new_additions
 
-            l = self.insert_choice(atom, stack, choices)
+            l = self.insert_choice(atom, choices)
             if l is False:
                 # this means somehow the node already slipped in.
                 # so we exit now, we are satisfied
@@ -733,7 +733,7 @@ class merge_plan:
                 c = choice_point(restrict, [pkg])
                 state.add_op(c, c.current_pkg, force=True).apply(self.state)
 
-    def insert_choice(self, atom, stack, choices):
+    def insert_choice(self, atom, choices):
         # first, check for conflicts.
         # lil bit fugly, but works for the moment
         if not choices.current_pkg.repo.livefs:

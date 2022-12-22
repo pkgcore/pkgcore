@@ -5,7 +5,9 @@
 atom version restrict
 """
 
-__all__ = ("VersionMatch",)
+__all__ = ("CategoryDep", "PackageDep", "RepositoryDep", "SlotDep",
+    "StaticUseDep", "SubSlotDep", "UseDepDefault", "VersionMatch"
+)
 
 from snakeoil.klass import generic_equality
 

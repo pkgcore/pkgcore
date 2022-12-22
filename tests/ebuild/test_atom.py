@@ -2,14 +2,15 @@ from functools import partial
 from pickle import dumps, loads
 
 import pytest
+from snakeoil.compatibility import cmp
 
 from pkgcore.ebuild import atom, errors, restricts
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions.boolean import AndRestriction
 from pkgcore.test.misc import FakePkg, FakeRepo
-from snakeoil.compatibility import cmp
 
 from ..restrictions.utils import TestRestriction
+
 
 def assert_equal_bidirectional(o1, o2):
     # logic bugs hidden behind short circuiting comparisons for metadata
@@ -547,3 +548,23 @@ class TestAtom(TestRestriction):
     def test_get_atom_without_use_deps(self, original, wanted):
         orig_atom = self.kls(original)
         assert str(orig_atom.get_atom_without_use_deps) == wanted
+
+    @pytest.mark.parametrize(('dep', 'iuse', 'use', 'wanted', 'eapi'), (
+        ("x(-)", {'x'}, {'x'}, True, '5'),
+        ("x(-)", {'x'}, (), False, '5'),
+        ("x(+)", (), (), True, '5'),
+        ("x(-)", (), (), False, '5'),
+        ("x(-),y(-)", (), (), False, '5'),
+        ("x(-),y(-)", {'x', 'y'}, ("x", "y"), True, '5'),
+        ("x(+),y(-)", (), (), False, '5'),
+        ("x(+),y(-)", {"y"}, (), False, '5'),
+        ("x(+),y(-)", {'y'}, {"y"}, True, '5'),
+        # verify that it's not sensitive to iuse defaults
+        ("x(-)", {"+x"}, {"x"}, True, '5'),
+        ("x(+)", {"-x"}, {"x"}, True, '5'),
+    ))
+    def test_use_dep_defaults(self, dep, iuse, use, wanted, eapi):
+        pkg = FakePkg("dev-util/diffball-1", eapi=eapi, iuse=frozenset(iuse), use=frozenset(use))
+        a = self.kls(f'dev-util/diffball[{dep}]')
+        #import pdb;pdb.set_trace()
+        assert a.match(pkg) == wanted

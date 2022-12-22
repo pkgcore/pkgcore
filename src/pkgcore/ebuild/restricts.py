@@ -222,8 +222,8 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
 
     def match(self, val):
         reduced_vals = self.vals
-        iuse, use = val
-        if reduced_vals.issubset(iuse):
+        iuse_stripped, use = val
+        if reduced_vals.issubset(iuse_stripped):
             # use normal pathways.
             return values.ContainmentMatch.match(self, use)
         if self.if_missing == self.negate:
@@ -234,7 +234,7 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
         # to reach here, either we're trying to force all flags false and the default is False,
         # or we're trying to force all flags on, and the default is on.
         # recall that negate is unfortunately a double negative in labeling...
-        reduced_vals = reduced_vals.intersection(iuse)
+        reduced_vals = reduced_vals.intersection(iuse_stripped)
         if reduced_vals:
             return values.ContainmentMatch.match(self, use, _values_override=reduced_vals)
         # nothing to match means all are missing, but the default makes them considered a match.
@@ -243,12 +243,12 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
     def force_False(self, pkg, attr, val):
         reduced_vals = self.vals
         # see comments in .match for clarification of logic.
-        iuse, use = val
-        if reduced_vals.issubset(iuse):
+        iuse_stripped, use = val
+        if reduced_vals.issubset(iuse_stripped):
             return values.ContainmentMatch.force_False(self, pkg, 'use', use)
         if self.if_missing == self.negate:
             return False
-        reduced_vals = reduced_vals.intersection(iuse)
+        reduced_vals = reduced_vals.intersection(iuse_stripped)
         if reduced_vals:
             return values.ContainmentMatch.force_False(self, pkg, 'use', use, reduced_vals)
         return True
@@ -256,12 +256,12 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
     def force_True(self, pkg, attr, val):
         reduced_vals = self.vals
         # see comments in .match for clarification of logic.
-        iuse, use = val
-        if reduced_vals.issubset(iuse):
+        iuse_stripped, use = val
+        if reduced_vals.issubset(iuse_stripped):
             return values.ContainmentMatch.force_True(self, pkg, 'use', use)
         if self.if_missing == self.negate:
             return False
-        reduced_vals = reduced_vals.intersection(iuse)
+        reduced_vals = reduced_vals.intersection(iuse_stripped)
         if reduced_vals:
             return values.ContainmentMatch.force_True(self, pkg, 'use', use, reduced_vals)
         return True
@@ -287,7 +287,7 @@ class UseDepDefault(packages.PackageRestrictionMulti):
         else:
             v = values.AlwaysTrue
 
-        super().__init__(('iuse', 'use'), v)
+        super().__init__(('iuse_stripped', 'use'), v)
 
 
 def _parse_nontransitive_use(sequence):

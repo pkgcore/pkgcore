@@ -324,6 +324,7 @@ class EbuildProcessor:
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
+        self.pid = None
 
         spawn_opts = {'umask': 0o002}
         if self.userpriv:
@@ -371,25 +372,37 @@ class EbuildProcessor:
             "PKGCORE_EBD_WRITE_FD": str(max_fd - 3),
         })
 
+        cread = cwrite = dread = dwrite = None
         # open pipes used for communication
-        cread, cwrite = os.pipe()
-        dread, dwrite = os.pipe()
+        try:
+            cread, cwrite = os.pipe()
+            dread, dwrite = os.pipe()
 
-        # allow pipe overrides except ebd-related
-        ebd_pipes = {0: 0, 1: 1, 2: 2}
-        if fd_pipes:
-            ebd_pipes.update(fd_pipes)
-        ebd_pipes[max_fd - 4] = cread
-        ebd_pipes[max_fd - 3] = dwrite
+            # allow pipe overrides except ebd-related
+            ebd_pipes = {0: 0, 1: 1, 2: 2}
+            if fd_pipes:
+                ebd_pipes.update(fd_pipes)
+            ebd_pipes[max_fd - 4] = cread
+            ebd_pipes[max_fd - 3] = dwrite
 
-        # force each ebd instance to be a process group leader so everything
-        # can be easily terminated
-        self.pid = spawn_func(
-            [spawn.BASH_BINARY, self.ebd, "daemonize"],
-            fd_pipes=ebd_pipes, returnpid=True, env=env, pgid=0, **spawn_opts)[0]
-
-        os.close(cread)
-        os.close(dwrite)
+            self.pid = spawn_func(
+                [spawn.BASH_BINARY, self.ebd, "daemonize"],
+                fd_pipes=ebd_pipes, returnpid=True, env=env,
+                # force each ebd instance to be a process group leader so everything
+                # can be easily terminated
+                pgid=0,
+                **spawn_opts)[0]
+        except:
+                if cwrite is not None:
+                    os.close(cwrite)
+                if dread is not None:
+                    os.close(dread)
+                raise
+        finally:
+            if cread is not None:
+                os.close(cread)
+            if dwrite is not None:
+                os.close(dwrite)
         self.ebd_write = os.fdopen(cwrite, "w")
         self.ebd_read = os.fdopen(dread, "r")
 

@@ -7,8 +7,17 @@ from snakeoil.sequences import iter_stable_unique
 class choice_point:
 
     __slots__ = (
-        "__weakref__", "atom", "matches", "matches_cur", "solution_filters",
-        "_prdeps", "_rdeps", "_deps", "_bdeps", "_ideps")
+        "__weakref__",
+        "atom",
+        "matches",
+        "matches_cur",
+        "solution_filters",
+        "_prdeps",
+        "_rdeps",
+        "_deps",
+        "_bdeps",
+        "_ideps",
+    )
 
     def __init__(self, a, matches):
         self.atom = a
@@ -31,13 +40,16 @@ class choice_point:
             and post merge deps.
         """
         m = self.matches_cur
-        return (len(self.solution_filters),
-            m.repo, m,
+        return (
+            len(self.solution_filters),
+            m.repo,
+            m,
             self.matches,
             self._bdeps,
             self._deps,
             self._rdeps,
-            self._prdeps)
+            self._prdeps,
+        )
 
     @staticmethod
     def _filter_choices(cnf_reqs, filterset):
@@ -182,5 +194,4 @@ class choice_point:
         return True
 
     def __str__(self):
-        return "%s: (%s, %s)" % (self.__class__.__name__,
-            self.atom, self.matches_cur)
+        return "%s: (%s, %s)" % (self.__class__.__name__, self.atom, self.matches_cur)

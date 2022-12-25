@@ -15,14 +15,14 @@ class base:
         return self.kls(location, **kwds)
 
     def test_basename(self):
-        assert self.make_obj(location='/asdf').basename == 'asdf'
-        assert self.make_obj(location='/a/b').basename == 'b'
+        assert self.make_obj(location="/asdf").basename == "asdf"
+        assert self.make_obj(location="/a/b").basename == "b"
 
     def test_dirname(self):
-        assert self.make_obj(location='/asdf').dirname == '/'
-        assert self.make_obj(location='/a/b').dirname == '/a'
+        assert self.make_obj(location="/asdf").dirname == "/"
+        assert self.make_obj(location="/a/b").dirname == "/a"
 
-    @pytest.mark.parametrize("loc", ('/tmp/a', '/tmp//a', '/tmp//', '/tmp/a/..'))
+    @pytest.mark.parametrize("loc", ("/tmp/a", "/tmp//a", "/tmp//", "/tmp/a/.."))
     def test_location_normalization(self, loc):
         assert self.make_obj(location=loc).location == normpath(loc)
 
@@ -81,15 +81,17 @@ class base:
 
     def test_default_attrs(self):
         assert self.make_obj(location="/adsf").mode is None
+
         class tmp(self.kls):
             __default_attrs__ = self.kls.__default_attrs__.copy()
-            __default_attrs__['tmp'] = lambda self2:getattr(self2, 'a', 1)
-            __attrs__ = self.kls.__attrs__ + ('tmp',)
-            __slots__ = ('a', 'tmp')
+            __default_attrs__["tmp"] = lambda self2: getattr(self2, "a", 1)
+            __attrs__ = self.kls.__attrs__ + ("tmp",)
+            __slots__ = ("a", "tmp")
+
         try:
             self.kls = tmp
-            assert self.make_obj('/adsf', strict=False).tmp == 1
-            t = self.make_obj('/asdf', a='foon', strict=False)
+            assert self.make_obj("/adsf", strict=False).tmp == 1
+            t = self.make_obj("/asdf", a="foon", strict=False)
             assert t.tmp == "foon"
         finally:
             del self.kls
@@ -106,14 +108,19 @@ class Test_fsFile(base):
             raw_data = f.read()
         assert o.data.text_fileobj().read() == raw_data
 
-        o = self.make_obj("/bin/this-file-should-not-exist-nor-be-read",
-            data=data_source(raw_data))
+        o = self.make_obj(
+            "/bin/this-file-should-not-exist-nor-be-read", data=data_source(raw_data)
+        )
         assert o.data.text_fileobj().read() == raw_data
         keys = list(o.chksums.keys())
-        assert [o.chksums[x] for x in keys] == list(get_chksums(data_source(raw_data), *keys))
+        assert [o.chksums[x] for x in keys] == list(
+            get_chksums(data_source(raw_data), *keys)
+        )
 
         chksums = dict(iter(o.chksums.items()))
-        assert set(self.make_obj(chksums=chksums).chksums.items()) == set(chksums.items())
+        assert set(self.make_obj(chksums=chksums).chksums.items()) == set(
+            chksums.items()
+        )
 
     def test_chksum_regen(self):
         data_source = object()
@@ -122,9 +129,12 @@ class Test_fsFile(base):
         chksums1 = obj.chksums
         assert chksums1 is not obj.change_attributes(data=data_source).chksums
 
-        assert chksums1 is obj.change_attributes(data=data_source, chksums=obj.chksums).chksums
+        assert (
+            chksums1
+            is obj.change_attributes(data=data_source, chksums=obj.chksums).chksums
+        )
 
-        obj2 = self.make_obj(__file__, chksums={1:2})
+        obj2 = self.make_obj(__file__, chksums={1: 2})
         assert obj2.chksums is obj2.change_attributes(data=data_source).chksums
 
 
@@ -142,16 +152,22 @@ class Test_fsLink(base):
         assert self.make_obj(target="../foon").target == "../foon"
 
     def test_resolved_target(self):
-        assert self.make_obj(location="/tmp/foon", target="dar").resolved_target == "/tmp/dar"
-        assert self.make_obj(location="/tmp/foon", target="/dar").resolved_target == "/dar"
+        assert (
+            self.make_obj(location="/tmp/foon", target="dar").resolved_target
+            == "/tmp/dar"
+        )
+        assert (
+            self.make_obj(location="/tmp/foon", target="/dar").resolved_target == "/dar"
+        )
 
     def test_cmp(self):
         obj1 = self.make_obj(
-            location='/usr/lib64/opengl/nvidia/lib/libnvidia-tls.so.1',
-            target='../tls/libnvidia-tls.so.1')
+            location="/usr/lib64/opengl/nvidia/lib/libnvidia-tls.so.1",
+            target="../tls/libnvidia-tls.so.1",
+        )
         obj2 = self.make_obj(
-            location='/usr/lib32/opengl/nvidia/lib/libGL.s',
-            target='libGL.so.173.14.09')
+            location="/usr/lib32/opengl/nvidia/lib/libGL.s", target="libGL.so.173.14.09"
+        )
         assert obj1 > obj2
         assert obj2 < obj1
 
@@ -184,6 +200,6 @@ def test_is_funcs():
     assert not fs.isreg(object())
     assert not fs.isfifo(object())
 
-    assert fs.isdir(fs.fsDir('/tmp', strict=False))
-    assert not fs.isreg(fs.fsDir('/tmp', strict=False))
-    assert fs.isreg(fs.fsFile('/tmp', strict=False))
+    assert fs.isdir(fs.fsDir("/tmp", strict=False))
+    assert not fs.isreg(fs.fsDir("/tmp", strict=False))
+    assert fs.isreg(fs.fsFile("/tmp", strict=False))

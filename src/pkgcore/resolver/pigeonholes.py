@@ -46,7 +46,8 @@ class PigeonHoledSlots:
         """add a limiter, returning any conflicting objs"""
         if not isinstance(atom, restriction.base):
             raise TypeError(
-                f"atom must be a restriction.base derivative: got {atom!r}, key={key!r}")
+                f"atom must be a restriction.base derivative: got {atom!r}, key={key!r}"
+            )
         # debug.
 
         if key is None:

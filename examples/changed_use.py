@@ -9,27 +9,34 @@ try:
     from pkgcore.restrictions.boolean import OrRestriction
     from pkgcore.util import commandline
 except ImportError:
-    print('Cannot import pkgcore!', file=sys.stderr)
-    print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)
-    if '--debug' not in sys.argv:
-        print('Add --debug to the commandline for a traceback.', file=sys.stderr)
+    print("Cannot import pkgcore!", file=sys.stderr)
+    print(
+        "Verify it is properly installed and/or PYTHONPATH is set correctly.",
+        file=sys.stderr,
+    )
+    if "--debug" not in sys.argv:
+        print("Add --debug to the commandline for a traceback.", file=sys.stderr)
     else:
         raise
     sys.exit(1)
 
 argparser = commandline.ArgumentParser(color=False, version=False)
+argparser.add_argument("target", nargs="+", help="target package atoms")
 argparser.add_argument(
-    'target', nargs='+', help='target package atoms')
+    "--repo",
+    action=commandline.StoreRepoObject,
+    help="repo to use (default from domain if omitted).",
+)
 argparser.add_argument(
-    '--repo', action=commandline.StoreRepoObject,
-    help='repo to use (default from domain if omitted).')
-argparser.add_argument(
-    '--print_type', '-t', default="cpvstr",
+    "--print_type",
+    "-t",
+    default="cpvstr",
     choices=("slotted_atom", "versioned_atom", "cpvstr"),
-    help='''type of atom to output:
+    help="""type of atom to output:
                 'versioned_atom' : a valid versioned atom,
                 'slotted_atom'   : a valid slotted atom,
-                'cpvstr'         : the cpv of the package''')
+                'cpvstr'         : the cpv of the package""",
+)
 
 
 @argparser.bind_final_check
@@ -38,10 +45,11 @@ def check_args(parser, namespace):
     namespace.vdb = domain.all_installed_repos
     if not namespace.repo:
         # fallback to default repo
-        namespace.repo = namespace.config.get_default('repo')
+        namespace.repo = namespace.config.get_default("repo")
 
     namespace.restrict = OrRestriction(
-        *commandline.convert_to_restrict(namespace.target))
+        *commandline.convert_to_restrict(namespace.target)
+    )
     namespace.outputter = attrgetter(namespace.print_type)
 
 
@@ -58,8 +66,13 @@ def main(options, out, err):
                 changed_flags = (oldflags ^ newflags) | (current.iuse ^ built.iuse)
                 if options.verbosity > 0:
                     out.write(
-                        "package %s, %d flags have changed:\n\t%s" %
-                        (current.unversioned_atom, len(changed_flags), ' '.join(changed_flags)))
+                        "package %s, %d flags have changed:\n\t%s"
+                        % (
+                            current.unversioned_atom,
+                            len(changed_flags),
+                            " ".join(changed_flags),
+                        )
+                    )
                 else:
                     out.write(options.outputter(current))
             else:
@@ -67,6 +80,6 @@ def main(options, out, err):
                     out.write("%s is the same as it was before" % current.cpvstr)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tool = commandline.Tool(argparser)
     sys.exit(tool())

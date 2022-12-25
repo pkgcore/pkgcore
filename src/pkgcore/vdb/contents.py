@@ -22,8 +22,9 @@ class LookupFsDev(fs.fsDev):
                 st = os.lstat(path)
             except FileNotFoundError:
                 st = None
-            if st is None or any(f(st.st_mode) for f in
-                (stat.S_ISREG, stat.S_ISDIR, stat.S_ISFIFO)):
+            if st is None or any(
+                f(st.st_mode) for f in (stat.S_ISREG, stat.S_ISDIR, stat.S_ISFIFO)
+            ):
                 kwds["strict"] = True
             else:
                 major, minor = fs.get_major_minor(st)
@@ -67,8 +68,11 @@ class ContentsFile(contentsSet):
         if isinstance(self._source, str):
             if write:
                 return AtomicWriteFile(
-                    self._source, uid=os_data.root_uid,
-                    gid=os_data.root_gid, perms=0o644)
+                    self._source,
+                    uid=os_data.root_uid,
+                    gid=os_data.root_gid,
+                    perms=0o644,
+                )
             return readlines_utf8(self._source, True)
         fobj = self._source.text_fileobj(writable=write)
         if write:
@@ -86,23 +90,30 @@ class ContentsFile(contentsSet):
                 continue
             s = line.split(" ")
             if s[0] in ("dir", "dev", "fif"):
-                path = ' '.join(s[1:])
-                if s[0] == 'dir':
+                path = " ".join(s[1:])
+                if s[0] == "dir":
                     obj = fs.fsDir(path, strict=False)
-                elif s[0] == 'dev':
+                elif s[0] == "dev":
                     obj = LookupFsDev(path, strict=False)
                 else:
                     obj = fs.fsFifo(path, strict=False)
             elif s[0] == "obj":
-                path = ' '.join(s[1:-2])
+                path = " ".join(s[1:-2])
                 obj = fs.fsFile(
-                    path, chksums={"md5":int(s[-2], 16)},
-                        mtime=int(s[-1]), strict=False)
+                    path,
+                    chksums={"md5": int(s[-2], 16)},
+                    mtime=int(s[-1]),
+                    strict=False,
+                )
             elif s[0] == "sym":
                 try:
                     p = s.index("->")
-                    obj = fs.fsLink(' '.join(s[1:p]), ' '.join(s[p+1:-1]),
-                        mtime=int(s[-1]), strict=False)
+                    obj = fs.fsLink(
+                        " ".join(s[1:p]),
+                        " ".join(s[p + 1 : -1]),
+                        mtime=int(s[-1]),
+                        strict=False,
+                    )
 
                 except ValueError:
                     # XXX throw a corruption error
@@ -113,7 +124,7 @@ class ContentsFile(contentsSet):
             yield obj
 
     def _write(self):
-        md5_handler = get_handler('md5')
+        md5_handler = get_handler("md5")
         outfile = None
         try:
             outfile = self._get_fd(True)
@@ -121,13 +132,19 @@ class ContentsFile(contentsSet):
             for obj in sorted(self):
 
                 if obj.is_reg:
-                    s = " ".join(("obj", obj.location,
-                        md5_handler.long2str(obj.chksums["md5"]),
-                        str(int(obj.mtime))))
+                    s = " ".join(
+                        (
+                            "obj",
+                            obj.location,
+                            md5_handler.long2str(obj.chksums["md5"]),
+                            str(int(obj.mtime)),
+                        )
+                    )
 
                 elif obj.is_sym:
-                    s = " ".join(("sym", obj.location, "->",
-                                   obj.target, str(int(obj.mtime))))
+                    s = " ".join(
+                        ("sym", obj.location, "->", obj.target, str(int(obj.mtime)))
+                    )
 
                 elif obj.is_dir:
                     s = "dir " + obj.location

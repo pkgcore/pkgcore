@@ -10,15 +10,12 @@ class FetchError(PkgcoreUserException):
 
 
 class UnmodifiableFile(FetchError):
-
-    def __init__(self, filename, extra=''):
-        super().__init__(
-            f'unable to update file {filename}, unmodifiable {extra}')
+    def __init__(self, filename, extra=""):
+        super().__init__(f"unable to update file {filename}, unmodifiable {extra}")
         self.filename = filename
 
 
 class FetchFailed(FetchError):
-
     def __init__(self, filename, message, resumable=False):
         super().__init__(message)
         self.filename = filename
@@ -30,7 +27,6 @@ class FetchFailed(FetchError):
 
 
 class MissingDistfile(FetchFailed):
-
     def __init__(self, filename):
         super().__init__(filename, "doesn't exist", resumable=True)
 

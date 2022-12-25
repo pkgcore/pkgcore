@@ -7,8 +7,8 @@ from .http import http_syncer
 class sqfs_syncer(http_syncer):
 
     supported_uris = (
-        ('sqfs+http://', 5),
-        ('sqfs+https://', 5),
+        ("sqfs+http://", 5),
+        ("sqfs+https://", 5),
     )
 
     @staticmethod

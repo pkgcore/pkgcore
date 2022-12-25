@@ -16,8 +16,9 @@ from . import restriction
 
 class base(restriction.base, metaclass=generic_equality):
     """base template for boolean restrictions"""
-    __attr_comparison__ = ('negate', 'type', 'restrictions')
-    __slots__ = ('restrictions', 'type', 'negate', '_hash')
+
+    __attr_comparison__ = ("negate", "type", "restrictions")
+    __slots__ = ("restrictions", "type", "negate", "_hash")
 
     _evaluate_collapsible = False
     _evaluate_wipe_empty = True
@@ -54,12 +55,13 @@ class base(restriction.base, metaclass=generic_equality):
                     if r.type is not None and r.type != node_type:
                         raise TypeError(
                             "instance '%s' is restriction type '%s', "
-                            "must be '%s'" % (r, r.type, node_type))
+                            "must be '%s'" % (r, r.type, node_type)
+                        )
             except AttributeError:
                 raise TypeError(
                     "type '%s' instance '%s' has no restriction type, "
-                    "'%s' required" % (
-                        r.__class__, r, node_type))
+                    "'%s' required" % (r.__class__, r, node_type)
+                )
 
         if kwds.pop("finalize", True):
             if not isinstance(restrictions, tuple):
@@ -72,15 +74,15 @@ class base(restriction.base, metaclass=generic_equality):
         if kwds:
             kwds.pop("disable_inst_caching", None)
             if kwds:
-                raise TypeError(
-                    "unknown keywords to %s: %s" %
-                    (self.__class__, kwds))
+                raise TypeError("unknown keywords to %s: %s" % (self.__class__, kwds))
 
     def change_restrictions(self, *restrictions, **kwds):
         """return a new instance of self.__class__, using supplied restrictions"""
         if self.type is not None:
-            if self.__class__.type not in restriction.valid_types or \
-                    self.__class__.type != self.type:
+            if (
+                self.__class__.type not in restriction.valid_types
+                or self.__class__.type != self.type
+            ):
                 kwds["node_type"] = self.type
         kwds.setdefault("negate", self.negate)
         return self.__class__(*restrictions, **kwds)
@@ -88,9 +90,10 @@ class base(restriction.base, metaclass=generic_equality):
     def remove_restriction(self, restriction_types=(), *restrictions):
         """return a new instance of self.__class__, dropping supplied restrictions or types"""
         new_restrictions = tuple(
-            r for r in self.restrictions if
-            not isinstance(r, tuple(restriction_types))
-            and r not in restrictions)
+            r
+            for r in self.restrictions
+            if not isinstance(r, tuple(restriction_types)) and r not in restrictions
+        )
         if new_restrictions != self.restrictions:
             return self.change_restrictions(*new_restrictions)
         return self
@@ -109,12 +112,13 @@ class base(restriction.base, metaclass=generic_equality):
                     if r.type is not None and r.type != self.type:
                         raise TypeError(
                             "instance '%s' is restriction type '%s', "
-                            "must be '%s'" % (r, r.type, self.type))
+                            "must be '%s'" % (r, r.type, self.type)
+                        )
             except AttributeError:
                 raise TypeError(
                     "type '%s' instance '%s' has no restriction type, "
-                    "'%s' required" % (
-                        r.__class__, r, getattr(self, "type", "unset")))
+                    "'%s' required" % (r.__class__, r, getattr(self, "type", "unset"))
+                )
 
         try:
             self.restrictions.extend(new_restrictions)
@@ -126,10 +130,14 @@ class base(restriction.base, metaclass=generic_equality):
         object.__setattr__(self, "restrictions", tuple(self.restrictions))
 
     def __repr__(self):
-        return '<%s negate=%r type=%r finalized=%r restrictions=%r @%#8x>' % (
-            self.__class__.__name__, self.negate, getattr(self, 'type', None),
-            isinstance(self.restrictions, tuple), self.restrictions,
-            id(self))
+        return "<%s negate=%r type=%r finalized=%r restrictions=%r @%#8x>" % (
+            self.__class__.__name__,
+            self.negate,
+            getattr(self, "type", None),
+            isinstance(self.restrictions, tuple),
+            self.restrictions,
+            id(self),
+        )
 
     def __len__(self):
         return len(self.restrictions)
@@ -158,11 +166,17 @@ class base(restriction.base, metaclass=generic_equality):
     def __getitem__(self, key):
         return self.restrictions[key]
 
-    def evaluate_conditionals(self, parent_cls, parent_seq, enabled,
-                              tristate_locked=None, force_collapse=False):
+    def evaluate_conditionals(
+        self,
+        parent_cls,
+        parent_seq,
+        enabled,
+        tristate_locked=None,
+        force_collapse=False,
+    ):
         l = []
         for restrict in self:
-            f = getattr(restrict, 'evaluate_conditionals', None)
+            f = getattr(restrict, "evaluate_conditionals", None)
             if f is None:
                 l.append(restrict)
             else:
@@ -170,17 +184,27 @@ class base(restriction.base, metaclass=generic_equality):
 
         if not self._evaluate_wipe_empty or l:
             if force_collapse or (
-                    (issubclass(parent_cls, self.__class__) and self._evaluate_collapsible) or
-                    len(l) <= 1):
+                (issubclass(parent_cls, self.__class__) and self._evaluate_collapsible)
+                or len(l) <= 1
+            ):
                 parent_seq.extend(l)
             else:
                 parent_seq.append(self.__class__(*l))
 
 
 # this beast, handles N^2 permutations.  convert to stack based.
-def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
-                            filter_func, desired_false=None, desired_true=None,
-                            kill_switch=None):
+def iterative_quad_toggling(
+    pkg,
+    pvals,
+    restrictions,
+    starting,
+    end,
+    truths,
+    filter_func,
+    desired_false=None,
+    desired_true=None,
+    kill_switch=None,
+):
     if desired_false is None:
         desired_false = lambda r, a: r.force_False(*a)
     if desired_true is None:
@@ -202,9 +226,17 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                 if filter_func(t):
                     yield True
                 for i in iterative_quad_toggling(
-                        pkg, pvals, restrictions, index + 1, end, t, filter_func,
-                        desired_false=desired_false, desired_true=desired_true,
-                        kill_switch=kill_switch):
+                    pkg,
+                    pvals,
+                    restrictions,
+                    index + 1,
+                    end,
+                    t,
+                    filter_func,
+                    desired_false=desired_false,
+                    desired_true=desired_true,
+                    kill_switch=kill_switch,
+                ):
                     yield True
                 reset = True
             else:
@@ -218,8 +250,16 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                 if filter_func(t):
                     yield True
                 for x in iterative_quad_toggling(
-                        pkg, pvals, restrictions, index + 1, end, t, filter_func,
-                        desired_false=desired_false, desired_true=desired_true):
+                    pkg,
+                    pvals,
+                    restrictions,
+                    index + 1,
+                    end,
+                    t,
+                    filter_func,
+                    desired_false=desired_false,
+                    desired_true=desired_true,
+                ):
                     yield True
                 reset = True
             elif index == end:
@@ -235,6 +275,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
 
 class AndRestriction(base):
     """Boolean AND grouping of restrictions.  negation is a NAND"""
+
     __slots__ = ()
 
     _evaluate_collapsible = True
@@ -267,9 +308,15 @@ class AndRestriction(base):
         def filter_func(truths):
             return False in truths
 
-        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
-                                         len(self.restrictions), truths,
-                                         filter_func):
+        for i in iterative_quad_toggling(
+            pkg,
+            pvals,
+            self.restrictions,
+            0,
+            len(self.restrictions),
+            truths,
+            filter_func,
+        ):
             return True
         return False
 
@@ -294,9 +341,16 @@ class AndRestriction(base):
 
         def filter_func(truths):
             return False in truths
-        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
-                                         len(self.restrictions), truths,
-                                         filter_func):
+
+        for i in iterative_quad_toggling(
+            pkg,
+            pvals,
+            self.restrictions,
+            0,
+            len(self.restrictions),
+            truths,
+            filter_func,
+        ):
             return True
         return False
 
@@ -307,12 +361,12 @@ class AndRestriction(base):
             (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
-#           raise NotImplementedError("negation for dnf_solutions on "
-#                 "AndRestriction isn't implemented yet")
+            #           raise NotImplementedError("negation for dnf_solutions on "
+            #                 "AndRestriction isn't implemented yet")
             # hack- this is an experiment
             for r in OrRestriction(
-                    node_type=self.type, *[restriction.Negate(x)
-                    for x in self.restrictions]).iter_dnf_solutions():
+                node_type=self.type, *[restriction.Negate(x) for x in self.restrictions]
+            ).iter_dnf_solutions():
                 yield r
             return
         if not self.restrictions:
@@ -321,7 +375,7 @@ class AndRestriction(base):
         hardreqs = []
         optionals = []
         for x in self.restrictions:
-            method = getattr(x, 'dnf_solutions', None)
+            method = getattr(x, "dnf_solutions", None)
             if method is None:
                 hardreqs.append(x)
             else:
@@ -357,10 +411,11 @@ class AndRestriction(base):
         """
 
         if self.negate:
-            raise NotImplementedError("negation for solutions on "
-                                      "AndRestriction isn't implemented yet")
+            raise NotImplementedError(
+                "negation for solutions on " "AndRestriction isn't implemented yet"
+            )
         for x in self.restrictions:
-            method = getattr(x, 'iter_cnf_solutions', None)
+            method = getattr(x, "iter_cnf_solutions", None)
             if method is None:
                 yield [x]
             else:
@@ -375,11 +430,12 @@ class AndRestriction(base):
         """
 
         if self.negate:
-            raise NotImplementedError("negation for solutions on "
-                                      "AndRestriction isn't implemented yet")
+            raise NotImplementedError(
+                "negation for solutions on " "AndRestriction isn't implemented yet"
+            )
         andreqs = []
         for x in self.restrictions:
-            method = getattr(x, 'iter_cnf_solutions', None)
+            method = getattr(x, "iter_cnf_solutions", None)
             if method is None:
                 andreqs.append([x])
             else:
@@ -388,12 +444,13 @@ class AndRestriction(base):
 
     def __str__(self):
         restricts_str = " && ".join(map(str, self.restrictions))
-        negate = 'not ' if self.negate else ''
-        return f'{negate}( {restricts_str} )'
+        negate = "not " if self.negate else ""
+        return f"{negate}( {restricts_str} )"
 
 
 class OrRestriction(base):
     """Boolean OR grouping of restrictions."""
+
     __slots__ = ()
 
     _evaluate_collapsible = True
@@ -412,7 +469,8 @@ class OrRestriction(base):
         """
         if self.negate:
             raise NotImplementedError(
-                "OrRestriction.solutions doesn't yet support self.negate")
+                "OrRestriction.solutions doesn't yet support self.negate"
+            )
 
         if not self.restrictions:
             return []
@@ -420,7 +478,7 @@ class OrRestriction(base):
         dcnf = []
         cnf = []
         for x in self.restrictions:
-            method = getattr(x, 'dnf_solutions', None)
+            method = getattr(x, "dnf_solutions", None)
             if method is None:
                 dcnf.append(x)
             else:
@@ -450,15 +508,14 @@ class OrRestriction(base):
         if self.negate:
             # hack- this is an experiment
             for x in AndRestriction(
-                node_type=self.type,
-                *[restriction.Negate(x)
-                  for x in self.restrictions]).iter_dnf_solutions():
+                node_type=self.type, *[restriction.Negate(x) for x in self.restrictions]
+            ).iter_dnf_solutions():
                 yield x
         if not self.restrictions:
             yield []
             return
         for x in self.restrictions:
-            method = getattr(x, 'iter_dnf_solutions', None)
+            method = getattr(x, "iter_dnf_solutions", None)
             if method is None:
                 yield [x]
             else:
@@ -490,9 +547,16 @@ class OrRestriction(base):
 
         def filter_func(truths):
             return True in truths
-        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
-                                         len(self.restrictions), truths,
-                                         filter_func):
+
+        for i in iterative_quad_toggling(
+            pkg,
+            pvals,
+            self.restrictions,
+            0,
+            len(self.restrictions),
+            truths,
+            filter_func,
+        ):
             return True
         return False
 
@@ -518,15 +582,22 @@ class OrRestriction(base):
 
         def filter_func(truths):
             return True in truths
-        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
-                                         len(self.restrictions), truths,
-                                         filter_func):
+
+        for i in iterative_quad_toggling(
+            pkg,
+            pvals,
+            self.restrictions,
+            0,
+            len(self.restrictions),
+            truths,
+            filter_func,
+        ):
             yield True
 
     def __str__(self):
         restricts_str = " || ".join(map(str, self.restrictions))
-        negate = 'not ' if self.negate else ''
-        return f'{negate}( {restricts_str} )'
+        negate = "not " if self.negate else ""
+        return f"{negate}( {restricts_str} )"
 
 
 class JustOneRestriction(base):
@@ -554,8 +625,8 @@ class JustOneRestriction(base):
 
     def __str__(self):
         restricts_str = " ".join(map(str, self.restrictions))
-        negate = 'not ' if self.negate else ''
-        return f'{negate}exactly-one-of ( {restricts_str} )'
+        negate = "not " if self.negate else ""
+        return f"{negate}exactly-one-of ( {restricts_str} )"
 
 
 class AtMostOneOfRestriction(base):
@@ -578,5 +649,5 @@ class AtMostOneOfRestriction(base):
 
     def __str__(self):
         restricts_str = " ".join(map(str, self.restrictions))
-        negate = 'not ' if self.negate else ''
-        return f'{negate}at-most-one-of ( {restricts_str} )'
+        negate = "not " if self.negate else ""
+        return f"{negate}at-most-one-of ( {restricts_str} )"

@@ -28,13 +28,17 @@ class fetchable(metaclass=generic_equality):
         self.filename = filename
 
     def __str__(self):
-        chksums = ', '.join(self.chksums)
-        return f'({self.filename!r}, {self.uri!r}, {chksums})'
+        chksums = ", ".join(self.chksums)
+        return f"({self.filename!r}, {self.uri!r}, {chksums})"
 
     def __repr__(self):
         return "<%s filename=%r uri=%r chksums=%r @%#8x>" % (
-            self.__class__.__name__, self.filename, self.uri, self.chksums,
-            id(self))
+            self.__class__.__name__,
+            self.filename,
+            self.uri,
+            self.chksums,
+            id(self),
+        )
 
     def __lt__(self, other):
         return self.filename < other.filename
@@ -52,7 +56,7 @@ class fetchable(metaclass=generic_equality):
 class mirror(metaclass=generic_equality):
     """uri source representing a mirror tier"""
 
-    __attr_comparison__ = ('mirror_name', 'mirrors')
+    __attr_comparison__ = ("mirror_name", "mirrors")
 
     __slots__ = ("mirrors", "mirror_name")
 
@@ -112,14 +116,16 @@ class uri_list:
         if not isinstance(mirror_inst, mirror):
             raise TypeError("mirror must be a pkgcore.fetch.mirror instance")
         if sub_uri is not None:
-            self._uri_source.append((mirror_inst, sub_uri.lstrip('/')))
+            self._uri_source.append((mirror_inst, sub_uri.lstrip("/")))
         else:
             self._uri_source.append(mirror_inst)
 
     def remove_mirrors(self):
         """Return a new URI source list after dropping all mirror-based URIs."""
         uri_list = self.__class__(self.filename)
-        uri_list._uri_source = tuple(x for x in self._uri_source if not isinstance(x, mirror))
+        uri_list._uri_source = tuple(
+            x for x in self._uri_source if not isinstance(x, mirror)
+        )
         return uri_list
 
     def add_uri(self, uri):
@@ -160,7 +166,7 @@ class uri_list:
             i += 1
 
     def __str__(self):
-        uris = ', '.join(str(x) for x in self._uri_source)
+        uris = ", ".join(str(x) for x in self._uri_source)
         return f"file: {self.filename}, uri: {uris}"
 
     def __bool__(self):
@@ -179,8 +185,10 @@ class uri_list:
 
     def visit_mirrors(self, invert=False, treat_default_as_mirror=True):
         def is_mirror(item):
-            return isinstance(item, mirror) and \
-                treat_default_as_mirror == isinstance(item, default_mirror)
+            return isinstance(item, mirror) and treat_default_as_mirror == isinstance(
+                item, default_mirror
+            )
+
         for item in self._uri_source:
             if isinstance(item, tuple):
                 if invert != is_mirror(item[0]):

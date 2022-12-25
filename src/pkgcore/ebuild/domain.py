@@ -44,9 +44,15 @@ from ..util.parserestrict import ParseError, parse_match
 from . import const
 from . import repository as ebuild_repo
 from .atom import atom as _atom
-from .misc import (ChunkedDataDict, chunked_data, collapsed_restrict_to_data, incremental_expansion,
-                   incremental_expansion_license, non_incremental_collapsed_restrict_to_data,
-                   optimize_incrementals)
+from .misc import (
+    ChunkedDataDict,
+    chunked_data,
+    collapsed_restrict_to_data,
+    incremental_expansion,
+    incremental_expansion_license,
+    non_incremental_collapsed_restrict_to_data,
+    optimize_incrementals,
+)
 from .portage_conf import PortageConfig
 from .repo_objs import Licenses, RepoConfig
 from .triggers import GenerateTriggers
@@ -57,7 +63,7 @@ def package_masks(iterable):
         try:
             yield parse_match(line), line, lineno, path
         except ParseError as e:
-            logger.warning(f'{path!r}, line {lineno}: parsing error: {e}')
+            logger.warning(f"{path!r}, line {lineno}: parsing error: {e}")
 
 
 def package_keywords_splitter(iterable):
@@ -66,7 +72,7 @@ def package_keywords_splitter(iterable):
         try:
             yield parse_match(v[0]), tuple(v[1:]), line, lineno, path
         except ParseError as e:
-            logger.warning(f'{path!r}, line {lineno}: parsing error: {e}')
+            logger.warning(f"{path!r}, line {lineno}: parsing error: {e}")
 
 
 def package_env_splitter(basedir, iterable):
@@ -85,7 +91,7 @@ def package_env_splitter(basedir, iterable):
         try:
             yield parse_match(val[0]), tuple(paths), line, lineno, path
         except ParseError as e:
-            logger.warning(f'{path!r}, line {lineno}: parsing error: {e}')
+            logger.warning(f"{path!r}, line {lineno}: parsing error: {e}")
 
 
 def apply_mask_filter(globs, atoms, pkg, mode):
@@ -118,17 +124,20 @@ def generate_filter(masks, unmasks, *extra):
             r = (packages.OrRestriction(masking, unmasking, disable_inst_caching=True),)
         else:
             r = (masking,)
-    return packages.AndRestriction(disable_inst_caching=True, finalize=True, *(r + extra))
+    return packages.AndRestriction(
+        disable_inst_caching=True, finalize=True, *(r + extra)
+    )
 
 
 def _read_config_file(path):
     """Read all the data files under a given path."""
     try:
         for fs_obj in iter_scan(path, follow_symlinks=True):
-            if not fs_obj.is_reg or '/.' in fs_obj.location:
+            if not fs_obj.is_reg or "/." in fs_obj.location:
                 continue
             for lineno, line in iter_read_bash(
-                    fs_obj.location, allow_line_cont=True, enum_line=True):
+                fs_obj.location, allow_line_cont=True, enum_line=True
+            ):
                 yield line, lineno, fs_obj.location
     except FileNotFoundError:
         pass
@@ -136,8 +145,9 @@ def _read_config_file(path):
         raise Failure(f"failed reading {path!r}: {e}") from e
 
 
-def load_property(filename, *, read_func=_read_config_file,
-                  parse_func=lambda x: x, fallback=()):
+def load_property(
+    filename, *, read_func=_read_config_file, parse_func=lambda x: x, fallback=()
+):
     """Decorator for parsing files using specified read/parse methods.
 
     :param filename: The filename to parse within the config directory.
@@ -146,6 +156,7 @@ def load_property(filename, *, read_func=_read_config_file,
     :keyword fallback: What to return if the file does not exist.
     :return: A :py:`klass.jit.attr_named` property instance.
     """
+
     def f(func):
         def _load_and_invoke(func, fallback, self, *args, **kwargs):
             if filename.startswith(os.path.sep):
@@ -159,9 +170,11 @@ def load_property(filename, *, read_func=_read_config_file,
             else:
                 data = fallback
             return func(self, data, *args, **kwargs)
-        doc = getattr(func, '__doc__', None)
-        jit_attr_named = klass.jit_attr_named(f'_jit_{func.__name__}', doc=doc)
+
+        doc = getattr(func, "__doc__", None)
+        jit_attr_named = klass.jit_attr_named(f"_jit_{func.__name__}", doc=doc)
         return jit_attr_named(partial(_load_and_invoke, func, fallback))
+
     return f
 
 
@@ -175,26 +188,50 @@ def load_property(filename, *, read_func=_read_config_file,
 class domain(config_domain):
 
     # XXX ouch, verify this crap and add defaults and stuff
-    _types = {'profile': 'ref:profile', 'repos': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo'}
+    _types = {
+        "profile": "ref:profile",
+        "repos": "lazy_refs:repo",
+        "vdb": "lazy_refs:repo",
+    }
     for _thing in (
-            'root', 'config_dir', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS',
-            'PATH', 'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR'):
-        _types[_thing] = 'str'
+        "root",
+        "config_dir",
+        "CHOST",
+        "CBUILD",
+        "CTARGET",
+        "CFLAGS",
+        "PATH",
+        "PORTAGE_TMPDIR",
+        "DISTCC_PATH",
+        "DISTCC_DIR",
+        "CCACHE_DIR",
+    ):
+        _types[_thing] = "str"
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
-        _types, typename='domain',
-        required=['repos', 'profile', 'vdb'],
-        allow_unknowns=True)
+        _types,
+        typename="domain",
+        required=["repos", "profile", "vdb"],
+        allow_unknowns=True,
+    )
 
     del _types, _thing
 
-    def __init__(self, profile, repos, vdb, root='/', prefix='/',
-                 config_dir='/etc/portage', **settings):
+    def __init__(
+        self,
+        profile,
+        repos,
+        vdb,
+        root="/",
+        prefix="/",
+        config_dir="/etc/portage",
+        **settings,
+    ):
         self.root = settings["ROOT"] = root
         self.config_dir = config_dir
         self.prefix = prefix
-        self.ebuild_hook_dir = pjoin(self.config_dir, 'env')
+        self.ebuild_hook_dir = pjoin(self.config_dir, "env")
         self.profile = profile
         self.__repos = repos
         self.__vdb = vdb
@@ -210,21 +247,22 @@ class domain(config_domain):
     @load_property("/etc/profile.env", read_func=read_bash_dict)
     def system_profile(self, data):
         # prepend system profile $PATH if it exists
-        if 'PATH' in data:
+        if "PATH" in data:
             path = stable_unique(
-                data['PATH'].split(os.pathsep) + os.environ['PATH'].split(os.pathsep))
-            os.environ['PATH'] = os.pathsep.join(path)
+                data["PATH"].split(os.pathsep) + os.environ["PATH"].split(os.pathsep)
+            )
+            os.environ["PATH"] = os.pathsep.join(path)
         return ImmutableDict(data)
 
-    @klass.jit_attr_named('_jit_reset_settings', uncached_val=None)
+    @klass.jit_attr_named("_jit_reset_settings", uncached_val=None)
     def settings(self):
         settings = self._settings
-        if 'CHOST' in settings and 'CBUILD' not in settings:
-            settings['CBUILD'] = settings['CHOST']
+        if "CHOST" in settings and "CBUILD" not in settings:
+            settings["CBUILD"] = settings["CHOST"]
 
         # if unset, MAKEOPTS defaults to CPU thread count
-        if 'MAKEOPTS' not in settings:
-            settings['MAKEOPTS'] = '-j%i' % cpu_count()
+        if "MAKEOPTS" not in settings:
+            settings["MAKEOPTS"] = "-j%i" % cpu_count()
 
         # reformat env.d and make.conf incrementals
         system_profile_settings = {}
@@ -257,16 +295,19 @@ class domain(config_domain):
             # skipped because negations are required for license filtering.
             if incremental not in settings or incremental in ("USE", "ACCEPT_LICENSE"):
                 continue
-            settings[incremental] = tuple(incremental_expansion(
-                settings[incremental],
-                msg_prefix=f'while expanding {incremental}'))
+            settings[incremental] = tuple(
+                incremental_expansion(
+                    settings[incremental], msg_prefix=f"while expanding {incremental}"
+                )
+            )
 
-        if 'ACCEPT_KEYWORDS' not in settings:
-            raise Failure("No ACCEPT_KEYWORDS setting detected from profile, "
-                          "or user config")
-        settings['ACCEPT_KEYWORDS'] = incremental_expansion(
-            settings['ACCEPT_KEYWORDS'],
-            msg_prefix='while expanding ACCEPT_KEYWORDS')
+        if "ACCEPT_KEYWORDS" not in settings:
+            raise Failure(
+                "No ACCEPT_KEYWORDS setting detected from profile, " "or user config"
+            )
+        settings["ACCEPT_KEYWORDS"] = incremental_expansion(
+            settings["ACCEPT_KEYWORDS"], msg_prefix="while expanding ACCEPT_KEYWORDS"
+        )
 
         # pull trigger options from the env
         self._triggers = GenerateTriggers(self, settings)
@@ -276,14 +317,14 @@ class domain(config_domain):
     @property
     def arch(self):
         try:
-            return self.settings['ARCH']
+            return self.settings["ARCH"]
         except KeyError:
             raise Failure("No ARCH setting detected from profile, or user config")
 
     @property
     def distdir(self):
         try:
-            return self.settings['DISTDIR']
+            return self.settings["DISTDIR"]
         except KeyError:
             raise Failure("No DISTDIR setting detected from config")
 
@@ -295,16 +336,18 @@ class domain(config_domain):
     def unstable_arch(self):
         return f"~{self.arch}"
 
-    @klass.jit_attr_named('_jit_reset_features', uncached_val=None)
+    @klass.jit_attr_named("_jit_reset_features", uncached_val=None)
     def features(self):
-        conf_features = list(self.settings.get('FEATURES', ()))
-        env_features = os.environ.get('FEATURES', '').split()
+        conf_features = list(self.settings.get("FEATURES", ()))
+        env_features = os.environ.get("FEATURES", "").split()
         return frozenset(optimize_incrementals(conf_features + env_features))
 
-    @klass.jit_attr_named('_jit_reset_use', uncached_val=None)
+    @klass.jit_attr_named("_jit_reset_use", uncached_val=None)
     def use(self):
         # append expanded use, FEATURES, and environment defined USE flags
-        use = list(self.settings.get('USE', ())) + list(self.profile.expand_use(self.settings))
+        use = list(self.settings.get("USE", ())) + list(
+            self.profile.expand_use(self.settings)
+        )
 
         # hackish implementation; if test is on, flip on the flag
         if "test" in self.features:
@@ -312,9 +355,9 @@ class domain(config_domain):
         if "prefix" in self.features:
             use.append("prefix")
 
-        return frozenset(optimize_incrementals(use + os.environ.get('USE', '').split()))
+        return frozenset(optimize_incrementals(use + os.environ.get("USE", "").split()))
 
-    @klass.jit_attr_named('_jit_reset_enabled_use', uncached_val=None)
+    @klass.jit_attr_named("_jit_reset_enabled_use", uncached_val=None)
     def enabled_use(self):
         use = ChunkedDataDict()
         use.add_bare_global(*split_negations(self.use))
@@ -326,7 +369,7 @@ class domain(config_domain):
     @klass.jit_attr_none
     def forced_use(self):
         use = ChunkedDataDict()
-        use.merge(getattr(self.profile, 'forced_use'))
+        use.merge(getattr(self.profile, "forced_use"))
         use.add_bare_global((), (self.arch,))
         use.freeze()
         return use
@@ -334,7 +377,7 @@ class domain(config_domain):
     @klass.jit_attr_none
     def stable_forced_use(self):
         use = ChunkedDataDict()
-        use.merge(getattr(self.profile, 'stable_forced_use'))
+        use.merge(getattr(self.profile, "stable_forced_use"))
         use.add_bare_global((), (self.arch,))
         use.freeze()
         return use
@@ -386,7 +429,7 @@ class domain(config_domain):
 
     @klass.jit_attr
     def bashrcs(self):
-        files = sorted_scan(pjoin(self.config_dir, 'bashrc'), follow_symlinks=True)
+        files = sorted_scan(pjoin(self.config_dir, "bashrc"), follow_symlinks=True)
         return tuple(local_source(x) for x in files)
 
     def _pkg_filters(self, pkg_accept_keywords=None, pkg_keywords=None):
@@ -397,21 +440,26 @@ class domain(config_domain):
 
         # ~amd64 -> [amd64, ~amd64]
         default_keywords = set([self.arch])
-        default_keywords.update(self.settings['ACCEPT_KEYWORDS'])
-        for x in self.settings['ACCEPT_KEYWORDS']:
+        default_keywords.update(self.settings["ACCEPT_KEYWORDS"])
+        for x in self.settings["ACCEPT_KEYWORDS"]:
             if x.startswith("~"):
                 default_keywords.add(x.lstrip("~"))
 
         # create keyword filters
         accept_keywords = (
-            pkg_keywords + pkg_accept_keywords + self.profile.accept_keywords)
-        filters = [self._make_keywords_filter(
-            default_keywords, accept_keywords,
-            incremental="package.keywords" in const.incrementals)]
+            pkg_keywords + pkg_accept_keywords + self.profile.accept_keywords
+        )
+        filters = [
+            self._make_keywords_filter(
+                default_keywords,
+                accept_keywords,
+                incremental="package.keywords" in const.incrementals,
+            )
+        ]
 
         # add license filters
         master_license = []
-        master_license.extend(self.settings.get('ACCEPT_LICENSE', ()))
+        master_license.extend(self.settings.get("ACCEPT_LICENSE", ()))
         if master_license or self.pkg_licenses:
             # restrict that matches iff the licenses are allowed
             restrict = delegate(partial(self._apply_license_filter, master_license))
@@ -435,12 +483,16 @@ class domain(config_domain):
                 matched_pkg_licenses += licenses
 
         raw_accepted_licenses = master_licenses + matched_pkg_licenses
-        license_manager = getattr(pkg.repo, 'licenses', self._default_licenses_manager)
+        license_manager = getattr(pkg.repo, "licenses", self._default_licenses_manager)
 
         for and_pair in pkg.license.dnf_solutions():
             accepted = incremental_expansion_license(
-                pkg, and_pair, license_manager.groups, raw_accepted_licenses,
-                msg_prefix="while checking ACCEPT_LICENSE ")
+                pkg,
+                and_pair,
+                license_manager.groups,
+                raw_accepted_licenses,
+                msg_prefix="while checking ACCEPT_LICENSE ",
+            )
             if accepted.issuperset(and_pair):
                 return True
         return False
@@ -449,7 +501,8 @@ class domain(config_domain):
         """Generates a restrict that matches iff the keywords are allowed."""
         if not accept_keywords and not self.profile.keywords:
             return packages.PackageRestriction(
-                "keywords", values.ContainmentMatch(frozenset(default_keys)))
+                "keywords", values.ContainmentMatch(frozenset(default_keys))
+            )
 
         if self.unstable_arch not in default_keys:
             # stable; thus empty entries == ~arch
@@ -457,9 +510,10 @@ class domain(config_domain):
                 if not v:
                     return r, self.unstable_arch
                 return r, v
+
             data = collapsed_restrict_to_data(
-                ((packages.AlwaysTrue, default_keys),),
-                (f(*i) for i in accept_keywords))
+                ((packages.AlwaysTrue, default_keys),), (f(*i) for i in accept_keywords)
+            )
         else:
             if incremental:
                 f = collapsed_restrict_to_data
@@ -488,7 +542,7 @@ class domain(config_domain):
             if atom.match(pkg):
                 pkg_keywords += keywords
         allowed = data.pull_data(pkg)
-        if '**' in allowed:
+        if "**" in allowed:
             return True
         if "*" in allowed:
             for k in pkg_keywords:
@@ -503,13 +557,16 @@ class domain(config_domain):
     @klass.jit_attr_none
     def use_expand_re(self):
         return re.compile(
-            "^(?:[+-])?(%s)_(.*)$" %
-            "|".join(x.lower() for x in self.profile.use_expand))
+            "^(?:[+-])?(%s)_(.*)$"
+            % "|".join(x.lower() for x in self.profile.use_expand)
+        )
 
     def _split_use_expand_flags(self, use_stream):
         stream = ((self.use_expand_re.match(x), x) for x in use_stream)
         flags, ue_flags = predicate_split(bool, stream, itemgetter(0))
-        return list(map(itemgetter(1), flags)), [(x[0].groups(), x[1]) for x in ue_flags]
+        return list(map(itemgetter(1), flags)), [
+            (x[0].groups(), x[1]) for x in ue_flags
+        ]
 
     def get_package_use_unconfigured(self, pkg, for_metadata=True):
         """Determine use flags for a given package.
@@ -530,23 +587,28 @@ class domain(config_domain):
             Three groups of use flags for the package in the following order:
             immutable flags, enabled flags, and disabled flags.
         """
-        pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
+        pre_defaults = [x[1:] for x in pkg.iuse if x[0] == "+"]
         if pre_defaults:
             pre_defaults, ue_flags = self._split_use_expand_flags(pre_defaults)
             pre_defaults.extend(
-                x[1] for x in ue_flags if x[0][0].upper() not in self.settings)
+                x[1] for x in ue_flags if x[0][0].upper() not in self.settings
+            )
 
-        attr = 'stable_' if self.stable_arch in pkg.keywords \
-            and self.unstable_arch not in self.settings['ACCEPT_KEYWORDS'] else ''
-        disabled = getattr(self.profile, attr + 'masked_use').pull_data(pkg)
-        immutable = getattr(self, attr + 'forced_use').pull_data(pkg)
+        attr = (
+            "stable_"
+            if self.stable_arch in pkg.keywords
+            and self.unstable_arch not in self.settings["ACCEPT_KEYWORDS"]
+            else ""
+        )
+        disabled = getattr(self.profile, attr + "masked_use").pull_data(pkg)
+        immutable = getattr(self, attr + "forced_use").pull_data(pkg)
 
         # lock the configurable use flags to only what's in IUSE, and what's forced
         # from the profiles (things like userland_GNU and arch)
         enabled = self.enabled_use.pull_data(pkg, pre_defaults=pre_defaults)
 
         # support globs for USE_EXPAND vars
-        use_globs = [u for u in enabled if u.endswith('*')]
+        use_globs = [u for u in enabled if u.endswith("*")]
         enabled_use_globs = []
         for glob in use_globs:
             for u in pkg.iuse_stripped:
@@ -565,7 +627,7 @@ class domain(config_domain):
 
     def get_package_domain(self, pkg):
         """Get domain object with altered settings from matching package.env entries."""
-        if getattr(pkg, '_domain', None) is not None:
+        if getattr(pkg, "_domain", None) is not None:
             return pkg._domain
 
         files = []
@@ -576,8 +638,12 @@ class domain(config_domain):
             pkg_settings = dict(self._settings.orig.items())
             for path in files:
                 PortageConfig.load_make_conf(
-                    pkg_settings, path, allow_sourcing=True,
-                    allow_recurse=False, incrementals=True)
+                    pkg_settings,
+                    path,
+                    allow_sourcing=True,
+                    allow_recurse=False,
+                    incrementals=True,
+                )
 
             # TODO: Improve pkg domain vs main domain proxying, e.g. static
             # jitted attrs should always be generated and pulled from the main
@@ -588,7 +654,7 @@ class domain(config_domain):
             pkg_domain = copy.copy(self)
             pkg_domain._settings = ProtectedDict(pkg_settings)
             # reset jitted attrs that can pull updated settings
-            for attr in (x for x in dir(self) if x.startswith('_jit_reset_')):
+            for attr in (x for x in dir(self) if x.startswith("_jit_reset_")):
                 setattr(pkg_domain, attr, None)
             # store altered domain on the pkg obj to avoid recreating pkg domain
             object.__setattr__(pkg, "_domain", pkg_domain)
@@ -641,26 +707,26 @@ class domain(config_domain):
 
         if repo_config.cache_format is not None:
             # default to using md5 cache
-            kwargs['cache'] = (md5_cache(path),)
+            kwargs["cache"] = (md5_cache(path),)
         repo = ebuild_repo.tree(config, repo_config, **kwargs)
         self.source_repos_raw += repo
 
         # inject repo objects into config to dynamically register repo
         data = {}
         repo_conf_data = {
-            'class': 'pkgcore.ebuild.repo_objs.RepoConfig',
-            'location': path,
+            "class": "pkgcore.ebuild.repo_objs.RepoConfig",
+            "location": path,
         }
         repo_data = {
-            'inherit': ('ebuild-repo-common',),
-            'repo_config': f'conf:{path}',
+            "inherit": ("ebuild-repo-common",),
+            "repo_config": f"conf:{path}",
         }
-        data[f'conf:{path}'] = basics.AutoConfigSection(repo_conf_data)
+        data[f"conf:{path}"] = basics.AutoConfigSection(repo_conf_data)
         data[path] = basics.AutoConfigSection(repo_data)
         config.update(data)
 
         # reset repo-related jit attrs
-        for attr in (x for x in dir(self) if x.startswith('_jit_repo_')):
+        for attr in (x for x in dir(self) if x.startswith("_jit_repo_")):
             setattr(self, attr, None)
 
         if configure:
@@ -693,13 +759,21 @@ class domain(config_domain):
                         args.append(getattr(self, x))
             except AttributeError as e:
                 raise Failure(
-                    f"failed configuring repo {repo!r}: "
-                    f"configurable missing: {e}") from e
+                    f"failed configuring repo {repo!r}: " f"configurable missing: {e}"
+                ) from e
             repo = repo.configure(*args)
         return repo
 
-    def filter_repo(self, repo, pkg_masks=None, pkg_unmasks=None, pkg_filters=None,
-                    pkg_accept_keywords=None, pkg_keywords=None, profile=True):
+    def filter_repo(
+        self,
+        repo,
+        pkg_masks=None,
+        pkg_unmasks=None,
+        pkg_filters=None,
+        pkg_accept_keywords=None,
+        pkg_keywords=None,
+        profile=True,
+    ):
         """Filter a configured repo."""
         if pkg_masks is None:
             pkg_masks = self.pkg_masks
@@ -726,40 +800,42 @@ class domain(config_domain):
         filters = generate_filter(masks, unmasks, *pkg_filters)
         return filtered.tree(repo, filters, True)
 
-    @klass.jit_attr_named('_jit_reset_tmpdir', uncached_val=None)
+    @klass.jit_attr_named("_jit_reset_tmpdir", uncached_val=None)
     def tmpdir(self):
         """Temporary directory for the system.
 
         Uses PORTAGE_TMPDIR setting and falls back to using the system's TMPDIR if unset.
         """
-        path = self.settings.get('PORTAGE_TMPDIR', '')
+        path = self.settings.get("PORTAGE_TMPDIR", "")
         if not os.path.exists(path):
             try:
                 os.mkdir(path)
             except EnvironmentError:
                 path = tempfile.gettempdir()
-                logger.warning(f'nonexistent PORTAGE_TMPDIR path, defaulting to {path!r}')
+                logger.warning(
+                    f"nonexistent PORTAGE_TMPDIR path, defaulting to {path!r}"
+                )
         return os.path.normpath(path)
 
     @property
     def pm_tmpdir(self):
         """Temporary directory for the package manager."""
-        return pjoin(self.tmpdir, 'portage')
+        return pjoin(self.tmpdir, "portage")
 
     @property
     def repo_configs(self):
         """All defined repo configs."""
-        return tuple(r.config for r in self.repos if hasattr(r, 'config'))
+        return tuple(r.config for r in self.repos if hasattr(r, "config"))
 
     @klass.jit_attr
     def KV(self):
         """The version of the running kernel."""
-        ret, version = spawn_get_output(['uname', '-r'])
+        ret, version = spawn_get_output(["uname", "-r"])
         if ret == 0:
             return version[0].strip()
-        raise ValueError('unknown kernel version')
+        raise ValueError("unknown kernel version")
 
-    @klass.jit_attr_named('_jit_repo_source_repos_raw', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_source_repos_raw", uncached_val=None)
     def source_repos_raw(self):
         """Group of package repos without filtering."""
         repos = []
@@ -768,7 +844,8 @@ class domain(config_domain):
                 repo = r.instantiate()
                 if not repo.is_supported:
                     logger.warning(
-                        f'skipping {r.name!r} repo: unsupported EAPI {str(repo.eapi)!r}')
+                        f"skipping {r.name!r} repo: unsupported EAPI {str(repo.eapi)!r}"
+                    )
                     continue
                 repos.append(repo)
             except config_errors.InstantiationError as e:
@@ -776,10 +853,10 @@ class domain(config_domain):
                 exc = find_user_exception(e)
                 if exc is None:
                     exc = e
-                logger.warning(f'skipping {r.name!r} repo: {exc}')
+                logger.warning(f"skipping {r.name!r} repo: {exc}")
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_named('_jit_repo_installed_repos_raw', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_installed_repos_raw", uncached_val=None)
     def installed_repos_raw(self):
         """Group of installed repos without filtering."""
         repos = [r.instantiate() for r in self.__vdb]
@@ -787,13 +864,12 @@ class domain(config_domain):
             repos.append(self.profile.provides_repo)
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_named('_jit_repo_repos_raw', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_repos_raw", uncached_val=None)
     def repos_raw(self):
         """Group of all repos without filtering."""
-        return RepositoryGroup(
-            chain(self.source_repos_raw, self.installed_repos_raw))
+        return RepositoryGroup(chain(self.source_repos_raw, self.installed_repos_raw))
 
-    @klass.jit_attr_named('_jit_repo_source_repos', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_source_repos", uncached_val=None)
     def source_repos(self):
         """Group of configured, filtered package repos."""
         repos = []
@@ -801,10 +877,10 @@ class domain(config_domain):
             try:
                 repos.append(self._wrap_repo(repo, filtered=True))
             except repo_errors.RepoError as e:
-                logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
+                logger.warning(f"skipping {repo.repo_id!r} repo: {e}")
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_named('_jit_repo_installed_repos', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_installed_repos", uncached_val=None)
     def installed_repos(self):
         """Group of configured, installed package repos."""
         repos = []
@@ -812,63 +888,73 @@ class domain(config_domain):
             try:
                 repos.append(self._wrap_repo(repo, filtered=False))
             except repo_errors.RepoError as e:
-                logger.warning(f'skipping {repo.repo_id!r} repo: {e}')
+                logger.warning(f"skipping {repo.repo_id!r} repo: {e}")
         return RepositoryGroup(repos)
 
-    @klass.jit_attr_named('_jit_repo_unfiltered_repos', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_unfiltered_repos", uncached_val=None)
     def unfiltered_repos(self):
         """Group of all configured repos without filtering."""
         repos = chain(self.source_repos, self.installed_repos)
         return RepositoryGroup(
-            (r.raw_repo if r.raw_repo is not None else r) for r in repos)
+            (r.raw_repo if r.raw_repo is not None else r) for r in repos
+        )
 
-    @klass.jit_attr_named('_jit_repo_repos', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_repos", uncached_val=None)
     def repos(self):
         """Group of all repos."""
-        return RepositoryGroup(
-            chain(self.source_repos, self.installed_repos))
+        return RepositoryGroup(chain(self.source_repos, self.installed_repos))
 
-    @klass.jit_attr_named('_jit_repo_ebuild_repos', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_ebuild_repos", uncached_val=None)
     def ebuild_repos(self):
         """Group of all ebuild repos bound with configuration data."""
         return RepositoryGroup(
-            x for x in self.source_repos
-            if isinstance(x.raw_repo, ebuild_repo.ConfiguredTree))
+            x
+            for x in self.source_repos
+            if isinstance(x.raw_repo, ebuild_repo.ConfiguredTree)
+        )
 
-    @klass.jit_attr_named('_jit_repo_ebuild_repos_unfiltered', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_ebuild_repos_unfiltered", uncached_val=None)
     def ebuild_repos_unfiltered(self):
         """Group of all ebuild repos without package filtering."""
         return RepositoryGroup(
-            x for x in self.unfiltered_repos
-            if isinstance(x, ebuild_repo.ConfiguredTree))
+            x
+            for x in self.unfiltered_repos
+            if isinstance(x, ebuild_repo.ConfiguredTree)
+        )
 
-    @klass.jit_attr_named('_jit_repo_ebuild_repos_raw', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_ebuild_repos_raw", uncached_val=None)
     def ebuild_repos_raw(self):
         """Group of all ebuild repos without filtering."""
         return RepositoryGroup(
-            x for x in self.source_repos_raw
-            if isinstance(x, ebuild_repo.UnconfiguredTree))
+            x
+            for x in self.source_repos_raw
+            if isinstance(x, ebuild_repo.UnconfiguredTree)
+        )
 
-    @klass.jit_attr_named('_jit_repo_binary_repos', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_binary_repos", uncached_val=None)
     def binary_repos(self):
         """Group of all binary repos bound with configuration data."""
         return RepositoryGroup(
-            x for x in self.source_repos
-            if isinstance(x.raw_repo, binary_repo.ConfiguredTree))
+            x
+            for x in self.source_repos
+            if isinstance(x.raw_repo, binary_repo.ConfiguredTree)
+        )
 
-    @klass.jit_attr_named('_jit_repo_binary_repos_unfiltered', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_binary_repos_unfiltered", uncached_val=None)
     def binary_repos_unfiltered(self):
         """Group of all binary repos without package filtering."""
         return RepositoryGroup(
-            x for x in self.unfiltered_repos
-            if isinstance(x, binary_repo.ConfiguredTree))
+            x
+            for x in self.unfiltered_repos
+            if isinstance(x, binary_repo.ConfiguredTree)
+        )
 
-    @klass.jit_attr_named('_jit_repo_binary_repos_raw', uncached_val=None)
+    @klass.jit_attr_named("_jit_repo_binary_repos_raw", uncached_val=None)
     def binary_repos_raw(self):
         """Group of all binary repos without filtering."""
         return RepositoryGroup(
-            x for x in self.source_repos_raw
-            if isinstance(x, binary_repo.tree))
+            x for x in self.source_repos_raw if isinstance(x, binary_repo.tree)
+        )
 
     # multiplexed repos
     all_repos = klass.alias_attr("repos.combined")

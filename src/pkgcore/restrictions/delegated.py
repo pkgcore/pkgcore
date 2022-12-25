@@ -16,7 +16,7 @@ class delegate(restriction.base):
     :obj:`pkgcore.ebuild.domain`.
     """
 
-    __slots__ = ('_transform', 'negate')
+    __slots__ = ("_transform", "negate")
 
     type = restriction.package_type
     inst_caching = False

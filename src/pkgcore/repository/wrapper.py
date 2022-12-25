@@ -26,7 +26,8 @@ class tree(prototype.tree):
         self.raw_repo = repo
         if not isinstance(self.raw_repo, prototype.tree):
             raise errors.InitializationError(
-                f'{self.raw_repo!r} is not a repository tree derivative')
+                f"{self.raw_repo!r} is not a repository tree derivative"
+            )
         self.package_class = package_class
         self.raw_repo = repo
 

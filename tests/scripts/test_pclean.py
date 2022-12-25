@@ -9,4 +9,4 @@ class TestCommandline(ArgParseMixin):
     suppress_domain = True
 
     def test_parser(self):
-        self.assertError('the following arguments are required: subcommand')
+        self.assertError("the following arguments are required: subcommand")

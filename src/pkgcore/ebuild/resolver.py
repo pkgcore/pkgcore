@@ -13,9 +13,15 @@ from ..restrictions import packages, values
 from .atom import atom
 
 
-def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
-                     force_replace=False, resolver_cls=plan.merge_plan,
-                     **kwds):
+def upgrade_resolver(
+    vdbs,
+    dbs,
+    verify_vdb=True,
+    nodeps=False,
+    force_replace=False,
+    resolver_cls=plan.merge_plan,
+    **kwds,
+):
 
     """
     generate and configure a resolver for upgrading all processed nodes.
@@ -44,8 +50,14 @@ def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
 
 
 def downgrade_resolver(
-        vdbs, dbs, verify_vdb=True, nodeps=False, force_replace=False,
-        resolver_cls=plan.merge_plan, **kwds):
+    vdbs,
+    dbs,
+    verify_vdb=True,
+    nodeps=False,
+    force_replace=False,
+    resolver_cls=plan.merge_plan,
+    **kwds,
+):
     """
     generate and configure a resolver for downgrading all processed nodes.
 
@@ -58,7 +70,8 @@ def downgrade_resolver(
     :return: :obj:`pkgcore.resolver.plan.merge_plan` instance
     """
     restrict = packages.OrRestriction(
-        *list(atom(f'>={x.cpvstr}') for x in chain.from_iterable(vdbs)))
+        *list(atom(f">={x.cpvstr}") for x in chain.from_iterable(vdbs))
+    )
     f = partial(plan.merge_plan.prefer_downgrade_version_strategy, restrict)
     dbs = list(map(partial(misc.restrict_repo, restrict), dbs))
     # hack.
@@ -74,9 +87,15 @@ def downgrade_resolver(
     return resolver_cls(dbs + vdbs, plan.pkg_sort_highest, f, **kwds)
 
 
-def min_install_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
-                         force_replace=False, resolver_cls=plan.merge_plan,
-                         **kwds):
+def min_install_resolver(
+    vdbs,
+    dbs,
+    verify_vdb=True,
+    nodeps=False,
+    force_replace=False,
+    resolver_cls=plan.merge_plan,
+    **kwds,
+):
     """
     Resolver that tries to minimize the number of changes while installing.
 
@@ -102,18 +121,18 @@ def min_install_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
 
     if force_replace:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
-    return resolver_cls(vdbs + dbs, plan.pkg_sort_highest,
-                        plan.merge_plan.prefer_reuse_strategy, **kwds)
+    return resolver_cls(
+        vdbs + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy, **kwds
+    )
+
 
 _vdb_restrict = packages.OrRestriction(
     packages.PackageRestriction("repo.livefs", values.EqualityMatch(False)),
     packages.AndRestriction(
-        packages.PackageRestriction(
-            "category", values.StrExactMatch("virtual")),
-        packages.PackageRestriction(
-            "package_is_real", values.EqualityMatch(False)),
-        ),
-    )
+        packages.PackageRestriction("category", values.StrExactMatch("virtual")),
+        packages.PackageRestriction("package_is_real", values.EqualityMatch(False)),
+    ),
+)
 
 
 class empty_tree_merge_plan(plan.merge_plan):
@@ -130,18 +149,20 @@ class empty_tree_merge_plan(plan.merge_plan):
         super().__init__(dbs, *args, **kwds)
         # XXX *cough*, hack.
         self.default_dbs = multiplex.tree(
-            *[x for x in self.all_raw_dbs if not x.livefs])
+            *[x for x in self.all_raw_dbs if not x.livefs]
+        )
 
 
 def generate_replace_resolver_kls(resolver_kls):
-
     class replace_resolver(resolver_kls):
         overriding_resolver_kls = resolver_kls
         _vdb_restriction = _vdb_restrict
 
         def add_atoms(self, restricts, **kwds):
-            restricts = [packages.KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
-                         for x in restricts]
+            restricts = [
+                packages.KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
+                for x in restricts
+            ]
             return self.overriding_resolver_kls.add_atoms(self, restricts, **kwds)
 
     return replace_resolver

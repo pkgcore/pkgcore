@@ -10,10 +10,10 @@ from .utils import TestRestriction
 class SillyBool(restriction.base):
     """Extra stupid version of AlwaysBool to test base.force_{True,False}."""
 
-    __slots__ = ('negate',)
+    __slots__ = ("negate",)
 
     def __init__(self, negate=False):
-        object.__setattr__(self, 'negate', negate)
+        object.__setattr__(self, "negate", negate)
 
     def match(self, *args, **kwargs):
         return not self.negate
@@ -49,7 +49,7 @@ class TestBase(TestRestriction):
 
 class TestAlwaysBool(TestRestriction):
 
-    bool_kls = partial(restriction.AlwaysBool, 'foo')
+    bool_kls = partial(restriction.AlwaysBool, "foo")
 
     def test_true(self):
         true_r = self.bool_kls(True)
@@ -82,19 +82,18 @@ class NoneMatch(restriction.base):
         return val is None
 
     def __repr__(self):
-        return '<NoneMatch>'
+        return "<NoneMatch>"
 
     def __str__(self):
-        return 'NoneMatch'
+        return "NoneMatch"
 
 
 class TestAnyMatch(TestRestriction):
-
     def test_basic(self):
         for negate in (False, True):
-            inst = restriction.AnyMatch(NoneMatch(), 'spork', negate=negate)
-            self.assertMatch(inst, ['spork', None], negated=negate)
-            self.assertNotMatch(inst, ['spork'], negated=negate)
+            inst = restriction.AnyMatch(NoneMatch(), "spork", negate=negate)
+            self.assertMatch(inst, ["spork", None], negated=negate)
+            self.assertNotMatch(inst, ["spork"], negated=negate)
             self.assertNotMatch(inst, (), negated=negate)
 
             # just test these do not traceback

@@ -7,10 +7,13 @@ try:
     from pkgcore.repository.util import get_raw_repos, get_virtual_repos
     from pkgcore.util import commandline
 except ImportError:
-    print('Cannot import pkgcore!', file=sys.stderr)
-    print('Verify it is properly installed and/or PYTHONPATH is set correctly.', file=sys.stderr)
-    if '--debug' not in sys.argv:
-        print('Add --debug to the commandline for a traceback.', file=sys.stderr)
+    print("Cannot import pkgcore!", file=sys.stderr)
+    print(
+        "Verify it is properly installed and/or PYTHONPATH is set correctly.",
+        file=sys.stderr,
+    )
+    if "--debug" not in sys.argv:
+        print("Add --debug to the commandline for a traceback.", file=sys.stderr)
     else:
         raise
     sys.exit(1)
@@ -18,8 +21,11 @@ except ImportError:
 
 argparser = commandline.ArgumentParser(color=False, version=False)
 argparser.add_argument(
-    '-r', '--repo', action=commandline.StoreRepoObject,
-    help='repo to give info about (default from domain if omitted)')
+    "-r",
+    "--repo",
+    action=commandline.StoreRepoObject,
+    help="repo to give info about (default from domain if omitted)",
+)
 
 
 @argparser.bind_final_check
@@ -46,6 +52,6 @@ def main(options, out, err):
         out.write()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tool = commandline.Tool(argparser)
     sys.exit(tool())

@@ -8,7 +8,6 @@ from pkgcore.fs.contents import contentsSet
 
 
 class TestFsObjs:
-
     def check_attrs(self, obj, path, offset=None):
         if offset is None:
             st = path.lstat()
@@ -81,7 +80,7 @@ class TestFsObjs:
         # do offset verification now.
         offset = path
         for obj in livefs.iter_scan(str(path), offset=str(offset)):
-            self.check_attrs(obj, Path(obj.location).relative_to('/'), offset=offset)
+            self.check_attrs(obj, Path(obj.location).relative_to("/"), offset=offset)
 
         seen = []
         for obj in livefs.iter_scan(str(files[0])):
@@ -97,21 +96,23 @@ class TestFsObjs:
 
         # regular directory scanning
         sorted_files = livefs.sorted_scan(str(tmp_path))
-        assert sorted_files == [str(tmp_path / x) for x in ('blah', 'dar', 'tmp')]
+        assert sorted_files == [str(tmp_path / x) for x in ("blah", "dar", "tmp")]
 
         # nonexistent paths
-        nonexistent_path = str(tmp_path / 'foobar')
+        nonexistent_path = str(tmp_path / "foobar")
         assert livefs.sorted_scan(nonexistent_path) == []
-        assert livefs.sorted_scan(nonexistent_path, nonexistent=True) == [nonexistent_path]
+        assert livefs.sorted_scan(nonexistent_path, nonexistent=True) == [
+            nonexistent_path
+        ]
 
     def test_sorted_scan_hidden(self, tmp_path):
         for x in (".tmp", "blah"):
             (tmp_path / x).touch()
 
         sorted_files = livefs.sorted_scan(str(tmp_path))
-        assert [str(tmp_path / x) for x in ('.tmp', 'blah')] == sorted_files
+        assert [str(tmp_path / x) for x in (".tmp", "blah")] == sorted_files
         sorted_files = livefs.sorted_scan(str(tmp_path), hidden=False)
-        assert [str(tmp_path / x) for x in ('blah', )] == sorted_files
+        assert [str(tmp_path / x) for x in ("blah",)] == sorted_files
 
     def test_sorted_scan_backup(self, tmp_path):
         for x in ("blah", "blah~"):
@@ -120,7 +121,7 @@ class TestFsObjs:
         sorted_files = livefs.sorted_scan(str(tmp_path))
         assert [str(tmp_path / x) for x in ("blah", "blah~")] == sorted_files
         sorted_files = livefs.sorted_scan(str(tmp_path), backup=False)
-        assert [str(tmp_path / x) for x in ('blah', )] == sorted_files
+        assert [str(tmp_path / x) for x in ("blah",)] == sorted_files
 
     def test_relative_sym(self, tmp_path):
         (path := tmp_path / "relative-symlink-test").symlink_to("../sym1/blah")
@@ -128,13 +129,17 @@ class TestFsObjs:
         assert o.target == "../sym1/blah"
 
     def test_intersect(self, tmp_path):
-        (tmp_path / 'reg').touch()
-        cset = contentsSet([fs.fsFile('reg', strict=False)])
+        (tmp_path / "reg").touch()
+        cset = contentsSet([fs.fsFile("reg", strict=False)])
         cset = cset.insert_offset(str(tmp_path))
         assert contentsSet(livefs.intersect(cset)) == cset
-        cset = contentsSet([fs.fsFile('reg/foon', strict=False),
-            fs.fsFile('reg/dar', strict=False),
-            fs.fsDir('reg/dir', strict=False)]).insert_offset(str(tmp_path))
+        cset = contentsSet(
+            [
+                fs.fsFile("reg/foon", strict=False),
+                fs.fsFile("reg/dar", strict=False),
+                fs.fsDir("reg/dir", strict=False),
+            ]
+        ).insert_offset(str(tmp_path))
         assert not list(livefs.intersect(cset))
-        cset = contentsSet([fs.fsDir('reg', strict=False)])
+        cset = contentsSet([fs.fsDir("reg", strict=False)])
         assert not list(livefs.intersect(cset))

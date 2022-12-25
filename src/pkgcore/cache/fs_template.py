@@ -29,10 +29,10 @@ class FsBased(base):
 
         for x, y in (("gid", portage_gid), ("perms", 0o664)):
             if x in config:
-                setattr(self, f'_{x}', config[x])
+                setattr(self, f"_{x}", config[x])
                 del config[x]
             else:
-                setattr(self, f'_{x}', y)
+                setattr(self, f"_{x}", y)
         super().__init__(**config)
 
         if label is not None:
@@ -40,13 +40,17 @@ class FsBased(base):
 
         self.location = location
 
-        self._mtime_used = 'mtime' == self.chf_type
+        self._mtime_used = "mtime" == self.chf_type
 
     __init__.__doc__ = "\n".join(
-        x.lstrip() for x in __init__.__doc__.split("\n") + [
+        x.lstrip()
+        for x in __init__.__doc__.split("\n")
+        + [
             y.lstrip().replace("@param", "@keyword")
             for y in base.__init__.__doc__.split("\n")
-            if "@param" in y])
+            if "@param" in y
+        ]
+    )
 
     def _ensure_access(self, path, mtime=None):
         """Ensure access to a path.

@@ -28,9 +28,9 @@ from .eapi import get_eapi
 from .misc import sort_keywords
 
 demand_compile_regexp(
-    '_EAPI_regex', r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
-demand_compile_regexp(
-    '_EAPI_str_regex', r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
+    "_EAPI_regex", r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
+)
+demand_compile_regexp("_EAPI_str_regex", r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
 
 
 class base(metadata.package):
@@ -43,18 +43,28 @@ class base(metadata.package):
     _config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in (
-            "bdepend", "depend", "rdepend", "pdepend", "idepend",
-            "fetchables", "license", "restrict", "required_use",
+            "bdepend",
+            "depend",
+            "rdepend",
+            "pdepend",
+            "idepend",
+            "fetchables",
+            "license",
+            "restrict",
+            "required_use",
         )
     }
 
-    __slots__ = ('_pkg_metadata_shared',)
+    __slots__ = ("_pkg_metadata_shared",)
 
     def _generate_depset(self, kls, key):
         return conditionals.DepSet.parse(
-            self.data.pop(key, ""), kls,
-            attr=key, element_func=self.eapi.atom_kls,
-            transitive_use_atoms=self.eapi.options.transitive_use_atoms)
+            self.data.pop(key, ""),
+            kls,
+            attr=key,
+            element_func=self.eapi.atom_kls,
+            transitive_use_atoms=self.eapi.options.transitive_use_atoms,
+        )
 
     @DynamicGetattrSetter.register
     def bdepend(self):
@@ -83,47 +93,58 @@ class base(metadata.package):
     @DynamicGetattrSetter.register
     def license(self):
         return conditionals.DepSet.parse(
-            self.data.pop('LICENSE', ''), str,
-            operators={
-                '||': boolean.OrRestriction,
-                '': boolean.AndRestriction},
-            attr='LICENSE', element_func=intern)
+            self.data.pop("LICENSE", ""),
+            str,
+            operators={"||": boolean.OrRestriction, "": boolean.AndRestriction},
+            attr="LICENSE",
+            element_func=intern,
+        )
 
     @DynamicGetattrSetter.register
     def fullslot(self):
-        slot = self.data.get('SLOT', None)
+        slot = self.data.get("SLOT", None)
         if not slot:
             raise metadata_errors.MetadataException(
-                self, 'slot', 'SLOT cannot be unset or empty')
+                self, "slot", "SLOT cannot be unset or empty"
+            )
         if not self.eapi.valid_slot_regex.match(slot):
             raise metadata_errors.MetadataException(
-                self, 'slot', f'invalid SLOT: {slot!r}')
+                self, "slot", f"invalid SLOT: {slot!r}"
+            )
         return slot
 
     @DynamicGetattrSetter.register
     def subslot(self):
-        slot, _sep, subslot = self.fullslot.partition('/')
+        slot, _sep, subslot = self.fullslot.partition("/")
         if not subslot:
             return slot
         return subslot
 
     @DynamicGetattrSetter.register
     def slot(self):
-        return self.fullslot.partition('/')[0]
+        return self.fullslot.partition("/")[0]
 
     def create_fetchable_from_uri(
-            self, chksums, ignore_missing_chksums, ignore_unknown_mirrors,
-            mirrors, default_mirrors, common_files, uri, filename=None):
+        self,
+        chksums,
+        ignore_missing_chksums,
+        ignore_unknown_mirrors,
+        mirrors,
+        default_mirrors,
+        common_files,
+        uri,
+        filename=None,
+    ):
         default_filename = os.path.basename(uri)
         if filename is not None:
             # log redundant renames for pkgcheck to flag
             if filename == default_filename:
-                logger.info(f'redundant rename: {uri} -> {filename}')
+                logger.info(f"redundant rename: {uri} -> {filename}")
         else:
             filename = default_filename
 
         if not filename:
-            raise ValueError(f'missing filename: {uri!r}')
+            raise ValueError(f"missing filename: {uri!r}")
 
         preexisting = common_files.get(filename)
 
@@ -142,11 +163,11 @@ class base(metadata.package):
             unrestrict_mirror = unrestrict_fetch = False
             if self.eapi.options.src_uri_unrestrict:
                 # mirror unrestriction implies fetch unrestriction
-                unrestrict_mirror = uri.startswith('mirror+')
-                unrestrict_fetch = uri.startswith('fetch+') or unrestrict_mirror
+                unrestrict_mirror = uri.startswith("mirror+")
+                unrestrict_fetch = uri.startswith("fetch+") or unrestrict_mirror
                 if unrestrict_fetch:
                     # strip the prefix
-                    uri = uri.partition('+')[2]
+                    uri = uri.partition("+")[2]
 
             allow_mirror = pkg_allow_mirror or unrestrict_mirror
 
@@ -168,16 +189,24 @@ class base(metadata.package):
                     uris.add_mirror(default_mirrors)
 
         if preexisting is None:
-            common_files[filename] = fetch.fetchable(filename, uris, chksums.get(filename))
+            common_files[filename] = fetch.fetchable(
+                filename, uris, chksums.get(filename)
+            )
         return common_files[filename]
 
-    def generate_fetchables(self, allow_missing_checksums=False,
-                            ignore_unknown_mirrors=False, skip_default_mirrors=False):
+    def generate_fetchables(
+        self,
+        allow_missing_checksums=False,
+        ignore_unknown_mirrors=False,
+        skip_default_mirrors=False,
+    ):
         """Generate fetchables object for a package."""
-        chksums_can_be_missing = allow_missing_checksums or \
-            bool(getattr(self.repo, '_allow_missing_chksums', False))
+        chksums_can_be_missing = allow_missing_checksums or bool(
+            getattr(self.repo, "_allow_missing_chksums", False)
+        )
         chksums_can_be_missing, chksums = self.repo._get_digests(
-            self, allow_missing=chksums_can_be_missing)
+            self, allow_missing=chksums_can_be_missing
+        )
 
         mirrors = getattr(self._parent, "mirrors", {})
         if skip_default_mirrors:
@@ -186,17 +215,26 @@ class base(metadata.package):
             default_mirrors = getattr(self._parent, "default_mirrors", None)
         common = {}
         func = partial(
-            self.create_fetchable_from_uri, chksums,
-            chksums_can_be_missing, ignore_unknown_mirrors,
-            mirrors, default_mirrors, common)
+            self.create_fetchable_from_uri,
+            chksums,
+            chksums_can_be_missing,
+            ignore_unknown_mirrors,
+            mirrors,
+            default_mirrors,
+            common,
+        )
 
         try:
             d = conditionals.DepSet.parse(
-                self.data.get("SRC_URI", ""), fetch.fetchable, operators={},
-                element_func=func, attr='SRC_URI',
-                allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
+                self.data.get("SRC_URI", ""),
+                fetch.fetchable,
+                operators={},
+                element_func=func,
+                attr="SRC_URI",
+                allow_src_uri_file_renames=self.eapi.options.src_uri_renames,
+            )
         except ebuild_errors.DepsetParseError as e:
-            raise metadata_errors.MetadataException(self, 'fetchables', str(e))
+            raise metadata_errors.MetadataException(self, "fetchables", str(e))
 
         for v in common.values():
             v.uri.finalize()
@@ -212,10 +250,15 @@ class base(metadata.package):
             if filename is not None:
                 return filename
             return os.path.basename(uri)
+
         return conditionals.DepSet.parse(
-            self.data.get("SRC_URI", ''), str, operators={}, attr='SRC_URI',
+            self.data.get("SRC_URI", ""),
+            str,
+            operators={},
+            attr="SRC_URI",
             element_func=partial(_extract_distfile_from_uri),
-            allow_src_uri_file_renames=self.eapi.options.src_uri_renames)
+            allow_src_uri_file_renames=self.eapi.options.src_uri_renames,
+        )
 
     @DynamicGetattrSetter.register
     def description(self):
@@ -233,13 +276,13 @@ class base(metadata.package):
     @DynamicGetattrSetter.register
     def restrict(self):
         return conditionals.DepSet.parse(
-            self.data.pop("RESTRICT", ''), str, operators={},
-            attr='RESTRICT')
+            self.data.pop("RESTRICT", ""), str, operators={}, attr="RESTRICT"
+        )
 
     @DynamicGetattrSetter.register
     def eapi(self):
         ebuild = self.ebuild
-        eapi = '0'
+        eapi = "0"
         if ebuild.path:
             # Use readlines directly since it does whitespace stripping
             # for us, far faster than native python can.
@@ -247,20 +290,20 @@ class base(metadata.package):
         else:
             i = (x.strip() for x in ebuild.text_fileobj())
         for line in i:
-            if line[0:1] in ('', '#'):
+            if line[0:1] in ("", "#"):
                 continue
-            if (mo := _EAPI_str_regex.match(line)) and (eapi_str := mo.group('EAPI')):
+            if (mo := _EAPI_str_regex.match(line)) and (eapi_str := mo.group("EAPI")):
                 eapi = eapi_str
             break
         i.close()
         try:
             return get_eapi(eapi)
         except ValueError as e:
-            error = str(e) if eapi else f'{e}: {eapi_str!r}'
-            raise metadata_errors.MetadataException(self, 'eapi', error)
+            error = str(e) if eapi else f"{e}: {eapi_str!r}"
+            raise metadata_errors.MetadataException(self, "eapi", error)
 
-    is_supported = klass.alias_attr('eapi.is_supported')
-    tracked_attributes = klass.alias_attr('eapi.tracked_attributes')
+    is_supported = klass.alias_attr("eapi.is_supported")
+    tracked_attributes = klass.alias_attr("eapi.tracked_attributes")
 
     @DynamicGetattrSetter.register
     def iuse(self):
@@ -269,7 +312,7 @@ class base(metadata.package):
     @property
     def iuse_stripped(self):
         if self.eapi.options.iuse_defaults:
-            return frozenset(x.lstrip('-+') if len(x) > 1 else x for x in self.iuse)
+            return frozenset(x.lstrip("-+") if len(x) > 1 else x for x in self.iuse)
         return self.iuse
 
     iuse_effective = klass.alias_attr("iuse_stripped")
@@ -281,13 +324,14 @@ class base(metadata.package):
     @DynamicGetattrSetter.register
     def properties(self):
         return conditionals.DepSet.parse(
-            self.data.pop("PROPERTIES", ''), str, operators={},
-            attr='PROPERTIES')
+            self.data.pop("PROPERTIES", ""), str, operators={}, attr="PROPERTIES"
+        )
 
     @DynamicGetattrSetter.register
     def defined_phases(self):
         return self.eapi.interpret_cache_defined_phases(
-            map(intern, self.data.pop("DEFINED_PHASES", "").split()))
+            map(intern, self.data.pop("DEFINED_PHASES", "").split())
+        )
 
     @DynamicGetattrSetter.register
     def homepage(self):
@@ -305,7 +349,7 @@ class base(metadata.package):
 
     @staticmethod
     def _mk_required_use_node(data):
-        if data[0] == '!':
+        if data[0] == "!":
             return values.ContainmentMatch(data[1:], negate=True)
         return values.ContainmentMatch(data)
 
@@ -317,22 +361,28 @@ class base(metadata.package):
                 operators = {
                     "||": boolean.OrRestriction,
                     "": boolean.AndRestriction,
-                    "^^": boolean.JustOneRestriction
+                    "^^": boolean.JustOneRestriction,
                 }
 
                 def _invalid_op(msg, *args):
-                    raise metadata_errors.MetadataException(self, 'eapi', f'REQUIRED_USE: {msg}')
+                    raise metadata_errors.MetadataException(
+                        self, "eapi", f"REQUIRED_USE: {msg}"
+                    )
 
                 if self.eapi.options.required_use_one_of:
-                    operators['??'] = boolean.AtMostOneOfRestriction
+                    operators["??"] = boolean.AtMostOneOfRestriction
                 else:
-                    operators['??'] = partial(
-                        _invalid_op, f"EAPI '{self.eapi}' doesn't support '??' operator")
+                    operators["??"] = partial(
+                        _invalid_op, f"EAPI '{self.eapi}' doesn't support '??' operator"
+                    )
 
                 return conditionals.DepSet.parse(
                     data,
-                    values.ContainmentMatch, operators=operators,
-                    element_func=self._mk_required_use_node, attr='REQUIRED_USE')
+                    values.ContainmentMatch,
+                    operators=operators,
+                    element_func=self._mk_required_use_node,
+                    attr="REQUIRED_USE",
+                )
         return conditionals.DepSet()
 
     source_repository = klass.alias_attr("repo.repo_id")
@@ -343,12 +393,11 @@ class base(metadata.package):
 
     @property
     def mandatory_phases(self):
-        return frozenset(
-            chain(self.defined_phases, self.eapi.default_phases))
+        return frozenset(chain(self.defined_phases, self.eapi.default_phases))
 
     @property
     def live(self):
-        return 'live' in self.properties
+        return "live" in self.properties
 
     @property
     def P(self):
@@ -360,7 +409,7 @@ class base(metadata.package):
 
     @property
     def PR(self):
-        return f'r{self.revision}'
+        return f"r{self.revision}"
 
     @property
     def path(self):
@@ -393,7 +442,9 @@ class package(base):
     local_use = klass.alias_attr("_shared_pkg_data.metadata_xml.local_use")
     longdescription = klass.alias_attr("_shared_pkg_data.metadata_xml.longdescription")
     manifest = klass.alias_attr("_shared_pkg_data.manifest")
-    stabilize_allarches = klass.alias_attr("_shared_pkg_data.metadata_xml.stabilize_allarches")
+    stabilize_allarches = klass.alias_attr(
+        "_shared_pkg_data.metadata_xml.stabilize_allarches"
+    )
 
     @property
     def _mtime_(self):
@@ -416,8 +467,9 @@ class package_factory(metadata.factory):
     # For the plugin system.
     priority = 5
 
-    def __init__(self, parent, cachedb, eclass_cache, mirrors, default_mirrors,
-                 *args, **kwargs):
+    def __init__(
+        self, parent, cachedb, eclass_cache, mirrors, default_mirrors, *args, **kwargs
+    ):
         super().__init__(parent, *args, **kwargs)
         self._cache = cachedb
         self._ecache = eclass_cache
@@ -427,7 +479,9 @@ class package_factory(metadata.factory):
 
         self.mirrors = mirrors
         if default_mirrors:
-            self.default_mirrors = fetch.default_mirror(default_mirrors, "conf. default mirror")
+            self.default_mirrors = fetch.default_mirror(
+                default_mirrors, "conf. default mirror"
+            )
         else:
             self.default_mirrors = None
 
@@ -466,36 +520,39 @@ class package_factory(metadata.factory):
     def _update_metadata(self, pkg, ebp=None):
         parsed_eapi = pkg.eapi
         if not parsed_eapi.is_supported:
-            return {'EAPI': str(parsed_eapi)}
+            return {"EAPI": str(parsed_eapi)}
 
         with processor.reuse_or_request(ebp) as my_proc:
             try:
                 mydata = my_proc.get_keys(pkg, self._ecache)
             except processor.ProcessorError as e:
                 raise metadata_errors.MetadataException(
-                    pkg, 'data', 'failed sourcing ebuild', e)
+                    pkg, "data", "failed sourcing ebuild", e
+                )
 
         # Rewrite defined_phases as needed, since we now know the EAPI.
-        eapi = get_eapi(mydata.get('EAPI', '0'))
+        eapi = get_eapi(mydata.get("EAPI", "0"))
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
-                pkg, 'eapi',
-                f"parsed EAPI '{parsed_eapi}' doesn't match sourced EAPI '{eapi}'")
+                pkg,
+                "eapi",
+                f"parsed EAPI '{parsed_eapi}' doesn't match sourced EAPI '{eapi}'",
+            )
         wipes = set(mydata)
 
         wipes.difference_update(eapi.metadata_keys)
-        if mydata["DEFINED_PHASES"] != '-':
+        if mydata["DEFINED_PHASES"] != "-":
             phases = mydata["DEFINED_PHASES"].split()
             d = eapi.phases_rev
             phases = set(d.get(x) for x in phases)
             # Discard is required should we have gotten
             # a phase that isn't actually in this EAPI.
             phases.discard(None)
-            mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
+            mydata["DEFINED_PHASES"] = " ".join(sorted(phases))
 
         if inherited := mydata.pop("INHERITED", None):
             mydata["_eclasses_"] = self._ecache.get_eclass_data(inherited.split())
-        mydata['_chf_'] = chksum.LazilyHashedPath(pkg.path)
+        mydata["_chf_"] = chksum.LazilyHashedPath(pkg.path)
 
         for x in wipes:
             del mydata[x]
@@ -523,8 +580,7 @@ class package_factory(metadata.factory):
         if inst is None:
             # key being cat/pkg
             mxml = self._parent_repo._get_shared_pkg_data(args[0], args[1])
-            inst = self._cached_instances[args] = self.child_class(
-                mxml, self, *args)
+            inst = self._cached_instances[args] = self.child_class(mxml, self, *args)
 
         return inst
 

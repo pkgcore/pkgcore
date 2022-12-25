@@ -15,8 +15,12 @@ design) reduces regen time by over 40% compared to portage-2.1
 # originally, but it still isn't what I would define as 'right'
 
 __all__ = (
-    "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor",
-    "UnhandledCommand", "expected_ebuild_env")
+    "request_ebuild_processor",
+    "release_ebuild_processor",
+    "EbuildProcessor",
+    "UnhandledCommand",
+    "expected_ebuild_env",
+)
 
 import contextlib
 import errno
@@ -43,10 +47,12 @@ active_ebp_list = []
 
 def _singled_threaded(functor):
     """Decorator that forces method to run under single thread."""
+
     @wraps(functor)
     def _inner(*args, **kwargs):
         with _global_ebp_lock:
             return functor(*args, **kwargs)
+
     return _inner
 
 
@@ -56,15 +62,15 @@ def shutdown_all_processors():
     try:
         while active_ebp_list:
             try:
-                active_ebp_list.pop().shutdown_processor(
-                    ignore_keyboard_interrupt=True)
+                active_ebp_list.pop().shutdown_processor(ignore_keyboard_interrupt=True)
             except EnvironmentError:
                 pass
 
         while inactive_ebp_list:
             try:
                 inactive_ebp_list.pop().shutdown_processor(
-                    ignore_keyboard_interrupt=True)
+                    ignore_keyboard_interrupt=True
+                )
             except EnvironmentError:
                 pass
     except Exception as e:
@@ -222,25 +228,26 @@ class EbdError(ProcessorError):
         """Extract error message from verbose output depending on verbosity level."""
         if verbosity <= 0:
             # strip ANSI escapes from output
-            lines = (bash.ansi_escape_re.sub('', x) for x in self.error.split('\n'))
+            lines = (bash.ansi_escape_re.sub("", x) for x in self.error.split("\n"))
             # pull eerror cmd output and strip prefixes
-            bash_error = [x.lstrip(' *') for x in lines if x.startswith(' *')]
+            bash_error = [x.lstrip(" *") for x in lines if x.startswith(" *")]
             try:
                 # output specific error message if it exists in the expected format
                 error = bash_error[1]
                 try:
                     # add non-helper die context if it exists and is from an eclass
                     die_context = next(
-                        x for x in reversed(bash_error) if x.endswith('called die'))
-                    if die_context.split(',', 1)[0].endswith('.eclass'):
-                        error += f', ({die_context})'
+                        x for x in reversed(bash_error) if x.endswith("called die")
+                    )
+                    if die_context.split(",", 1)[0].endswith(".eclass"):
+                        error += f", ({die_context})"
                 except StopIteration:
                     pass
                 return error
             except IndexError:
                 pass
         # show full bash output in verbose mode
-        return self.error.strip('\n')
+        return self.error.strip("\n")
 
 
 def chuck_DyingInterrupt(ebp, logfile=None, *args):
@@ -249,15 +256,15 @@ def chuck_DyingInterrupt(ebp, logfile=None, *args):
     error = []
     while True:
         line = ebp.read()
-        if line.strip() == 'dead':
+        if line.strip() == "dead":
             break
         error.append(line)
     drop_ebuild_processor(ebp)
     ebp.shutdown_processor(force=True)
     if logfile:
-        with open(logfile, 'at') as f:
-            f.write(''.join(error))
-    raise EbdError(''.join(error))
+        with open(logfile, "at") as f:
+            f.write("".join(error))
+    raise EbdError("".join(error))
 
 
 def chuck_KeyboardInterrupt(*args):
@@ -294,8 +301,8 @@ def chuck_UnhandledCommand(ebp, line):
 
 def chuck_StoppingCommand(ebp, line):
     """Event handler for successful phase/command completion."""
-    args = line.split(' ', 1)
-    if args[0] == 'succeeded':
+    args = line.split(" ", 1)
+    if args[0] == "succeeded":
         raise FinishedProcessing(True)
     else:
         # IndexError is explicitly left unhandled to force visibility
@@ -326,31 +333,36 @@ class EbuildProcessor:
         self._metadata_paths = None
         self.pid = None
 
-        spawn_opts = {'umask': 0o002}
+        spawn_opts = {"umask": 0o002}
         if self.userpriv:
-            spawn_opts.update({
-                "uid": os_data.portage_uid,
-                "gid": os_data.portage_gid,
-                "groups": [os_data.portage_gid],
-            })
+            spawn_opts.update(
+                {
+                    "uid": os_data.portage_uid,
+                    "gid": os_data.portage_gid,
+                    "groups": [os_data.portage_gid],
+                }
+            )
         elif spawn.is_userpriv_capable():
-            spawn_opts.update({
-                "gid": os_data.portage_gid,
-                "groups": [0, os_data.portage_gid],
-            })
+            spawn_opts.update(
+                {
+                    "gid": os_data.portage_gid,
+                    "groups": [0, os_data.portage_gid],
+                }
+            )
 
         # force invalid bashrc
         env = {x: "/not/valid" for x in ("BASHRC", "BASH_ENV")}
 
-        if int(os.environ.get('PKGCORE_PERF_DEBUG', 0)):
-            env["PKGCORE_PERF_DEBUG"] = os.environ['PKGCORE_PERF_DEBUG']
-        if int(os.environ.get('PKGCORE_DEBUG', 0)):
-            env["PKGCORE_DEBUG"] = os.environ['PKGCORE_DEBUG']
+        if int(os.environ.get("PKGCORE_PERF_DEBUG", 0)):
+            env["PKGCORE_PERF_DEBUG"] = os.environ["PKGCORE_PERF_DEBUG"]
+        if int(os.environ.get("PKGCORE_DEBUG", 0)):
+            env["PKGCORE_DEBUG"] = os.environ["PKGCORE_DEBUG"]
 
         # prepend script dir to PATH for git repo or unpacked tarball, for
         # installed versions it's empty
         env["PATH"] = os.pathsep.join(
-            list(const.PATH_FORCED_PREPEND) + [os.environ["PATH"]])
+            list(const.PATH_FORCED_PREPEND) + [os.environ["PATH"]]
+        )
 
         if self.sandbox:
             if not spawn.is_sandbox_capable():
@@ -367,10 +379,12 @@ class EbuildProcessor:
         # starting with max-3 to avoid a bug in older bash versions where it
         # doesn't check if an fd is in use before claiming it.
         max_fd = min(spawn.max_fd_limit, 1024)
-        env.update({
-            "PKGCORE_EBD_READ_FD": str(max_fd - 4),
-            "PKGCORE_EBD_WRITE_FD": str(max_fd - 3),
-        })
+        env.update(
+            {
+                "PKGCORE_EBD_READ_FD": str(max_fd - 4),
+                "PKGCORE_EBD_WRITE_FD": str(max_fd - 3),
+            }
+        )
 
         cread = cwrite = dread = dwrite = None
         # open pipes used for communication
@@ -387,17 +401,20 @@ class EbuildProcessor:
 
             self.pid = spawn_func(
                 [spawn.BASH_BINARY, self.ebd, "daemonize"],
-                fd_pipes=ebd_pipes, returnpid=True, env=env,
+                fd_pipes=ebd_pipes,
+                returnpid=True,
+                env=env,
                 # force each ebd instance to be a process group leader so everything
                 # can be easily terminated
                 pgid=0,
-                **spawn_opts)[0]
+                **spawn_opts,
+            )[0]
         except:
-                if cwrite is not None:
-                    os.close(cwrite)
-                if dread is not None:
-                    os.close(dread)
-                raise
+            if cwrite is not None:
+                os.close(cwrite)
+            if dread is not None:
+                os.close(dread)
+            raise
         finally:
             if cread is not None:
                 os.close(cread)
@@ -409,7 +426,9 @@ class EbuildProcessor:
         # verify ebd is running
         self.write("ebd?")
         if not self.expect("ebd!"):
-            raise InternalError("expected 'ebd!' response from ebd, which wasn't received")
+            raise InternalError(
+                "expected 'ebd!' response from ebd, which wasn't received"
+            )
 
         if self.sandbox:
             self.write("sandbox_log?")
@@ -420,8 +439,15 @@ class EbuildProcessor:
         # locking isn't used much, but w/ threading this will matter
         self.unlock()
 
-    def run_phase(self, phase, env, tmpdir=None, logging=None,
-                  additional_commands=None, sandbox=True):
+    def run_phase(
+        self,
+        phase,
+        env,
+        tmpdir=None,
+        logging=None,
+        additional_commands=None,
+        sandbox=True,
+    ):
         """Utility function, to initialize the processor for a phase.
 
         Used to combine multiple calls into one, leaving the processor
@@ -447,8 +473,9 @@ class EbuildProcessor:
         self.write("start_processing")
         return self.generic_handler(additional_commands=additional_commands)
 
-    def write(self, string, flush=True, disable_runtime_exceptions=False,
-              append_newline=True):
+    def write(
+        self, string, flush=True, disable_runtime_exceptions=False, append_newline=True
+    ):
         """Send something to the bash side.
 
         :param string: string to write to the bash processor.
@@ -460,7 +487,7 @@ class EbuildProcessor:
         string = str(string)
         try:
             if append_newline:
-                if string != '\n':
+                if string != "\n":
                     string += "\n"
             self.ebd_write.write(string)
             if flush:
@@ -473,8 +500,8 @@ class EbuildProcessor:
     def _consume_async_expects(self):
         if any(x[0] for x in self._outstanding_expects):
             self.ebd_write.flush()
-        got = [x.rstrip('\n') for x in self.readlines(len(self._outstanding_expects))]
-        ret = (got == [x[1] for x in self._outstanding_expects])
+        got = [x.rstrip("\n") for x in self.readlines(len(self._outstanding_expects))]
+        ret = got == [x[1] for x in self._outstanding_expects]
         self._outstanding_expects = []
         return ret
 
@@ -498,7 +525,7 @@ class EbuildProcessor:
             self.ebd_write.flush()
         if not self._outstanding_expects:
             try:
-                return want == self.read().rstrip('\n')
+                return want == self.read().rstrip("\n")
             except TimeoutError:
                 return False
             finally:
@@ -513,12 +540,12 @@ class EbuildProcessor:
         mydata = []
         while lines > 0:
             mydata.append(self.ebd_read.readline())
-            cmd, _, args_str = mydata[-1].strip().partition(' ')
-            if cmd == 'SIGINT':
+            cmd, _, args_str = mydata[-1].strip().partition(" ")
+            if cmd == "SIGINT":
                 chuck_KeyboardInterrupt(self, args_str)
-            elif cmd == 'SIGTERM':
+            elif cmd == "SIGTERM":
                 chuck_TermInterrupt(self, args_str)
-            elif cmd == 'dying':
+            elif cmd == "dying":
                 chuck_DyingInterrupt(self, args_str)
             lines -= 1
         return mydata
@@ -548,22 +575,30 @@ class EbuildProcessor:
         elif move_log != self.__sandbox_log:
             with open(move_log) as myf:
                 for x in violations:
-                    myf.write(x+"\n")
+                    myf.write(x + "\n")
 
         # XXX this is fugly, use a colorizer or something
         # (but it is better than "from output import red" (portage's output))
         def red(text):
-            return '\x1b[31;1m%s\x1b[39;49;00m' % (text,)
+            return "\x1b[31;1m%s\x1b[39;49;00m" % (text,)
 
-        self.write(red(
-            "--------------------------- ACCESS VIOLATION SUMMARY "
-            "---------------------------")+"\n")
-        self.write(red(f"LOG FILE = \"{move_log}\"")+"\n\n")
+        self.write(
+            red(
+                "--------------------------- ACCESS VIOLATION SUMMARY "
+                "---------------------------"
+            )
+            + "\n"
+        )
+        self.write(red(f'LOG FILE = "{move_log}"') + "\n\n")
         for x in violations:
-            self.write(x+"\n")
-        self.write(red(
-            "-----------------------------------------------------"
-            "---------------------------")+"\n")
+            self.write(x + "\n")
+        self.write(
+            red(
+                "-----------------------------------------------------"
+                "---------------------------"
+            )
+            + "\n"
+        )
         self.write("end_sandbox_summary")
         try:
             os.remove(self.__sandbox_log)
@@ -639,7 +674,7 @@ class EbuildProcessor:
         """Unlock the processor."""
         self.processing_lock = False
 
-    is_locked = klass.alias_attr('processing_lock')
+    is_locked = klass.alias_attr("processing_lock")
 
     @property
     def is_alive(self):
@@ -708,11 +743,14 @@ class EbuildProcessor:
                 raise KeyError(f"{key}: bash doesn't allow digits as the first char")
             if not isinstance(val, (str, list, tuple)):
                 raise ValueError(
-                    f"_generate_env_str was fed a bad value; key={key}, val={val}")
+                    f"_generate_env_str was fed a bad value; key={key}, val={val}"
+                )
 
             if isinstance(val, (list, tuple)):
-                data.append("%s=(%s)" % (key, ' '.join(
-                    f'[{i}]="{value}"' for i, value in enumerate(val))))
+                data.append(
+                    "%s=(%s)"
+                    % (key, " ".join(f'[{i}]="{value}"' for i, value in enumerate(val)))
+                )
             elif val.isalnum():
                 data.append(f"{key}={val}")
             elif "'" not in val:
@@ -734,18 +772,18 @@ class EbuildProcessor:
         data = self._generate_env_str(env_dict)
         old_umask = os.umask(0o002)
         if tmpdir:
-            path = pjoin(tmpdir, 'ebd-env-transfer')
-            with open(path, 'w') as file:
+            path = pjoin(tmpdir, "ebd-env-transfer")
+            with open(path, "w") as file:
                 file.write(data)
             self.write(f"start_receiving_env file {path}")
         else:
             self.write(
-                f"start_receiving_env bytes {len(data)}\n{data}",
-                append_newline=False)
+                f"start_receiving_env bytes {len(data)}\n{data}", append_newline=False
+            )
         os.umask(old_umask)
         return self.expect("env_received", async_req=async_req, flush=True)
 
-    def set_logfile(self, logfile=''):
+    def set_logfile(self, logfile=""):
         """Set the logfile (location to log to).
 
         Relevant only when the daemon is sandboxed.
@@ -777,8 +815,9 @@ class EbuildProcessor:
         if self.expect("metadata_path_received", flush=True):
             self._metadata_paths = paths
 
-    def _run_depend_like_phase(self, command, package_inst, eclass_cache,
-                               env=None, extra_commands={}):
+    def _run_depend_like_phase(
+        self, command, package_inst, eclass_cache, env=None, extra_commands={}
+    ):
         # ebuild is not allowed to run any external programs during
         # depend phases; use /dev/null since "" == "."
         self._ensure_metadata_paths(("/dev/null",))
@@ -791,7 +830,9 @@ class EbuildProcessor:
         if self._eclass_caching:
             updates = set()
         commands = extra_commands.copy()
-        commands["request_inherit"] = partial(inherit_handler, eclass_cache, updates=updates)
+        commands["request_inherit"] = partial(
+            inherit_handler, eclass_cache, updates=updates
+        )
         self.generic_handler(additional_commands=commands)
         if updates:
             self.preload_eclasses(eclass_cache, limited_to=updates, async_req=True)
@@ -815,15 +856,20 @@ class EbuildProcessor:
                 raise InternalError(line, "receive_env was invoked twice.")
             line = line.strip()
             if not line:
-                raise InternalError(line, "During env receive, ebd didn't give us a size.")
+                raise InternalError(
+                    line, "During env receive, ebd didn't give us a size."
+                )
             elif not line.isdigit():
                 raise InternalError(line, "Returned size wasn't an integer")
             # This is a raw transfer, for obvious reasons.
             environ.append(self.ebd_read.read(int(line)))
 
         self._run_depend_like_phase(
-            'gen_ebuild_env', package_inst, eclass_cache,
-            extra_commands={'receive_env': receive_env})
+            "gen_ebuild_env",
+            package_inst,
+            eclass_cache,
+            extra_commands={"receive_env": receive_env},
+        )
         if not environ:
             raise InternalError(None, "receive_env was never invoked.")
         # Dump any leading/trailing spaces.
@@ -848,13 +894,17 @@ class EbuildProcessor:
 
         # pass down phase and metadata key lists to avoid hardcoding them on the bash side
         env = {
-            'PKGCORE_EBUILD_PHASES': tuple(package_inst.eapi.phases.values()),
-            'PKGCORE_METADATA_KEYS': tuple(package_inst.eapi.metadata_keys),
+            "PKGCORE_EBUILD_PHASES": tuple(package_inst.eapi.phases.values()),
+            "PKGCORE_METADATA_KEYS": tuple(package_inst.eapi.metadata_keys),
         }
 
         self._run_depend_like_phase(
-            'gen_metadata', package_inst, eclass_cache, env=env,
-            extra_commands={'key': receive_key})
+            "gen_metadata",
+            package_inst,
+            eclass_cache,
+            env=env,
+            extra_commands={"key": receive_key},
+        )
 
         return metadata_keys
 
@@ -908,10 +958,11 @@ class EbuildProcessor:
             while True:
                 line = self.read().strip()
                 # split on first whitespace
-                cmd, _, args_str = line.partition(' ')
+                cmd, _, args_str = line.partition(" ")
                 if not cmd:
                     raise InternalError(
-                        f"Expected command; instead got nothing from {line!r}")
+                        f"Expected command; instead got nothing from {line!r}"
+                    )
                 if cmd in handlers:
                     args = []
                     if args_str:
@@ -989,19 +1040,21 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     d.update(pkg.eapi.ebd_env)
 
     if not depends:
-        path = chain.from_iterable((
-            const.PATH_FORCED_PREPEND,
-            pkg.eapi.helpers.get('global', ()),
-            d.get("PATH", "").split(os.pathsep),
-            os.environ.get("PATH", "").split(os.pathsep),
-        ))
+        path = chain.from_iterable(
+            (
+                const.PATH_FORCED_PREPEND,
+                pkg.eapi.helpers.get("global", ()),
+                d.get("PATH", "").split(os.pathsep),
+                os.environ.get("PATH", "").split(os.pathsep),
+            )
+        )
         d["PATH"] = os.pathsep.join(filter(None, path))
-        d["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
-        d["USE"] = ' '.join(sorted(str(x) for x in pkg.use))
+        d["INHERITED"] = " ".join(pkg.data.get("_eclasses_", ()))
+        d["USE"] = " ".join(sorted(str(x) for x in pkg.use))
         d["SLOT"] = pkg.fullslot
 
         # temp hack.
-        for x in ('chost', 'cbuild', 'ctarget'):
+        for x in ("chost", "cbuild", "ctarget"):
             val = getattr(pkg, x)
             if val is not None:
                 d[x.upper()] = val

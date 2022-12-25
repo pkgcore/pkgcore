@@ -20,11 +20,15 @@ def DeriveMetadataKls(original_kls):
         built = False
         __slots__ = ("_parent", "data", "_domain")
         try:
-            __doc__ = "package class with metadata bound to it for attribute " \
-                "generation\n\n" + \
-                     "\n".join(x.lstrip()
-                          for x in original_kls.__doc__.split("\n")
-                          if ":ivar" in x or ":cvar" in x)
+            __doc__ = (
+                "package class with metadata bound to it for attribute "
+                "generation\n\n"
+                + "\n".join(
+                    x.lstrip()
+                    for x in original_kls.__doc__.split("\n")
+                    if ":ivar" in x or ":cvar" in x
+                )
+            )
             __doc__ += "\n:ivar repo: parent repository"
         except AttributeError:
             # wee, must be in -OO mode.
@@ -35,7 +39,7 @@ def DeriveMetadataKls(original_kls):
 
         def __init__(self, parent_repository, *args, **kwds):
             f"""wrapper for {original_kls}.__init__
-            
+
             See {original_kls}.__init__ for allowed args/kwds, they're passed
             directly to it.
 
@@ -44,7 +48,7 @@ def DeriveMetadataKls(original_kls):
                 instance
             """
             super().__init__(*args, **kwds)
-            object.__setattr__(self, '_parent',  parent_repository)
+            object.__setattr__(self, "_parent", parent_repository)
 
         @base.DynamicGetattrSetter.register
         def data(self):
@@ -62,13 +66,13 @@ def DeriveMetadataKls(original_kls):
 
             if all:
                 try:
-                    object.__delattr__(self, 'data')
+                    object.__delattr__(self, "data")
                 except AttributeError:
                     pass
 
         @property
         def slotted_atom(self):
-            return atom(f'{self.key}:{self.slot}')
+            return atom(f"{self.key}:{self.slot}")
 
         def _fetch_metadata(self):
             """Pull the metadata for this package.
@@ -82,7 +86,9 @@ def DeriveMetadataKls(original_kls):
 
     return package
 
+
 package = DeriveMetadataKls(cpv.VersionedCPV)
+
 
 class factory:
     """package generator
@@ -128,9 +134,9 @@ class factory:
 
     def __getstate__(self):
         d = self.__dict__.copy()
-        del d['_cached_instances']
+        del d["_cached_instances"]
         return d
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
-        self.__dict__['_cached_instances'] = WeakValueDictionary()
+        self.__dict__["_cached_instances"] = WeakValueDictionary()

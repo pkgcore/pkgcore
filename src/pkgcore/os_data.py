@@ -5,8 +5,14 @@ This will be killed off and bound into configuration subsystem at some point
 """
 
 __all__ = (
-    "ostype", "portage_gid", "portage_uid", "root_gid", "root_uid",
-    "userland", "wheelgid", "xargs",
+    "ostype",
+    "portage_gid",
+    "portage_uid",
+    "root_gid",
+    "root_uid",
+    "userland",
+    "wheelgid",
+    "xargs",
 )
 
 import grp
@@ -48,8 +54,9 @@ except KeyError:
 try:
     portage_uid = pwd.getpwnam("portage").pw_uid
     portage_gid = grp.getgrnam("portage").gr_gid
-    portage_user_groups = tuple(x.gr_name for x in grp.getgrall()
-                                if 'portage' in x.gr_mem)
+    portage_user_groups = tuple(
+        x.gr_name for x in grp.getgrall() if "portage" in x.gr_mem
+    )
 except KeyError:
     portage_uid = 0
     portage_gid = wheelgid

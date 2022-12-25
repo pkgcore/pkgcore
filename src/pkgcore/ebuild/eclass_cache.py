@@ -75,18 +75,19 @@ class base:
 
     def __getstate__(self):
         d = self.__dict__.copy()
-        del d['_eclass_data_inst_cache']
+        del d["_eclass_data_inst_cache"]
         return d
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
-        self.__dict__['_eclass_data_inst_cache'] = WeakValueDictionary()
+        self.__dict__["_eclass_data_inst_cache"] = WeakValueDictionary()
 
 
 class cache(base):
 
-    pkgcore_config_type = ConfigHint({"path":"str", "location":"str"},
-                                     typename='eclass_cache')
+    pkgcore_config_type = ConfigHint(
+        {"path": "str", "location": "str"}, typename="eclass_cache"
+    )
 
     def __init__(self, path, location=None):
         """
@@ -107,7 +108,8 @@ class cache(base):
                 continue
             ys = y[:-eclass_len]
             ec[intern(ys)] = LazilyHashedPath(
-                pjoin(self.eclassdir, y), eclassdir=self.eclassdir)
+                pjoin(self.eclassdir, y), eclassdir=self.eclassdir
+            )
         return ImmutableDict(ec)
 
 
@@ -120,8 +122,9 @@ class StackedCaches(base):
     """
 
     pkgcore_config_type = ConfigHint(
-        {'caches': 'refs:eclass_cache', 'location': 'str', 'eclassdir': 'str'},
-        typename='eclass_cache')
+        {"caches": "refs:eclass_cache", "location": "str", "eclassdir": "str"},
+        typename="eclass_cache",
+    )
 
     def __init__(self, caches, **kwds):
         """
@@ -132,11 +135,12 @@ class StackedCaches(base):
             cache.
         """
         if len(caches) < 2:
-            raise TypeError(
-                "%s requires at least two eclass_caches" % self.__class__)
+            raise TypeError("%s requires at least two eclass_caches" % self.__class__)
 
         kwds.setdefault("eclassdir", caches[0].eclassdir)
-        kwds.setdefault("location", os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep)))
+        kwds.setdefault(
+            "location", os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep))
+        )
         self._caches = caches
         base.__init__(self, **kwds)
 

@@ -3,9 +3,17 @@ package class for buildable ebuilds
 """
 
 __all__ = (
-    "Maintainer", "MetadataXml", "LocalMetadataXml",
-    "SharedPkgData", "Licenses", "OverlayedProfiles",
-    "Project", "ProjectMember", "Subproject", "ProjectsXml", "LocalProjectsXml"
+    "Maintainer",
+    "MetadataXml",
+    "LocalMetadataXml",
+    "SharedPkgData",
+    "Licenses",
+    "OverlayedProfiles",
+    "Project",
+    "ProjectMember",
+    "Subproject",
+    "ProjectsXml",
+    "LocalProjectsXml",
 )
 
 import contextlib
@@ -56,11 +64,13 @@ class Maintainer:
     :ivar proxied: proxied maintainer status (yes, no, proxy)
     """
 
-    __slots__ = ('email', 'description', 'name', 'maint_type', 'proxied')
+    __slots__ = ("email", "description", "name", "maint_type", "proxied")
 
-    def __init__(self, email=None, name=None, description=None, maint_type=None, proxied=None):
+    def __init__(
+        self, email=None, name=None, description=None, maint_type=None, proxied=None
+    ):
         if email is None and name is None:
-            raise ValueError('need at least one of name and email')
+            raise ValueError("need at least one of name and email")
         self.email = email
         self.name = name
         self.description = description
@@ -70,13 +80,13 @@ class Maintainer:
     def __str__(self):
         if self.name is not None:
             if self.email is not None:
-                res = f'{self.name} <{self.email}>'
+                res = f"{self.name} <{self.email}>"
             else:
                 res = self.name
         else:
             res = self.email
         if self.description is not None:
-            return f'{res} ({self.description})'
+            return f"{res} ({self.description})"
         return res
 
     def __eq__(self, other):
@@ -94,7 +104,7 @@ class Maintainer:
 class Upstream:
     """Data on a single upstream."""
 
-    __slots__ = ('type', 'name')
+    __slots__ = ("type", "name")
 
     def __init__(self, type, name):
         self.type = type
@@ -119,8 +129,13 @@ class MetadataXml:
     """
 
     __slots__ = (
-        "__weakref__", "_maintainers", "_upstreams", "_local_use",
-        "_longdescription", "_source", "_stabilize_allarches",
+        "__weakref__",
+        "_maintainers",
+        "_upstreams",
+        "_local_use",
+        "_longdescription",
+        "_source",
+        "_stabilize_allarches",
     )
 
     def __init__(self, source):
@@ -131,8 +146,13 @@ class MetadataXml:
             self._parse_xml()
         return getattr(self, attr)
 
-    for attr in ("maintainers", "upstreams", "local_use",
-                 "longdescription", "stabilize_allarches"):
+    for attr in (
+        "maintainers",
+        "upstreams",
+        "local_use",
+        "longdescription",
+        "stabilize_allarches",
+    ):
         locals()[attr] = property(post_curry(_generic_attr, "_" + attr))
     del attr
 
@@ -160,30 +180,37 @@ class MetadataXml:
                     name = e.text
                 elif e.tag == "email":
                     email = e.text
-                elif e.tag == 'description' and e.get('lang', 'en') == 'en':
+                elif e.tag == "description" and e.get("lang", "en") == "en":
                     description = e.text
             try:
-                maintainers.append(Maintainer(
-                    name=name, email=email, description=description,
-                    maint_type=x.get('type'), proxied=x.get('proxied')))
+                maintainers.append(
+                    Maintainer(
+                        name=name,
+                        email=email,
+                        description=description,
+                        maint_type=x.get("type"),
+                        proxied=x.get("proxied"),
+                    )
+                )
             except ValueError:
                 # ignore invalid maintainers that should be caught by pkgcheck
                 pass
 
         self._maintainers = tuple(maintainers)
         self._upstreams = tuple(
-            Upstream(e.get('type'), e.text) for e in chain.from_iterable(tree.findall("upstream"))
-            if e.tag == 'remote-id'
+            Upstream(e.get("type"), e.text)
+            for e in chain.from_iterable(tree.findall("upstream"))
+            if e.tag == "remote-id"
         )
 
         # Could be unicode!
         self._longdescription = None
         for x in tree.findall("longdescription"):
-            if x.get('lang', 'en') != 'en':
+            if x.get("lang", "en") != "en":
                 continue
-            longdesc = ''.join(x.itertext())
+            longdesc = "".join(x.itertext())
             if longdesc:
-                self._longdescription = ' '.join(longdesc.split())
+                self._longdescription = " ".join(longdesc.split())
             break
 
         self._source = None
@@ -191,12 +218,12 @@ class MetadataXml:
         # lang="" is property of <use/>
         self._local_use = mappings.ImmutableDict()
         for x in tree.findall("use"):
-            if x.get('lang', 'en') != 'en':
+            if x.get("lang", "en") != "en":
                 continue
             self._local_use = mappings.ImmutableDict(
-                (e.attrib['name'], ' '.join(''.join(e.itertext()).split()))
-                for e in x.findall('flag')
-                if 'name' in e.attrib
+                (e.attrib["name"], " ".join("".join(e.itertext()).split()))
+                for e in x.findall("flag")
+                if "name" in e.attrib
             )
             break
 
@@ -242,12 +269,12 @@ class ProjectMember(metaclass=klass.generic_equality):
     :ivar is_lead: whether the member is a project lead.
     """
 
-    __slots__ = ('email', 'name', 'role', 'is_lead')
-    __attr_comparison__ = ('email', 'name', 'role', 'is_lead')
+    __slots__ = ("email", "name", "role", "is_lead")
+    __attr_comparison__ = ("email", "name", "role", "is_lead")
 
     def __init__(self, email, name=None, role=None, is_lead=None):
         if email is None:
-            raise ValueError('email for project member must not be null')
+            raise ValueError("email for project member must not be null")
         self.email = email
         self.name = name
         self.role = role
@@ -255,11 +282,11 @@ class ProjectMember(metaclass=klass.generic_equality):
 
     def __str__(self):
         if self.name is not None:
-            res = f'{self.name} <{self.email}>'
+            res = f"{self.name} <{self.email}>"
         else:
             res = self.email
         if self.role is not None:
-            return f'{res} ({self.role})'
+            return f"{res} ({self.role})"
         return res
 
 
@@ -270,11 +297,11 @@ class Subproject:
     :ivar inherit_members: whether the parent project inherits members from this subproject
     """
 
-    __slots__ = ('_ref', 'inherit_members', '_projects_xml', '_project')
+    __slots__ = ("_ref", "inherit_members", "_projects_xml", "_project")
 
     def __init__(self, ref, projects_xml, inherit_members=None):
         if ref is None:
-            raise ValueError('ref for subproject must not be null')
+            raise ValueError("ref for subproject must not be null")
         self._ref = ref
         self.inherit_members = inherit_members
         self._projects_xml = projects_xml
@@ -284,11 +311,11 @@ class Subproject:
         try:
             return self._projects_xml.projects[self._ref]
         except KeyError:
-            logger.error(f'projects.xml: subproject {self._ref!r} does not exist')
+            logger.error(f"projects.xml: subproject {self._ref!r} does not exist")
             return None
 
-    __getattr__ = klass.GetAttrProxy('project')
-    __dir__ = klass.DirProxy('project')
+    __getattr__ = klass.GetAttrProxy("project")
+    __dir__ = klass.DirProxy("project")
 
 
 class Project:
@@ -308,12 +335,13 @@ class Project:
     :ivar subprojects: subprojects
     """
 
-    __slots__ = ('email', 'name', 'url', 'description', 'members', 'subprojects')
+    __slots__ = ("email", "name", "url", "description", "members", "subprojects")
 
-    def __init__(self, email, name=None, url=None, description=None,
-                 members=(), subprojects=()):
+    def __init__(
+        self, email, name=None, url=None, description=None, members=(), subprojects=()
+    ):
         if email is None:
-            raise ValueError('email for project must not be null')
+            raise ValueError("email for project must not be null")
         self.email = email
         self.name = name
         self.url = url
@@ -323,11 +351,11 @@ class Project:
 
     def __str__(self):
         if self.name is not None:
-            res = f'{self.name} <{self.email}>'
+            res = f"{self.name} <{self.email}>"
         else:
             res = self.email
         if self.url is not None:
-            return f'{res} ({self.url})'
+            return f"{res} ({self.url})"
         return res
 
     @property
@@ -339,8 +367,10 @@ class Project:
     def recursive_members(self):
         """All project members, including members inherited from subprojects."""
         subprojects = list(
-            sp for sp in self.subprojects
-            if sp.inherit_members and sp.project is not None)
+            sp
+            for sp in self.subprojects
+            if sp.inherit_members and sp.project is not None
+        )
         subproject_emails = set(sp.email for sp in subprojects)
 
         # recursively collect all subprojects from which to inherit
@@ -360,7 +390,8 @@ class Project:
                 if m.email not in members:
                     # drop lead bit
                     m = ProjectMember(
-                        email=m.email, name=m.name, role=m.role, is_lead=False)
+                        email=m.email, name=m.name, role=m.role, is_lead=False
+                    )
                     members[m.email] = m
         return tuple(members.values())
 
@@ -372,7 +403,7 @@ class ProjectsXml:
     if loaded.
     """
 
-    __slots__ = ('__weakref__', '_projects', '_source')
+    __slots__ = ("__weakref__", "_projects", "_source")
 
     def __init__(self, source):
         self._source = source
@@ -389,39 +420,46 @@ class ProjectsXml:
         try:
             tree = etree.parse(source)
         except etree.XMLSyntaxError as e:
-            logger.error(f'failed parsing projects.xml: {e}')
+            logger.error(f"failed parsing projects.xml: {e}")
             return mappings.ImmutableDict()
 
         projects = {}
-        for p in tree.findall('project'):
+        for p in tree.findall("project"):
             kwargs = {}
-            for k in ('email', 'name', 'url', 'description'):
+            for k in ("email", "name", "url", "description"):
                 kwargs[k] = p.findtext(k)
 
             members = []
-            for m in p.findall('member'):
+            for m in p.findall("member"):
                 m_kwargs = {}
-                for k in ('email', 'name', 'role'):
+                for k in ("email", "name", "role"):
                     m_kwargs[k] = m.findtext(k)
-                m_kwargs['is_lead'] = m.get('is-lead', '') == '1'
+                m_kwargs["is_lead"] = m.get("is-lead", "") == "1"
                 try:
                     members.append(ProjectMember(**m_kwargs))
                 except ValueError:
-                    logger.error(f"project {kwargs['email']} has <member/> with no email")
-            kwargs['members'] = members
+                    logger.error(
+                        f"project {kwargs['email']} has <member/> with no email"
+                    )
+            kwargs["members"] = members
 
             subprojects = []
-            for sp in p.findall('subproject'):
+            for sp in p.findall("subproject"):
                 try:
-                    subprojects.append(Subproject(
-                        ref=sp.get('ref'),
-                        inherit_members=sp.get('inherit-members', '') == '1',
-                        projects_xml=self))
+                    subprojects.append(
+                        Subproject(
+                            ref=sp.get("ref"),
+                            inherit_members=sp.get("inherit-members", "") == "1",
+                            projects_xml=self,
+                        )
+                    )
                 except ValueError:
-                    logger.error(f"project {kwargs['email']} has <subproject/> with no ref")
-            kwargs['subprojects'] = subprojects
+                    logger.error(
+                        f"project {kwargs['email']} has <subproject/> with no ref"
+                    )
+            kwargs["subprojects"] = subprojects
 
-            projects[kwargs['email']] = Project(**kwargs)
+            projects[kwargs["email"]] = Project(**kwargs)
 
         return mappings.ImmutableDict(projects)
 
@@ -441,15 +479,30 @@ class LocalProjectsXml(ProjectsXml):
 class Licenses(metaclass=WeakInstMeta):
 
     __inst_caching__ = True
-    __slots__ = ('_base', '_licenses', '_groups', 'license_groups_path', 'licenses_dir', '_repo_masters', '_license_instances')
+    __slots__ = (
+        "_base",
+        "_licenses",
+        "_groups",
+        "license_groups_path",
+        "licenses_dir",
+        "_repo_masters",
+        "_license_instances",
+    )
 
-    def __init__(self, repo, *repo_masters,
-                 licenses_dir='licenses', license_groups='profiles/license_groups'):
+    def __init__(
+        self,
+        repo,
+        *repo_masters,
+        licenses_dir="licenses",
+        license_groups="profiles/license_groups",
+    ):
         repo_base = repo.location
-        object.__setattr__(self, '_base', repo_base)
-        object.__setattr__(self, 'license_groups_path', pjoin(repo_base, license_groups))
-        object.__setattr__(self, 'licenses_dir', pjoin(repo_base, licenses_dir))
-        object.__setattr__(self, '_repo_masters', repo_masters)
+        object.__setattr__(self, "_base", repo_base)
+        object.__setattr__(
+            self, "license_groups_path", pjoin(repo_base, license_groups)
+        )
+        object.__setattr__(self, "licenses_dir", pjoin(repo_base, licenses_dir))
+        object.__setattr__(self, "_repo_masters", repo_masters)
         self._load_license_instances()
 
     def _load_license_instances(self):
@@ -457,9 +510,9 @@ class Licenses(metaclass=WeakInstMeta):
         for x in self._repo_masters:
             if isinstance(x, Licenses):
                 l.append(x)
-            elif hasattr(x, 'licenses'):
+            elif hasattr(x, "licenses"):
                 l.append(x.licenses)
-        object.__setattr__(self, '_license_instances', tuple(l))
+        object.__setattr__(self, "_license_instances", tuple(l))
 
     @klass.jit_attr_none
     def licenses(self):
@@ -474,7 +527,7 @@ class Licenses(metaclass=WeakInstMeta):
     def groups(self):
         """Return the mapping of defined license groups to licenses for a repo."""
         try:
-            d = read_dict(self.license_groups_path, splitter=' ')
+            d = read_dict(self.license_groups_path, splitter=" ")
             for k, v in d.items():
                 d[k] = set(v.split())
         except EnvironmentError:
@@ -496,20 +549,22 @@ class Licenses(metaclass=WeakInstMeta):
         while keep_going:
             keep_going = False
             for k, v in groups.items():
-                if not any(x[0] == '@' for x in v):
+                if not any(x[0] == "@" for x in v):
                     continue
                 keep_going = True
                 l = []
                 for v2 in v:
-                    if v2[0] == '@':
+                    if v2[0] == "@":
                         v2 = v2[1:]
                         if not v2 or v2 not in groups:
                             logger.error(
-                                f"invalid license group reference: {v2!r} in {self}")
+                                f"invalid license group reference: {v2!r} in {self}"
+                            )
                             continue
                         elif v2 == k:
                             logger.error(
-                                f"cyclic license group references for {v2!r} in {self}")
+                                f"cyclic license group references for {v2!r} in {self}"
+                            )
                             continue
                         l.extend(groups[v2])
                     else:
@@ -551,18 +606,22 @@ class _immutable_attr_dict(mappings.ImmutableDict):
     mappings.inject_getitem_as_getattr(locals())
 
 
-_KnownProfile = namedtuple('_KnownProfile', ['base', 'arch', 'path', 'status', 'deprecated'])
+_KnownProfile = namedtuple(
+    "_KnownProfile", ["base", "arch", "path", "status", "deprecated"]
+)
 
 
 class Profiles(klass.ImmutableInstance):
 
-    __slots__ = ('config', 'profiles_base', '_profiles')
+    __slots__ = ("config", "profiles_base", "_profiles")
     __inst_caching__ = True
 
     def __init__(self, repo_config, profiles_base=None):
-        object.__setattr__(self, 'config', repo_config)
-        profiles_base = profiles_base if profiles_base is not None else repo_config.profiles_base
-        object.__setattr__(self, 'profiles_base', profiles_base)
+        object.__setattr__(self, "config", repo_config)
+        profiles_base = (
+            profiles_base if profiles_base is not None else repo_config.profiles_base
+        )
+        object.__setattr__(self, "profiles_base", profiles_base)
 
     @klass.jit_attr_none
     def profiles(self):
@@ -572,7 +631,7 @@ class Profiles(klass.ImmutableInstance):
     def parse(profiles_base, repo_id, known_status=None, known_arch=None):
         """Return the mapping of arches to profiles for a repo."""
         l = []
-        fp = pjoin(profiles_base, 'profiles.desc')
+        fp = pjoin(profiles_base, "profiles.desc")
         try:
             for lineno, line in iter_read_bash(fp, enum_line=True):
                 try:
@@ -581,21 +640,25 @@ class Profiles(klass.ImmutableInstance):
                     logger.error(
                         f"{repo_id}::profiles/profiles.desc, "
                         f"line {lineno}: invalid profile line format: "
-                        "should be 'arch profile status'")
+                        "should be 'arch profile status'"
+                    )
                     continue
                 if known_status is not None and status not in known_status:
                     logger.warning(
                         f"{repo_id}::profiles/profiles.desc, "
-                        f"line {lineno}: unknown profile status: {status!r}")
+                        f"line {lineno}: unknown profile status: {status!r}"
+                    )
                 if known_arch is not None and arch not in known_arch:
                     logger.warning(
                         f"{repo_id}::profiles/profiles.desc, "
-                        f"line {lineno}: unknown arch: {arch!r}")
+                        f"line {lineno}: unknown arch: {arch!r}"
+                    )
                 # Normalize the profile name on the offchance someone slipped an extra /
                 # into it.
-                path = '/'.join(filter(None, profile.split('/')))
+                path = "/".join(filter(None, profile.split("/")))
                 deprecated = os.path.exists(
-                    os.path.join(profiles_base, path, 'deprecated'))
+                    os.path.join(profiles_base, path, "deprecated")
+                )
                 l.append(_KnownProfile(profiles_base, arch, path, status, deprecated))
         except FileNotFoundError:
             # no profiles exist
@@ -609,7 +672,7 @@ class Profiles(klass.ImmutableInstance):
         yield from self.profiles
 
     def __getitem__(self, path):
-        if path[0] == '/':
+        if path[0] == "/":
             path = path.lstrip(self.profiles_base).lstrip(os.sep)
         for p in self.profiles:
             if p.path == path:
@@ -617,7 +680,7 @@ class Profiles(klass.ImmutableInstance):
         raise KeyError(path)
 
     def __contains__(self, path):
-        if path[0] == '/':
+        if path[0] == "/":
             path = path.lstrip(self.profiles_base).lstrip(os.sep)
         for p in self.profiles:
             if p.path == path:
@@ -638,7 +701,7 @@ class Profiles(klass.ImmutableInstance):
     def get_profiles(self, status):
         """Yield profiles matching a given status."""
         for p in self.profiles:
-            if status == p.status or (status == 'deprecated' and p.deprecated):
+            if status == p.status or (status == "deprecated" and p.deprecated):
                 yield p
 
     def create_profile(self, node, **kwargs):
@@ -649,10 +712,10 @@ class Profiles(klass.ImmutableInstance):
 class OverlayedProfiles(Profiles):
 
     __inst_caching__ = True
-    __slots__ = ('_profiles_instances', '_profiles_sources')
+    __slots__ = ("_profiles_instances", "_profiles_sources")
 
     def __init__(self, *profiles_sources):
-        object.__setattr__(self, '_profiles_sources', profiles_sources)
+        object.__setattr__(self, "_profiles_sources", profiles_sources)
         self._load_profiles_instances()
 
     @klass.jit_attr_none
@@ -670,9 +733,9 @@ class OverlayedProfiles(Profiles):
         for x in self._profiles_sources:
             if isinstance(x, Profiles):
                 l.append(x)
-            elif hasattr(x, 'profiles'):
+            elif hasattr(x, "profiles"):
                 l.append(x.profiles)
-        object.__setattr__(self, '_profiles_instances', tuple(l))
+        object.__setattr__(self, "_profiles_instances", tuple(l))
 
 
 class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta):
@@ -680,26 +743,35 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
     layout_offset = "metadata/layout.conf"
 
-    default_hashes = ('size', 'blake2b', 'sha512')
-    default_required_hashes = ('size', 'blake2b')
-    supported_profile_formats = ('pms', 'portage-1', 'portage-2', 'profile-bashrcs', 'profile-set')
-    supported_cache_formats = ('md5-dict', 'pms')
+    default_hashes = ("size", "blake2b", "sha512")
+    default_required_hashes = ("size", "blake2b")
+    supported_profile_formats = (
+        "pms",
+        "portage-1",
+        "portage-2",
+        "profile-bashrcs",
+        "profile-set",
+    )
+    supported_cache_formats = ("md5-dict", "pms")
 
     __inst_caching__ = True
 
     pkgcore_config_type = ConfigHint(
-        typename='repo_config',
+        typename="repo_config",
         types={
-            'config_name': 'str',
-            'syncer': 'lazy_ref:syncer',
-        })
+            "config_name": "str",
+            "syncer": "lazy_ref:syncer",
+        },
+    )
 
-    def __init__(self, location, config_name=None, syncer=None, profiles_base='profiles'):
+    def __init__(
+        self, location, config_name=None, syncer=None, profiles_base="profiles"
+    ):
         super().__init__(syncer)
-        object.__setattr__(self, 'config_name', config_name)
-        object.__setattr__(self, 'external', (config_name is None))
-        object.__setattr__(self, 'location', location)
-        object.__setattr__(self, 'profiles_base', pjoin(self.location, profiles_base))
+        object.__setattr__(self, "config_name", config_name)
+        object.__setattr__(self, "external", (config_name is None))
+        object.__setattr__(self, "location", location)
+        object.__setattr__(self, "profiles_base", pjoin(self.location, profiles_base))
 
         try:
             self._parse_config()
@@ -713,96 +785,138 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         """Load data from the repo's metadata/layout.conf file."""
         path = pjoin(self.location, self.layout_offset)
         data = read_dict(
-            iter_read_bash(readlines(path, strip_whitespace=True, swallow_missing=True)),
-            source_isiter=True, strip=True, filename=path, ignore_errors=True)
+            iter_read_bash(
+                readlines(path, strip_whitespace=True, swallow_missing=True)
+            ),
+            source_isiter=True,
+            strip=True,
+            filename=path,
+            ignore_errors=True,
+        )
 
         sf = object.__setattr__
-        sf(self, 'repo_name', data.get('repo-name', None))
+        sf(self, "repo_name", data.get("repo-name", None))
 
-        hashes = data.get('manifest-hashes', '').lower().split()
+        hashes = data.get("manifest-hashes", "").lower().split()
         if hashes:
-            hashes = ['size'] + hashes
+            hashes = ["size"] + hashes
             hashes = tuple(iter_stable_unique(hashes))
         else:
             hashes = self.default_hashes
 
-        required_hashes = data.get('manifest-required-hashes', '').lower().split()
+        required_hashes = data.get("manifest-required-hashes", "").lower().split()
         if required_hashes:
-            required_hashes = ['size'] + required_hashes
+            required_hashes = ["size"] + required_hashes
             required_hashes = tuple(iter_stable_unique(required_hashes))
         else:
             required_hashes = self.default_required_hashes
 
-        manifest_policy = data.get('use-manifests', 'strict').lower()
+        manifest_policy = data.get("use-manifests", "strict").lower()
         d = {
-            'disabled': (manifest_policy == 'false'),
-            'strict': (manifest_policy == 'strict'),
-            'thin': (data.get('thin-manifests', '').lower() == 'true'),
-            'signed': (data.get('sign-manifests', 'true').lower() == 'true'),
-            'hashes': hashes,
-            'required_hashes': required_hashes,
+            "disabled": (manifest_policy == "false"),
+            "strict": (manifest_policy == "strict"),
+            "thin": (data.get("thin-manifests", "").lower() == "true"),
+            "signed": (data.get("sign-manifests", "true").lower() == "true"),
+            "hashes": hashes,
+            "required_hashes": required_hashes,
         }
 
-        sf(self, 'manifests', _immutable_attr_dict(d))
-        masters = data.get('masters')
+        sf(self, "manifests", _immutable_attr_dict(d))
+        masters = data.get("masters")
         _missing_masters = False
         if masters is None:
             if not self.is_empty:
                 logger.warning(
                     f"{self.repo_id} repo at {self.location!r}, doesn't "
                     "specify masters in metadata/layout.conf. Please explicitly "
-                    "set masters (use \"masters =\" if the repo is standalone).")
+                    'set masters (use "masters =" if the repo is standalone).'
+                )
             _missing_masters = True
             masters = ()
         else:
             masters = tuple(iter_stable_unique(masters.split()))
-        sf(self, '_missing_masters', _missing_masters)
-        sf(self, 'masters', masters)
-        aliases = data.get('aliases', '').split() + [
-            self.config_name, self.repo_name, self.pms_repo_name, self.location]
-        sf(self, 'aliases', tuple(filter(None, iter_stable_unique(aliases))))
-        sf(self, 'eapis_deprecated', tuple(iter_stable_unique(data.get('eapis-deprecated', '').split())))
-        sf(self, 'eapis_banned', tuple(iter_stable_unique(data.get('eapis-banned', '').split())))
-        sf(self, 'eapis_testing', tuple(iter_stable_unique(data.get('eapis-testing', '').split())))
-        sf(self, 'profile_eapis_deprecated', tuple(iter_stable_unique(data.get('profile-eapis-deprecated', '').split())))
-        sf(self, 'profile_eapis_banned', tuple(iter_stable_unique(data.get('profile-eapis-banned', '').split())))
-        sf(self, 'properties_allowed', tuple(iter_stable_unique(data.get('properties-allowed', '').split())))
-        sf(self, 'restrict_allowed', tuple(iter_stable_unique(data.get('restrict-allowed', '').split())))
-        sf(self, 'sign_commits', data.get('sign-commits', 'false').lower() == 'true')
+        sf(self, "_missing_masters", _missing_masters)
+        sf(self, "masters", masters)
+        aliases = data.get("aliases", "").split() + [
+            self.config_name,
+            self.repo_name,
+            self.pms_repo_name,
+            self.location,
+        ]
+        sf(self, "aliases", tuple(filter(None, iter_stable_unique(aliases))))
+        sf(
+            self,
+            "eapis_deprecated",
+            tuple(iter_stable_unique(data.get("eapis-deprecated", "").split())),
+        )
+        sf(
+            self,
+            "eapis_banned",
+            tuple(iter_stable_unique(data.get("eapis-banned", "").split())),
+        )
+        sf(
+            self,
+            "eapis_testing",
+            tuple(iter_stable_unique(data.get("eapis-testing", "").split())),
+        )
+        sf(
+            self,
+            "profile_eapis_deprecated",
+            tuple(iter_stable_unique(data.get("profile-eapis-deprecated", "").split())),
+        )
+        sf(
+            self,
+            "profile_eapis_banned",
+            tuple(iter_stable_unique(data.get("profile-eapis-banned", "").split())),
+        )
+        sf(
+            self,
+            "properties_allowed",
+            tuple(iter_stable_unique(data.get("properties-allowed", "").split())),
+        )
+        sf(
+            self,
+            "restrict_allowed",
+            tuple(iter_stable_unique(data.get("restrict-allowed", "").split())),
+        )
+        sf(self, "sign_commits", data.get("sign-commits", "false").lower() == "true")
 
-        v = set(data.get('cache-formats', 'md5-dict').lower().split())
+        v = set(data.get("cache-formats", "md5-dict").lower().split())
         if not v:
             v = [None]
         else:
             # sort into favored order
             v = [f for f in self.supported_cache_formats if f in v]
             if not v:
-                logger.warning('unknown cache format: falling back to md5-dict format')
-                v = ['md5-dict']
-        sf(self, 'cache_format', list(v)[0])
+                logger.warning("unknown cache format: falling back to md5-dict format")
+                v = ["md5-dict"]
+        sf(self, "cache_format", list(v)[0])
 
-        profile_formats = set(data.get('profile-formats', 'pms').lower().split())
+        profile_formats = set(data.get("profile-formats", "pms").lower().split())
         if not profile_formats:
             logger.info(
                 f"{self.repo_id!r} repo at {self.location!r} has explicitly "
-                "unset profile-formats, defaulting to pms")
-            profile_formats = {'pms'}
+                "unset profile-formats, defaulting to pms"
+            )
+            profile_formats = {"pms"}
         unknown = profile_formats.difference(self.supported_profile_formats)
         if unknown:
             logger.info(
                 "%r repo at %r has unsupported profile format%s: %s",
-                self.repo_id, self.location, pluralism(unknown),
-                ', '.join(sorted(unknown)))
+                self.repo_id,
+                self.location,
+                pluralism(unknown),
+                ", ".join(sorted(unknown)),
+            )
             profile_formats.difference_update(unknown)
-            profile_formats.add('pms')
-        sf(self, 'profile_formats', profile_formats)
+            profile_formats.add("pms")
+        sf(self, "profile_formats", profile_formats)
 
     @klass.jit_attr
     def known_arches(self):
         """All valid KEYWORDS for the repo."""
         try:
-            return frozenset(iter_read_bash(
-                pjoin(self.profiles_base, 'arch.list')))
+            return frozenset(iter_read_bash(pjoin(self.profiles_base, "arch.list")))
         except FileNotFoundError:
             return frozenset()
 
@@ -812,8 +926,8 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
         See https://www.gentoo.org/glep/glep-0072.html for more details.
         """
-        fp = pjoin(self.profiles_base, 'arches.desc')
-        d = {'stable': set(), 'transitional': set(), 'testing': set()}
+        fp = pjoin(self.profiles_base, "arches.desc")
+        d = {"stable": set(), "transitional": set(), "testing": set()}
         try:
             for lineno, line in iter_read_bash(fp, enum_line=True):
                 try:
@@ -822,17 +936,20 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
                     logger.error(
                         f"{self.repo_id}::profiles/arches.desc, "
                         f"line {lineno}: invalid line format: "
-                        "should be '<arch> <status>'")
+                        "should be '<arch> <status>'"
+                    )
                     continue
                 if arch not in self.known_arches:
                     logger.warning(
                         f"{self.repo_id}::profiles/arches.desc, "
-                        f"line {lineno}: unknown arch: {arch!r}")
+                        f"line {lineno}: unknown arch: {arch!r}"
+                    )
                     continue
                 if status not in d:
                     logger.warning(
                         f"{self.repo_id}::profiles/arches.desc, "
-                        f"line {lineno}: unknown status: {status!r}")
+                        f"line {lineno}: unknown status: {status!r}"
+                    )
                     continue
                 d[status].add(arch)
         except FileNotFoundError:
@@ -846,23 +963,25 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         # conversion of ValueErrors...
         def converter(key):
             return (packages.AlwaysTrue, key)
-        return tuple(self._split_use_desc_file('use.desc', converter))
+
+        return tuple(self._split_use_desc_file("use.desc", converter))
 
     @klass.jit_attr
     def use_local_desc(self):
         """Local USE flags for the repo."""
+
         def converter(key):
             # todo: convert this to using a common exception base, with
             # conversion of ValueErrors/atom exceptions...
-            chunks = key.split(':', 1)
+            chunks = key.split(":", 1)
             return (atom.atom(chunks[0]), chunks[1])
 
-        return tuple(self._split_use_desc_file('use.local.desc', converter))
+        return tuple(self._split_use_desc_file("use.local.desc", converter))
 
     @klass.jit_attr
     def use_expand_desc(self):
         """USE_EXPAND settings for the repo."""
-        base = pjoin(self.profiles_base, 'desc')
+        base = pjoin(self.profiles_base, "desc")
         d = {}
         try:
             targets = listdir_files(base)
@@ -870,17 +989,19 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             targets = []
 
         for use_group in targets:
-            group = use_group.split('.', 1)[0]
+            group = use_group.split(".", 1)[0]
             d[group] = tuple(
                 self._split_use_desc_file(
-                    f'desc/{use_group}', lambda k: f'{group}_{k}', matcher=False))
+                    f"desc/{use_group}", lambda k: f"{group}_{k}", matcher=False
+                )
+            )
 
         return mappings.ImmutableDict(d)
 
     @klass.jit_attr
     def use_expand_sort(self):
         """Mapping of USE_EXPAND sorting keys for the repo."""
-        base = pjoin(self.profiles_base, 'desc')
+        base = pjoin(self.profiles_base, "desc")
         d = {}
         try:
             targets = listdir_files(base)
@@ -888,9 +1009,13 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             targets = []
 
         for use_group in targets:
-            group = use_group.split('.', 1)[0]
-            use_expand = (x[0] for x in self._split_use_desc_file(
-                f'desc/{use_group}', lambda k: k, matcher=False))
+            group = use_group.split(".", 1)[0]
+            use_expand = (
+                x[0]
+                for x in self._split_use_desc_file(
+                    f"desc/{use_group}", lambda k: k, matcher=False
+                )
+            )
             d[group] = {use: i for i, use in enumerate(use_expand)}
 
         return mappings.ImmutableDict(d)
@@ -904,15 +1029,15 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
                     key, val = line.split(None, 1)
                     key = converter(key)
                     if matcher:
-                        yield key[0], (key[1], val.split('-', 1)[1].strip())
+                        yield key[0], (key[1], val.split("-", 1)[1].strip())
                     else:
-                        yield key, val.split('-', 1)[1].strip()
+                        yield key, val.split("-", 1)[1].strip()
                 except ValueError as e:
-                    logger.error(f'failed parsing {fp!r}, line {line!r}: {e}')
+                    logger.error(f"failed parsing {fp!r}, line {line!r}: {e}")
         except FileNotFoundError:
             pass
         except ValueError as e:
-            logger.error(f'failed parsing {fp!r}: {e}')
+            logger.error(f"failed parsing {fp!r}: {e}")
 
     @klass.jit_attr
     def is_empty(self):
@@ -935,9 +1060,9 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         We're more lenient than the spec and don't verify it conforms to the
         specified format.
         """
-        name = readfile(pjoin(self.profiles_base, 'repo_name'), none_on_missing=True)
+        name = readfile(pjoin(self.profiles_base, "repo_name"), none_on_missing=True)
         if name is not None:
-            name = name.split('\n', 1)[0].strip()
+            name = name.split("\n", 1)[0].strip()
         return name
 
     @klass.jit_attr
@@ -951,7 +1076,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         if self.config_name:
             return self.config_name
         # repo_name might not be parsed yet if failure occurs during init
-        if repo_name := getattr(self, 'repo_name', None):
+        if repo_name := getattr(self, "repo_name", None):
             return repo_name
         if self.pms_repo_name:
             return self.pms_repo_name
@@ -962,13 +1087,15 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
     @klass.jit_attr
     def updates(self):
         """Package updates for the repo defined in profiles/updates/*."""
-        updates_dir = pjoin(self.profiles_base, 'updates')
+        updates_dir = pjoin(self.profiles_base, "updates")
         d = pkg_updates.read_updates(updates_dir, eapi=self.eapi)
         return mappings.ImmutableDict(d)
 
     @klass.jit_attr
     def categories(self):
-        categories = readlines(pjoin(self.profiles_base, 'categories'), True, True, True)
+        categories = readlines(
+            pjoin(self.profiles_base, "categories"), True, True, True
+        )
         if categories is not None:
             return tuple(map(intern, categories))
         return ()
@@ -979,7 +1106,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
 
     @klass.jit_attr
     def base_profile(self):
-        pms_strict = 'pms' in self.profile_formats
+        pms_strict = "pms" in self.profile_formats
         return profiles.EmptyRootNode(self.profiles_base, pms_strict=pms_strict)
 
     @klass.jit_attr
@@ -987,7 +1114,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         try:
             return self.base_profile.eapi
         except profiles.NonexistentProfile:
-            return get_eapi('0')
+            return get_eapi("0")
 
     @klass.jit_attr
     def pkg_masks(self):
@@ -1009,16 +1136,17 @@ class SquashfsRepoConfig(RepoConfig):
 
     def __init__(self, sqfs_file, location, *args, **kwargs):
         sqfs_path = pjoin(location, sqfs_file)
-        object.__setattr__(self, '_sqfs', sqfs_path)
-        object.__setattr__(self, 'location', location)
+        object.__setattr__(self, "_sqfs", sqfs_path)
+        object.__setattr__(self, "location", location)
         # if squashfs archive exists in the repo, try to mount it over itself
         if os.path.exists(self._sqfs):
             try:
                 self._mount_archive()
             except PermissionError:
-                if platform.uname().release < '4.18':
+                if platform.uname().release < "4.18":
                     raise repo_errors.InitializationError(
-                        'fuse mounts in user namespaces require linux >= 4.18')
+                        "fuse mounts in user namespaces require linux >= 4.18"
+                    )
                 raise
         super().__init__(location, *args, **kwargs)
 
@@ -1036,7 +1164,7 @@ class SquashfsRepoConfig(RepoConfig):
     def _failed_cmd(self, process, action):
         if process.returncode:
             stderr = process.stderr.decode().strip().lower()
-            msg = f'failed {action} squashfs archive: {stderr}'
+            msg = f"failed {action} squashfs archive: {stderr}"
             if process.returncode == 1:
                 raise PermissionDenied(self._sqfs, msg)
             else:
@@ -1045,35 +1173,38 @@ class SquashfsRepoConfig(RepoConfig):
     def _mount_archive(self):
         """Mount the squashfs archive onto the repo in a mount namespace."""
         # enable a user namespace if not running as root
-        unshare_kwds = {'mount': True, 'user': not os.getuid() == 0}
+        unshare_kwds = {"mount": True, "user": not os.getuid() == 0}
         try:
             simple_unshare(**unshare_kwds)
         except OSError as e:
             raise repo_errors.InitializationError(
-                f'namespace support unavailable: {e.strerror}')
+                f"namespace support unavailable: {e.strerror}"
+            )
 
         # First try using mount binary to automatically handle setting up loop
         # device -- this only works with real root perms since loopback device
         # mounting (losetup) doesn't work in user namespaces.
-        p = subprocess.run(['mount', self._sqfs, self.location], capture_output=True)
+        p = subprocess.run(["mount", self._sqfs, self.location], capture_output=True)
 
         if p.returncode == 0:
             return
         elif p.returncode not in (1, 32):
             # fail out if not a permissions issue (regular or loopback failure inside userns)
-            self._failed_cmd(p, 'mounting')
+            self._failed_cmd(p, "mounting")
 
         # fallback to using squashfuse
         try:
             p = subprocess.run(
-                ['squashfuse', '-o', 'nonempty', self._sqfs, self.location],
-                capture_output=True)
+                ["squashfuse", "-o", "nonempty", self._sqfs, self.location],
+                capture_output=True,
+            )
         except FileNotFoundError as e:
             raise repo_errors.InitializationError(
-                f'failed mounting squashfs archive: {e.filename} required')
+                f"failed mounting squashfs archive: {e.filename} required"
+            )
 
         if p.returncode:
-            self._failed_cmd(p, 'mounting')
+            self._failed_cmd(p, "mounting")
 
     def _umount_archive(self):
         """Unmount the squashfs archive."""
@@ -1082,19 +1213,22 @@ class SquashfsRepoConfig(RepoConfig):
             return
         except FileNotFoundError as e:
             raise repo_errors.InitializationError(
-                f'failed unmounting squashfs archive: {e.filename} required')
+                f"failed unmounting squashfs archive: {e.filename} required"
+            )
         except OSError as e:
             # fail out if not a permissions issue (regular or loopback failure inside userns)
             if e.errno not in (errno.EPERM, errno.EPIPE):
                 raise repo_errors.InitializationError(
-                    f'failed unmounting squashfs archive: {e.strerror}')
+                    f"failed unmounting squashfs archive: {e.strerror}"
+                )
 
         # fallback to using fusermount
         try:
-            p = subprocess.run(['fusermount', '-u', self.location], capture_output=True)
+            p = subprocess.run(["fusermount", "-u", self.location], capture_output=True)
         except FileNotFoundError as e:
             raise repo_errors.InitializationError(
-                f'failed unmounting squashfs archive: {e.filename} required')
+                f"failed unmounting squashfs archive: {e.filename} required"
+            )
 
         if p.returncode:
-            self._failed_cmd(p, 'unmounting')
+            self._failed_cmd(p, "unmounting")

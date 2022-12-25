@@ -12,5 +12,5 @@ def get_raw_pkg(pkg):
 
 
 def groupby_pkg(iterable):
-    for key, pkgs in itertools.groupby(iterable, attrgetter('key')):
+    for key, pkgs in itertools.groupby(iterable, attrgetter("key")):
         yield pkgs

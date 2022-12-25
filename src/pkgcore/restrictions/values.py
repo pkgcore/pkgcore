@@ -33,7 +33,7 @@ class base(restriction.base):
 
 
 def hashed_base(name, bases, scope):
-    scope.setdefault("__hash__", reflective_hash('_hash'))
+    scope.setdefault("__hash__", reflective_hash("_hash"))
     slots = scope.get("__slots__", None)
     if slots is not None:
         if "_hash" not in slots:
@@ -70,13 +70,14 @@ class VersionRestriction(base):
 
     Gives a clue to what the restriction does.
     """
+
     __slots__ = ()
 
 
 class StrRegex(base, metaclass=hashed_base):
     """regex based matching"""
 
-    __slots__ = ('_hash', 'flags', 'regex', '_matchfunc', 'ismatch', 'negate')
+    __slots__ = ("_hash", "flags", "regex", "_matchfunc", "ismatch", "negate")
     __inst_caching__ = True
 
     def __init__(self, regex, case_sensitive=True, match=False, negate=False):
@@ -109,7 +110,7 @@ class StrRegex(base, metaclass=hashed_base):
         if not isinstance(value, str):
             # Be too clever for our own good --marienz
             if value is None:
-                value = ''
+                value = ""
             else:
                 value = str(value)
         return (self._matchfunc(value) is not None) != self.negate
@@ -117,30 +118,30 @@ class StrRegex(base, metaclass=hashed_base):
     def __repr__(self):
         result = [self.__class__.__name__, repr(self.regex)]
         if self.negate:
-            result.append('negated')
+            result.append("negated")
         if self.ismatch:
-            result.append('match')
+            result.append("match")
         else:
-            result.append('search')
-        result.append('@%#8x' % (id(self),))
-        result = ' '.join(result)
-        return f'<{result}>'
+            result.append("search")
+        result.append("@%#8x" % (id(self),))
+        result = " ".join(result)
+        return f"<{result}>"
 
     def __str__(self):
         if self.ismatch:
-            result = 'match '
+            result = "match "
         else:
-            result = 'search '
+            result = "search "
         result += self.regex
         if self.negate:
-            return f'not {result}'
+            return f"not {result}"
         return result
 
 
 class StrExactMatch(base, metaclass=generic_equality):
     """exact string comparison match"""
 
-    __slots__ = __attr_comparison__ = ('_hash', 'exact', 'case_sensitive', 'negate')
+    __slots__ = __attr_comparison__ = ("_hash", "exact", "case_sensitive", "negate")
     __inst_caching__ = True
 
     def __init__(self, exact, case_sensitive=True, negate=False):
@@ -180,23 +181,23 @@ class StrExactMatch(base, metaclass=generic_equality):
 
     def __repr__(self):
         if self.negate:
-            string = '<%s %r negated @%#8x>'
+            string = "<%s %r negated @%#8x>"
         else:
-            string = '<%s %r @%#8x>'
+            string = "<%s %r @%#8x>"
         return string % (self.__class__.__name__, self.exact, id(self))
 
     def __str__(self):
         if self.negate:
-            return f'!= {self.exact}'
-        return f'== {self.exact}'
+            return f"!= {self.exact}"
+        return f"== {self.exact}"
 
-    __hash__ = reflective_hash('_hash')
+    __hash__ = reflective_hash("_hash")
 
 
 class StrGlobMatch(base, metaclass=hashed_base):
     """globbing matches; essentially startswith and endswith matches"""
 
-    __slots__ = ('_hash', 'glob', 'prefix', 'negate', 'flags')
+    __slots__ = ("_hash", "glob", "prefix", "negate", "flags")
     __inst_caching__ = True
 
     def __init__(self, glob, case_sensitive=True, prefix=True, negate=False):
@@ -231,30 +232,32 @@ class StrGlobMatch(base, metaclass=hashed_base):
 
     def __repr__(self):
         if self.negate:
-            string = '<%s %r case_sensitive=%r negated @%#8x>'
+            string = "<%s %r case_sensitive=%r negated @%#8x>"
         else:
-            string = '<%s %r case_sensitive=%r @%#8x>'
+            string = "<%s %r case_sensitive=%r @%#8x>"
         if self.prefix:
-            g = f'{self.glob}.*'
+            g = f"{self.glob}.*"
         else:
-            g = f'.*{self.glob}'
+            g = f".*{self.glob}"
         return string % (
-            self.__class__.__name__, g,
+            self.__class__.__name__,
+            g,
             self.flags == re.I and True or False,
-            id(self))
+            id(self),
+        )
 
     def __str__(self):
-        s = ''
+        s = ""
         if self.negate:
-            s = 'not '
+            s = "not "
         if self.prefix:
-            return f'{s}{self.glob}*'
-        return '{s}*{self.glob}'
+            return f"{s}{self.glob}*"
+        return "{s}*{self.glob}"
 
 
 class EqualityMatch(base, metaclass=generic_equality):
 
-    __slots__ = ('negate', 'data')
+    __slots__ = ("negate", "data")
     __attr_comparison__ = __slots__
 
     def __init__(self, data, negate=False):
@@ -264,7 +267,7 @@ class EqualityMatch(base, metaclass=generic_equality):
         """
 
         sf = object.__setattr__
-        sf(self, 'negate', negate)
+        sf(self, "negate", negate)
         sf(self, "data", data)
 
     def __hash__(self):
@@ -274,13 +277,17 @@ class EqualityMatch(base, metaclass=generic_equality):
         return (self.data == actual_val) != self.negate
 
     def __repr__(self):
-        return '<%s %r negate=%r @%#8x>' % (
-            self.__class__.__name__, self.data, self.negate, id(self))
+        return "<%s %r negate=%r @%#8x>" % (
+            self.__class__.__name__,
+            self.data,
+            self.negate,
+            id(self),
+        )
 
     def __str__(self):
         if self.negate:
-            return f'EqualityMatch: !={self.data}'
-        return f'EqualityMatch: ={self.data}'
+            return f"EqualityMatch: !={self.data}"
+        return f"EqualityMatch: ={self.data}"
 
 
 class ContainmentMatch(base, metaclass=hashed_base):
@@ -290,7 +297,7 @@ class ContainmentMatch(base, metaclass=hashed_base):
     not result in a true NAND when all is on.
     """
 
-    __slots__ = ('_hash', 'vals', 'all', 'negate')
+    __slots__ = ("_hash", "vals", "all", "negate")
     __inst_caching__ = True
 
     def __init__(self, vals, match_all=False, negate=False):
@@ -349,39 +356,65 @@ class ContainmentMatch(base, metaclass=hashed_base):
             vals = self.vals
 
         # XXX pretty much positive this isn't working.
-        if isinstance(val, str) or not getattr(pkg, 'configurable', False):
+        if isinstance(val, str) or not getattr(pkg, "configurable", False):
             # unchangable
             return not self.match(val)
 
         if self.negate:
             if self.all:
+
                 def filter(truths):
                     return False in truths
+
                 def true(r, pvals):
                     return pkg.request_enable(attr, r)
+
                 def false(r, pvals):
                     return pkg.request_disable(attr, r)
 
                 truths = [x in val for x in vals]
 
                 for x in boolean.iterative_quad_toggling(
-                        pkg, None, list(vals), 0, len(vals), truths,
-                        filter, desired_false=false, desired_true=true):
+                    pkg,
+                    None,
+                    list(vals),
+                    0,
+                    len(vals),
+                    truths,
+                    filter,
+                    desired_false=false,
+                    desired_true=true,
+                ):
                     return True
             elif pkg.request_disable(attr, *vals):
-                    return True
+                return True
             return False
 
         if not self.all:
             return pkg.request_disable(attr, *vals)
         l = len(vals)
-        def filter(truths): return truths.count(True) < l
-        def true(r, pvals): return pkg.request_enable(attr, r)
-        def false(r, pvals): return pkg.request_disable(attr, r)
+
+        def filter(truths):
+            return truths.count(True) < l
+
+        def true(r, pvals):
+            return pkg.request_enable(attr, r)
+
+        def false(r, pvals):
+            return pkg.request_disable(attr, r)
+
         truths = [x in val for x in vals]
         for x in boolean.iterative_quad_toggling(
-                pkg, None, list(vals), 0, l, truths, filter,
-                desired_false=false, desired_true=true):
+            pkg,
+            None,
+            list(vals),
+            0,
+            l,
+            truths,
+            filter,
+            desired_false=false,
+            desired_true=true,
+        ):
             return True
         return False
 
@@ -396,24 +429,35 @@ class ContainmentMatch(base, metaclass=hashed_base):
         if _values_override is None:
             vals = self.vals
 
-        if isinstance(val, str) or not getattr(pkg, 'configurable', False):
+        if isinstance(val, str) or not getattr(pkg, "configurable", False):
             # unchangable
             return self.match(val)
 
         if not self.negate:
             if not self.all:
+
                 def filter(truths):
                     return True in truths
+
                 def true(r, pvals):
                     return pkg.request_enable(attr, r)
+
                 def false(r, pvals):
                     return pkg.request_disable(attr, r)
 
                 truths = [x in val for x in vals]
 
                 for x in boolean.iterative_quad_toggling(
-                        pkg, None, list(vals), 0, len(vals), truths,
-                        filter, desired_false=false, desired_true=true):
+                    pkg,
+                    None,
+                    list(vals),
+                    0,
+                    len(vals),
+                    truths,
+                    filter,
+                    desired_false=false,
+                    desired_true=true,
+                ):
                     return True
             else:
                 if pkg.request_enable(attr, *vals):
@@ -425,28 +469,43 @@ class ContainmentMatch(base, metaclass=hashed_base):
             if pkg.request_disable(attr, *vals):
                 return True
         else:
-            def filter(truths): return True not in truths
-            def true(r, pvals): return pkg.request_enable(attr, r)
-            def false(r, pvals): return pkg.request_disable(attr, r)
+
+            def filter(truths):
+                return True not in truths
+
+            def true(r, pvals):
+                return pkg.request_enable(attr, r)
+
+            def false(r, pvals):
+                return pkg.request_disable(attr, r)
+
             truths = [x in val for x in vals]
             for x in boolean.iterative_quad_toggling(
-                    pkg, None, list(vals), 0, len(vals), truths, filter,
-                    desired_false=false, desired_true=true):
+                pkg,
+                None,
+                list(vals),
+                0,
+                len(vals),
+                truths,
+                filter,
+                desired_false=false,
+                desired_true=true,
+            ):
                 return True
         return False
 
     def __repr__(self):
         if self.negate:
-            string = '<%s %r all=%s negated @%#8x>'
+            string = "<%s %r all=%s negated @%#8x>"
         else:
-            string = '<%s %r all=%s @%#8x>'
-        return string % (
-            self.__class__.__name__, tuple(self.vals), self.all, id(self))
+            string = "<%s %r all=%s @%#8x>"
+        return string % (self.__class__.__name__, tuple(self.vals), self.all, id(self))
 
     def __str__(self):
-        restricts_str = ', '.join(map(str, self.vals))
-        negate = '!' if self.negate else ''
-        return f'{negate}{restricts_str}'
+        restricts_str = ", ".join(map(str, self.vals))
+        negate = "!" if self.negate else ""
+        return f"{negate}{restricts_str}"
+
 
 # ContainmentMatch2 was added in f1d3c6f to deprecate ContainmentMatch;
 # cleanup took a while (2021).  This ContainmentMatch2 can be removed
@@ -457,7 +516,7 @@ ContainmentMatch2 = ContainmentMatch
 class FlatteningRestriction(base, metaclass=generic_equality):
     """Flatten the values passed in and apply the nested restriction."""
 
-    __slots__ = __attr_comparison__ = ('dont_iter', 'restriction', 'negate')
+    __slots__ = __attr_comparison__ = ("dont_iter", "restriction", "negate")
     __hash__ = object.__hash__
 
     def __init__(self, dont_iter, childrestriction, negate=False):
@@ -473,26 +532,31 @@ class FlatteningRestriction(base, metaclass=generic_equality):
         object.__setattr__(self, "restriction", childrestriction)
 
     def match(self, val):
-        return self.restriction.match(
-            iflatten_instance(val, self.dont_iter)) != self.negate
+        return (
+            self.restriction.match(iflatten_instance(val, self.dont_iter))
+            != self.negate
+        )
 
     def __str__(self):
         return (
-            'flattening_restriction: '
-            f'dont_iter = {self.dont_iter}, restriction = {self.restriction}'
+            "flattening_restriction: "
+            f"dont_iter = {self.dont_iter}, restriction = {self.restriction}"
         )
 
     def __repr__(self):
-        return '<%s restriction=%r dont_iter=%r negate=%r @%#8x>' % (
+        return "<%s restriction=%r dont_iter=%r negate=%r @%#8x>" % (
             self.__class__.__name__,
-            self.restriction, self.dont_iter, self.negate,
-            id(self))
+            self.restriction,
+            self.dont_iter,
+            self.negate,
+            id(self),
+        )
 
 
 class FunctionRestriction(base, metaclass=generic_equality):
     """Convenience class for creating special restrictions."""
 
-    __attr_comparison__ = __slots__ = ('func', 'negate')
+    __attr_comparison__ = __slots__ = ("func", "negate")
     __hash__ = object.__hash__
 
     def __init__(self, func, negate=False):
@@ -504,22 +568,26 @@ class FunctionRestriction(base, metaclass=generic_equality):
         restriction using this class you should only use it if it is
         very unlikely backend-specific optimizations will be possible.
         """
-        object.__setattr__(self, 'negate', negate)
-        object.__setattr__(self, 'func', func)
+        object.__setattr__(self, "negate", negate)
+        object.__setattr__(self, "func", func)
 
     def match(self, val):
         return self.func(val) != self.negate
 
     def __repr__(self):
-        return '<%s func=%r negate=%r @%#8x>' % (
-            self.__class__.__name__, self.func, self.negate, id(self))
+        return "<%s func=%r negate=%r @%#8x>" % (
+            self.__class__.__name__,
+            self.func,
+            self.negate,
+            id(self),
+        )
 
 
 class StrConversion(base, metaclass=generic_equality):
     """convert passed in data to a str object"""
 
     __hash__ = object.__hash__
-    __attr_comparison__ = __slots__ = ('restrict',)
+    __attr_comparison__ = __slots__ = ("restrict",)
 
     def __init__(self, restrict):
         object.__setattr__(self, "restrict", restrict)
@@ -547,7 +615,8 @@ class AnyMatch(restriction.AnyMatch):
         # Hack: skip calling base.__init__. Doing this would make
         # restriction.base.__init__ run twice.
         restriction.AnyMatch.__init__(
-            self, childrestriction, restriction.value_type, negate=negate)
+            self, childrestriction, restriction.value_type, negate=negate
+        )
 
     def force_True(self, pkg, attr, val):
         return self.match(val)
@@ -559,13 +628,14 @@ class AnyMatch(restriction.AnyMatch):
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)
 # pylint: disable-msg=C0103
 
-AndRestriction = restriction.curry_node_type(boolean.AndRestriction,
-                                             restriction.value_type)
-OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
-                                            restriction.value_type)
+AndRestriction = restriction.curry_node_type(
+    boolean.AndRestriction, restriction.value_type
+)
+OrRestriction = restriction.curry_node_type(
+    boolean.OrRestriction, restriction.value_type
+)
 
-AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
-                                         restriction.value_type)
+AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool, restriction.value_type)
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

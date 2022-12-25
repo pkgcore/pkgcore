@@ -29,7 +29,7 @@ class FakePkgBase(package):
         for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
             data.setdefault(x, "")
 
-        data.setdefault("KEYWORDS", ' '.join(default_arches))
+        data.setdefault("KEYWORDS", " ".join(default_arches))
 
         cpv = CPV(cpvstr, versioned=True)
         super().__init__(shared, repo, cpv.category, cpv.package, cpv.fullver)
@@ -37,9 +37,16 @@ class FakePkgBase(package):
 
 
 class FakeProfile:
-
-    def __init__(self, masked_use={}, forced_use={},
-                 provides={}, masks=[], virtuals={}, arch='x86', name='none'):
+    def __init__(
+        self,
+        masked_use={},
+        forced_use={},
+        provides={},
+        masks=[],
+        virtuals={},
+        arch="x86",
+        name="none",
+    ):
         self.provides_repo = SimpleTree(provides)
         self.masked_use = {atom(k): v for k, v in masked_use.items()}
         self.forced_use = {atom(k): v for k, v in forced_use.items()}
@@ -49,20 +56,19 @@ class FakeProfile:
         self.name = name
 
         self.forced_data = collapsed_restrict_to_data(
-            [(packages.AlwaysTrue, (self.arch,))],
-            self.forced_use.items())
+            [(packages.AlwaysTrue, (self.arch,))], self.forced_use.items()
+        )
 
         self.masked_data = collapsed_restrict_to_data(
-            [(packages.AlwaysTrue, default_arches)],
-            self.masked_use.items())
+            [(packages.AlwaysTrue, default_arches)], self.masked_use.items()
+        )
 
     def make_virtuals_repo(self, repo):
         return self.virtuals
 
 
 class FakeRepo:
-
-    def __init__(self, pkgs=(), repo_id='', location='', masks=(), **kwds):
+    def __init__(self, pkgs=(), repo_id="", location="", masks=(), **kwds):
         self.pkgs = pkgs
         self.repo_id = repo_id or location
         self.location = location
@@ -97,16 +103,26 @@ class FakeRepo:
 
 
 class FakeEbuildRepo(FakeRepo):
-
     def __init__(self, *args, **kwds):
-        self.config = kwds.pop('config', RepoConfig('nonexistent'))
+        self.config = kwds.pop("config", RepoConfig("nonexistent"))
         self.trees = (self,)
         super().__init__(*args, **kwds)
 
 
 class FakePkg(FakePkgBase):
-    def __init__(self, cpv, eapi="0", slot="0", subslot=None, iuse=None, use=(),
-                 repo=FakeRepo(), restrict='', keywords=None, **kwargs):
+    def __init__(
+        self,
+        cpv,
+        eapi="0",
+        slot="0",
+        subslot=None,
+        iuse=None,
+        use=(),
+        repo=FakeRepo(),
+        restrict="",
+        keywords=None,
+        **kwargs,
+    ):
         if isinstance(repo, str):
             repo = FakeRepo(repo)
         elif isinstance(repo, (tuple, list)) and len(repo) < 3:
@@ -121,15 +137,14 @@ class FakePkg(FakePkgBase):
         object.__setattr__(self, "restrict", DepSet.parse(restrict, str))
         object.__setattr__(self, "fetchables", [])
         object.__setattr__(self, "use", set(use))
-        object.__setattr__(self, 'eapi', get_eapi(eapi, False))
+        object.__setattr__(self, "eapi", get_eapi(eapi, False))
         if iuse is not None:
             object.__setattr__(self, "iuse", set(iuse))
 
 
 # misc setup code for generating glsas for testing
 
-glsa_template = \
-"""<?xml version="1.0" encoding="UTF-8"?>
+glsa_template = """<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE glsa SYSTEM "http://www.gentoo.org/dtd/glsa.dtd">
 <?xml-stylesheet href="/xsl/glsa.xsl" type="text/xsl"?>
 <?xml-stylesheet href="/xsl/guide.xsl" type="text/xsl"?>
@@ -168,10 +183,10 @@ glsa_template = \
 </glsa>
 """
 
-ops = {'>': 'gt', '<': 'lt'}
-ops.update((k + '=', v[0] + 'e') for k, v in list(ops.items()))
-ops.update(('~' + k, 'r' + v) for k, v in list(ops.items()))
-ops['='] = 'eq'
+ops = {">": "gt", "<": "lt"}
+ops.update((k + "=", v[0] + "e") for k, v in list(ops.items()))
+ops.update(("~" + k, "r" + v) for k, v in list(ops.items()))
+ops["="] = "eq"
 
 
 def convert_range(text, tag, slot):
@@ -181,7 +196,7 @@ def convert_range(text, tag, slot):
     op = text[:i]
     text = text[i:]
     range = ops[op]
-    slot = f' slot="{slot}"' if slot else ''
+    slot = f' slot="{slot}"' if slot else ""
     return f'<{tag} range="{range}"{slot}>{text}</{tag}>'
 
 
@@ -190,19 +205,21 @@ def mk_glsa(*pkgs, **kwds):
     if kwds:
         raise TypeError("id is the only allowed kwds; got %r" % kwds)
     id = str(id)
-    horked = ''
+    horked = ""
     for data in pkgs:
         if len(data) == 4:
             pkg, slot, ranges, arch = data
         elif len(data) == 3:
             pkg, ranges, arch = data
-            slot = ''
+            slot = ""
         else:
             pkg, ranges = data
-            slot = ''
-            arch = '*'
-        horked += '<package name="%s" auto="yes" arch="%s">%s%s\n</package>' \
-            % (pkg, arch,
-                '\n'.join(convert_range(x, 'unaffected', slot) for x in ranges[0]),
-                '\n'.join(convert_range(x, 'vulnerable', slot) for x in ranges[1]))
+            slot = ""
+            arch = "*"
+        horked += '<package name="%s" auto="yes" arch="%s">%s%s\n</package>' % (
+            pkg,
+            arch,
+            "\n".join(convert_range(x, "unaffected", slot) for x in ranges[0]),
+            "\n".join(convert_range(x, "vulnerable", slot) for x in ranges[1]),
+        )
     return glsa_template % (id, id, horked)

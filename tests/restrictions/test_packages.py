@@ -19,6 +19,7 @@ class TestPackageRestriction(TestRestriction):
     if packages.PackageRestriction is packages.PackageRestriction:
         kls = packages.PackageRestriction
     else:
+
         class kls(packages.PackageRestriction, packages.PackageRestriction_mixin):
             __slots__ = ()
             __inst_caching__ = packages.PackageRestriction.__inst_caching__
@@ -50,8 +51,11 @@ class TestPackageRestriction(TestRestriction):
                     raise exceptions_d.get(attr[4:], None)()
                 raise AttributeError("monkey lover")
 
-        exceptions_d = {"KeyboardInterrupt":KeyboardInterrupt,
-            "RuntimeError":RuntimeError, "SystemExit":SystemExit}
+        exceptions_d = {
+            "KeyboardInterrupt": KeyboardInterrupt,
+            "RuntimeError": RuntimeError,
+            "SystemExit": SystemExit,
+        }
 
         for mode in ("match", "force_True", "force_False"):
             caplog.clear()
@@ -62,7 +66,9 @@ class TestPackageRestriction(TestRestriction):
             # ensure various exceptions are passed through
             for k in (KeyboardInterrupt, RuntimeError, SystemExit):
                 with pytest.raises(k):
-                    getattr(self.kls(f"exc_{k.__name__}", AlwaysSelfIntersect), mode)(foo())
+                    getattr(self.kls(f"exc_{k.__name__}", AlwaysSelfIntersect), mode)(
+                        foo()
+                    )
 
         # check that it only does string comparison in exception catching.
         class foo:
@@ -74,19 +80,23 @@ class TestPackageRestriction(TestRestriction):
 
         assert not self.kls("foon", AlwaysSelfIntersect).match(foo())
 
-    @pytest.mark.parametrize('value', ('val', 'val.dar'))
+    @pytest.mark.parametrize("value", ("val", "val.dar"))
     def test_attr(self, value):
         assert self.kls(value, values.AlwaysTrue).attr == value
         assert self.kls(value, values.AlwaysTrue).attrs == (value,)
 
     def test_eq(self):
-        assert self.kls('one', values.AlwaysTrue) == self.kls('one', values.AlwaysTrue)
-        assert self.kls('one', values.AlwaysTrue) != self.kls('one', values.AlwaysTrue, negate=True)
-        assert self.kls('one', values.AlwaysTrue) != self.kls('two', values.AlwaysTrue)
-        assert self.kls('one', values.AlwaysTrue, negate=True) != self.kls('one', values.AlwaysFalse, negate=True)
+        assert self.kls("one", values.AlwaysTrue) == self.kls("one", values.AlwaysTrue)
+        assert self.kls("one", values.AlwaysTrue) != self.kls(
+            "one", values.AlwaysTrue, negate=True
+        )
+        assert self.kls("one", values.AlwaysTrue) != self.kls("two", values.AlwaysTrue)
+        assert self.kls("one", values.AlwaysTrue, negate=True) != self.kls(
+            "one", values.AlwaysFalse, negate=True
+        )
 
     def test_hash(self):
-        inst = self.kls('one.dar', AlwaysSelfIntersect())
+        inst = self.kls("one.dar", AlwaysSelfIntersect())
         hash(inst)
 
 
@@ -95,7 +105,7 @@ class values_callback(values.base):
     __slots__ = ("callback",)
 
     def __init__(self, callback):
-        object.__setattr__(self, 'callback', callback)
+        object.__setattr__(self, "callback", callback)
 
     def match(self, val):
         return self.callback((None, val))
@@ -112,7 +122,10 @@ class TestPackageRestrictionMulti:
     if packages.PackageRestriction is packages.PackageRestriction:
         kls = packages.PackageRestrictionMulti
     else:
-        class kls(packages.PackageRestrictionMulti, packages.PackageRestrictionMulti_mixin):
+
+        class kls(
+            packages.PackageRestrictionMulti, packages.PackageRestrictionMulti_mixin
+        ):
             __slots__ = ()
             __inst_caching__ = packages.PackageRestrictionMulti.__inst_caching__
 
@@ -125,6 +138,7 @@ class TestPackageRestrictionMulti:
 
     def test_values(self):
         l = []
+
         def f(*args):
             assert len(args) == 1
             l.append(args[0])
@@ -136,29 +150,48 @@ class TestPackageRestrictionMulti:
         o.match(pkg)
         assert not l
 
-        pkg['repo'] = 1
+        pkg["repo"] = 1
         o.match(pkg)
         assert not l
 
-        pkg['asdf'] = AttrAccessible(far=2)
+        pkg["asdf"] = AttrAccessible(far=2)
         o.match(pkg)
-        assert l == [(None, [2, 1],)]
+        assert l == [
+            (
+                None,
+                [2, 1],
+            )
+        ]
 
         l.clear()
         o.force_True(pkg)
-        assert l == [(True, pkg, ('asdf.far', 'repo'), [2, 1],)]
+        assert l == [
+            (
+                True,
+                pkg,
+                ("asdf.far", "repo"),
+                [2, 1],
+            )
+        ]
 
         l.clear()
         o.force_False(pkg)
-        assert l == [(False, pkg, ('asdf.far', 'repo'), [2, 1],)]
+        assert l == [
+            (
+                False,
+                pkg,
+                ("asdf.far", "repo"),
+                [2, 1],
+            )
+        ]
 
 
 def test_conditional():
-    p = (packages.PackageRestriction('one', values.AlwaysTrue),)
-    p2 = (packages.PackageRestriction('one', values.AlwaysFalse),)
+    p = (packages.PackageRestriction("one", values.AlwaysTrue),)
+    p2 = (packages.PackageRestriction("one", values.AlwaysFalse),)
     v = values.AlwaysTrue
     v2 = values.AlwaysFalse
-    assert packages.Conditional('use', v, p) == packages.Conditional('use', v, p)
-    assert packages.Conditional('use', v2, p) != packages.Conditional('use', v, p)
-    assert packages.Conditional('use', v, p) != packages.Conditional('use', v, p2)
-    assert packages.Conditional('use1', v, p) != packages.Conditional('use', v, p)
+    assert packages.Conditional("use", v, p) == packages.Conditional("use", v, p)
+    assert packages.Conditional("use", v2, p) != packages.Conditional("use", v, p)
+    assert packages.Conditional("use", v, p) != packages.Conditional("use", v, p2)
+    assert packages.Conditional("use1", v, p) != packages.Conditional("use", v, p)

@@ -19,15 +19,15 @@ def _getattr_wrapped(attr, self):
     o = self._cached_wrapped.get(attr)
     if o is None or o[0] != self._reuse_pt:
         o = self._wrapped_attr[attr](
-            getattr(self._raw_pkg, attr),
-            self._configurable,
-            pkg=self)
+            getattr(self._raw_pkg, attr), self._configurable, pkg=self
+        )
         o = self._cached_wrapped[attr] = (self._reuse_pt, o)
     return o[1]
 
 
-def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(),
-                 kls_injections={}):
+def make_wrapper(
+    wrapped_repo, configurable_attribute_name, attributes_to_wrap=(), kls_injections={}
+):
     """
     :param configurable_attribute_name: attribute name to add,
         and that is used for evaluating attributes_to_wrap
@@ -37,16 +37,22 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
     """
 
     if configurable_attribute_name.find(".") != -1:
-        raise ValueError("can only wrap first level attributes, "
-                         "'obj.dar' fex, not '%s'" %
-                         (configurable_attribute_name))
+        raise ValueError(
+            "can only wrap first level attributes, "
+            "'obj.dar' fex, not '%s'" % (configurable_attribute_name)
+        )
 
     class PackageWrapper(wrapper):
         """Add a new attribute, and evaluate attributes of a wrapped pkg."""
 
         __slots__ = (
-            "_unchangable", "_configurable", "_reuse_pt",
-            "_cached_wrapped", "_disabled", "_domain", "repo",
+            "_unchangable",
+            "_configurable",
+            "_reuse_pt",
+            "_cached_wrapped",
+            "_disabled",
+            "_domain",
+            "repo",
         )
 
         _wrapped_attr = attributes_to_wrap
@@ -59,11 +65,16 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
         locals()[configurable_attribute_name] = property(attrgetter("_configurable"))
 
         locals().update(
-            (x, property(partial(_getattr_wrapped, x)))
-            for x in attributes_to_wrap)
+            (x, property(partial(_getattr_wrapped, x))) for x in attributes_to_wrap
+        )
 
-        def __init__(self, pkg_instance, initial_settings=None,
-                     disabled_settings=None, unchangable_settings=None):
+        def __init__(
+            self,
+            pkg_instance,
+            initial_settings=None,
+            disabled_settings=None,
+            unchangable_settings=None,
+        ):
             """
             :type pkg_instance: :obj:`pkgcore.package.metadata.package`
             :param pkg_instance: instance to wrap.
@@ -83,23 +94,28 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
                 unchangable_settings = []
 
             sf = object.__setattr__
-            sf(self, '_unchangable', unchangable_settings)
-            sf(self, '_configurable', LimitedChangeSet(
-                initial_settings, unchangable_settings))
-            sf(self, '_disabled', disabled_settings)
-            sf(self, '_reuse_pt', 0)
-            sf(self, 'repo', wrapped_repo)
-            sf(self, '_cached_wrapped', {})
-            sf(self, '_domain', None)
+            sf(self, "_unchangable", unchangable_settings)
+            sf(
+                self,
+                "_configurable",
+                LimitedChangeSet(initial_settings, unchangable_settings),
+            )
+            sf(self, "_disabled", disabled_settings)
+            sf(self, "_reuse_pt", 0)
+            sf(self, "repo", wrapped_repo)
+            sf(self, "_cached_wrapped", {})
+            sf(self, "_domain", None)
             super().__init__(pkg_instance)
 
         def __copy__(self):
             return self.__class__(
-                self._raw_pkg, self._configurable_name,
+                self._raw_pkg,
+                self._configurable_name,
                 initial_settings=set(self._configurable),
                 disabled_settings=self._disabled,
                 unchangable_settings=self._unchangable,
-                attributes_to_wrap=self._wrapped_attr)
+                attributes_to_wrap=self._wrapped_attr,
+            )
 
         def rollback(self, point=0):
             """rollback changes to the configurable attribute to an earlier point
@@ -109,7 +125,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
             self._configurable.rollback(point)
             # yes, nuking objs isn't necessarily required.  easier this way though.
             # XXX: optimization point
-            object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
+            object.__setattr__(self, "_reuse_pt", self._reuse_pt + 1)
 
         def commit(self):
             """Commit current changes.
@@ -117,7 +133,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
             This means that those changes can be reverted from this point out.
             """
             self._configurable.commit()
-            object.__setattr__(self, '_reuse_pt',  0)
+            object.__setattr__(self, "_reuse_pt", 0)
 
         def changes_count(self):
             """current commit point for the configurable"""
@@ -141,7 +157,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
                     entry_point = self.changes_count()
                     try:
                         list(map(self._configurable.add, vals))
-                        object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
+                        object.__setattr__(self, "_reuse_pt", self._reuse_pt + 1)
                         return True
                     except Unchangable:
                         self.rollback(entry_point)
@@ -166,7 +182,7 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
             except Unchangable:
                 self.rollback(entry_point)
                 return False
-            object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
+            object.__setattr__(self, "_reuse_pt", self._reuse_pt + 1)
             return True
 
         def request_disable(self, attr, *vals):
@@ -211,17 +227,19 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
             except Unchangable:
                 self.rollback(entry_point)
                 return False
-            object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
+            object.__setattr__(self, "_reuse_pt", self._reuse_pt + 1)
             return True
 
         def __str__(self):
-            return "config wrapped(%s): %s" % (self._configurable_name,
-                                               self._raw_pkg)
+            return "config wrapped(%s): %s" % (self._configurable_name, self._raw_pkg)
 
         def __repr__(self):
             return "<%s pkg=%r wrapped=%r @%#8x>" % (
-                self.__class__.__name__, self._raw_pkg, self._configurable_name,
-                id(self))
+                self.__class__.__name__,
+                self._raw_pkg,
+                self._configurable_name,
+                id(self),
+            )
 
         def freeze(self):
             o = copy(self)
@@ -233,9 +251,9 @@ def make_wrapper(wrapped_repo, configurable_attribute_name, attributes_to_wrap=(
             commit any outstanding changes and lock the configuration.
             """
             self.commit()
-            object.__setattr__(self, '_configurable', list(self._configurable))
+            object.__setattr__(self, "_configurable", list(self._configurable))
 
-        if 'operations_callback' in kls_injections:
+        if "operations_callback" in kls_injections:
             _operations = kls_injections.pop("operations_callback")
         locals().update(kls_injections)
 

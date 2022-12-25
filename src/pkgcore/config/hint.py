@@ -1,7 +1,7 @@
 """Config introspection support."""
 
 
-__all__ = ('ConfigHint', 'configurable')
+__all__ = ("ConfigHint", "configurable")
 
 
 class ConfigHint:
@@ -9,12 +9,29 @@ class ConfigHint:
 
     # be aware this is used in clone
     __slots__ = (
-        "types", "positional", "required", "typename", "allow_unknowns",
-        "doc", "authorative", "requires_config", "raw_class")
+        "types",
+        "positional",
+        "required",
+        "typename",
+        "allow_unknowns",
+        "doc",
+        "authorative",
+        "requires_config",
+        "raw_class",
+    )
 
-    def __init__(self, types=None, positional=None, required=None, doc=None,
-                 typename=None, allow_unknowns=False, authorative=False,
-                 requires_config=False, raw_class=False):
+    def __init__(
+        self,
+        types=None,
+        positional=None,
+        required=None,
+        doc=None,
+        typename=None,
+        allow_unknowns=False,
+        authorative=False,
+        requires_config=False,
+        raw_class=False,
+    ):
         self.types = types or {}
         self.positional = positional or []
         self.required = required or []
@@ -37,7 +54,9 @@ class ConfigHint:
 def configurable(*args, **kwargs):
     """Decorator version of ConfigHint."""
     hint = ConfigHint(*args, **kwargs)
+
     def decorator(original):
         original.pkgcore_config_type = hint
         return original
+
     return decorator

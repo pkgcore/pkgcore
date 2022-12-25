@@ -29,10 +29,10 @@ from .xpak import Xpak
 
 class force_unpacking(triggers.base):
 
-    required_csets = ('new_cset',)
+    required_csets = ("new_cset",)
     priority = 5
-    _hooks = ('sanity_check',)
-    _label = 'forced decompression'
+    _hooks = ("sanity_check",)
+    _label = "forced decompression"
     _engine_type = triggers.INSTALLING_MODES
 
     def __init__(self, format_op):
@@ -40,11 +40,11 @@ class force_unpacking(triggers.base):
 
     def trigger(self, engine, cset):
         op = self.format_op
-        op = getattr(op, 'install_op', op)
+        op = getattr(op, "install_op", op)
         op.setup_workdir()
         merge_cset = cset
-        if engine.offset != '/':
-            merge_cset = cset.change_offset(engine.offset, '/')
+        if engine.offset != "/":
+            merge_cset = cset.change_offset(engine.offset, "/")
         merge_contents(merge_cset, offset=op.env["D"])
 
         # ok.  they're on disk.
@@ -54,9 +54,10 @@ class force_unpacking(triggers.base):
 
         # this rewrites the data_source to the ${D} loc.
         d = op.env["D"]
-        fi = (x.change_attributes(data=local_source(
-            pjoin(d, x.location.lstrip('/'))))
-            for x in merge_cset.iterfiles())
+        fi = (
+            x.change_attributes(data=local_source(pjoin(d, x.location.lstrip("/"))))
+            for x in merge_cset.iterfiles()
+        )
 
         if engine.offset:
             # we're using merge_cset above, which has the final offset loc
@@ -69,20 +70,20 @@ class force_unpacking(triggers.base):
 
         # we *probably* should change the csets class at some point
         # since it no longer needs to be tar, but that's for another day.
-        engine.replace_cset('new_cset', cset)
+        engine.replace_cset("new_cset", cset)
 
 
 class BinPkg(ebuild_built.generate_new_factory):
-
-    def _add_format_triggers(self, pkg, op_inst, format_op_inst,
-                                engine_inst):
-        if (engine.UNINSTALL_MODE != engine_inst.mode and
-                pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
+    def _add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
+        if (
+            engine.UNINSTALL_MODE != engine_inst.mode
+            and pkg == engine_inst.new
+            and pkg.repo is engine_inst.new.repo
+        ):
             t = force_unpacking(op_inst.format_op)
             t.register(engine_inst)
 
-        klass._add_format_triggers(
-            self, pkg, op_inst, format_op_inst, engine_inst)
+        klass._add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst)
 
     def scan_contents(self, location):
         return scan(location, offset=location)
@@ -112,9 +113,9 @@ class StackedXpakDict(DictMixin):
     def xpak(self):
         return Xpak(self._parent._get_path(self._pkg))
 
-    mtime = alias_attr('_chf_.mtime')
+    mtime = alias_attr("_chf_.mtime")
 
-    @jit_attr_named('_chf_obj')
+    @jit_attr_named("_chf_obj")
     def _chf_(self):
         return chksum.LazilyHashedPath(self._parent._get_path(self._pkg))
 
@@ -132,10 +133,12 @@ class StackedXpakDict(DictMixin):
                 if data is None:
                     raise KeyError(
                         "environment.bz2 not found in xpak segment, "
-                        "malformed binpkg?")
+                        "malformed binpkg?"
+                    )
             else:
                 data = data_source(
-                    compression.decompress_data('bzip2', data), mutable=True)
+                    compression.decompress_data("bzip2", data), mutable=True
+                )
         elif key == "ebuild":
             data = self.xpak.get(f"{self._pkg.package}-{self._pkg.fullver}.ebuild", "")
             data = data_source(data)
@@ -143,11 +146,11 @@ class StackedXpakDict(DictMixin):
             try:
                 data = self.xpak[key]
             except KeyError:
-                if key == '_eclasses_':
+                if key == "_eclasses_":
                     # hack...
                     data = {}
                 else:
-                    data = ''
+                    data = ""
         return data
 
     def __delitem__(self, key):
@@ -177,7 +180,7 @@ class StackedXpakDict(DictMixin):
         translated_key = self._metadata_rewrites.get(key, key)
         if translated_key in self._wipes:
             return False
-        elif key in ('ebuild', 'environment', 'contents'):
+        elif key in ("ebuild", "environment", "contents"):
             return True
         return translated_key in self.xpak
 
@@ -201,12 +204,11 @@ class tree(prototype.tree):
     operations_kls = repo_ops.operations
     cache_name = "Packages"
 
-    pkgcore_config_type = ConfigHint({
-        'location': 'str',
-        'repo_id': 'str'},
-        typename='repo')
+    pkgcore_config_type = ConfigHint(
+        {"location": "str", "repo_id": "str"}, typename="repo"
+    )
 
-    def __init__(self, location, repo_id=None, cache_version='0'):
+    def __init__(self, location, repo_id=None, cache_version="0"):
         """
         :param location: root of the tbz2 repository
         :keyword repo_id: unique repository id to use; else defaults to
@@ -226,14 +228,16 @@ class tree(prototype.tree):
                 raise errors.InitializationError(f"base {self.base!r} doesn't exist")
             raise errors.InitializationError(
                 "base directory %r with mode 0%03o isn't readable/executable"
-                " by this user" %
-                (self.base, os.stat(self.base).st_mode & 0o4777))
+                " by this user" % (self.base, os.stat(self.base).st_mode & 0o4777)
+            )
 
-        self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
+        self.cache = remote.get_cache_kls(cache_version)(
+            pjoin(self.base, self.cache_name)
+        )
         self.package_class = BinPkg(self)
 
     def configure(self, *args):
-        return(ConfiguredTree(self, *args))
+        return ConfiguredTree(self, *args)
 
     def __str__(self):
         return self.repo_id
@@ -243,9 +247,7 @@ class tree(prototype.tree):
         if optional_category:
             return {}
         try:
-            return tuple(
-                x for x in listdir_dirs(self.base)
-                if x.lower() != "all")
+            return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
         except EnvironmentError as e:
             raise KeyError(f"failed fetching categories: {e}") from e
 
@@ -258,18 +260,21 @@ class tree(prototype.tree):
         try:
             for x in listdir_files(cpath):
                 # don't use lstat; symlinks may exist
-                if (x.endswith(".lockfile") or
-                        not x[-lext:].lower() == self.extension or
-                        x.startswith(".tmp.")):
+                if (
+                    x.endswith(".lockfile")
+                    or not x[-lext:].lower() == self.extension
+                    or x.startswith(".tmp.")
+                ):
                     continue
                 pv = x[:-lext]
-                pkg = VersionedCPV(f'{category}/{pv}')
+                pkg = VersionedCPV(f"{category}/{pv}")
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except EnvironmentError as e:
             raise KeyError(
-                "failed fetching packages for category %s: %s" %
-                (pjoin(self.base, category.lstrip(os.path.sep)), str(e))) from e
+                "failed fetching packages for category %s: %s"
+                % (pjoin(self.base, category.lstrip(os.path.sep)), str(e))
+            ) from e
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -288,7 +293,7 @@ class tree(prototype.tree):
             if force:
                 raise KeyError
             cache_data = self.cache[pkg.cpvstr]
-            if int(cache_data['mtime']) != int(xpak.mtime):
+            if int(cache_data["mtime"]) != int(xpak.mtime):
                 raise KeyError
         except KeyError:
             cache_data = self.cache.update_from_xpak(pkg, xpak)
@@ -326,8 +331,8 @@ class _WrappedBinpkg(pkg_base.wrapper):
 
     def __str__(self):
         return (
-            f'ebuild binary pkg: {self.cpvstr}::{self.repo.repo_id}, '
-            f'source repo {self.source_repository!r}'
+            f"ebuild binary pkg: {self.cpvstr}::{self.repo.repo_id}, "
+            f"source repo {self.source_repository!r}"
         )
 
 
@@ -344,4 +349,5 @@ class ConfiguredTree(wrapper.tree):
 
     def _generate_operations(self, domain, pkg, **kwargs):
         return ebd.built_operations(
-            domain, pkg._raw_pkg, initial_env=self.domain_settings, **kwargs)
+            domain, pkg._raw_pkg, initial_env=self.domain_settings, **kwargs
+        )

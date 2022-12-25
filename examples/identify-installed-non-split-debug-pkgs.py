@@ -8,7 +8,7 @@ debug_paths = ["/usr/lib/debug"]
 fi = file_identifier()
 vdbs = load_config().get_default("domain").all_installed_repos
 for pkg in sorted(vdbs):
-    contents = getattr(pkg, 'contents', ())
+    contents = getattr(pkg, "contents", ())
     if not contents:
         continue
     files = contents.iterfiles()

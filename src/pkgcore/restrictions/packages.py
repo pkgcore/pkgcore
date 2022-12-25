@@ -13,7 +13,13 @@ from . import boolean, restriction
 class PackageRestriction(restriction.base, metaclass=generic_equality):
     """Package data restriction."""
 
-    __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing', 'negate')
+    __slots__ = (
+        "_pull_attr_func",
+        "_attr_split",
+        "restriction",
+        "ignore_missing",
+        "negate",
+    )
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
     __inst_caching__ = True
 
@@ -47,7 +53,7 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
 
     def _parse_attr(self, attr):
         object.__setattr__(self, "_pull_attr_func", static_attrgetter(attr))
-        object.__setattr__(self, "_attr_split", attr.split('.'))
+        object.__setattr__(self, "_attr_split", attr.split("."))
 
     def _pull_attr(self, pkg):
         try:
@@ -69,8 +75,11 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
                 logger.exception(
-                    "failed getting attribute %s from %s, "
-                    "exception %s", '.'.join(attr_split), str(pkg), str(exc))
+                    "failed getting attribute %s from %s, " "exception %s",
+                    ".".join(attr_split),
+                    str(pkg),
+                    str(exc),
+                )
 
             eargs = [x for x in exc.args if isinstance(x, str)]
             if any(x in attr_split for x in eargs):
@@ -83,8 +92,11 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
                 # if it doesn't match, exception is thrown.
                 return False
         logger.exception(
-            "caught unexpected exception accessing %s from %s, "
-            "exception %s", '.'.join(attr_split), str(pkg), str(exc))
+            "caught unexpected exception accessing %s from %s, " "exception %s",
+            ".".join(attr_split),
+            str(pkg),
+            str(exc),
+        )
         return True
 
     def force_False(self, pkg):
@@ -112,22 +124,21 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
         return hash((self.negate, self.attrs, self.restriction))
 
     def __str__(self):
-        s = f'{self.attrs} '
+        s = f"{self.attrs} "
         if self.negate:
             s += "not "
         return s + str(self.restriction)
 
     def __repr__(self):
         if self.negate:
-            string = '<%s attr=%r restriction=%r negated @%#8x>'
+            string = "<%s attr=%r restriction=%r negated @%#8x>"
         else:
-            string = '<%s attr=%r restriction=%r @%#8x>'
-        return string % (
-            self.__class__.__name__, self.attr, self.restriction, id(self))
+            string = "<%s attr=%r restriction=%r @%#8x>"
+        return string % (self.__class__.__name__, self.attr, self.restriction, id(self))
 
     @property
     def attr(self):
-        return '.'.join(self._attr_split)
+        return ".".join(self._attr_split)
 
     @property
     def attrs(self):
@@ -158,11 +169,13 @@ class PackageRestrictionMulti(PackageRestriction):
 
     @property
     def attrs(self):
-        return tuple('.'.join(x) for x in self._attr_split)
+        return tuple(".".join(x) for x in self._attr_split)
 
     def _parse_attr(self, attrs):
-        object.__setattr__(self, '_pull_attr_func', tuple(map(static_attrgetter, attrs)))
-        object.__setattr__(self, '_attr_split', tuple(x.split('.') for x in attrs))
+        object.__setattr__(
+            self, "_pull_attr_func", tuple(map(static_attrgetter, attrs))
+        )
+        object.__setattr__(self, "_attr_split", tuple(x.split(".") for x in attrs))
 
     def _pull_attr(self, pkg):
         val = []
@@ -187,7 +200,7 @@ class Conditional(PackageRestriction, metaclass=generic_equality):
     Used to control whether a payload of restrictions are accessible or not.
     """
 
-    __slots__ = ('payload',)
+    __slots__ = ("payload",)
 
     __attr_comparison__ = ("__class__", "negate", "attr", "restriction", "payload")
     conditional = True
@@ -208,17 +221,21 @@ class Conditional(PackageRestriction, metaclass=generic_equality):
 
     def __str__(self):
         s = PackageRestriction.__str__(self)
-        payload = ', '.join(str(x) for x in self.payload)
-        return f'( Conditional: {s} payload: [ {payload} ] )'
+        payload = ", ".join(str(x) for x in self.payload)
+        return f"( Conditional: {s} payload: [ {payload} ] )"
 
     def __repr__(self):
         if self.negate:
-            string = '<%s attr=%r restriction=%r payload=%r negated @%#8x>'
+            string = "<%s attr=%r restriction=%r payload=%r negated @%#8x>"
         else:
-            string = '<%s attr=%r restriction=%r payload=%r @%#8x>'
+            string = "<%s attr=%r restriction=%r payload=%r @%#8x>"
         return string % (
-            self.__class__.__name__, self.attr, self.restriction, self.payload,
-            id(self))
+            self.__class__.__name__,
+            self.attr,
+            self.restriction,
+            self.payload,
+            id(self),
+        )
 
     def __iter__(self):
         return iter(self.payload)
@@ -226,7 +243,9 @@ class Conditional(PackageRestriction, metaclass=generic_equality):
     def __hash__(self):
         return hash((self.attr, self.negate, self.restriction, self.payload))
 
-    def evaluate_conditionals(self, parent_cls, parent_seq, enabled, tristate_locked=None):
+    def evaluate_conditionals(
+        self, parent_cls, parent_seq, enabled, tristate_locked=None
+    ):
         if tristate_locked is not None:
             assert len(self.restriction.vals) == 1
             val = list(self.restriction.vals)[0]
@@ -241,19 +260,23 @@ class Conditional(PackageRestriction, metaclass=generic_equality):
 
         if self.payload:
             boolean.AndRestriction(*self.payload).evaluate_conditionals(
-                parent_cls, parent_seq, enabled, tristate_locked)
+                parent_cls, parent_seq, enabled, tristate_locked
+            )
 
 
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)
 # pylint: disable-msg=C0103
 
-AndRestriction = restriction.curry_node_type(boolean.AndRestriction,
-                                             restriction.package_type)
-OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
-                                            restriction.package_type)
+AndRestriction = restriction.curry_node_type(
+    boolean.AndRestriction, restriction.package_type
+)
+OrRestriction = restriction.curry_node_type(
+    boolean.OrRestriction, restriction.package_type
+)
 
-AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
-                                         restriction.package_type)
+AlwaysBool = restriction.curry_node_type(
+    restriction.AlwaysBool, restriction.package_type
+)
 
 
 class KeyedAndRestriction(boolean.AndRestriction):
@@ -273,7 +296,7 @@ class KeyedAndRestriction(boolean.AndRestriction):
         boolean_str = boolean.AndRestriction.__str__(self)
         if self.tag is None:
             return boolean_str
-        return f'{self.tag} {boolean_str}'
+        return f"{self.tag} {boolean_str}"
 
 
 AlwaysTrue = AlwaysBool(negate=True)

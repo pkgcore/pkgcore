@@ -8,6 +8,7 @@ from snakeoil.osutils import listdir_files
 
 from pkgcore.config import load_config
 from pkgcore.ebuild.atom import atom
+
 # we use a WorldFile since it *currently* forces unversioned atoms.
 from pkgcore.pkgsets.filelist import WorldFile
 
@@ -36,17 +37,20 @@ def main(target_repo, seen, moves):
 
     for l, prefix in ((new_pkgs, "added pkgs"), (removed, "removed pkgs")):
         if l:
-            sys.stdout.write("%s:\n  %s\n\n" %
-                (prefix, "\n  ".join(str(x) for x in sorted(l))))
+            sys.stdout.write(
+                "%s:\n  %s\n\n" % (prefix, "\n  ".join(str(x) for x in sorted(l)))
+            )
 
     if finished_moves:
-        sys.stdout.write("moved pkgs:\n  %s\n\n" %
-            "\n  ".join("%s -> %s" % (k, moves[k])
-                for k in sorted(finished_moves)))
+        sys.stdout.write(
+            "moved pkgs:\n  %s\n\n"
+            % "\n  ".join("%s -> %s" % (k, moves[k]) for k in sorted(finished_moves))
+        )
     if in_transit:
-        sys.stdout.write("pkg moves in transit:\n  %s\n\n" %
-            "\n  ".join("%s -> %s" % (k, in_transit[k])
-                for k in sorted(in_transit)))
+        sys.stdout.write(
+            "pkg moves in transit:\n  %s\n\n"
+            % "\n  ".join("%s -> %s" % (k, in_transit[k]) for k in sorted(in_transit))
+        )
 
     # just flush the seen fully, simplest.
     for x in seen_set:
@@ -71,32 +75,36 @@ def parse_moves(location):
 
     # schwartzian comparison, convert it into YYYY-QQ
     def get_key(fname):
-        return tuple(reversed(fname.split('-')))
+        return tuple(reversed(fname.split("-")))
 
     moves = {}
     for update_file in sorted(listdir_files(location), key=get_key):
         for line in iter_read_bash(pjoin(location, update_file)):
             line = line.split()
-            if line[0] != 'move':
+            if line[0] != "move":
                 continue
             moves[atom(line[1])] = atom(line[2])
     return moves
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = sys.argv[1:]
-    if len(args) not in (2,3) or "--help" in args or "-h" in args:
-        sys.stderr.write("need two args; repository to scan, and "
+    if len(args) not in (2, 3) or "--help" in args or "-h" in args:
+        sys.stderr.write(
+            "need two args; repository to scan, and "
             "file to store the state info in.\nOptional third arg is "
-            "a profiles update directory to scan for moves.\n")
+            "a profiles update directory to scan for moves.\n"
+        )
         sys.exit(-1)
 
     conf = load_config()
     try:
         repo = conf.repo[args[0]]
     except KeyError:
-        sys.stderr.write("repository %r wasn't found- known repos\n%r\n" %
-            (args[0], list(conf.repo.keys())))
+        sys.stderr.write(
+            "repository %r wasn't found- known repos\n%r\n"
+            % (args[0], list(conf.repo.keys()))
+        )
         sys.exit(-2)
 
     if not os.path.exists(args[1]):

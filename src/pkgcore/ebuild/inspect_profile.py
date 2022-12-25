@@ -17,21 +17,22 @@ commands = []
 
 
 class _base(arghparse.ArgparseCommand):
-
     @staticmethod
     def _validate_args(parser, namespace):
         path = namespace.profile
         if path is None:
             if namespace.repo is not None:
                 # default to the repo's main profiles dir
-                path = pjoin(namespace.repo.location, 'profiles')
+                path = pjoin(namespace.repo.location, "profiles")
             else:
                 # default to the configured system profile if none is selected
                 path = namespace.config.get_default("domain").profile.profile
         else:
-            if namespace.repo is not None and getattr(namespace.repo, 'location', False):
-                if not path.startswith('/'):
-                    path = pjoin(namespace.repo.location, 'profiles', path)
+            if namespace.repo is not None and getattr(
+                namespace.repo, "location", False
+            ):
+                if not path.startswith("/"):
+                    path = pjoin(namespace.repo.location, "profiles", path)
         try:
             stack = profiles.ProfileStack(arghparse.existent_path(path))
         except argparse.ArgumentTypeError as e:
@@ -42,9 +43,9 @@ class _base(arghparse.ArgparseCommand):
 
     def bind_to_parser(self, parser):
         arghparse.ArgparseCommand.bind_to_parser(self, parser)
-        parser.add_argument('profile', help='path to the profile to inspect')
+        parser.add_argument("profile", help="path to the profile to inspect")
         name = self.__class__.__name__
-        kwds = {(f'_{name}_suppress'): arghparse.DelayedDefault.wipe(('domain'), 50)}
+        kwds = {(f"_{name}_suppress"): arghparse.DelayedDefault.wipe(("domain"), 50)}
         parser.set_defaults(**kwds)
         parser.bind_final_check(self._validate_args)
         self._subclass_bind(parser)
@@ -66,9 +67,9 @@ class parent(_base, metaclass=_register_command):
         if namespace.repo is None:
             out.write("\n".join(x.path for x in namespace.profile.stack))
         else:
-            repo_dir = pjoin(namespace.repo.location, 'profiles')
+            repo_dir = pjoin(namespace.repo.location, "profiles")
             for x in namespace.profile.stack:
-                out.write(x.path[len(repo_dir):].lstrip('/'))
+                out.write(x.path[len(repo_dir) :].lstrip("/"))
 
 
 class eapi(_base, metaclass=_register_command):
@@ -83,14 +84,17 @@ class status(_base, metaclass=_register_command):
     """output profile status"""
 
     def __call__(self, namespace, out, err):
-        profiles_dir = pjoin(namespace.profile.node.repoconfig.location, 'profiles')
-        profile_rel_path = namespace.profile.path[len(profiles_dir):].lstrip('/')
+        profiles_dir = pjoin(namespace.profile.node.repoconfig.location, "profiles")
+        profile_rel_path = namespace.profile.path[len(profiles_dir) :].lstrip("/")
         arch_profiles = namespace.profile.node.repoconfig.arch_profiles
-        statuses = [(path, status) for path, status in chain.from_iterable(arch_profiles.values())
-                    if path.startswith(profile_rel_path)]
+        statuses = [
+            (path, status)
+            for path, status in chain.from_iterable(arch_profiles.values())
+            if path.startswith(profile_rel_path)
+        ]
         if len(statuses) > 1:
             for path, status in sorted(statuses):
-                out.write(f'{path}: {status}')
+                out.write(f"{path}: {status}")
         elif statuses:
             out.write(statuses[0][1])
 
@@ -99,17 +103,25 @@ class deprecated(_base, metaclass=_register_command):
     """dump deprecation notices, if any"""
 
     def __call__(self, namespace, out, err):
-        for idx, profile in enumerate(x for x in namespace.profile.stack if x.deprecated):
+        for idx, profile in enumerate(
+            x for x in namespace.profile.stack if x.deprecated
+        ):
             if idx:
                 out.write()
             out.write(out.bold, out.fg("cyan"), profile.path, out.reset, ":")
             data = profile.deprecated
             if data[0]:
-                out.write(" ", out.fg("yellow"), "replacement profile", out.reset, f": {data[0]}")
+                out.write(
+                    " ",
+                    out.fg("yellow"),
+                    "replacement profile",
+                    out.reset,
+                    f": {data[0]}",
+                )
             if data[1]:
                 out.write(" ", out.fg("yellow"), "deprecation message", out.reset, ":")
                 for line in data[1].split("\n"):
-                    out.write(line, prefix='  ')
+                    out.write(line, prefix="  ")
 
 
 class provided(_base, metaclass=_register_command):
@@ -126,8 +138,12 @@ class provided(_base, metaclass=_register_command):
 
         for pkg_name, pkgs in sorted(targets.items(), key=operator.itemgetter(0)):
             out.write(
-                out.fg("cyan"), pkg_name, out.reset, ": ",
-                ", ".join(x.fullver for x in sorted(pkgs)))
+                out.fg("cyan"),
+                pkg_name,
+                out.reset,
+                ": ",
+                ", ".join(x.fullver for x in sorted(pkgs)),
+            )
 
 
 class system(_base, metaclass=_register_command):
@@ -147,12 +163,8 @@ class use_expand(_base, metaclass=_register_command):
     """
 
     def __call__(self, namespace, out, err):
-        out.write(
-            "flags: ",
-            ', '.join(sorted(namespace.profile.use_expand)))
-        out.write(
-            "hidden: ",
-            ', '.join(sorted(namespace.profile.use_expand_hidden)))
+        out.write("flags: ", ", ".join(sorted(namespace.profile.use_expand)))
+        out.write("hidden: ", ", ".join(sorted(namespace.profile.use_expand_hidden)))
 
 
 class iuse_effective(_base, metaclass=_register_command):
@@ -160,7 +172,7 @@ class iuse_effective(_base, metaclass=_register_command):
 
     def __call__(self, namespace, out, err):
         if namespace.profile.iuse_effective:
-            out.write(' '.join(sorted(namespace.profile.iuse_effective)))
+            out.write(" ".join(sorted(namespace.profile.iuse_effective)))
 
 
 class masks(_base, metaclass=_register_command):
@@ -193,7 +205,7 @@ class package_bashrc(_base, metaclass=_register_command):
     def __call__(self, namespace, out, err):
         for package, bashrcs in namespace.profile.pkg_bashrcs:
             bashrcs = ", ".join(s.path for s in bashrcs)
-            out.write(f'{package}: {bashrcs}')
+            out.write(f"{package}: {bashrcs}")
 
 
 class keywords(_base, metaclass=_register_command):
@@ -217,10 +229,9 @@ class accept_keywords(_base, metaclass=_register_command):
 
 
 class _use(_base):
-
     def _output_use(self, neg, pos):
-        neg = ('-' + x for x in neg)
-        return ' '.join(sorted(chain(neg, pos)))
+        neg = ("-" + x for x in neg)
+        return " ".join(sorted(chain(neg, pos)))
 
     def __call__(self, namespace, out, err):
         global_use = []
@@ -241,11 +252,11 @@ class _use(_base):
                 global_use = (neg, pos)
 
         if global_use:
-            out.write(f'*/*: {self._output_use(*global_use)}')
+            out.write(f"*/*: {self._output_use(*global_use)}")
         if pkg_use:
             for pkg, (neg, pos) in sorted(pkg_use.items()):
                 if neg or pos:
-                    out.write(f'{pkg}: {self._output_use(neg, pos)}')
+                    out.write(f"{pkg}: {self._output_use(neg, pos)}")
 
 
 class use(_use, metaclass=_register_command):
@@ -303,10 +314,12 @@ class defaults(_base, metaclass=_register_command):
 
     def _subclass_bind(self, parser):
         parser.add_argument(
-            "variables", nargs='*',
+            "variables",
+            nargs="*",
             help="if not specified, all settings are displayed"
-                 ". If given, output is limited to just those settings if "
-                 "they exist")
+            ". If given, output is limited to just those settings if "
+            "they exist",
+        )
 
     def __call__(self, namespace, out, err):
         var_filter = namespace.variables
@@ -322,7 +335,7 @@ class defaults(_base, metaclass=_register_command):
             if not val:
                 continue
             if isinstance(val, tuple):
-                val = ' '.join(val)
+                val = " ".join(val)
             out.write(f'{key}="{val}"')
 
 
@@ -338,8 +351,8 @@ def bind_parser(parser, name):
     subparsers = parser.add_subparsers(description=f"{name} commands")
     for command in commands:
         # Split docstrings into summaries and extended docs.
-        help, _, docs = command.__doc__.partition('\n')
+        help, _, docs = command.__doc__.partition("\n")
         subparser = subparsers.add_parser(
-            command.__name__.lower(),
-            help=help, docs=docs)
+            command.__name__.lower(), help=help, docs=docs
+        )
         command().bind_to_parser(subparser)

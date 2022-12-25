@@ -3,8 +3,15 @@ build operation
 """
 
 __all__ = (
-    'build_base', 'install', 'uninstall', 'replace', 'fetch_base',
-    'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'FetchError',
+    "build_base",
+    "install",
+    "uninstall",
+    "replace",
+    "fetch_base",
+    "empty_build_op",
+    "FailedDirectory",
+    "GenericBuildError",
+    "FetchError",
 )
 
 import os
@@ -20,7 +27,6 @@ from ..fetch import errors as fetch_errors
 
 
 class fetch_base:
-
     def __init__(self, domain, pkg, fetchables, distdir=None):
         self.verified_files = {}
         self._basenames = set()
@@ -30,11 +36,12 @@ class fetch_base:
         self.distdir = distdir if distdir is not None else domain.distdir
 
         # create fetcher
-        fetchcmd = domain.settings['FETCHCOMMAND']
-        resumecmd = domain.settings.get('RESUMECOMMAND', fetchcmd)
-        attempts = int(domain.settings.get('FETCH_ATTEMPTS', 10))
+        fetchcmd = domain.settings["FETCHCOMMAND"]
+        resumecmd = domain.settings.get("RESUMECOMMAND", fetchcmd)
+        attempts = int(domain.settings.get("FETCH_ATTEMPTS", 10))
         self.fetcher = fetch_custom.fetcher(
-            self.distdir, fetchcmd, resumecmd, attempts=attempts)
+            self.distdir, fetchcmd, resumecmd, attempts=attempts
+        )
 
     def fetch_all(self, observer):
         # TODO: add parallel fetch support
@@ -54,13 +61,15 @@ class fetch_base:
         except fetch_errors.ChksumFailure as e:
             # checksum failed, rename file and try refetching
             path = pjoin(self.distdir, fetchable.filename)
-            failed_filename = f'{fetchable.filename}._failed_chksum_'
+            failed_filename = f"{fetchable.filename}._failed_chksum_"
             failed_path = pjoin(self.distdir, failed_filename)
             os.rename(path, failed_path)
             if retry:
                 raise
             observer.error(str(e))
-            observer.error(f'renaming to {failed_filename!r} and refetching from upstream')
+            observer.error(
+                f"renaming to {failed_filename!r} and refetching from upstream"
+            )
             observer.flush()
             # refetch directly from upstream
             return self.fetch_one(fetchable.upstream, observer, retry=True)
@@ -77,8 +86,9 @@ class operations(_operations_mod.base):
 
     _fetch_kls = fetch_base
 
-    def __init__(self, domain, pkg, observer=None, disable_overrides=(),
-                 enable_overrides=()):
+    def __init__(
+        self, domain, pkg, observer=None, disable_overrides=(), enable_overrides=()
+    ):
         self.observer = observer
         self.pkg = pkg
         self.domain = domain
@@ -90,7 +100,7 @@ class operations(_operations_mod.base):
 
     @_operations_mod.is_standalone
     def _cmd_api_mergable(self):
-        return getattr(self.pkg, 'built', False)
+        return getattr(self.pkg, "built", False)
 
     def _cmd_api_sanity_check(self):
         return self._cmd_implementation_sanity_check(self.domain)
@@ -101,17 +111,18 @@ class operations(_operations_mod.base):
     def _cmd_api_localize(self, force=False, observer=klass.sentinel):
         observer = observer if observer is not klass.sentinel else self.observer
         return self._cmd_implementation_localize(
-            self._get_observer(observer), force=force)
+            self._get_observer(observer), force=force
+        )
 
     def _cmd_api_cleanup(self, force=False, observer=klass.sentinel):
         observer = observer if observer is not klass.sentinel else self.observer
         return self._cmd_implementation_cleanup(
-            self._get_observer(observer), force=force)
+            self._get_observer(observer), force=force
+        )
 
     def _cmd_api_configure(self, observer=klass.sentinel):
         observer = observer if observer is not klass.sentinel else self.observer
-        return self._cmd_implementation_configure(
-            self._get_observer(observer))
+        return self._cmd_implementation_configure(self._get_observer(observer))
 
     @_operations_mod.is_standalone
     def _cmd_api_fetch(self, fetchables=None, observer=klass.sentinel, distdir=None):
@@ -125,7 +136,7 @@ class operations(_operations_mod.base):
 
         if failures:
             # run pkg_nofetch phase for fetch restricted pkgs
-            if 'fetch' in self.pkg.restrict:
+            if "fetch" in self.pkg.restrict:
                 # This requires wrapped packages from a configured repo, otherwise
                 # buildables aren't available to run the pkg_nofetch phase.
                 configured_repo = self.domain.unfiltered_repos[self.pkg.repo.repo_id]
@@ -134,8 +145,12 @@ class operations(_operations_mod.base):
                 build_ops.nofetch()
                 build_ops.cleanup(force=True)
             for fetchable in failures:
-                observer.error('failed fetching %s', fetchable.uri)
-            observer.error('failed fetching files for package %s::%s', self.pkg.unversioned_atom, self.pkg.repo.repo_id)
+                observer.error("failed fetching %s", fetchable.uri)
+            observer.error(
+                "failed fetching files for package %s::%s",
+                self.pkg.unversioned_atom,
+                self.pkg.repo.repo_id,
+            )
             raise FetchError(failures)
 
         self.verified_files = verified
@@ -148,9 +163,8 @@ class build_operations(operations):
 
     def _cmd_api_build(self, observer=None, failed=False, clean=True, **kwargs):
         return self._cmd_implementation_build(
-            self._get_observer(observer),
-            self.verified_files,
-            clean=clean, **kwargs)
+            self._get_observer(observer), self.verified_files, clean=clean, **kwargs
+        )
 
     def _cmd_api_buildable(self, domain):
         return self._cmd_implementation_buildable(domain)
@@ -161,7 +175,7 @@ class build_operations(operations):
 
 class build_base(metaclass=ForcedDepends):
 
-    stage_depends = {'finish': 'start'}
+    stage_depends = {"finish": "start"}
 
     def __init__(self, domain, observer):
         self.domain = domain
@@ -224,12 +238,15 @@ class build(build_base):
     for k in ("setup", "unpack", "configure", "compile", "test", "install"):
         locals()[k].__doc__ = (
             "execute any %s steps required; "
-            "implementations of this interface should overide this as needed"
-            % k)
+            "implementations of this interface should overide this as needed" % k
+        )
     for k in ("setup", "unpack", "configure", "compile", "test", "install", "finalize"):
         o = locals()[k]
-        o.__doc__ = "\n".join(x.lstrip() for x in o.__doc__.split("\n") + [
-                              ":return: True on success, False on failure"])
+        o.__doc__ = "\n".join(
+            x.lstrip()
+            for x in o.__doc__.split("\n")
+            + [":return: True on success, False on failure"]
+        )
     del o, k
 
 

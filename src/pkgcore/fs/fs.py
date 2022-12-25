@@ -17,49 +17,53 @@ from snakeoil.osutils import normpath, pjoin
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
-__all__ = [
-    "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo"]
-__all__.extend(
-    f"is{x}" for x in ("dir", "reg", "sym", "fifo", "dev", "fs_obj"))
+__all__ = ["fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo"]
+__all__.extend(f"is{x}" for x in ("dir", "reg", "sym", "fifo", "dev", "fs_obj"))
 
 # following are used to generate appropriate __init__, wiped from the
 # namespace at the end of the module
 
 _fs_doc = {
-    "mode":""":keyword mode: int, the mode of this entry.  """
-        """required if strict is set""",
-    "mtime":""":keyword mtime: long, the mtime of this entry.  """
-        """required if strict is set""",
-    "uid":""":keyword uid: int, the uid of this entry.  """
-        """required if strict is set""",
-    "gid":""":keyword gid: int, the gid of this entry.  """
-        """required if strict is set""",
+    "mode": """:keyword mode: int, the mode of this entry.  """
+    """required if strict is set""",
+    "mtime": """:keyword mtime: long, the mtime of this entry.  """
+    """required if strict is set""",
+    "uid": """:keyword uid: int, the uid of this entry.  """
+    """required if strict is set""",
+    "gid": """:keyword gid: int, the gid of this entry.  """
+    """required if strict is set""",
 }
+
 
 def gen_doc_additions(init, slots):
     if init.__doc__ is None:
-        d = \
-"""
+        d = """
 :param location: location (real or intended) for this entry
 :param strict: is this fully representative of the entry, or only partially
 :raise KeyError: if strict is enabled, and not all args are passed in
-""".split("\n")
+""".split(
+            "\n"
+        )
     else:
         d = init.__doc__.split("\n")
-    init.__doc__ = "\n".join(k.lstrip() for k in d) + \
-        "\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
+    init.__doc__ = "\n".join(k.lstrip() for k in d) + "\n".join(
+        _fs_doc[k] for k in _fs_doc if k in slots
+    )
 
 
 class fsBase:
 
     """base class, all extensions must derive from this class"""
+
     __slots__ = ("location", "mtime", "mode", "uid", "gid")
     __attrs__ = __slots__
     __default_attrs__ = {}
 
-    locals().update((x.replace("is", "is_"), False) for x in
-        __all__ if x.startswith("is") and x.islower() and not
-            x.endswith("fs_obj"))
+    locals().update(
+        (x.replace("is", "is_"), False)
+        for x in __all__
+        if x.startswith("is") and x.islower() and not x.endswith("fs_obj")
+    )
 
     klass.inject_richcmp_methods_from_cmp(locals())
     klass.inject_immutable_instance(locals())
@@ -75,11 +79,11 @@ class fsBase:
         else:
             for k, v in d.items():
                 s(self, k, v)
+
     gen_doc_additions(__init__, __attrs__)
 
     def change_attributes(self, **kwds):
-        d = {x: getattr(self, x)
-             for x in self.__attrs__ if hasattr(self, x)}
+        d = {x: getattr(self, x) for x in self.__attrs__ if hasattr(self, x)}
         d.update(kwds)
         # split location out
         location = d.pop("location")
@@ -148,7 +152,7 @@ class fsFile(fsBase):
 
     __slots__ = ("chksums", "data", "dev", "inode")
     __attrs__ = fsBase.__attrs__ + __slots__
-    __default_attrs__ = {"mtime":0, 'dev':None, 'inode':None}
+    __default_attrs__ = {"mtime": 0, "dev": None, "inode": None}
 
     is_reg = True
 
@@ -157,7 +161,7 @@ class fsFile(fsBase):
         :param chksums: dict of checksums, key chksum_type: val hash val.
             See :obj:`snakeoil.chksum`.
         """
-        assert 'data_source' not in kwds
+        assert "data_source" not in kwds
         if data is None:
             data = local_source(location)
         kwds["data"] = data
@@ -171,6 +175,7 @@ class fsFile(fsBase):
             chksums = _LazyChksums(chf_types, self._chksum_callback)
         kwds["chksums"] = chksums
         fsBase.__init__(self, location, **kwds)
+
     gen_doc_additions(__init__, __slots__)
 
     def __repr__(self):
@@ -182,9 +187,10 @@ class fsFile(fsBase):
         return list(zip(chfs, get_chksums(self.data, *chfs)))
 
     def change_attributes(self, **kwds):
-        if 'data' in kwds and ('chksums' not in kwds and
-            isinstance(self.chksums, _LazyChksums)):
-            kwds['chksums'] = None
+        if "data" in kwds and (
+            "chksums" not in kwds and isinstance(self.chksums, _LazyChksums)
+        ):
+            kwds["chksums"] = None
         return fsBase.change_attributes(self, **kwds)
 
     def _can_be_hardlinked(self, other):
@@ -194,7 +200,7 @@ class fsFile(fsBase):
         if None in (self.inode, self.dev):
             return False
 
-        for attr in ('dev', 'inode', 'uid', 'gid', 'mode', 'mtime'):
+        for attr in ("dev", "inode", "uid", "gid", "mode", "mtime"):
             if getattr(self, attr) != getattr(other, attr):
                 return False
         return True
@@ -225,11 +231,11 @@ class fsLink(fsBase):
         """
         kwargs["target"] = target
         fsBase.__init__(self, location, **kwargs)
+
     gen_doc_additions(__init__, __slots__)
 
     def change_attributes(self, **kwds):
-        d = {x: getattr(self, x)
-             for x in self.__attrs__ if hasattr(self, x)}
+        d = {x: getattr(self, x) for x in self.__attrs__ if hasattr(self, x)}
         d.update(kwds)
         # split location out
         location = d.pop("location")
@@ -243,7 +249,7 @@ class fsLink(fsBase):
     def resolved_target(self):
         if self.target.startswith("/"):
             return self.target
-        return normpath(pjoin(self.location, '../', self.target))
+        return normpath(pjoin(self.location, "../", self.target))
 
     def __cmp__(self, other):
         c = cmp(self.location, other.location)
@@ -254,7 +260,7 @@ class fsLink(fsBase):
         return 0
 
     def __str__(self):
-        return f'{self.location} -> {self.target}'
+        return f"{self.location} -> {self.target}"
 
     def __repr__(self):
         return f"symlink:{self.location}->{self.target}"
@@ -269,33 +275,31 @@ class fsDev(fsBase):
 
     __slots__ = ("major", "minor")
     __attrs__ = fsBase.__attrs__ + __slots__
-    __default_attrs__ = {"major":-1, "minor":-1}
+    __default_attrs__ = {"major": -1, "minor": -1}
     is_dev = True
 
     def __init__(self, path, major=-1, minor=-1, **kwds):
         if kwds.get("strict", True):
             if major == -1 or minor == -1:
-                raise TypeError(
-                   "major/minor must be specified and positive ints")
+                raise TypeError("major/minor must be specified and positive ints")
             if not stat.S_IFMT(kwds["mode"]):
                 raise TypeError(
-                    "mode %o: must specify the device type (got %o)" % (
-                        kwds["mode"], stat.S_IFMT(kwds["mode"])))
+                    "mode %o: must specify the device type (got %o)"
+                    % (kwds["mode"], stat.S_IFMT(kwds["mode"]))
+                )
             kwds["major"] = major
             kwds["minor"] = minor
         else:
             if major != -1:
                 major = int(major)
                 if major < 0:
-                    raise TypeError(
-                       "major/minor must be specified and positive ints")
+                    raise TypeError("major/minor must be specified and positive ints")
                 kwds["major"] = major
 
             if minor != -1:
                 minor = int(minor)
                 if minor < 0:
-                    raise TypeError(
-                       "major/minor must be specified and positive ints")
+                    raise TypeError("major/minor must be specified and positive ints")
                 kwds["minor"] = minor
 
         fsBase.__init__(self, path, **kwds)
@@ -308,7 +312,7 @@ def get_major_minor(stat_inst):
     """get major/minor from a stat instance
     :return: major,minor tuple of ints
     """
-    return ( stat_inst.st_rdev >> 8 ) & 0xff, stat_inst.st_rdev & 0xff
+    return (stat_inst.st_rdev >> 8) & 0xFF, stat_inst.st_rdev & 0xFF
 
 
 class fsFifo(fsBase):
@@ -321,18 +325,24 @@ class fsFifo(fsBase):
     def __repr__(self):
         return f"fifo:{self.location}"
 
-def mk_check(name):
-    return pretty_docs(post_curry(getattr, 'is_' + name, False),
-        extradocs=("return True if obj is an instance of :obj:`%s`, else False" % name),
-        name=("is" +name)
-        )
 
-isdir    = mk_check('dir')
-isreg    = mk_check('reg')
-issym    = mk_check('sym')
-isfifo   = mk_check('fifo')
-isdev    = mk_check('dev')
-isfs_obj = pretty_docs(post_curry(isinstance, fsBase), name='isfs_obj',
-    extradocs='return True if obj is an fsBase derived object')
+def mk_check(name):
+    return pretty_docs(
+        post_curry(getattr, "is_" + name, False),
+        extradocs=("return True if obj is an instance of :obj:`%s`, else False" % name),
+        name=("is" + name),
+    )
+
+
+isdir = mk_check("dir")
+isreg = mk_check("reg")
+issym = mk_check("sym")
+isfifo = mk_check("fifo")
+isdev = mk_check("dev")
+isfs_obj = pretty_docs(
+    post_curry(isinstance, fsBase),
+    name="isfs_obj",
+    extradocs="return True if obj is an fsBase derived object",
+)
 
 del gen_doc_additions, mk_check

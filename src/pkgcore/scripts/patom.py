@@ -14,14 +14,24 @@ def atom(value: str) -> atom_cls:
     except MalformedAtom as exc:
         # try to add an operator in case we got a version without op
         try:
-            return atom_cls('=' + value)
+            return atom_cls("=" + value)
         except MalformedAtom:
             raise exc
 
-argparser = ArgumentParser(description=__doc__, prog=__name__, script=(__file__, __name__),
-    config=False, domain=False, )
+
+argparser = ArgumentParser(
+    description=__doc__,
+    prog=__name__,
+    script=(__file__, __name__),
+    config=False,
+    domain=False,
+)
 group = argparser.add_mutually_exclusive_group()
-group.add_argument("-F", "--format", nargs='+', metavar=("FORMAT", "ATOM"),
+group.add_argument(
+    "-F",
+    "--format",
+    nargs="+",
+    metavar=("FORMAT", "ATOM"),
     help="Custom output format",
     docs="""
         Specify a custom  output  format.
@@ -63,15 +73,18 @@ group.add_argument("-F", "--format", nargs='+', metavar=("FORMAT", "ATOM"),
 
         OP
             The package prefixes, that is version specifiers.
-    """
+    """,
 )
-group.add_argument("-c", "--compare", nargs=2, metavar="ATOM", type=atom,
-    help="Compare two atoms")
+group.add_argument(
+    "-c", "--compare", nargs=2, metavar="ATOM", type=atom, help="Compare two atoms"
+)
+
 
 def _transform_format(atom: atom_cls, match: re.Match):
     if res := getattr(atom, match.group(0)[2:-1].lower()):
         return str(res)
     return "<unset>" if match.group(0)[1] == "{" else ""
+
 
 @argparser.bind_main_func
 def main(options, out, err):
@@ -90,7 +103,7 @@ def main(options, out, err):
                 err.write(f"bad format: {fmt!r}")
                 return 1
     # TODO: check implementation and add tests
-    elif options.compare: # pragma: no cover
+    elif options.compare:  # pragma: no cover
         atom1, atom2 = options.compare
         if atom1.unversioned_atom != atom2.unversioned_atom or atom1.slot != atom2.slot:
             op = "!="

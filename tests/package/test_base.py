@@ -5,18 +5,17 @@ import pytest
 from pkgcore.package import base
 
 
-def fake_pkg(cat='dev-util', pkg='bsdiff', ver='1.0', **attrs):
-    attrs.setdefault('category', cat)
-    attrs.setdefault('pkg', pkg)
-    attrs.setdefault('ver', ver)
-    attrs.setdefault('key', f"{cat}/{pkg}")
-    attrs.setdefault('cpvstr', f"{cat}/{pkg}-{ver}")
-    attrs.setdefault('built', False)
+def fake_pkg(cat="dev-util", pkg="bsdiff", ver="1.0", **attrs):
+    attrs.setdefault("category", cat)
+    attrs.setdefault("pkg", pkg)
+    attrs.setdefault("ver", ver)
+    attrs.setdefault("key", f"{cat}/{pkg}")
+    attrs.setdefault("cpvstr", f"{cat}/{pkg}-{ver}")
+    attrs.setdefault("built", False)
     return SimpleNamespace(**attrs)
 
 
 class mixin:
-
     def mk_inst(self):
         raise NotImplementedError(self, "mk_inst")
 
@@ -46,9 +45,8 @@ class TestBasePkg(mixin):
     def test_getattr(self):
         class Class(base.base):
             __slotting_intentionally_disabled__ = True
-            _get_attr = {str(x): partial((lambda a, s: a), x)
-                         for x in range(10)}
-            _get_attr["a"] = lambda s:"foo"
+            _get_attr = {str(x): partial((lambda a, s: a), x) for x in range(10)}
+            _get_attr["a"] = lambda s: "foo"
             __getattr__ = base.dynamic_getattr_dict
 
         o = Class()
@@ -65,6 +63,7 @@ class TestWrapper(mixin):
     def mk_inst(self, overrides=None, **kwds):
         kls = self.kls
         if overrides:
+
             class kls(self.kls):
                 locals().update(overrides)
                 __slots__ = ()
@@ -77,4 +76,4 @@ class TestWrapper(mixin):
         assert not self.mk_inst().built
         assert self.mk_inst(built=True).built
         # verify that wrapping will override it
-        assert not self.mk_inst(overrides={'built':False}, built=True).built
+        assert not self.mk_inst(overrides={"built": False}, built=True).built

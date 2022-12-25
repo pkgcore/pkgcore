@@ -20,7 +20,6 @@ from ..operations import observer as _observer
 
 
 class OperationError(PkgcoreException):
-
     def __init__(self, api, exc=None):
         self._api = api
         self._exc = exc
@@ -50,8 +49,11 @@ class base:
 
     @klass.cached_property
     def raw_operations(self):
-        return frozenset(x[len("_cmd_api_"):] for x in dir(self.__class__)
-                         if x.startswith("_cmd_api_"))
+        return frozenset(
+            x[len("_cmd_api_") :]
+            for x in dir(self.__class__)
+            if x.startswith("_cmd_api_")
+        )
 
     @klass.cached_property
     def enabled_operations(self):
@@ -74,7 +76,8 @@ class base:
 
     def _wrap_exception(self, functor, name):
         f = partial(
-            self._recast_exception_decorator, self.__casting_exception__, name, functor)
+            self._recast_exception_decorator, self.__casting_exception__, name, functor
+        )
         return pretty_docs(f)
 
     def _setup_api(self):
@@ -84,15 +87,15 @@ class base:
         else:
             f = self._wrap_exception
         for op in self.enabled_operations:
-            setattr(self, op, f(getattr(self, '_cmd_api_%s' % op), op))
+            setattr(self, op, f(getattr(self, "_cmd_api_%s" % op), op))
 
     def _filter_disabled_commands(self, sequence):
         for command in sequence:
-            obj = getattr(self, '_cmd_api_%s' % command, None)
-            if not getattr(obj, '_is_standalone', False):
-                if not hasattr(self, '_cmd_implementation_%s' % command):
+            obj = getattr(self, "_cmd_api_%s" % command, None)
+            if not getattr(obj, "_is_standalone", False):
+                if not hasattr(self, "_cmd_implementation_%s" % command):
                     continue
-            check_f = getattr(self, '_cmd_check_support_%s' % command, None)
+            check_f = getattr(self, "_cmd_check_support_%s" % command, None)
             if check_f is not None and not check_f():
                 continue
             yield command
@@ -117,7 +120,7 @@ class base:
         :return: Either the value of or_return, or if the operation is
             supported, the return value from that operation
         """
-        kwds.setdefault('observer', getattr(self, 'observer', self._get_observer()))
+        kwds.setdefault("observer", getattr(self, "observer", self._get_observer()))
         ret = kwds.pop("or_return", self.UNSUPPORTED)
         if self.supports(operation_name):
             ret = getattr(self, operation_name)(*args, **kwds)

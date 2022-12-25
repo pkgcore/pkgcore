@@ -2,7 +2,10 @@
 fetcher class that pulls files via executing another program to do the fetching
 """
 
-__all__ = ("MalformedCommand", "fetcher",)
+__all__ = (
+    "MalformedCommand",
+    "fetcher",
+)
 
 import os
 
@@ -15,22 +18,35 @@ from . import base, errors, fetchable
 
 
 class MalformedCommand(errors.FetchError):
-
     def __init__(self, command):
-        super().__init__(f'fetchcommand is malformed: {command}')
+        super().__init__(f"fetchcommand is malformed: {command}")
         self.command = command
 
 
 class fetcher(base.fetcher):
 
     pkgcore_config_type = ConfigHint(
-        {'userpriv': 'bool', 'required_chksums': 'list',
-         'distdir': 'str', 'command': 'str', 'resume_command': 'str'},
-        allow_unknowns=True)
+        {
+            "userpriv": "bool",
+            "required_chksums": "list",
+            "distdir": "str",
+            "command": "str",
+            "resume_command": "str",
+        },
+        allow_unknowns=True,
+    )
 
-    def __init__(self, distdir, command, resume_command=None,
-                 required_chksums=None, userpriv=True, attempts=10,
-                 readonly=False, **extra_env):
+    def __init__(
+        self,
+        distdir,
+        command,
+        resume_command=None,
+        required_chksums=None,
+        userpriv=True,
+        attempts=10,
+        readonly=False,
+        **extra_env,
+    ):
         """
         :param distdir: directory to download files to
         :type distdir: string
@@ -91,13 +107,12 @@ class fetcher(base.fetcher):
             else on disk location of the copied file
         """
         if not isinstance(target, fetchable):
-            raise TypeError(
-                f"target must be fetchable instance/derivative: {target}")
+            raise TypeError(f"target must be fetchable instance/derivative: {target}")
 
         path = pjoin(self.distdir, target.filename)
         uris = iter(target.uri)
         last_exc = RuntimeError("fetching failed for an unknown reason")
-        spawn_opts = {'umask': 0o002, 'env': self.extra_env}
+        spawn_opts = {"umask": 0o002, "env": self.extra_env}
         if self.userpriv and is_userpriv_capable():
             spawn_opts.update({"uid": portage_uid, "gid": portage_gid})
 
@@ -125,11 +140,12 @@ class fetcher(base.fetcher):
             # fetcher's exit code, trust our chksums instead.
             try:
                 spawn_bash(
-                    command % {"URI": next(uris), "FILE": target.filename},
-                    **spawn_opts)
+                    command % {"URI": next(uris), "FILE": target.filename}, **spawn_opts
+                )
             except StopIteration:
                 raise errors.FetchFailed(
-                    target.filename, "ran out of urls to fetch from")
+                    target.filename, "ran out of urls to fetch from"
+                )
         else:
             raise last_exc
 

@@ -20,24 +20,26 @@ _unique_inode = count(2**32).__next__
 known_compressors = {
     "bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,
-    None: tarfile.TarFile.open}
+    None: tarfile.TarFile.open,
+}
 
 
-def write_set(contents_set, filepath, compressor='bzip2', absolute_paths=False,
-              parallelize=False):
-    if compressor == 'bz2':
-        compressor = 'bzip2'
+def write_set(
+    contents_set, filepath, compressor="bzip2", absolute_paths=False, parallelize=False
+):
+    if compressor == "bz2":
+        compressor = "bzip2"
 
     tar_handle = None
-    handle = compression.compress_handle(compressor, filepath,
-        parallelize=parallelize)
+    handle = compression.compress_handle(compressor, filepath, parallelize=parallelize)
     try:
-        tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode='w')
+        tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode="w")
         add_contents_to_tarfile(contents_set, tar_handle)
     finally:
         if tar_handle is not None:
             tar_handle.close()
         handle.close()
+
 
 def add_contents_to_tarfile(contents_set, tar_fd, absolute_paths=False):
     # first add directories, then everything else
@@ -57,13 +59,13 @@ def add_contents_to_tarfile(contents_set, tar_fd, absolute_paths=False):
             if existing is not None:
                 if x._can_be_hardlinked(existing):
                     t.type = tarfile.LNKTYPE
-                    t.linkname = './%s' % existing.location.lstrip('/')
+                    t.linkname = "./%s" % existing.location.lstrip("/")
                     t.size = 0
             else:
                 inodes[key] = x
                 data = x.data.bytes_fileobj()
             tar_fd.addfile(t, fileobj=data)
-            #tar_fd.addfile(t, fileobj=x.data.bytes_fileobj())
+            # tar_fd.addfile(t, fileobj=x.data.bytes_fileobj())
         else:
             tar_fd.addfile(t)
 
@@ -78,8 +80,11 @@ def archive_to_fsobj(src_tar):
     inodes = {}
     for member in src_tar:
         d = {
-            "uid":member.uid, "gid":member.gid,
-            "mtime":member.mtime, "mode":member.mode}
+            "uid": member.uid,
+            "gid": member.gid,
+            "mtime": member.mtime,
+            "mode": member.mode,
+        }
         location = os.path.abspath(os.path.join(psep, member.name.strip(psep)))
         if member.isdir():
             if member.name.strip(psep) == ".":
@@ -95,7 +100,8 @@ def archive_to_fsobj(src_tar):
                         "Tarfile file %r is a hardlink to %r, but we can't "
                         "find the resolved hardlink target %r in the archive.  "
                         "This means either a bug in pkgcore, or a malformed "
-                        "tarball." % (member.name, member.linkname, target))
+                        "tarball." % (member.name, member.linkname, target)
+                    )
                 d["inode"] = inode
             else:
                 d["inode"] = inode = _unique_inode()
@@ -104,9 +110,11 @@ def archive_to_fsobj(src_tar):
             # to ensure 'y' is in the cache alongside it's target z to support 'x'
             # later lookup.
             inodes[location] = inode
-            d["data"] = invokable_data_source.wrap_function(partial(
-                src_tar.extractfile, member.name), returns_text=False,
-                returns_handle=True)
+            d["data"] = invokable_data_source.wrap_function(
+                partial(src_tar.extractfile, member.name),
+                returns_text=False,
+                returns_handle=True,
+            )
             yield fsFile(location, **d)
         elif member.issym() or member.islnk():
             yield fsSymlink(location, member.linkname, **d)
@@ -118,8 +126,10 @@ def archive_to_fsobj(src_tar):
             yield fsDev(location, **d)
         else:
             raise AssertionError(
-                "unknown type %r, %r was encounted walking tarmembers" %
-                    (member, member.type))
+                "unknown type %r, %r was encounted walking tarmembers"
+                % (member, member.type)
+            )
+
 
 def fsobj_to_tarinfo(fsobj, absolute_path=True):
     t = tarfile.TarInfo()
@@ -142,7 +152,7 @@ def fsobj_to_tarinfo(fsobj, absolute_path=True):
         t.devminor = fsobj.minor
     t.name = fsobj.location
     if not absolute_path:
-        t.name = './%s' % (fsobj.location.lstrip("/"),)
+        t.name = "./%s" % (fsobj.location.lstrip("/"),)
     t.mode = fsobj.mode
     t.uid = fsobj.uid
     t.gid = fsobj.gid
@@ -159,15 +169,16 @@ def generate_contents(filepath, compressor="bz2", parallelize=True):
         :obj:`known_compressors` for list of valid compressors
     """
 
-    if compressor == 'bz2':
-        compressor = 'bzip2'
+    if compressor == "bz2":
+        compressor = "bzip2"
 
     tar_handle = None
-    handle = compression.decompress_handle(compressor, filepath,
-        parallelize=parallelize)
+    handle = compression.decompress_handle(
+        compressor, filepath, parallelize=parallelize
+    )
 
     try:
-        tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode='r')
+        tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode="r")
     except tarfile.ReadError as e:
         if not e.message.endswith("empty header"):
             raise
@@ -232,8 +243,7 @@ def convert_archive(archive):
             return +1
         elif x.is_reg:
             if y.is_reg:
-                return cmp(files_ordering[x.data],
-                    files_ordering[y.data])
+                return cmp(files_ordering[x.data], files_ordering[y.data])
             return +1
         elif y.is_reg:
             return -1

@@ -3,11 +3,17 @@ misc. stuff we've not found a spot for yet.
 """
 
 __all__ = (
-    "ChunkedDataDict", "IncrementalsDict", "PayloadDict",
-    "chunked_data", "collapsed_restrict_to_data", "get_relative_dosym_target",
-    "incremental_chunked", "incremental_expansion",
+    "ChunkedDataDict",
+    "IncrementalsDict",
+    "PayloadDict",
+    "chunked_data",
+    "collapsed_restrict_to_data",
+    "get_relative_dosym_target",
+    "incremental_chunked",
+    "incremental_expansion",
     "incremental_expansion_license",
-    "non_incremental_collapsed_restrict_to_data", "optimize_incrementals",
+    "non_incremental_collapsed_restrict_to_data",
+    "optimize_incrementals",
     "sort_keywords",
 )
 
@@ -29,9 +35,11 @@ chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
 
 def sort_keywords(keywords):
     """Sort keywords in the proper order: i.e. glob-arches, arch, prefix-arches."""
+
     def _sort_kwds(kw):
-        parts = tuple(reversed(kw.lstrip('~-').partition('-')))
+        parts = tuple(reversed(kw.lstrip("~-").partition("-")))
         return parts[0], parts[2]
+
     return sorted(keywords, key=_sort_kwds)
 
 
@@ -41,11 +49,11 @@ def optimize_incrementals(sequence):
     # is the terminal point- no point in having -x.
     finalized = set()
     for item in reversed(sequence):
-        if item[0] == '-':
+        if item[0] == "-":
             i = item[1:]
             if not i:
                 raise ValueError("encountered an incomplete negation (just -, no flag)")
-            if i == '*':
+            if i == "*":
                 # seen enough.
                 yield item
                 return
@@ -64,17 +72,18 @@ def incremental_chunked(orig, iterables):
         orig.update(cinst.pos)
 
 
-def incremental_expansion(iterable, orig=None, msg_prefix='', finalize=True):
+def incremental_expansion(iterable, orig=None, msg_prefix="", finalize=True):
     if orig is None:
         orig = set()
 
     for token in iterable:
-        if token[0] == '-':
+        if token[0] == "-":
             i = token[1:]
             if not i:
                 raise ValueError(
-                    f"{msg_prefix} encountered an incomplete negation, '-'")
-            if i == '*':
+                    f"{msg_prefix} encountered an incomplete negation, '-'"
+                )
+            if i == "*":
                 orig.clear()
             else:
                 orig.discard(i)
@@ -87,33 +96,38 @@ def incremental_expansion(iterable, orig=None, msg_prefix='', finalize=True):
     return orig
 
 
-def incremental_expansion_license(pkg, licenses, license_groups, iterable, msg_prefix=''):
+def incremental_expansion_license(
+    pkg, licenses, license_groups, iterable, msg_prefix=""
+):
     seen = set()
     for token in iterable:
-        if token[0] == '-':
+        if token[0] == "-":
             i = token[1:]
             if not i:
                 raise ValueError(
-                    f"{pkg}: {msg_prefix}encountered an incomplete negation, '-'")
-            if i == '*':
+                    f"{pkg}: {msg_prefix}encountered an incomplete negation, '-'"
+                )
+            if i == "*":
                 seen.clear()
             else:
-                if i[0] == '@':
+                if i[0] == "@":
                     i = i[1:]
                     if not i:
                         raise ValueError(
                             f"{pkg}: {msg_prefix}encountered an incomplete negation"
-                            " of a license group, '-@'")
+                            " of a license group, '-@'"
+                        )
                     seen.difference_update(license_groups.get(i, ()))
                 else:
                     seen.discard(i)
-        elif token[0] == '@':
+        elif token[0] == "@":
             i = token[1:]
             if not i:
                 raise ValueError(
-                    f"{pkg}: {msg_prefix}encountered an incomplete license group, '@'")
+                    f"{pkg}: {msg_prefix}encountered an incomplete license group, '@'"
+                )
             seen.update(license_groups.get(i, ()))
-        elif token == '*':
+        elif token == "*":
             seen.update(licenses)
         else:
             seen.add(token)
@@ -132,14 +146,14 @@ class IncrementalsDict(mappings.DictMixin):
     def __setitem__(self, key, value):
         if key in self._incrementals:
             if key in self._dict:
-                self._dict[key] += f' {value}'
+                self._dict[key] += f" {value}"
             else:
                 self._dict[key] = value
         else:
             self._dict[key] = value
 
     for x in "getitem delitem len iter".split():
-        x = f'__{x}__'
+        x = f"__{x}__"
         locals()[x] = alias_method(f"_dict.{x}")
     s = "pop clear keys items values"
     for x in s.split():
@@ -149,7 +163,7 @@ class IncrementalsDict(mappings.DictMixin):
 
 class collapsed_restrict_to_data(metaclass=generic_equality):
 
-    __attr_comparison__ = ('defaults', 'freeform', 'atoms', '__class__')
+    __attr_comparison__ = ("defaults", "freeform", "atoms", "__class__")
     incremental = True
 
     def __init__(self, *restrict_sources, **kwds):
@@ -182,7 +196,13 @@ class collapsed_restrict_to_data(metaclass=generic_equality):
                         always.extend(data)
                         for atomlist in atom_d.values():
                             atomlist.append(
-                                (a, set([flag for flag in data if flag.startswith("-")])))
+                                (
+                                    a,
+                                    set(
+                                        [flag for flag in data if flag.startswith("-")]
+                                    ),
+                                )
+                            )
                 elif isinstance(a, atom.atom):
                     atom_d.setdefault(a.key, []).append((a, data))
                 elif isinstance(a, boolean.AndRestriction):
@@ -197,14 +217,18 @@ class collapsed_restrict_to_data(metaclass=generic_equality):
                     else:
                         raise ValueError(
                             f"{a!r} doesn't operate on "
-                            f"package/category/repo: data {data!r}")
+                            f"package/category/repo: data {data!r}"
+                        )
                 else:
                     raise ValueError(
                         f"{a!r} is not an AlwaysBool, PackageRestriction, "
-                        f"or atom: data {data!r}")
+                        f"or atom: data {data!r}"
+                    )
 
         if always:
-            always = incremental_expansion(always, finalize=kwds.get("finalize_defaults", True))
+            always = incremental_expansion(
+                always, finalize=kwds.get("finalize_defaults", True)
+            )
         else:
             always = set()
         self.defaults = always
@@ -249,7 +273,6 @@ class collapsed_restrict_to_data(metaclass=generic_equality):
 
 
 class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
-
     def pull_data(self, pkg, force_copy=False):
         l = []
         for specific in self.freeform:
@@ -284,7 +307,9 @@ def _cached_build_cp_atom_payload(cache, sequence, restrict, payload_form=False)
     key = (payload_form, restrict, tuple(sequence))
     val = cache.get(key)
     if val is None:
-        val = cache[key] = _build_cp_atom_payload(sequence, restrict, payload_form=payload_form)
+        val = cache[key] = _build_cp_atom_payload(
+            sequence, restrict, payload_form=payload_form
+        )
     return val
 
 
@@ -295,8 +320,10 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
     l = []
 
     if payload_form:
+
         def f(r, neg, pos):
-            return restrict_payload(r, tuple(chain(('-' + x for x in neg), pos)))
+            return restrict_payload(r, tuple(chain(("-" + x for x in neg), pos)))
+
     else:
         f = chunked_data
 
@@ -309,7 +336,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
     i = reversed(i)
 
     for data in i:
-        if data.key == packages.AlwaysTrue or getattr(data.key, 'is_simple', False):
+        if data.key == packages.AlwaysTrue or getattr(data.key, "is_simple", False):
             for n in data.neg:
                 ldefault(n, False)
             for p in data.pos:
@@ -329,11 +356,13 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
         # all is specific/non-simple, just reverse and return
         return tuple(f(*vals) for vals in reversed(l))
 
-    new_l = [f(
-        restrict,
-        tuple(k for k, v in locked.items() if not v),  # neg
-        tuple(k for k, v in locked.items() if v)  # pos
-    )]
+    new_l = [
+        f(
+            restrict,
+            tuple(k for k, v in locked.items() if not v),  # neg
+            tuple(k for k, v in locked.items() if v),  # pos
+        )
+    ]
     # we exploit a few things this time around in reusing the algo from above
     # we know there is only going to be one global (which we just added),
     # and that everything is specific.
@@ -352,7 +381,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
 class ChunkedDataDict(metaclass=generic_equality):
 
-    __attr_comparison__ = ('_global_settings', '_dict')
+    __attr_comparison__ = ("_global_settings", "_dict")
 
     def __init__(self):
         self._global_settings = []
@@ -401,11 +430,13 @@ class ChunkedDataDict(metaclass=generic_equality):
         if not isinstance(cdict, ChunkedDataDict):
             raise TypeError(
                 "merge expects a ChunkedDataDict instance; "
-                f"got type {type(cdict)}, {cdict!r}")
+                f"got type {type(cdict)}, {cdict!r}"
+            )
         if isinstance(cdict, PayloadDict) and not isinstance(self, PayloadDict):
             raise TypeError(
                 "merge expects a PayloadDataDict instance; "
-                f"got type {type(cdict)}, {cdict!r}")
+                f"got type {type(cdict)}, {cdict!r}"
+            )
         # straight extensions for this, rather than update_from_stream.
         d = self._dict
         for key, values in cdict._dict.items():
@@ -427,22 +458,26 @@ class ChunkedDataDict(metaclass=generic_equality):
         # while a chain seems obvious here, reversed is used w/in _build_cp_atom;
         # reversed doesn't like chain, so we just modify the list and do it this way.
         self._global_settings.extend(new_globals)
-        restrict = getattr(new_globals[0], 'key', packages.AlwaysTrue)
+        restrict = getattr(new_globals[0], "key", packages.AlwaysTrue)
         if restrict == packages.AlwaysTrue:
             self._global_settings[:] = list(
-                _build_cp_atom_payload(self._global_settings, restrict))
+                _build_cp_atom_payload(self._global_settings, restrict)
+            )
 
     def add(self, cinst):
         self.update_from_stream([cinst])
 
     def update_from_stream(self, stream):
         for cinst in stream:
-            if getattr(cinst.key, 'key', None) is not None:
+            if getattr(cinst.key, "key", None) is not None:
                 # atom, or something similar.  use the key lookup.
                 # hack also... recreate the restriction; this is due to
                 # internal idiocy in ChunkedDataDict that will be fixed.
-                new_globals = (x for x in self._global_settings
-                               if x not in self._dict[cinst.key.key])
+                new_globals = (
+                    x
+                    for x in self._global_settings
+                    if x not in self._dict[cinst.key.key]
+                )
                 self._dict[cinst.key.key].extend(new_globals)
                 self._dict[cinst.key.key].append(cinst)
             else:
@@ -451,25 +486,32 @@ class ChunkedDataDict(metaclass=generic_equality):
     def freeze(self):
         if not isinstance(self._dict, mappings.ImmutableDict):
             self._dict = mappings.ImmutableDict(
-                (k, tuple(v))
-                for k, v in self._dict.items())
+                (k, tuple(v)) for k, v in self._dict.items()
+            )
             self._global_settings = tuple(self._global_settings)
 
     def optimize(self, cache=None):
         if cache is None:
             d_stream = (
                 (k, _build_cp_atom_payload(v, atom.atom(k), False))
-                for k, v in self._dict.items())
-            g_stream = (_build_cp_atom_payload(
+                for k, v in self._dict.items()
+            )
+            g_stream = _build_cp_atom_payload(
                 self._global_settings,
-                packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+                packages.AlwaysTrue,
+                payload_form=isinstance(self, PayloadDict),
+            )
         else:
-            d_stream = ((k, _cached_build_cp_atom_payload(
-                cache, v, atom.atom(k), False))
-                for k, v in self._dict.items())
-            g_stream = (_cached_build_cp_atom_payload(
-                cache, self._global_settings,
-                packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+            d_stream = (
+                (k, _cached_build_cp_atom_payload(cache, v, atom.atom(k), False))
+                for k, v in self._dict.items()
+            )
+            g_stream = _cached_build_cp_atom_payload(
+                cache,
+                self._global_settings,
+                packages.AlwaysTrue,
+                payload_form=isinstance(self, PayloadDict),
+            )
 
         if self.frozen:
             self._dict = mappings.ImmutableDict(d_stream)
@@ -486,12 +528,14 @@ class ChunkedDataDict(metaclass=generic_equality):
 
     def render_to_payload(self):
         d = PayloadDict()
-        d = {atom.atom(k): _build_cp_atom_payload(v, atom.atom(k), True)
-             for k, v in self._dict.items()}
+        d = {
+            atom.atom(k): _build_cp_atom_payload(v, atom.atom(k), True)
+            for k, v in self._dict.items()
+        }
         if self._global_settings:
             data = _build_cp_atom_payload(
-                self._global_settings,
-                packages.AlwaysTrue, payload_form=True)
+                self._global_settings, packages.AlwaysTrue, payload_form=True
+            )
             d[packages.AlwaysTrue] = tuple(data)
         return d
 
@@ -513,23 +557,22 @@ class ChunkedDataDict(metaclass=generic_equality):
 
 
 class PayloadDict(ChunkedDataDict):
-
     def mk_item(self, key, neg, pos):
         return restrict_payload(key, tuple(chain(("-" + x for x in neg), pos)))
 
     def add_bare_global(self, payload):
-        neg = [x[1:] for x in payload if x[0] == '-']
-        pos = [x for x in payload if x[0] != '-']
+        neg = [x[1:] for x in payload if x[0] == "-"]
+        pos = [x for x in payload if x[0] != "-"]
         ChunkedDataDict.add_bare_global(self, neg, pos)
 
     def add_global(self, pinst):
-        neg = [x[1:] for x in pinst.data if x[0] == '-']
-        pos = [x for x in pinst.data if x[0] != '-']
+        neg = [x[1:] for x in pinst.data if x[0] == "-"]
+        pos = [x for x in pinst.data if x[0] != "-"]
         return ChunkedDataDict.add_global(self, chunked_data(pinst.restrict, neg, pos))
 
     def update_from_stream(self, stream):
         for pinst in stream:
-            if getattr(pinst.restrict, 'key', None) is not None:
+            if getattr(pinst.restrict, "key", None) is not None:
                 # atom, or something similar.  use the key lookup.
                 # hack also... recreate the restriction; this is due to
                 # internal idiocy in ChunkedDataDict that will be fixed.
@@ -543,7 +586,8 @@ class PayloadDict(ChunkedDataDict):
             items = self._global_settings
         s = set(pre_defaults)
         data = chain.from_iterable(
-            item.data for item in items if item.restrict.match(pkg))
+            item.data for item in items if item.restrict.match(pkg)
+        )
         return incremental_expansion(data, orig=s)
 
     pull_data = render_pkg
@@ -563,4 +607,4 @@ def run_sanity_checks(pkgs, domain, threads=None):
 def get_relative_dosym_target(source, target):
     """Get relative path from target to source, for symlink target."""
     # NB: as dosym arg, initial slash can be omitted
-    return os.path.relpath(source, os.path.join('/', os.path.dirname(target)))
+    return os.path.relpath(source, os.path.join("/", os.path.dirname(target)))

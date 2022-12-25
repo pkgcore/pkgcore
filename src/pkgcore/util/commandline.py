@@ -53,11 +53,11 @@ class StoreTarget(argparse._AppendAction):
     """
 
     def __init__(self, *args, **kwargs):
-        self.use_sets = kwargs.pop('use_sets', False)
-        self.allow_ebuild_paths = kwargs.pop('allow_ebuild_paths', False)
-        self.allow_external_repos = kwargs.pop('allow_external_repos', False)
-        self.separator = kwargs.pop('separator', None)
-        kwargs.setdefault('default', ())
+        self.use_sets = kwargs.pop("use_sets", False)
+        self.allow_ebuild_paths = kwargs.pop("allow_ebuild_paths", False)
+        self.allow_external_repos = kwargs.pop("allow_external_repos", False)
+        self.separator = kwargs.pop("separator", None)
+        kwargs.setdefault("default", ())
         super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -68,39 +68,48 @@ class StoreTarget(argparse._AppendAction):
 
         if isinstance(values, str):
             values = [values]
-        elif values is not None and len(values) == 1 and values[0] == '-':
+        elif values is not None and len(values) == 1 and values[0] == "-":
             if not sys.stdin.isatty():
-                values = [x.strip() for x in sys.stdin.readlines() if x.strip() != '']
+                values = [x.strip() for x in sys.stdin.readlines() if x.strip() != ""]
                 # reassign stdin to allow interactivity (currently only works for unix)
-                sys.stdin = open('/dev/tty')
+                sys.stdin = open("/dev/tty")
             else:
-                raise argparse.ArgumentError(self, "'-' is only valid when piping data in")
+                raise argparse.ArgumentError(
+                    self, "'-' is only valid when piping data in"
+                )
 
         # override default empty tuple value to appendable list
         if values:
             setattr(namespace, self.dest, [])
 
         for token in values:
-            if self.use_sets and token.startswith('@'):
+            if self.use_sets and token.startswith("@"):
                 namespace.sets.append(token[1:])
             else:
-                if self.allow_ebuild_paths and token.endswith('.ebuild'):
+                if self.allow_ebuild_paths and token.endswith(".ebuild"):
                     try:
-                        repo = getattr(namespace, 'repo', namespace.domain.ebuild_repos_raw)
+                        repo = getattr(
+                            namespace, "repo", namespace.domain.ebuild_repos_raw
+                        )
                     except AttributeError:
                         raise argparse.ArgumentTypeError(
-                            'repo or domain must be defined in the namespace')
+                            "repo or domain must be defined in the namespace"
+                        )
                     if not os.path.exists(token):
-                        raise argparse.ArgumentError(self, f"nonexistent ebuild: {token!r}")
+                        raise argparse.ArgumentError(
+                            self, f"nonexistent ebuild: {token!r}"
+                        )
                     elif not os.path.isfile(token):
                         raise argparse.ArgumentError(self, f"invalid ebuild: {token!r}")
                     if self.allow_external_repos and token not in repo:
                         repo_root_dir = os.path.abspath(
-                            pjoin(token, os.pardir, os.pardir, os.pardir))
+                            pjoin(token, os.pardir, os.pardir, os.pardir)
+                        )
                         try:
                             with suppress_logging():
                                 repo = namespace.domain.add_repo(
-                                    repo_root_dir, config=namespace.config)
+                                    repo_root_dir, config=namespace.config
+                                )
                         except repo_errors.RepoError as e:
                             raise argparse.ArgumentError(self, f"{token!r} -- {e}")
                     try:
@@ -113,8 +122,8 @@ class StoreTarget(argparse._AppendAction):
                     except parserestrict.ParseError as e:
                         parser.error(e)
                 super().__call__(
-                    parser, namespace,
-                    (token, restriction), option_string=option_string)
+                    parser, namespace, (token, restriction), option_string=option_string
+                )
 
 
 CONFIG_ALL_DEFAULT = object()
@@ -136,9 +145,13 @@ class StoreConfigObject(argparse._StoreAction):
 
         if kwargs.pop("get_default", False):
             kwargs["default"] = arghparse.DelayedValue(
-                partial(self.store_default, self.config_type,
-                        option_string=kwargs.get('option_strings', [None])[0]),
-                self.priority)
+                partial(
+                    self.store_default,
+                    self.config_type,
+                    option_string=kwargs.get("option_strings", [None])[0],
+                ),
+                self.priority,
+            )
 
         self.store_name = kwargs.pop("store_name", False)
         self.writable = kwargs.pop("writable", None)
@@ -154,36 +167,41 @@ class StoreConfigObject(argparse._StoreAction):
 
     def _load_obj(self, sections, name):
         obj_type = self.metavar if self.metavar is not None else self.config_type
-        obj_type = obj_type.lower() + ' ' if obj_type is not None else ''
+        obj_type = obj_type.lower() + " " if obj_type is not None else ""
 
         try:
             val = sections[name]
         except KeyError:
-            choices = ', '.join(self._choices(sections))
+            choices = ", ".join(self._choices(sections))
             if choices:
                 choices = f" (available: {choices})"
 
             raise argparse.ArgumentError(
-                self, f"couldn't find {obj_type}{name!r}{choices}")
+                self, f"couldn't find {obj_type}{name!r}{choices}"
+            )
 
-        if self.writable and getattr(val, 'frozen', False):
-            raise argparse.ArgumentError(
-                self, f"{obj_type}{name!r} is readonly")
+        if self.writable and getattr(val, "frozen", False):
+            raise argparse.ArgumentError(self, f"{obj_type}{name!r} is readonly")
 
         if self.store_name:
             return name, val
         return val
 
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, arghparse.DelayedParse(
-            partial(self._real_call, parser, namespace, values, option_string),
-            self.priority))
+        setattr(
+            namespace,
+            self.dest,
+            arghparse.DelayedParse(
+                partial(self._real_call, parser, namespace, values, option_string),
+                self.priority,
+            ),
+        )
 
     def _get_sections(self, config, namespace):
         return getattr(config, self.config_type)
 
     def _real_call(self, parser, namespace, values, option_string=None):
-        config = getattr(namespace, 'config', None)
+        config = getattr(namespace, "config", None)
         if config is None:
             raise ValueError("no config found, internal bug")
 
@@ -202,10 +220,11 @@ class StoreConfigObject(argparse._StoreAction):
 
     @staticmethod
     def store_default(config_type, namespace, attr, option_string=None):
-        config = getattr(namespace, 'config', None)
+        config = getattr(namespace, "config", None)
         if config is None:
             raise argparse.ArgumentTypeError(
-                "no config found -- internal bug, or broken on disk configuration")
+                "no config found -- internal bug, or broken on disk configuration"
+            )
         obj = config.get_default(config_type)
         if obj is None:
             known_objs = sorted(getattr(config, config_type).keys())
@@ -215,7 +234,8 @@ class StoreConfigObject(argparse._StoreAction):
             else:
                 msg += (
                     "Please either fix your configuration, or set the "
-                    f"{config_type} via the {option_string} option.")
+                    f"{config_type} via the {option_string} option."
+                )
             if known_objs:
                 msg += f"Known {config_type}s: {', '.join(map(repr, known_objs))}"
             raise NoDefaultConfigError(None, msg)
@@ -223,7 +243,7 @@ class StoreConfigObject(argparse._StoreAction):
 
     @staticmethod
     def store_all_default(config_type, namespace, attr):
-        config = getattr(namespace, 'config', None)
+        config = getattr(namespace, "config", None)
         if config is None:
             raise ValueError("no config found -- internal bug")
         obj = [(k, v) for k, v in getattr(config, config_type).items()]
@@ -234,16 +254,15 @@ class StoreConfigObject(argparse._StoreAction):
         if priority is None:
             priority = cls.default_priority
         return arghparse.DelayedValue(
-            partial(cls._lazy_load_object, config_type, key),
-            priority)
+            partial(cls._lazy_load_object, config_type, key), priority
+        )
 
     @staticmethod
     def _lazy_load_object(config_type, key, namespace, attr):
         try:
             obj = getattr(namespace.config, config_type)[key]
         except KeyError:
-            raise argparse.ArgumentError(
-                None, f"couldn't find {config_type} {attr!r}")
+            raise argparse.ArgumentError(None, f"couldn't find {config_type} {attr!r}")
         setattr(namespace, attr, obj)
 
 
@@ -253,29 +272,30 @@ class StoreRepoObject(StoreConfigObject):
     # mapping between supported repo type requests and the related attr on
     # domain objects to pull the requested repos from
     valid_repo_types = {
-        'config': 'repo_configs',
-        'all': 'repos',
-        'all-raw': 'repos_raw',
-        'source': 'source_repos',
-        'source-raw': 'source_repos_raw',
-        'installed': 'installed_repos',
-        'installed-raw': 'installed_repos_raw',
-        'unfiltered': 'unfiltered_repos',
-        'ebuild': 'ebuild_repos',
-        'ebuild-unfiltered': 'ebuild_repos_unfiltered',
-        'ebuild-raw': 'ebuild_repos_raw',
-        'binary': 'binary_repos',
-        'binary-unfiltered': 'binary_repos_unfiltered',
-        'binary-raw': 'binary_repos_raw',
+        "config": "repo_configs",
+        "all": "repos",
+        "all-raw": "repos_raw",
+        "source": "source_repos",
+        "source-raw": "source_repos_raw",
+        "installed": "installed_repos",
+        "installed-raw": "installed_repos_raw",
+        "unfiltered": "unfiltered_repos",
+        "ebuild": "ebuild_repos",
+        "ebuild-unfiltered": "ebuild_repos_unfiltered",
+        "ebuild-raw": "ebuild_repos_raw",
+        "binary": "binary_repos",
+        "binary-unfiltered": "binary_repos_unfiltered",
+        "binary-raw": "binary_repos_raw",
     }
 
     def __init__(self, *args, **kwargs):
-        if 'config_type' in kwargs:
+        if "config_type" in kwargs:
             raise ValueError(
                 "StoreRepoObject: config_type keyword is redundant: got %s"
-                % (kwargs['config_type'],))
+                % (kwargs["config_type"],)
+            )
 
-        self.repo_type = kwargs.pop('repo_type', 'all')
+        self.repo_type = kwargs.pop("repo_type", "all")
         if self.repo_type not in self.valid_repo_types:
             raise argparse.ArgumentTypeError(f"unknown repo type: {self.repo_type!r}")
         self.repo_key = self.valid_repo_types[self.repo_type]
@@ -285,22 +305,26 @@ class StoreRepoObject(StoreConfigObject):
             unknown_aliases = self.allow_aliases.difference(self.valid_repo_types)
             if unknown_aliases:
                 raise argparse.ArgumentTypeError(
-                    'unknown repo alias%s: %s' % (
-                        pluralism(unknown_aliases, plural='es'), ', '.join(unknown_aliases)))
+                    "unknown repo alias%s: %s"
+                    % (
+                        pluralism(unknown_aliases, plural="es"),
+                        ", ".join(unknown_aliases),
+                    )
+                )
 
-        if self.repo_type == 'config':
-            kwargs['config_type'] = 'repo_config'
+        if self.repo_type == "config":
+            kwargs["config_type"] = "repo_config"
         else:
-            kwargs['config_type'] = 'repo'
+            kwargs["config_type"] = "repo"
         self.allow_name_lookup = kwargs.pop("allow_name_lookup", True)
         self.allow_external_repos = kwargs.pop("allow_external_repos", False)
         super().__init__(*args, **kwargs)
 
     def _get_sections(self, config, namespace):
-        domain = getattr(namespace, 'domain', None)
+        domain = getattr(namespace, "domain", None)
 
         # return repo config objects
-        if domain is None or self.repo_type == 'config':
+        if domain is None or self.repo_type == "config":
             return StoreConfigObject._get_sections(self, config, namespace)
 
         self.config = config
@@ -316,8 +340,8 @@ class StoreRepoObject(StoreConfigObject):
         If a repo doesn't have a proper location just the name is returned.
         """
         for repo_name, repo in sorted(unstable_unique(sections.items())):
-            repo_name = getattr(repo, 'repo_id', repo_name)
-            if hasattr(repo, 'location'):
+            repo_name = getattr(repo, "repo_id", repo_name)
+            if hasattr(repo, "location"):
                 yield f"{repo_name}:{repo.location}"
             else:
                 yield repo_name
@@ -340,24 +364,24 @@ class StoreRepoObject(StoreConfigObject):
                 # try to add it as an external repo
                 if self.allow_external_repos and os.path.exists(repo):
                     try:
-                        configure = not self.repo_type.endswith('-raw')
+                        configure = not self.repo_type.endswith("-raw")
                         with suppress_logging():
                             repo_obj = self.domain.add_repo(
-                                repo, config=self.config, configure=configure)
+                                repo, config=self.config, configure=configure
+                            )
                         repo = repo_obj.location
                     except repo_errors.RepoError as e:
                         raise argparse.ArgumentError(self, e)
-                    if hasattr(self.domain, '_' + self.repo_key):
+                    if hasattr(self.domain, "_" + self.repo_key):
                         # force JIT-ed attr refresh to include newly added repo
-                        setattr(self.domain, '_' + self.repo_key, None)
+                        setattr(self.domain, "_" + self.repo_key, None)
                     sections = getattr(self.domain, self.repo_key)
         return StoreConfigObject._load_obj(self, sections, repo)
 
 
 class DomainFromPath(StoreConfigObject):
-
     def __init__(self, *args, **kwargs):
-        kwargs['config_type'] = 'domain'
+        kwargs["config_type"] = "domain"
         super().__init__(*args, **kwargs)
 
     def _load_obj(self, sections, requested_path):
@@ -366,15 +390,16 @@ class DomainFromPath(StoreConfigObject):
             raise ValueError(f"couldn't find domain at path {requested_path!r}")
         elif len(targets) != 1:
             raise ValueError(
-                "multiple domains claim root %r: domains %s" %
-                (requested_path, ', '.join(repr(x[0]) for x in targets)))
+                "multiple domains claim root %r: domains %s"
+                % (requested_path, ", ".join(repr(x[0]) for x in targets))
+            )
         return targets[0][1]
 
 
 def find_domains_from_path(sections, path):
     path = normpath(abspath(path))
     for name, domain in sections.items():
-        root = getattr(domain, 'root', None)
+        root = getattr(domain, "root", None)
         if root is None:
             continue
         root = normpath(abspath(root))
@@ -383,23 +408,24 @@ def find_domains_from_path(sections, path):
 
 
 class BooleanQuery(arghparse.DelayedValue):
-
     def __init__(self, attrs, klass_type=None, priority=100, converter=None):
-        if klass_type == 'and':
+        if klass_type == "and":
             self.klass = packages.AndRestriction
-        elif klass_type == 'or':
+        elif klass_type == "or":
             self.klass = packages.OrRestriction
         elif callable(klass_type):
             self.klass = klass_type
         else:
             raise ValueError(
                 "klass_type either needs to be 'or', 'and', "
-                f"or a callable. Got {klass_type!r}")
+                f"or a callable. Got {klass_type!r}"
+            )
 
         if converter is not None and not callable(converter):
             raise ValueError(
                 "converter either needs to be None, or a callable;"
-                f" got {converter!r}")
+                f" got {converter!r}"
+            )
 
         self.converter = converter
         self.priority = int(priority)
@@ -442,22 +468,24 @@ def make_query(parser, *args, **kwargs):
     attrs = kwargs.pop("attrs", [])
     subattr = f"_{dest}"
     kwargs["dest"] = subattr
-    if kwargs.get('type', False) is None:
-        del kwargs['type']
+    if kwargs.get("type", False) is None:
+        del kwargs["type"]
     else:
+
         def query(value):
             return parserestrict.parse_match(value)
+
         kwargs.setdefault("type", query)
-    if kwargs.get('metavar', False) is None:
-        del kwargs['metavar']
+    if kwargs.get("metavar", False) is None:
+        del kwargs["metavar"]
     else:
         kwargs.setdefault("metavar", dest)
     final_priority = kwargs.pop("final_priority", None)
     final_converter = kwargs.pop("final_converter", None)
     parser.add_argument(*args, **kwargs)
-    bool_kwargs = {'converter': final_converter}
+    bool_kwargs = {"converter": final_converter}
     if final_priority is not None:
-        bool_kwargs['priority'] = final_priority
+        bool_kwargs["priority"] = final_priority
     obj = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type, **bool_kwargs)
     # note that dict expansion has to be used here; dest=obj would just set a
     # default named 'dest'
@@ -488,6 +516,7 @@ def register_command(commands, real_type=type):
         o = real_type(name, bases, scope)
         commands.append(o)
         return o
+
     return f
 
 
@@ -495,19 +524,24 @@ def store_config(namespace, attr, global_config=()):
     config = load_config(
         prepend_sources=tuple(global_config),
         location=namespace.config_path,
-        **vars(namespace))
+        **vars(namespace),
+    )
     setattr(namespace, attr, config)
 
 
 def _mk_domain(parser, help=True):
     parser.add_argument(
-        '--domain', get_default=True, config_type='domain',
+        "--domain",
+        get_default=True,
+        config_type="domain",
         action=StoreConfigObject,
-        help='custom pkgcore domain to use for this operation' if help else argparse.SUPPRESS)
+        help="custom pkgcore domain to use for this operation"
+        if help
+        else argparse.SUPPRESS,
+    )
 
 
 class _SubParser(arghparse._SubParser):
-
     def add_parser(self, name, config=False, domain=False, **kwds):
         """Suppress config and domain options in subparsers by default.
 
@@ -520,26 +554,36 @@ class _ConfigArg(argparse._StoreAction):
     """Store given config path location or use the stub config when disabled."""
 
     def __call__(self, parser, namespace, value, option_string=None):
-        if value.lower() in {'false', 'no', 'n'}:
-            path = pjoin(const.DATA_PATH, 'stubconfig')
+        if value.lower() in {"false", "no", "n"}:
+            path = pjoin(const.DATA_PATH, "stubconfig")
         else:
             path = arghparse.existent_path(value)
         setattr(namespace, self.dest, path)
 
 
 class ArgumentParser(arghparse.ArgumentParser):
-
-    def __init__(self, suppress=False, help=True, config=True,
-                 domain=True, global_config=(), **kwds):
+    def __init__(
+        self,
+        suppress=False,
+        help=True,
+        config=True,
+        domain=True,
+        global_config=(),
+        **kwds,
+    ):
         super().__init__(suppress=suppress, **kwds)
-        self.register('action', 'parsers', _SubParser)
+        self.register("action", "parsers", _SubParser)
 
         if not suppress:
-            config_opts = self.add_argument_group('config options')
+            config_opts = self.add_argument_group("config options")
             if config:
                 config_opts.add_argument(
-                    '--config', action=_ConfigArg, dest='config_path',
-                    help='use custom config or skip loading system config' if help else argparse.SUPPRESS,
+                    "--config",
+                    action=_ConfigArg,
+                    dest="config_path",
+                    help="use custom config or skip loading system config"
+                    if help
+                    else argparse.SUPPRESS,
                     docs="""
                         The path to a custom pkgcore config file or portage
                         config directory can be given to override loading the
@@ -547,10 +591,14 @@ class ArgumentParser(arghparse.ArgumentParser):
 
                         Alternatively, an argument of 'false' or 'no' will skip
                         loading the system config entirely if one exists.
-                    """)
+                    """,
+                )
 
-                self.set_defaults(config=arghparse.DelayedValue(
-                    partial(store_config, global_config=global_config)))
+                self.set_defaults(
+                    config=arghparse.DelayedValue(
+                        partial(store_config, global_config=global_config)
+                    )
+                )
 
             if domain:
                 _mk_domain(config_opts, help)
@@ -574,4 +622,4 @@ class Tool(tool.Tool):
         """Pass down pkgcore-specific settings to the bash side."""
         # pass down verbosity level to affect debug output
         if self.parser.debug:
-            os.environ['PKGCORE_DEBUG'] = str(self.parser.verbosity)
+            os.environ["PKGCORE_DEBUG"] = str(self.parser.verbosity)

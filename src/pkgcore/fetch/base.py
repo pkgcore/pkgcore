@@ -12,7 +12,6 @@ from . import errors
 
 
 class fetcher:
-
     def _verify(self, file_location, target, all_chksums=True, handlers=None):
         """Internal function for derivatives.
 
@@ -35,7 +34,8 @@ class fetcher:
                 handlers = get_handlers(target.chksums)
             except MissingChksumHandler as e:
                 raise errors.MissingChksumHandler(
-                    f'missing required checksum handler: {e}')
+                    f"missing required checksum handler: {e}"
+                )
         if all_chksums:
             missing = set(target.chksums).difference(handlers)
             if missing:
@@ -48,14 +48,18 @@ class fetcher:
             if val != target.chksums["size"]:
                 if val < target.chksums["size"]:
                     raise errors.FetchFailed(
-                        file_location, 'file is too small', resumable=True)
+                        file_location, "file is too small", resumable=True
+                    )
                 raise errors.ChksumFailure(
-                    file_location, chksum='size', expected=target.chksums["size"], value=val)
+                    file_location,
+                    chksum="size",
+                    expected=target.chksums["size"],
+                    value=val,
+                )
         elif not os.path.exists(file_location):
             raise errors.MissingDistfile(file_location)
         elif not os.stat(file_location).st_size:
-            raise errors.FetchFailed(
-                file_location, 'file is empty', resumable=False)
+            raise errors.FetchFailed(file_location, "file is empty", resumable=False)
 
         chfs = set(target.chksums).intersection(handlers)
         chfs.discard("size")
@@ -65,14 +69,16 @@ class fetcher:
                 val = handlers[x](file_location)
                 if val != target.chksums[x]:
                     raise errors.ChksumFailure(
-                        file_location, chksum=x, expected=target.chksums[x], value=val)
+                        file_location, chksum=x, expected=target.chksums[x], value=val
+                    )
         else:
             desired_vals = [target.chksums[x] for x in chfs]
             calced = get_chksums(file_location, *chfs)
             for desired, got, chf in zip(desired_vals, calced, chfs):
                 if desired != got:
                     raise errors.ChksumFailure(
-                        file_location, chksum=chf, expected=desired, value=got)
+                        file_location, chksum=chf, expected=desired, value=got
+                    )
 
     def __call__(self, fetchable):
         if not fetchable.uri:

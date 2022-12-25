@@ -5,8 +5,15 @@
 atom version restrict
 """
 
-__all__ = ("CategoryDep", "PackageDep", "RepositoryDep", "SlotDep",
-    "StaticUseDep", "SubSlotDep", "UseDepDefault", "VersionMatch"
+__all__ = (
+    "CategoryDep",
+    "PackageDep",
+    "RepositoryDep",
+    "SlotDep",
+    "StaticUseDep",
+    "SubSlotDep",
+    "UseDepDefault",
+    "VersionMatch",
 )
 
 from snakeoil.klass import generic_equality
@@ -28,7 +35,7 @@ class _VersionMatch(restriction.base, metaclass=generic_equality):
 
     __slots__ = ("ver", "rev", "vals", "droprev", "negate")
 
-    __attr_comparison__ = ('negate', 'rev', 'droprev', 'vals')
+    __attr_comparison__ = ("negate", "rev", "droprev", "vals")
 
     type = restriction.value_type
     attr = "fullver"
@@ -62,13 +69,13 @@ class _VersionMatch(restriction.base, metaclass=generic_equality):
         sf(self, "rev", rev)
         if operator != "~" and operator not in self._convert_str2op:
             raise errors.InvalidVersion(
-                self.ver, self.rev, f"invalid operator, '{operator}'")
+                self.ver, self.rev, f"invalid operator, '{operator}'"
+            )
 
         sf(self, "negate", negate)
         if operator == "~":
             if ver is None:
-                raise ValueError(
-                    "for ~ op, version must be something other then None")
+                raise ValueError("for ~ op, version must be something other then None")
             sf(self, "droprev", True)
             sf(self, "vals", (0,))
         else:
@@ -92,7 +99,7 @@ class _VersionMatch(restriction.base, metaclass=generic_equality):
         if self.negate:
             n = "not "
         else:
-            n = ''
+            n = ""
 
         if self.droprev or not self.rev:
             return f"ver {n}{s} {self.ver}"
@@ -104,7 +111,11 @@ class _VersionMatch(restriction.base, metaclass=generic_equality):
         if self.rev:
             s += f"-r{self.rev}"
         return "<%s %s negate=%s droprrev=%s @#x>" % (
-            self.__class__.__name__, s, self.negate, self.droprev)
+            self.__class__.__name__,
+            s,
+            self.negate,
+            self.droprev,
+        )
 
     @staticmethod
     def _convert_ops(inst):
@@ -118,8 +129,11 @@ class _VersionMatch(restriction.base, metaclass=generic_equality):
         if self is other:
             return True
         if isinstance(other, self.__class__):
-            if self.droprev != other.droprev or self.ver != other.ver \
-                    or self.rev != other.rev:
+            if (
+                self.droprev != other.droprev
+                or self.ver != other.ver
+                or self.rev != other.rev
+            ):
                 return False
             return self._convert_ops(self) == self._convert_ops(other)
 
@@ -136,7 +150,7 @@ class VersionMatch(packages.PackageRestriction):
 
     def __init__(self, *args, **kwds):
         v = _VersionMatch(*args, **kwds)
-        super().__init__('fullver', v, negate=kwds.get('negate', False))
+        super().__init__("fullver", v, negate=kwds.get("negate", False))
 
     def match(self, pkg, *args, **kwds):
         return self.restriction.match(pkg)
@@ -149,7 +163,7 @@ class SlotDep(packages.PackageRestriction):
 
     def __init__(self, slot, **kwds):
         v = values.StrExactMatch(slot)
-        super().__init__('slot', v, negate=kwds.get('negate', False))
+        super().__init__("slot", v, negate=kwds.get("negate", False))
 
 
 class SubSlotDep(packages.PackageRestriction):
@@ -159,7 +173,7 @@ class SubSlotDep(packages.PackageRestriction):
 
     def __init__(self, subslot, **kwds):
         v = values.StrExactMatch(subslot)
-        super().__init__('subslot', v, negate=kwds.get('negate', False))
+        super().__init__("subslot", v, negate=kwds.get("negate", False))
 
 
 class CategoryDep(packages.PackageRestriction):
@@ -168,7 +182,7 @@ class CategoryDep(packages.PackageRestriction):
     __inst_caching__ = True
 
     def __init__(self, category, negate=False):
-        super().__init__('category', values.StrExactMatch(category, negate=negate))
+        super().__init__("category", values.StrExactMatch(category, negate=negate))
 
 
 class PackageDep(packages.PackageRestriction):
@@ -177,7 +191,7 @@ class PackageDep(packages.PackageRestriction):
     __inst_caching__ = True
 
     def __init__(self, package, negate=False):
-        super().__init__('package', values.StrExactMatch(package, negate=negate))
+        super().__init__("package", values.StrExactMatch(package, negate=negate))
 
 
 class RepositoryDep(packages.PackageRestriction):
@@ -186,7 +200,7 @@ class RepositoryDep(packages.PackageRestriction):
     __inst_caching__ = True
 
     def __init__(self, repo_id, negate=False):
-        super().__init__('repo.repo_id', values.StrExactMatch(repo_id), negate=negate)
+        super().__init__("repo.repo_id", values.StrExactMatch(repo_id), negate=negate)
 
 
 class StaticUseDep(packages.PackageRestriction):
@@ -209,15 +223,15 @@ class StaticUseDep(packages.PackageRestriction):
         else:
             v = values.AlwaysTrue
 
-        super().__init__('use', v)
+        super().__init__("use", v)
 
 
 class _UseDepDefaultContainment(values.ContainmentMatch):
 
-    __slots__ = ('if_missing',)
+    __slots__ = ("if_missing",)
 
     def __init__(self, if_missing, vals, negate=False):
-        object.__setattr__(self, 'if_missing', bool(if_missing))
+        object.__setattr__(self, "if_missing", bool(if_missing))
         super().__init__(vals, negate=negate, match_all=True)
 
     def match(self, val):
@@ -236,7 +250,9 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
         # recall that negate is unfortunately a double negative in labeling...
         reduced_vals = reduced_vals.intersection(iuse_stripped)
         if reduced_vals:
-            return values.ContainmentMatch.match(self, use, _values_override=reduced_vals)
+            return values.ContainmentMatch.match(
+                self, use, _values_override=reduced_vals
+            )
         # nothing to match means all are missing, but the default makes them considered a match.
         return True
 
@@ -245,12 +261,14 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
         # see comments in .match for clarification of logic.
         iuse_stripped, use = val
         if reduced_vals.issubset(iuse_stripped):
-            return values.ContainmentMatch.force_False(self, pkg, 'use', use)
+            return values.ContainmentMatch.force_False(self, pkg, "use", use)
         if self.if_missing == self.negate:
             return False
         reduced_vals = reduced_vals.intersection(iuse_stripped)
         if reduced_vals:
-            return values.ContainmentMatch.force_False(self, pkg, 'use', use, reduced_vals)
+            return values.ContainmentMatch.force_False(
+                self, pkg, "use", use, reduced_vals
+            )
         return True
 
     def force_True(self, pkg, attr, val):
@@ -258,12 +276,14 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
         # see comments in .match for clarification of logic.
         iuse_stripped, use = val
         if reduced_vals.issubset(iuse_stripped):
-            return values.ContainmentMatch.force_True(self, pkg, 'use', use)
+            return values.ContainmentMatch.force_True(self, pkg, "use", use)
         if self.if_missing == self.negate:
             return False
         reduced_vals = reduced_vals.intersection(iuse_stripped)
         if reduced_vals:
-            return values.ContainmentMatch.force_True(self, pkg, 'use', use, reduced_vals)
+            return values.ContainmentMatch.force_True(
+                self, pkg, "use", use, reduced_vals
+            )
         return True
 
 
@@ -287,7 +307,7 @@ class UseDepDefault(packages.PackageRestrictionMulti):
         else:
             v = values.AlwaysTrue
 
-        super().__init__(('iuse_stripped', 'use'), v)
+        super().__init__(("iuse_stripped", "use"), v)
 
 
 def _parse_nontransitive_use(sequence):
@@ -295,15 +315,15 @@ def _parse_nontransitive_use(sequence):
     default_on = [[], []]
     normal = [[], []]
     for token in sequence:
-        if token[-1] == ')':
-            if token[-2] == '+':
+        if token[-1] == ")":
+            if token[-2] == "+":
                 trg = default_on
             else:
                 trg = default_off
             token = token[:-3]
         else:
             trg = normal
-        if token[0] == '-':
+        if token[0] == "-":
             trg[0].append(token[1:])
         else:
             trg[1].append(token)

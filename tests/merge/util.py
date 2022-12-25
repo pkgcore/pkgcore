@@ -4,11 +4,10 @@ from pkgcore.merge import triggers
 
 
 class fake_trigger(triggers.base):
-
     def __init__(self, **kwargs):
         self._called = []
-        if isinstance(kwargs.get('_hooks', False), str):
-            kwargs['_hooks'] = (kwargs['_hooks'],)
+        if isinstance(kwargs.get("_hooks", False), str):
+            kwargs["_hooks"] = (kwargs["_hooks"],)
         for k, v in kwargs.items():
             if callable(v):
                 v = partial(v, self)
@@ -19,9 +18,8 @@ class fake_trigger(triggers.base):
 
 
 class fake_engine:
-
     def __init__(self, **kwargs):
-        kwargs.setdefault('observer', None)
+        kwargs.setdefault("observer", None)
         self._triggers = []
         for k, v in kwargs.items():
             if callable(v):

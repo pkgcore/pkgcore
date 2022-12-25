@@ -2,10 +2,14 @@ from pkgcore.package import base, metadata
 
 
 def make_pkg_kls(attrs=(), callbacks={}):
-
     class simple_pkg(base.base):
         _get_attr = callbacks
-        __slots__ = ("_args", "_kwds", "_data", "_fetch_called",) + tuple(attrs)
+        __slots__ = (
+            "_args",
+            "_kwds",
+            "_data",
+            "_fetch_called",
+        ) + tuple(attrs)
 
         def __init__(self, *args, **kwds):
             self._args = args
@@ -18,6 +22,7 @@ def make_pkg_kls(attrs=(), callbacks={}):
     class metadata_pkg(metadata.DeriveMetadataKls(simple_pkg)):
 
         __slots__ = ()
+
         def _fetch_metadata(self):
             self._fetch_called = True
             return self._data
@@ -26,7 +31,6 @@ def make_pkg_kls(attrs=(), callbacks={}):
 
 
 class TestMetadataPackage:
-
     def test_init(self):
         class repo:
             _parent_repo = "foon"
@@ -41,5 +45,5 @@ class TestMetadataPackage:
 
     def test_getdata(self):
         kls = make_pkg_kls()
-        o = kls(None, data={'a': 'b'})
-        assert o.data == {'a': 'b'}
+        o = kls(None, data={"a": "b"})
+        assert o.data == {"a": "b"}

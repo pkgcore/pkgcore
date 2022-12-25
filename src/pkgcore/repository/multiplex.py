@@ -21,18 +21,23 @@ from . import errors, prototype
 
 class operations(repo_interface.operations_proxy):
 
-    ops_stop_after_first_supported = frozenset(
-        ["install", "uninstall", "replace"])
+    ops_stop_after_first_supported = frozenset(["install", "uninstall", "replace"])
 
     @klass.cached_property
     def raw_operations(self):
-        return frozenset(chain.from_iterable(
-            tree.operations.raw_operations for tree in self.repo.trees))
+        return frozenset(
+            chain.from_iterable(
+                tree.operations.raw_operations for tree in self.repo.trees
+            )
+        )
 
     @klass.cached_property
     def enabled_operations(self):
-        s = set(chain.from_iterable(
-            tree.operations.enabled_operations for tree in self.repo.trees))
+        s = set(
+            chain.from_iterable(
+                tree.operations.enabled_operations for tree in self.repo.trees
+            )
+        )
         return frozenset(self._apply_overrides(s))
 
     def _setup_api(self):
@@ -58,7 +63,7 @@ class operations(repo_interface.operations_proxy):
         return ret
 
 
-@configurable({'repos': 'refs:repo'}, typename='repo')
+@configurable({"repos": "refs:repo"}, typename="repo")
 def config_tree(repos):
     return tree(*repos)
 
@@ -83,9 +88,10 @@ class tree(prototype.tree):
     def __init__(self, *trees):
         super().__init__()
         for x in trees:
-            if not hasattr(x, 'itermatch'):
+            if not hasattr(x, "itermatch"):
                 raise errors.InitializationError(
-                    f'{x} is not a repository tree derivative')
+                    f"{x} is not a repository tree derivative"
+                )
         self.trees = trees
 
     def _get_categories(self, *optional_category):
@@ -106,8 +112,7 @@ class tree(prototype.tree):
                     failures += 1
         if failures == len(self.trees):
             if optional_category:
-                raise KeyError("category base '%s' not found" %
-                               str(optional_category))
+                raise KeyError("category base '%s' not found" % str(optional_category))
             raise KeyError("failed getting categories")
         return tuple(d)
 
@@ -120,7 +125,7 @@ class tree(prototype.tree):
             except (errors.RepoError, KeyError):
                 failures += 1
         if failures == len(self.trees):
-            raise KeyError(f'category {category!r} not found')
+            raise KeyError(f"category {category!r} not found")
         return tuple(d)
 
     def _get_versions(self, package):
@@ -133,7 +138,7 @@ class tree(prototype.tree):
                 failures += 1
 
         if failures == len(self.trees):
-            raise KeyError(f'category {package!r} not found')
+            raise KeyError(f"category {package!r} not found")
         return tuple(d)
 
     def path_restrict(self, path):
@@ -156,13 +161,16 @@ class tree(prototype.tree):
                 return repo.path_restrict(path)
             except ValueError:
                 raise
-        raise ValueError(f'no repo contains: {path!r}')
+        raise ValueError(f"no repo contains: {path!r}")
 
     def itermatch(self, restrict, **kwds):
         sorter = kwds.get("sorter", iter)
         if sorter is iter:
-            return (match for repo in self.trees
-                    for match in repo.itermatch(restrict, **kwds))
+            return (
+                match
+                for repo in self.trees
+                for match in repo.itermatch(restrict, **kwds)
+            )
 
         # ugly, and a bit slow, but works.
         def f(x, y):
@@ -170,12 +178,13 @@ class tree(prototype.tree):
             if l[0] == y:
                 return 1
             return -1
+
         f = post_curry(sorted_cmp, f, key=itemgetter(0))
-        return iter_sort(
-            f, *[repo.itermatch(restrict, **kwds) for repo in self.trees])
+        return iter_sort(f, *[repo.itermatch(restrict, **kwds) for repo in self.trees])
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
-        "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")
+        "@param", "@keyword"
+    ).replace(":keyword restrict:", ":param restrict:")
 
     def __iter__(self):
         return (pkg for repo in self.trees for pkg in repo)
@@ -214,7 +223,7 @@ class tree(prototype.tree):
             except KeyError:
                 pass
         # made it here, no match.
-        raise KeyError(f'package {key} not found')
+        raise KeyError(f"package {key} not found")
 
     def __add__(self, other):
         if isinstance(other, prototype.tree):
@@ -225,7 +234,8 @@ class tree(prototype.tree):
             return tree(*(self.trees + other.trees))
         raise TypeError(
             "cannot add '%s' and '%s' objects"
-            % (self.__class__.__name__, other.__class__.__name__))
+            % (self.__class__.__name__, other.__class__.__name__)
+        )
 
     def __radd__(self, other):
         if isinstance(other, prototype.tree):
@@ -236,13 +246,16 @@ class tree(prototype.tree):
             return tree(*(other.trees + self.trees))
         raise TypeError(
             "cannot add '%s' and '%s' objects"
-            % (other.__class__.__name__, self.__class__.__name__))
+            % (other.__class__.__name__, self.__class__.__name__)
+        )
 
     def __repr__(self):
-        return '<%s.%s trees=%r @%#8x>' % (
-            self.__class__.__module__, self.__class__.__name__,
-            getattr(self, 'trees', 'unset'),
-            id(self))
+        return "<%s.%s trees=%r @%#8x>" % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            getattr(self, "trees", "unset"),
+            id(self),
+        )
 
     @property
     def pkg_masks(self):

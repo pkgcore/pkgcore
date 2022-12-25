@@ -27,7 +27,9 @@ def config_from_file(file_obj):
     try:
         cparser.read_file(file_obj)
     except configparser.ParsingError as e:
-        raise errors.ParsingError(f'while parsing {file_obj}', e) from e
+        raise errors.ParsingError(f"while parsing {file_obj}", e) from e
+
     def get_section(section):
         return basics.ConfigSectionFromStringDict(dict(cparser.items(section)))
+
     return mappings.LazyValDict(cparser.sections, get_section)

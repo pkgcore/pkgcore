@@ -118,7 +118,7 @@ class base:
         return [csets[x] for x in required_csets]
 
     def trigger(self, engine, csets):
-        raise NotImplementedError(self, 'trigger')
+        raise NotImplementedError(self, "trigger")
 
     def __call__(self, engine, csets):
         """execute the trigger"""
@@ -133,15 +133,12 @@ class base:
         return f"{self.label}: cset({self.required_csets}) ftrigger({self.trigger})"
 
     def __repr__(self):
-        return "<%s cset=%r @#%x>" % (
-            self.label,
-            self.required_csets, id(self))
+        return "<%s cset=%r @#%x>" % (self.label, self.required_csets, id(self))
 
 
 class ThreadedTrigger(base):
-
     def identify_work(self, engine, *csets):
-        raise NotImplementedError(self, 'identify_work')
+        raise NotImplementedError(self, "identify_work")
 
     def _run_job(self, observer, functor, args, kwds):
         try:
@@ -168,8 +165,9 @@ class ThreadedTrigger(base):
         args = (observer,) + self.threading_get_args(engine, *csets)
         kwargs = self.threading_get_kwargs(engine, *csets)
         # Grab PKGCORE_TRIGGER_PARALLELISM to make development easier
-        kwargs['threads'] = int(
-            os.environ.get("PKGCORE_TRIGGER_PARALLELISM", engine.parallelism))
+        kwargs["threads"] = int(
+            os.environ.get("PKGCORE_TRIGGER_PARALLELISM", engine.parallelism)
+        )
 
         work = list(self.identify_work(engine, *csets))
         thread_pool.map_async(work, self.thread_trigger, *args, **kwargs)
@@ -275,7 +273,7 @@ class mtime_watcher:
 
 
 def update_elf_hints(root):
-    return spawn.spawn(["/sbin/ldconfig", "-X", "-r", root], fd_pipes={1:1, 2:2})
+    return spawn.spawn(["/sbin/ldconfig", "-X", "-r", root], fd_pipes={1: 1, 2: 2})
 
 
 class ldconfig(base):
@@ -283,9 +281,9 @@ class ldconfig(base):
     required_csets = ()
     priority = 10
     _engine_types = None
-    _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
+    _hooks = ("pre_merge", "post_merge", "pre_unmerge", "post_unmerge")
 
-    default_ld_path = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib', 'lib64', 'lib32']
+    default_ld_path = ["usr/lib", "usr/lib64", "usr/lib32", "lib", "lib64", "lib32"]
 
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
@@ -308,8 +306,8 @@ class ldconfig(base):
     def _mk_ld_so_conf(self, fp):
         if not ensure_dirs(os.path.dirname(fp), mode=0o755, minimal=True):
             raise errors.BlockModification(
-                self,
-                f"failed creating/setting {fp} to 0755, root/root for uid/gid")
+                self, f"failed creating/setting {fp} to 0755, root/root for uid/gid"
+            )
         try:
             touch(fp)
         except EnvironmentError as e:
@@ -317,11 +315,11 @@ class ldconfig(base):
 
     def trigger(self, engine):
         # ldconfig is only meaningful in GNU/Linux
-        if platform.system() != 'Linux':
+        if platform.system() != "Linux":
             return
 
         locations = self.read_ld_so_conf(engine.offset)
-        if engine.phase.startswith('pre_'):
+        if engine.phase.startswith("pre_"):
             self.saved_mtimes.set_state(locations)
             return
 
@@ -342,30 +340,31 @@ class InfoRegen(base):
     # could implement this to look at csets, and do incremental removal and
     # addition; doesn't seem worth while though for the additional complexity
 
-    _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
+    _hooks = ("pre_merge", "post_merge", "pre_unmerge", "post_unmerge")
     _engine_types = None
     _label = "gnu info regen"
 
-    locations = ('/usr/share/info',)
+    locations = ("/usr/share/info",)
 
     def __init__(self):
         self.saved_mtimes = mtime_watcher()
 
     def get_binary_path(self):
         try:
-            return process.find_binary('install-info')
+            return process.find_binary("install-info")
         except process.CommandNotFound:
             # swallow it.
             return None
 
     def trigger(self, engine):
-        locations = [pjoin(engine.offset, x.lstrip(os.path.sep))
-                     for x in self.locations]
+        locations = [
+            pjoin(engine.offset, x.lstrip(os.path.sep)) for x in self.locations
+        ]
 
-        if engine.phase.startswith('pre_'):
+        if engine.phase.startswith("pre_"):
             self.saved_mtimes.set_state(locations)
             return
-        elif engine.phase == 'post_merge' and engine.mode == const.REPLACE_MODE:
+        elif engine.phase == "post_merge" and engine.mode == const.REPLACE_MODE:
             # skip post_merge for replace.
             # we catch it on unmerge...
             return
@@ -376,14 +375,14 @@ class InfoRegen(base):
 
         regens = set(x.location for x in self.saved_mtimes.get_changes(locations))
         # force regeneration of any directory lacking the info index.
-        regens.update(x for x in locations if not os.path.isfile(pjoin(x, 'dir')))
+        regens.update(x for x in locations if not os.path.isfile(pjoin(x, "dir")))
 
         bad = []
         for x in regens:
             bad.extend(self.regen(bin_path, x))
 
         if bad and engine.observer is not None:
-            bad_info = ', '.join(map(repr, sorted(bad)))
+            bad_info = ", ".join(map(repr, sorted(bad)))
             engine.observer.warn(f"bad info files: {bad_info}")
 
     def should_skip_directory(self, basepath, files):
@@ -403,26 +402,31 @@ class InfoRegen(base):
         for x in set(ignores).intersection(files):
             os.remove(pjoin(basepath, x))
 
-        index = pjoin(basepath, 'dir')
+        index = pjoin(basepath, "dir")
         for x in files:
             if x in ignores or x.startswith("."):
                 continue
 
             ret, data = spawn.spawn_get_output(
-                [binary, '--quiet', pjoin(basepath, x), '--dir-file', index],
-                collect_fds=(1, 2), split_lines=False)
+                [binary, "--quiet", pjoin(basepath, x), "--dir-file", index],
+                collect_fds=(1, 2),
+                split_lines=False,
+            )
 
-            if not data or "already exists" in data or \
-                    "warning: no info dir entry" in data:
+            if (
+                not data
+                or "already exists" in data
+                or "warning: no info dir entry" in data
+            ):
                 continue
             yield pjoin(basepath, x)
 
 
 class merge(base):
 
-    required_csets = ('install',)
+    required_csets = ("install",)
     _engine_types = INSTALLING_MODES
-    _hooks = ('merge',)
+    _hooks = ("merge",)
 
     suppress_exceptions = False
 
@@ -432,35 +436,49 @@ class merge(base):
 
 class unmerge(base):
 
-    required_csets = ('uninstall',)
+    required_csets = ("uninstall",)
     _engine_types = UNINSTALLING_MODES
-    _hooks = ('unmerge',)
+    _hooks = ("unmerge",)
 
     suppress_exceptions = False
 
     def trigger(self, engine, unmerging_cset):
-        return unmerge_contents(unmerging_cset, callback=engine.observer.removing_fs_obj)
+        return unmerge_contents(
+            unmerging_cset, callback=engine.observer.removing_fs_obj
+        )
 
 
 class BaseSystemUnmergeProtection(base):
 
-    required_csets = ('uninstall',)
+    required_csets = ("uninstall",)
     priority = -100
     _engine_types = UNINSTALLING_MODES
-    _hooks = ('unmerge',)
+    _hooks = ("unmerge",)
 
     suppress_exceptions = False
 
     _preserve_sequence = (
-        '/usr', '/usr/lib', '/usr/lib64', '/usr/lib32',
-        '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64',
-        '/etc', '/var', '/home', '/root',
+        "/usr",
+        "/usr/lib",
+        "/usr/lib64",
+        "/usr/lib32",
+        "/usr/bin",
+        "/usr/sbin",
+        "/bin",
+        "/sbin",
+        "/lib",
+        "/lib32",
+        "/lib64",
+        "/etc",
+        "/var",
+        "/home",
+        "/root",
     )
 
     def __init__(self, preserve_sequence=None):
         if preserve_sequence is None:
             preserve_sequence = self._preserve_sequence
-        self._block = tuple(x.lstrip('/') for x in preserve_sequence)
+        self._block = tuple(x.lstrip("/") for x in preserve_sequence)
 
     def trigger(self, engine, uninstall):
         uninstall.difference_update(pjoin(engine.offset, x) for x in self._block)
@@ -469,12 +487,11 @@ class BaseSystemUnmergeProtection(base):
 
 class fix_uid_perms(base):
 
-    required_csets = ('new_cset',)
-    _hooks = ('pre_merge',)
+    required_csets = ("new_cset",)
+    _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
-    def __init__(self, uid=os_data.portage_uid,
-                 replacement=os_data.root_uid):
+    def __init__(self, uid=os_data.portage_uid, replacement=os_data.root_uid):
         super().__init__()
         self.bad_uid = uid
         self.good_uid = replacement
@@ -488,12 +505,11 @@ class fix_uid_perms(base):
 
 class fix_gid_perms(base):
 
-    required_csets = ('new_cset',)
-    _hooks = ('pre_merge',)
+    required_csets = ("new_cset",)
+    _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
-    def __init__(self, gid=os_data.portage_gid,
-                 replacement=os_data.root_gid):
+    def __init__(self, gid=os_data.portage_gid, replacement=os_data.root_gid):
         super().__init__()
         self.bad_gid = gid
         self.good_gid = replacement
@@ -502,28 +518,30 @@ class fix_gid_perms(base):
         good = self.good_gid
         bad = self.bad_gid
 
-        cset.update(x.change_attributes(gid=good)
-            for x in cset if x.gid == bad)
+        cset.update(x.change_attributes(gid=good) for x in cset if x.gid == bad)
 
 
 class fix_set_bits(base):
 
-    required_csets = ('new_cset',)
-    _hooks = ('pre_merge',)
+    required_csets = ("new_cset",)
+    _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
     def trigger(self, engine, cset):
         reporter = engine.observer
         # if s(uid|gid) *and* world writable...
-        l = [x for x in cset.iterlinks(True) if
-             (x.mode & 0o6000) and (x.mode & 0o002)]
+        l = [x for x in cset.iterlinks(True) if (x.mode & 0o6000) and (x.mode & 0o002)]
 
         if reporter is not None:
             for x in l:
                 if x.mode & 0o4000:
-                    reporter.warn(f"correcting unsafe world writable SetGID: {x.location}")
+                    reporter.warn(
+                        f"correcting unsafe world writable SetGID: {x.location}"
+                    )
                 else:
-                    reporter.warn(f"correcting unsafe world writable SetUID: {x.location}")
+                    reporter.warn(
+                        f"correcting unsafe world writable SetUID: {x.location}"
+                    )
         if l:
             # wipe setgid/setuid
             cset.update(x.change_attributes(mode=x.mode & ~0o6002) for x in l)
@@ -531,8 +549,8 @@ class fix_set_bits(base):
 
 class detect_world_writable(base):
 
-    required_csets = ('new_cset',)
-    _hooks = ('pre_merge',)
+    required_csets = ("new_cset",)
+    _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
     def __init__(self, fix_perms=False):
@@ -555,8 +573,8 @@ class detect_world_writable(base):
 
 class PruneFiles(base):
 
-    required_csets = ('new_cset',)
-    _hooks = ('pre_merge',)
+    required_csets = ("new_cset",)
+    _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
     def __init__(self, sentinel_func):
@@ -577,15 +595,16 @@ class PruneFiles(base):
 
 class CommonDirectoryModes(base):
 
-    required_csets = ('new_cset',)
-    _hooks = ('pre_merge',)
+    required_csets = ("new_cset",)
+    _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
-    directories = [pjoin('/usr', x) for x in ('.', 'lib', 'lib64', 'lib32',
-        'bin', 'sbin', 'local')]
-    directories.extend(pjoin('/usr/share', x) for x in ('.', 'man', 'info'))
-    directories.extend(f'/usr/share/man/man{x}' for x in range(1, 10))
-    directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin', '/var'])
+    directories = [
+        pjoin("/usr", x) for x in (".", "lib", "lib64", "lib32", "bin", "sbin", "local")
+    ]
+    directories.extend(pjoin("/usr/share", x) for x in (".", "man", "info"))
+    directories.extend(f"/usr/share/man/man{x}" for x in range(1, 10))
+    directories.extend(["/lib", "/lib32", "/lib64", "/etc", "/bin", "/sbin", "/var"])
     directories = frozenset(map(normpath, directories))
 
     def trigger(self, engine, cset):
@@ -596,13 +615,13 @@ class CommonDirectoryModes(base):
             if x.location not in self.directories:
                 continue
             if x.mode != 0o755:
-                r.warn(f'{x.location} path has mode {oct(x.mode)}, should be 0755')
+                r.warn(f"{x.location} path has mode {oct(x.mode)}, should be 0755")
 
 
 class BlockFileType(base):
 
-    required_csets = ('new_cset',)
-    _hooks = ('pre_merge',)
+    required_csets = ("new_cset",)
+    _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
     def __init__(self, bad_regex, regex_to_check=None, fatal=True):
@@ -613,7 +632,7 @@ class BlockFileType(base):
         file_typer = file_type.file_identifier()
 
         if self.filter_regex is None:
-            filter_re = lambda x:True
+            filter_re = lambda x: True
         else:
             filter_re = re.compile(self.filter_regex).match
         bad_pat = re.compile(self.bad_regex).match
@@ -627,46 +646,51 @@ class BlockFileType(base):
         if self.fatal and bad_files:
             raise errors.BlockModification(
                 self,
-                ("blacklisted filetypes were encountered- "
-                 f"pattern {self.bad_regex!r} matched files: {sorted(bad_files)}"))
+                (
+                    "blacklisted filetypes were encountered- "
+                    f"pattern {self.bad_regex!r} matched files: {sorted(bad_files)}"
+                ),
+            )
 
 
 class SavePkg(base):
 
-    required_csets = ('raw_new_cset',)
+    required_csets = ("raw_new_cset",)
     priority = 90
-    _hooks = ('sanity_check',)
+    _hooks = ("sanity_check",)
     _engine_types = INSTALLING_MODES
 
-    _copy_source = 'new'
+    _copy_source = "new"
 
     def __init__(self, target_repo, pristine=True, skip_if_source=True):
         if not pristine:
-            self._hooks = ('pre_merge',)
-            self.required_csets = ('install',)
+            self._hooks = ("pre_merge",)
+            self.required_csets = ("install",)
         self.skip_if_source = skip_if_source
         self.target_repo = target_repo
 
     def trigger(self, engine, cset):
         pkg = getattr(engine, self._copy_source)
         # don't build binpkgs of target repo binpkgs
-        if self.skip_if_source and str(getattr(pkg, 'repo')) == self.target_repo.repo_id:
+        if (
+            self.skip_if_source
+            and str(getattr(pkg, "repo")) == self.target_repo.repo_id
+        ):
             return
 
         old_pkg = self.target_repo.match(pkg.versioned_atom)
-        wrapped_pkg = MutatedPkg(pkg, {'contents':cset})
+        wrapped_pkg = MutatedPkg(pkg, {"contents": cset})
         if old_pkg:
-            txt = 'replacing'
+            txt = "replacing"
             op = self.target_repo.operations.replace(*(old_pkg + [wrapped_pkg]))
         else:
-            txt = 'installing'
+            txt = "installing"
             op = self.target_repo.operations.install(wrapped_pkg)
         engine.observer.info(f"{txt} {pkg} to {self.target_repo.location}")
         op.finish()
 
 
 class SavePkgIfInPkgset(SavePkg):
-
     def __init__(self, target_repo, pkgset, pristine=True, skip_if_source=True):
         super().__init__(target_repo, pristine=pristine, skip_if_source=skip_if_source)
         self.pkgset = pkgset
@@ -678,16 +702,15 @@ class SavePkgIfInPkgset(SavePkg):
 
 
 class SavePkgUnmerging(SavePkg):
-    required_csets = ('old_cset',)
+    required_csets = ("old_cset",)
     _engine_types = UNINSTALLING_MODES
-    _copy_source = 'old'
+    _copy_source = "old"
 
     def __init__(self, target_repo):
         self.target_repo = target_repo
 
 
 class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
-
     def __init__(self, target_repo, pkgset, pristine=True):
         super().__init__(target_repo, pristine=pristine)
         self.pkgset = pkgset
@@ -700,22 +723,29 @@ class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
 
 class BinaryDebug(ThreadedTrigger):
 
-    required_csets = ('install',)
+    required_csets = ("install",)
     _engine_types = INSTALLING_MODES
 
-    _hooks = ('pre_merge',)
+    _hooks = ("pre_merge",)
 
-    default_strip_flags = ('--strip-unneeded', '-R', '.comment')
-    elf_regex = r'(^| )ELF +(\d+-bit )'
+    default_strip_flags = ("--strip-unneeded", "-R", ".comment")
+    elf_regex = r"(^| )ELF +(\d+-bit )"
 
-    def __init__(self, mode='split', strip_binary=None, objcopy_binary=None,
-                 extra_strip_flags=(), debug_storage='/usr/lib/debug/', compress=False):
+    def __init__(
+        self,
+        mode="split",
+        strip_binary=None,
+        objcopy_binary=None,
+        extra_strip_flags=(),
+        debug_storage="/usr/lib/debug/",
+        compress=False,
+    ):
         self.mode = mode = mode.lower()
-        if mode not in ('split', 'strip'):
+        if mode not in ("split", "strip"):
             raise TypeError(f"mode {mode!r} is unknown; must be either split or strip")
-        self.thread_trigger = getattr(self, f'_{mode}')
-        self.threading_setup = getattr(self, f'_{mode}_setup')
-        self.threading_finish = getattr(self, f'_{mode}_finish')
+        self.thread_trigger = getattr(self, f"_{mode}")
+        self.threading_setup = getattr(self, f"_{mode}_setup")
+        self.threading_finish = getattr(self, f"_{mode}_finish")
 
         self._strip_binary = strip_binary
         self._objcopy_binary = objcopy_binary
@@ -732,14 +762,14 @@ class BinaryDebug(ThreadedTrigger):
                     obj = process.find_binary(f"{pkg.chost}-{x}")
                 except process.CommandNotFound:
                     obj = process.find_binary(x)
-            setattr(self, f'{x}_binary', obj)
+            setattr(self, f"{x}_binary", obj)
 
     def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):
         args = self._strip_flags
         if "executable" in ftype or "shared object" in ftype:
             args += self._extra_strip_flags
         elif "current ar archive" in ftype:
-            args = ['-g']
+            args = ["-g"]
         if not quiet:
             reporter.info(f"stripping: {fs_obj} {' '.join(args)}")
         ret = spawn.spawn([self.strip_binary] + args + [fs_obj.data.path])
@@ -763,7 +793,7 @@ class BinaryDebug(ThreadedTrigger):
         return (engine, cset)
 
     def _strip_setup(self, engine, cset):
-        if 'strip' in getattr(engine.new, 'restrict', ()):
+        if "strip" in getattr(engine.new, "restrict", ()):
             engine.observer.info(f"stripping disabled for {engine.new}")
             return False
         self._initialize_paths(engine.new, ("strip",))
@@ -779,15 +809,18 @@ class BinaryDebug(ThreadedTrigger):
             if len(fs_objs) > 1:
                 self._modified.update(
                     stripped.change_attributes(location=fs_obj.location)
-                    for fs_obj in fs_objs[1:])
+                    for fs_obj in fs_objs[1:]
+                )
 
     def _strip_finish(self, engine, cset):
-        if hasattr(self, '_modified'):
+        if hasattr(self, "_modified"):
             cset.update(self._modified)
             del self._modified
 
     def _split_setup(self, engine, cset):
-        skip = frozenset(['strip', 'splitdebug']).intersection(getattr(engine.new, 'restrict', ()))
+        skip = frozenset(["strip", "splitdebug"]).intersection(
+            getattr(engine.new, "restrict", ())
+        )
         skip = bool(skip)
         if not skip:
             for fs_obj in cset:
@@ -795,7 +828,9 @@ class BinaryDebug(ThreadedTrigger):
                     skip = True
                     break
         if skip:
-            engine.observer.info(f"splitdebug disabled for {engine.new}, skipping splitdebug")
+            engine.observer.info(
+                f"splitdebug disabled for {engine.new}, skipping splitdebug"
+            )
             return False
 
         self._initialize_paths(engine.new, ("strip", "objcopy"))
@@ -803,48 +838,59 @@ class BinaryDebug(ThreadedTrigger):
         return True
 
     def _split(self, iterable, observer, engine, cset):
-        debug_store = pjoin(engine.offset, self._debug_storage.lstrip('/'))
+        debug_store = pjoin(engine.offset, self._debug_storage.lstrip("/"))
 
-        objcopy_args = [self.objcopy_binary, '--only-keep-debug']
+        objcopy_args = [self.objcopy_binary, "--only-keep-debug"]
         if self._compress:
-            objcopy_args.append('--compress-debug-sections')
+            objcopy_args.append("--compress-debug-sections")
 
         for fs_objs, ftype in iterable:
-            if 'ar archive' in ftype:
+            if "ar archive" in ftype:
                 continue
-            if 'relocatable' in ftype:
+            if "relocatable" in ftype:
                 if not any(x.basename.endswith(".ko") for x in fs_objs):
                     continue
             fs_obj = fs_objs[0]
-            debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/') + ".debug")
+            debug_loc = pjoin(debug_store, fs_obj.location.lstrip("/") + ".debug")
             if debug_loc in cset:
                 continue
             fpath = fs_obj.data.path
-            debug_ondisk = pjoin(os.path.dirname(fpath), os.path.basename(fpath) + ".debug")
+            debug_ondisk = pjoin(
+                os.path.dirname(fpath), os.path.basename(fpath) + ".debug"
+            )
 
             # note that we tell the UI the final pathway- not the intermediate one.
             observer.info(f"splitdebug'ing {fs_obj.location} into {debug_loc}")
 
             ret = spawn.spawn(objcopy_args + [fpath, debug_ondisk])
             if ret != 0:
-                observer.warn(f"splitdebug'ing {fs_obj.location} failed w/ exitcode {ret}")
+                observer.warn(
+                    f"splitdebug'ing {fs_obj.location} failed w/ exitcode {ret}"
+                )
                 continue
 
             # note that the given pathway to the debug file /must/ be relative to ${D};
             # it must exist at the time of invocation.
-            ret = spawn.spawn([self.objcopy_binary,
-                '--add-gnu-debuglink', debug_ondisk, fpath])
+            ret = spawn.spawn(
+                [self.objcopy_binary, "--add-gnu-debuglink", debug_ondisk, fpath]
+            )
             if ret != 0:
                 observer.warn(
                     f"splitdebug created debug file {debug_ondisk!r}, but "
-                    f"failed adding links to {fpath!r} ({ret!r})")
-                observer.debug("failed splitdebug command was %r",
-                    (self.objcopy_binary, '--add-gnu-debuglink', debug_ondisk, fpath))
+                    f"failed adding links to {fpath!r} ({ret!r})"
+                )
+                observer.debug(
+                    "failed splitdebug command was %r",
+                    (self.objcopy_binary, "--add-gnu-debuglink", debug_ondisk, fpath),
+                )
                 continue
 
-
-            debug_obj = gen_obj(debug_loc, real_location=debug_ondisk,
-                uid=os_data.root_uid, gid=os_data.root_gid)
+            debug_obj = gen_obj(
+                debug_loc,
+                real_location=debug_ondisk,
+                uid=os_data.root_uid,
+                gid=os_data.root_gid,
+            )
 
             stripped_fsobj = self._strip_fsobj(fs_obj, ftype, observer, quiet=True)
 
@@ -852,14 +898,18 @@ class BinaryDebug(ThreadedTrigger):
             self._modified.add(debug_obj)
 
             for fs_obj in fs_objs[1:]:
-                debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/') + ".debug")
+                debug_loc = pjoin(debug_store, fs_obj.location.lstrip("/") + ".debug")
                 linked_debug_obj = debug_obj.change_attributes(location=debug_loc)
-                observer.info(f"splitdebug hardlinking {debug_obj.location} to {debug_loc}")
+                observer.info(
+                    f"splitdebug hardlinking {debug_obj.location} to {debug_loc}"
+                )
                 self._modified.add(linked_debug_obj)
-                self._modified.add(stripped_fsobj.change_attributes(location=fs_obj.location))
+                self._modified.add(
+                    stripped_fsobj.change_attributes(location=fs_obj.location)
+                )
 
     def _split_finish(self, engine, cset):
-        if not hasattr(self, '_modified'):
+        if not hasattr(self, "_modified"):
             return
         self._modified.add_missing_directories(mode=0o775)
         # add the non directories first.
@@ -872,8 +922,15 @@ class BinaryDebug(ThreadedTrigger):
 
 def default_plugins_triggers() -> tuple[type[base]]:
     triggers = (
-        ldconfig, merge, unmerge,
-        fix_uid_perms, fix_gid_perms, fix_set_bits, detect_world_writable,
-        InfoRegen, CommonDirectoryModes, BaseSystemUnmergeProtection,
+        ldconfig,
+        merge,
+        unmerge,
+        fix_uid_perms,
+        fix_gid_perms,
+        fix_set_bits,
+        detect_world_writable,
+        InfoRegen,
+        CommonDirectoryModes,
+        BaseSystemUnmergeProtection,
     )
     return tuple(sorted(triggers, reverse=True, key=lambda x: (x.priority, x.__name__)))

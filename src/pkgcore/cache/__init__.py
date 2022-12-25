@@ -32,13 +32,13 @@ class base:
     autocommits = False
     cleanse_keys = False
     default_sync_rate = 1
-    chf_type = 'mtime'
-    eclass_chf_types = ('mtime',)
-    eclass_splitter = '\t'
+    chf_type = "mtime"
+    eclass_chf_types = ("mtime",)
+    eclass_splitter = "\t"
 
     default_keys = metadata_keys
 
-    frozen = klass.alias_attr('readonly')
+    frozen = klass.alias_attr("readonly")
 
     def __init__(self, auxdbkeys=None, readonly=False):
         """
@@ -51,7 +51,7 @@ class base:
         if auxdbkeys is None:
             auxdbkeys = self.default_keys
         self._known_keys = frozenset(auxdbkeys)
-        self._chf_key = '_%s_' % self.chf_type
+        self._chf_key = "_%s_" % self.chf_type
         self._chf_serializer = self._get_chf_serializer(self.chf_type)
         self._chf_deserializer = self._get_chf_deserializer(self.chf_type)
         self._known_keys |= frozenset([self._chf_key])
@@ -66,7 +66,7 @@ class base:
 
     @staticmethod
     def _mtime_serializer(data):
-        return '%.0f' % math.floor(data.mtime)
+        return "%.0f" % math.floor(data.mtime)
 
     @staticmethod
     def _default_serializer(chf, data):
@@ -75,9 +75,9 @@ class base:
         return get_handler(chf).long2str(getter(data))
 
     def _get_chf_serializer(self, chf):
-        if chf == 'eclassdir':
+        if chf == "eclassdir":
             return self._eclassdir_serializer
-        if chf == 'mtime':
+        if chf == "mtime":
             return self._mtime_serializer
         return partial(self._default_serializer, chf)
 
@@ -90,16 +90,15 @@ class base:
         return int(data, 16)
 
     def _get_chf_deserializer(self, chf):
-        if chf == 'eclassdir':
+        if chf == "eclassdir":
             return str
-        elif chf == 'mtime':
+        elif chf == "mtime":
             return self._mtime_deserializer
         return self._default_deserializer
 
     @klass.jit_attr
     def eclass_chf_serializers(self):
-        return tuple(self._get_chf_serializer(chf) for chf in
-                     self.eclass_chf_types)
+        return tuple(self._get_chf_serializer(chf) for chf in self.eclass_chf_types)
 
     @klass.jit_attr
     def eclass_chf_deserializers(self):
@@ -155,7 +154,7 @@ class base:
         elif "_eclasses_" in values:
             d["_eclasses_"] = self.deconstruct_eclasses(d["_eclasses_"])
 
-        d[self._chf_key] = self._chf_serializer(d.pop('_chf_'))
+        d[self._chf_key] = self._chf_serializer(d.pop("_chf_"))
         self._setitem(cpv, d)
         self._sync_if_needed(True)
 
@@ -231,8 +230,7 @@ class base:
     def reconstruct_eclasses(self, cpv, eclass_string):
         """Turn a string from :obj:`serialize_eclasses` into a dict."""
         if not isinstance(eclass_string, str):
-            raise TypeError("eclass_string must be basestring, got %r" %
-                eclass_string)
+            raise TypeError("eclass_string must be basestring, got %r" % eclass_string)
         eclass_data = eclass_string.strip().split(self.eclass_splitter)
         if eclass_data == [""]:
             # occasionally this occurs in the fs backends.  they suck.
@@ -243,8 +241,9 @@ class base:
         tuple_len = len(chf_funcs) + 1
         if len(eclass_data) % tuple_len:
             raise errors.CacheCorruption(
-                cpv, f'_eclasses_ was of invalid len {len(eclass_data)}'
-                f'(must be mod {tuple_len})'
+                cpv,
+                f"_eclasses_ was of invalid len {len(eclass_data)}"
+                f"(must be mod {tuple_len})",
             )
 
         i = iter(eclass_data)
@@ -256,28 +255,29 @@ class base:
         # a dict; in effect, if 2 chfs, this results in a stream of-
         # (eclass_name, ((chf1,chf1_val), (chf2, chf2_val))).
         try:
-            return [(eclass, tuple(self._deserialize_eclass_chfs(i)))
-                for eclass in i]
+            return [(eclass, tuple(self._deserialize_eclass_chfs(i))) for eclass in i]
         except ValueError as e:
             raise errors.CacheCorruption(
-                cpv, f'ValueError reading {eclass_string!r}') from e
+                cpv, f"ValueError reading {eclass_string!r}"
+            ) from e
 
     def validate_entry(self, cache_item, ebuild_hash_item, eclass_db):
         chf_hash = cache_item.get(self._chf_key)
-        if (chf_hash is None or
-            chf_hash != getattr(ebuild_hash_item, self.chf_type, None)):
+        if chf_hash is None or chf_hash != getattr(
+            ebuild_hash_item, self.chf_type, None
+        ):
             return False
-        eclass_data = cache_item.get('_eclasses_')
+        eclass_data = cache_item.get("_eclasses_")
         if eclass_data is None:
             return True
         # if the INHERIT key is missing yet we did inherit some eclasses,
         # trigger a refresh to upgrade metadata cache
-        if cache_item.get('INHERIT') is None:
+        if cache_item.get("INHERIT") is None:
             return False
         update = eclass_db.rebuild_cache_entry(eclass_data)
         if update is None:
             return False
-        cache_item['_eclasses_'] = update
+        cache_item["_eclasses_"] = update
         return True
 
 
@@ -294,10 +294,10 @@ class bulk(base):
         return self._read_data()
 
     def _read_data(self):
-        raise NotImplementedError(self, '_read_data')
+        raise NotImplementedError(self, "_read_data")
 
     def _write_data(self):
-        raise NotImplementedError(self, '_write_data')
+        raise NotImplementedError(self, "_write_data")
 
     def __contains__(self, key):
         return key in self.data
@@ -307,7 +307,7 @@ class bulk(base):
 
     def _setitem(self, key, val):
         known = self._known_keys
-        val = self._cdict_kls((k, v) for k,v in val.items() if k in known)
+        val = self._cdict_kls((k, v) for k, v in val.items() if k in known)
         self._pending_updates.append((key, val))
         self.data[key] = val
 

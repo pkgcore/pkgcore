@@ -6,7 +6,7 @@ from pkgcore.fetch import base, errors, fetchable
 from snakeoil import data_source
 from snakeoil.chksum import get_handlers
 
-repeating_str = 'asdf'
+repeating_str = "asdf"
 data = repeating_str * 4000
 handlers = get_handlers()
 
@@ -16,13 +16,15 @@ from snakeoil.mappings import LazyValDict
 
 def _callback(chf):
     return handlers[chf](data_source.data_source(data))
+
+
 chksums = LazyValDict(frozenset(handlers.keys()), _callback)
 
 # get a non size based chksum
 known_chksum = [x for x in handlers.keys() if x != "size"][0]
 
-class TestFetcher:
 
+class TestFetcher:
     @pytest.fixture(autouse=True)
     def _setup(self, tmpdir):
         self.fp = os.path.join(str(tmpdir), "test")
@@ -35,6 +37,7 @@ class TestFetcher:
 
     def test__call__(self):
         l = []
+
         class c(base.fetcher):
             def fetch(self, *a, **kw):
                 l.extend((a, kw))
@@ -56,20 +59,26 @@ class TestFetcher:
             self.fetcher._verify(self.fp, self.obj, handlers=subhandlers)
         self.fetcher._verify(self.fp, self.obj)
         assert None == self.fetcher._verify(
-            self.fp, self.obj, handlers=subhandlers, all_chksums=False)
+            self.fp, self.obj, handlers=subhandlers, all_chksums=False
+        )
 
     def test_size_verification_first(self):
         self.write_data()
         chksum_data = dict(chksums.items())
         l = []
+
         def f(chf, fp):
             l.append(chf)
             return chksum_data[chf]
-        subhandlers = {"size": partial(f, 'size'), known_chksum:partial(f, known_chksum)}
+
+        subhandlers = {
+            "size": partial(f, "size"),
+            known_chksum: partial(f, known_chksum),
+        }
 
         # exact size verification
         self.fetcher._verify(self.fp, self.obj, handlers=subhandlers, all_chksums=False)
-        assert ['size', known_chksum] == l
+        assert ["size", known_chksum] == l
         for x in (-100, 100):
             while l:
                 l.pop(-1)
@@ -77,14 +86,16 @@ class TestFetcher:
             if x > 0:
                 with pytest.raises(errors.ChksumFailure) as excinfo:
                     self.fetcher._verify(
-                        self.fp, self.obj, handlers=subhandlers, all_chksums=False)
-                assert excinfo.value.chksum == 'size'
+                        self.fp, self.obj, handlers=subhandlers, all_chksums=False
+                    )
+                assert excinfo.value.chksum == "size"
             else:
                 with pytest.raises(errors.FetchError) as excinfo:
                     self.fetcher._verify(
-                        self.fp, self.obj, handlers=subhandlers, all_chksums=False)
+                        self.fp, self.obj, handlers=subhandlers, all_chksums=False
+                    )
                 assert excinfo.value.resumable
-            assert ['size'] == l
+            assert ["size"] == l
 
     def test_normal(self):
         self.write_data()
@@ -101,10 +112,11 @@ class TestFetcher:
         self.write_data(data + "foon")
         with pytest.raises(errors.ChksumFailure) as excinfo:
             self.fetcher._verify(self.fp, self.obj)
-        assert excinfo.value.chksum == 'size'
+        assert excinfo.value.chksum == "size"
 
         # verify they're ran one, and only once
         l = []
+
         def f(chf, fp):
             l.append(chf)
             return chksums[chf]

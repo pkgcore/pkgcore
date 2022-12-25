@@ -26,25 +26,29 @@ def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
         returns a :obj:`packages.PackageRestriction` matching packages that
         have any of those values in the attribute passed to this function.
     """
+
     def _parse(value):
         return packages.PackageRestriction(
-            attr, values.ContainmentMatch(
-                values_kls(token_kls(piece.strip()) for piece in value.split(','))
-            )
+            attr,
+            values.ContainmentMatch(
+                values_kls(token_kls(piece.strip()) for piece in value.split(","))
+            ),
         )
+
     return _parse
 
 
 def convert_glob(token):
-    if token in ('*', ''):
+    if token in ("*", ""):
         return None
-    elif '*' not in token:
+    elif "*" not in token:
         return values.StrExactMatch(token)
     elif not valid_globbing(token):
         raise ParseError(
             "globs must be composed of [\\w-.+], with optional "
-            f"'*'- {token!r} is disallowed however")
-    pattern = re.escape(token).replace('\\*', '.*')
+            f"'*'- {token!r} is disallowed however"
+        )
+    pattern = re.escape(token).replace("\\*", ".*")
     pattern = f"^{pattern}$"
     return values.StrRegex(pattern, match=True)
 
@@ -88,23 +92,24 @@ def parse_match(text):
     orig_text = text = text.strip()
     if "!" in text:
         raise ParseError(
-            f"'!' or any form of blockers make no sense in this usage: {text!r}")
+            f"'!' or any form of blockers make no sense in this usage: {text!r}"
+        )
 
     restrictions = []
-    if '::' in text:
-        text, repo_id = text.rsplit('::', 1)
+    if "::" in text:
+        text, repo_id = text.rsplit("::", 1)
         restrictions.append(restricts.RepositoryDep(repo_id))
-    if ':' in text:
-        text, slot = text.rsplit(':', 1)
-        slot, _sep, subslot = slot.partition('/')
+    if ":" in text:
+        text, slot = text.rsplit(":", 1)
+        slot, _sep, subslot = slot.partition("/")
         if slot:
-            if '*' in slot:
+            if "*" in slot:
                 if r := convert_glob(slot):
                     restrictions.append(packages.PackageRestriction("slot", r))
             else:
                 restrictions.append(restricts.SlotDep(slot))
         if subslot:
-            if '*' in subslot:
+            if "*" in subslot:
                 if r := convert_glob(subslot):
                     restrictions.append(packages.PackageRestriction("subslot", r))
             else:
@@ -124,12 +129,17 @@ def parse_match(text):
                 return packages.AndRestriction(*restrictions)
         elif text.startswith("*"):
             raise ParseError(
-                f"cannot do prefix glob matches with version ops: {orig_text}")
+                f"cannot do prefix glob matches with version ops: {orig_text}"
+            )
         # ok... fake category.  whee.
         try:
-            r = list(collect_package_restrictions(
-                     atom.atom(f"{ops}category/{text}").restrictions,
-                     attrs=("category",), invert=True))
+            r = list(
+                collect_package_restrictions(
+                    atom.atom(f"{ops}category/{text}").restrictions,
+                    attrs=("category",),
+                    invert=True,
+                )
+            )
         except errors.MalformedAtom as e:
             e.atom = orig_text
             raise ParseError(str(e)) from e
@@ -137,12 +147,12 @@ def parse_match(text):
             return r[0]
         restrictions.extend(r)
         return packages.AndRestriction(*restrictions)
-    elif text[0] in atom.valid_ops or '*' not in text:
+    elif text[0] in atom.valid_ops or "*" not in text:
         # possibly a valid atom object
         try:
             return atom.atom(orig_text)
         except errors.MalformedAtom as e:
-            if '*' not in text:
+            if "*" not in text:
                 raise ParseError(str(e)) from e
             # support globbed targets with version restrictions
             return packages.AndRestriction(*parse_globbed_version(text, orig_text))
@@ -155,10 +165,12 @@ def parse_match(text):
     elif not r[1]:
         restrictions.append(packages.PackageRestriction("category", r[0]))
     else:
-        restrictions.extend((
-            packages.PackageRestriction("category", r[0]),
-            packages.PackageRestriction("package", r[1]),
-        ))
+        restrictions.extend(
+            (
+                packages.PackageRestriction("category", r[0]),
+                packages.PackageRestriction("package", r[1]),
+            )
+        )
     if len(restrictions) == 1:
         return restrictions[0]
     return packages.AndRestriction(*restrictions)
@@ -173,18 +185,19 @@ def parse_globbed_version(text, orig_text):
     restrictions = []
     # find longest matching op
     op = max(x for x in atom.valid_ops if text.startswith(x))
-    text = text[len(op):]
+    text = text[len(op) :]
     # determine pkg version
-    chunks = text.rsplit('-', 1)
+    chunks = text.rsplit("-", 1)
     if len(chunks) == 1:
-        raise ParseError(f'missing valid package version: {orig_text!r}')
+        raise ParseError(f"missing valid package version: {orig_text!r}")
     version_txt = chunks[-1]
     version = cpv.isvalid_version_re.match(version_txt)
     if not version:
-        if '*' in version_txt:
+        if "*" in version_txt:
             raise ParseError(
-                f'operator {op!r} invalid with globbed version: {version_txt!r}')
-        raise ParseError(f'missing valid package version: {orig_text!r}')
+                f"operator {op!r} invalid with globbed version: {version_txt!r}"
+            )
+        raise ParseError(f"missing valid package version: {orig_text!r}")
     restrictions.append(restricts.VersionMatch(op, version.group(0)))
     # parse the remaining chunk
     restrictions.append(parse_match(chunks[0]))
@@ -204,7 +217,8 @@ def parse_pv(repo, text):
         for match in repo.itermatch(restrict):
             if result is not None:
                 raise ParseError(
-                    f"multiple matches for {text} ({result.cpvstr}, {match.cpvstr})")
+                    f"multiple matches for {text} ({result.cpvstr}, {match.cpvstr})"
+                )
             result = match
         if result is None:
             raise ParseError(f"no matches for {text}")
@@ -212,5 +226,5 @@ def parse_pv(repo, text):
 
 
 parse_funcs = {
-    'match': parse_match,
+    "match": parse_match,
 }

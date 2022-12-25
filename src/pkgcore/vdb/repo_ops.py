@@ -28,7 +28,6 @@ def update_mtime(path, timestamp=None):
 
 
 class install(repo_ops.install):
-
     def __init__(self, repo, newpkg, observer):
         base = pjoin(repo.location, newpkg.category)
         dirname = f"{newpkg.package}-{newpkg.fullver}"
@@ -44,32 +43,32 @@ class install(repo_ops.install):
         rewrite = self.repo._metadata_rewrites
         for k in self.new_pkg.tracked_attributes:
             if k == "contents":
-                v = ContentsFile(pjoin(dirpath, "CONTENTS"),
-                                 mutable=True, create=True)
+                v = ContentsFile(pjoin(dirpath, "CONTENTS"), mutable=True, create=True)
                 v.update(self.new_pkg.contents)
                 v.flush()
             elif k == "environment":
-                data = compression.compress_data('bzip2',
-                    self.new_pkg.environment.bytes_fileobj().read())
+                data = compression.compress_data(
+                    "bzip2", self.new_pkg.environment.bytes_fileobj().read()
+                )
                 with open(pjoin(dirpath, "environment.bz2"), "wb") as f:
                     f.write(data)
                 del data
             else:
                 v = getattr(self.new_pkg, k)
-                if k in ('bdepend', 'depend', 'rdepend', 'idepend'):
+                if k in ("bdepend", "depend", "rdepend", "idepend"):
                     s = v.slotdep_str(domain)
-                elif k == 'user_patches':
-                    s = '\n'.join(chain.from_iterable(files for _, files in v))
+                elif k == "user_patches":
+                    s = "\n".join(chain.from_iterable(files for _, files in v))
                 elif not isinstance(v, str):
                     try:
-                        s = ' '.join(v)
+                        s = " ".join(v)
                     except TypeError:
                         s = str(v)
                 else:
                     s = v
                 with open(pjoin(dirpath, rewrite.get(k, k.upper())), "w", 32768) as f:
                     if s:
-                        s += '\n'
+                        s += "\n"
                     f.write(s)
 
         # ebuild_data is the actual ebuild- no point in holding onto
@@ -79,8 +78,9 @@ class install(repo_ops.install):
             logger.warning(
                 "doing install/replace op, "
                 "but source package doesn't provide the actual ebuild data.  "
-                "Creating an empty file")
-            o = ''
+                "Creating an empty file"
+            )
+            o = ""
         else:
             o = o.bytes_fileobj().read()
         # XXX lil hackish accessing PF
@@ -88,9 +88,10 @@ class install(repo_ops.install):
             f.write(o)
 
         # install NEEDED and NEEDED.ELF.2 files from tmpdir if they exist
-        pkg_tmpdir = normpath(pjoin(domain.pm_tmpdir, self.new_pkg.category,
-                                    self.new_pkg.PF, 'temp'))
-        for f in ['NEEDED', 'NEEDED.ELF.2']:
+        pkg_tmpdir = normpath(
+            pjoin(domain.pm_tmpdir, self.new_pkg.category, self.new_pkg.PF, "temp")
+        )
+        for f in ["NEEDED", "NEEDED.ELF.2"]:
             fp = pjoin(pkg_tmpdir, f)
             if os.path.exists(fp):
                 local_source(fp).transfer_to_path(pjoin(dirpath, f))
@@ -118,10 +119,10 @@ class install(repo_ops.install):
 
 
 class uninstall(repo_ops.uninstall):
-
     def __init__(self, repo, pkg, observer):
         self.remove_path = pjoin(
-            repo.location, pkg.category, pkg.package+"-"+pkg.fullver)
+            repo.location, pkg.category, pkg.package + "-" + pkg.fullver
+        )
         super().__init__(repo, pkg, observer)
 
     def remove_data(self):
@@ -136,7 +137,6 @@ class uninstall(repo_ops.uninstall):
 
 # should convert these to mixins.
 class replace(repo_ops.replace, install, uninstall):
-
     def __init__(self, repo, pkg, newpkg, observer):
         uninstall.__init__(self, repo, pkg, observer)
         install.__init__(self, repo, newpkg, observer)
@@ -158,7 +158,6 @@ class replace(repo_ops.replace, install, uninstall):
 
 
 class operations(repo_ops.operations):
-
     def _cmd_implementation_install(self, pkg, observer):
         return install(self.repo, pkg, observer)
 

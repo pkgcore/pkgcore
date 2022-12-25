@@ -3,8 +3,13 @@ repository modifications (installing, removing, replacing)
 """
 
 __all__ = (
-    "Failure", "base", "install", "uninstall", "replace",
-    "operations", "operations_proxy"
+    "Failure",
+    "base",
+    "install",
+    "uninstall",
+    "replace",
+    "operations",
+    "operations_proxy",
 )
 
 from functools import partial
@@ -56,7 +61,7 @@ class base(metaclass=ForcedDepends):
         return True
 
     def finalize_data(self):
-        raise NotImplementedError(self, 'finalize_data')
+        raise NotImplementedError(self, "finalize_data")
 
     def finish(self):
         self.lock.release_write_lock()
@@ -67,10 +72,10 @@ class base(metaclass=ForcedDepends):
 class install(base):
 
     stage_depends = {
-        'finish': '_notify_repo_add',
-        '_notify_repo_add': 'finalize_data',
-        'finalize_data': 'add_data',
-        'add_data': 'start'
+        "finish": "_notify_repo_add",
+        "_notify_repo_add": "finalize_data",
+        "finalize_data": "add_data",
+        "add_data": "start",
     }
 
     description = "install"
@@ -84,7 +89,7 @@ class install(base):
         return True
 
     def add_data(self):
-        raise NotImplementedError(self, 'add_data')
+        raise NotImplementedError(self, "add_data")
 
     def _update_pkg_contents(self, contents):
         self.new_pkg = MutatedPkg(self.new_pkg, {"contents": contents})
@@ -93,10 +98,10 @@ class install(base):
 class uninstall(base):
 
     stage_depends = {
-        'finish': '_notify_repo_remove',
-        '_notify_repo_remove': 'finalize_data',
-        'finalize_data': 'remove_data',
-        'remove_data': 'start'
+        "finish": "_notify_repo_remove",
+        "_notify_repo_remove": "finalize_data",
+        "finalize_data": "remove_data",
+        "remove_data": "start",
     }
 
     description = "uninstall"
@@ -110,18 +115,18 @@ class uninstall(base):
         return True
 
     def remove_data(self):
-        raise NotImplementedError(self, 'remove_data')
+        raise NotImplementedError(self, "remove_data")
 
 
 class replace(install, uninstall):
 
     stage_depends = {
-        'finish': '_notify_repo_add',
-        '_notify_repo_add': 'finalize_data',
-        'finalize_data': ('add_data', '_notify_repo_remove'),
-        '_notify_repo_remove': 'remove_data',
-        'remove_data': 'start',
-        'add_data': 'start'
+        "finish": "_notify_repo_add",
+        "_notify_repo_add": "finalize_data",
+        "finalize_data": ("add_data", "_notify_repo_remove"),
+        "_notify_repo_remove": "remove_data",
+        "remove_data": "start",
+        "add_data": "start",
     }
 
     description = "replace"
@@ -133,7 +138,6 @@ class replace(install, uninstall):
 
 
 class sync_operations(operations_mod.base):
-
     def __init__(self, repository, disable_overrides=(), enable_overrides=()):
         self.repo = repository
         super().__init__(disable_overrides, enable_overrides)
@@ -148,12 +152,12 @@ class sync_operations(operations_mod.base):
         return ret
 
     def _get_syncer(self, lazy=False):
-        syncer = getattr(self.repo, '_syncer', klass.sentinel)
+        syncer = getattr(self.repo, "_syncer", klass.sentinel)
         if syncer is klass.sentinel:
             # raw repo's vs non-raw; drive down to the raw repo.
             # see pkgcore.ebuild.repository for an example
-            syncer = getattr(self.repo, 'config', None)
-            syncer = getattr(syncer, '_syncer', None)
+            syncer = getattr(self.repo, "config", None)
+            syncer = getattr(syncer, "_syncer", None)
 
         if not lazy and not isinstance(syncer, _sync_base.Syncer):
             syncer = syncer.instantiate()
@@ -167,12 +171,13 @@ class sync_operations(operations_mod.base):
 
 
 class operations(sync_operations):
-
     def _disabled_if_frozen(self, command):
         if self.repo.frozen:
             logger.debug(
                 "disabling repo(%r) command(%r) due to repo being frozen",
-                self.repo, command)
+                self.repo,
+                command,
+            )
         return not self.repo.frozen
 
     def _get_observer(self, observer=None):
@@ -181,20 +186,20 @@ class operations(sync_operations):
         return observer
 
     def _cmd_api_install(self, pkg, observer=None):
-        return self._cmd_implementation_install(
-            pkg, self._get_observer(observer))
+        return self._cmd_implementation_install(pkg, self._get_observer(observer))
 
     def _cmd_api_uninstall(self, pkg, observer=None):
-        return self._cmd_implementation_uninstall(
-            pkg, self._get_observer(observer))
+        return self._cmd_implementation_uninstall(pkg, self._get_observer(observer))
 
     def _cmd_api_replace(self, oldpkg, newpkg, observer=None):
         return self._cmd_implementation_replace(
-            oldpkg, newpkg, self._get_observer(observer))
+            oldpkg, newpkg, self._get_observer(observer)
+        )
 
     def _cmd_api_install_or_replace(self, newpkg, observer=None):
         return self._cmd_implementation_install_or_replace(
-            newpkg, self._get_observer(observer))
+            newpkg, self._get_observer(observer)
+        )
 
     def _cmd_implementation_install_or_replace(self, newpkg, observer=None):
         match = self.repo.match(newpkg.versioned_atom)
@@ -204,14 +209,14 @@ class operations(sync_operations):
         return self.replace(match[0], newpkg, observer=observer)
 
     for x in ("install", "uninstall", "replace", "install_or_replace"):
-        locals()["_cmd_check_support_%s" % x] = post_curry(
-            _disabled_if_frozen, x)
+        locals()["_cmd_check_support_%s" % x] = post_curry(_disabled_if_frozen, x)
 
     del x
 
     def _cmd_api_configure(self, pkg, observer=None):
         return self._cmd_implementation_configure(
-            self.repo, pkg, self._get_observer(observer))
+            self.repo, pkg, self._get_observer(observer)
+        )
 
     def _cmd_implementation_clean_cache(self, pkgs=None):
         """Clean stale and invalid cache entries up."""
@@ -227,10 +232,10 @@ class operations(sync_operations):
 
     @operations_mod.is_standalone
     def _cmd_api_regen_cache(self, observer=None, threads=1, **kwargs):
-        cache = getattr(self.repo, 'cache', None)
-        if not cache and not kwargs.get('force', False):
+        cache = getattr(self.repo, "cache", None)
+        if not cache and not kwargs.get("force", False):
             return
-        sync_rate = getattr(cache, 'sync_rate', None)
+        sync_rate = getattr(cache, "sync_rate", None)
         try:
             if sync_rate is not None:
                 cache.set_sync_rate(1000000)
@@ -243,15 +248,18 @@ class operations(sync_operations):
 
             observer = self._get_observer(observer)
             for pkg, e in regen.regen_repository(
-                    self.repo, pkgs, observer=observer, threads=threads, **kwargs):
-                observer.error(f'caught exception {e} while processing {pkg.cpvstr}')
+                self.repo, pkgs, observer=observer, threads=threads, **kwargs
+            ):
+                observer.error(f"caught exception {e} while processing {pkg.cpvstr}")
                 errors += 1
 
             # report pkgs with bad metadata -- relies on iterating over the
             # unfiltered repo to populate the masked repo
             pkgs = frozenset(pkg.cpvstr for pkg in self.repo)
             for pkg in sorted(self.repo._bad_masked):
-                observer.error(f'{pkg.cpvstr}: {pkg.data.msg(verbosity=observer.verbosity)}')
+                observer.error(
+                    f"{pkg.cpvstr}: {pkg.data.msg(verbosity=observer.verbosity)}"
+                )
                 errors += 1
 
             # remove old/invalid cache entries
@@ -264,8 +272,8 @@ class operations(sync_operations):
             self.repo.operations.run_if_supported("flush_cache")
 
     def _get_caches(self):
-        caches = getattr(self.repo, 'cache', ())
-        if not hasattr(caches, 'commit'):
+        caches = getattr(self.repo, "cache", ())
+        if not hasattr(caches, "commit"):
             return caches
         return [caches]
 
@@ -276,7 +284,9 @@ class operations(sync_operations):
 
     def _cmd_api_manifest(self, domain, restriction, observer=None, **kwargs):
         observer = self._get_observer(observer)
-        return self._cmd_implementation_manifest(domain, restriction, observer, **kwargs)
+        return self._cmd_implementation_manifest(
+            domain, restriction, observer, **kwargs
+        )
 
 
 class operations_proxy(operations):

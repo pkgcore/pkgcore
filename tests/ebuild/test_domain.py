@@ -1,3 +1,4 @@
+import textwrap
 from unittest import mock
 
 import pytest
@@ -54,3 +55,30 @@ class TestDomain:
                 (packages.AlwaysTrue, ((), ("X",))),
                 (packages.AlwaysTrue, (("X",), ("Y",))),
             ) == self.mk_domain().pkg_use
+
+    def test_use_expand_syntax(self):
+        puse = self.confdir / "package.use"
+        puse.mkdir()
+        open(puse / "a", "w").write(
+            textwrap.dedent(
+                """
+                */* x_y1
+                # unrelated is there to verify that it's unaffected by the USE_EXPAND
+                */* unrelated X: -y1 y2
+                """
+            )
+        )
+
+        assert (
+            (packages.AlwaysTrue, ((), ("x_y1",))),
+            (
+                packages.AlwaysTrue,
+                (
+                    ("x_y1",),
+                    (
+                        "unrelated",
+                        "x_y2",
+                    ),
+                ),
+            ),
+        ) == self.mk_domain().pkg_use

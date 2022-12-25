@@ -11,13 +11,11 @@ class bzr_syncer(base.VcsSyncer):
 
     binary = "bzr"
 
-    supported_uris = (
-        ('bzr+', 5),
-    )
+    supported_uris = (("bzr+", 5),)
 
     @classmethod
     def is_usable_on_filepath(cls, path):
-        bzr_path = os.path.join(path, '.bzr')
+        bzr_path = os.path.join(path, ".bzr")
         if cls.disabled or not os.path.isdir(bzr_path):
             return None
         code, data = spawn_get_output([cls.binary, "info", path])
@@ -28,7 +26,7 @@ class bzr_syncer(base.VcsSyncer):
             line = line.strip().split(":", 1)
             if len(line) != 2:
                 continue
-            if line[0] == 'parent branch':
+            if line[0] == "parent branch":
                 uri = f"bzr+{line[1].strip()}"
                 return (cls._rewrite_uri_from_stat(bzr_path, uri),)
         return None

@@ -28,7 +28,6 @@ from ..exceptions import PkgcoreException
 
 
 class MalformedXpak(PkgcoreException):
-
     def __init__(self, msg):
         super().__init__(f"xpak as malformed: {msg}")
         self.msg = msg
@@ -37,12 +36,13 @@ class MalformedXpak(PkgcoreException):
 class Xpak:
     __slots__ = ("_source", "_source_is_path", "xpak_start", "_keys_dict")
 
-    _reading_key_rewrites = {'repo': 'REPO'}
+    _reading_key_rewrites = {"repo": "REPO"}
 
     trailer_pre_magic = "XPAKSTOP"
     trailer_post_magic = "STOP"
-    trailer = struct.Struct(">%isL%is" % (
-        len(trailer_pre_magic), len(trailer_post_magic)))
+    trailer = struct.Struct(
+        ">%isL%is" % (len(trailer_pre_magic), len(trailer_post_magic))
+    )
 
     header_pre_magic = "XPAKPACK"
     header = struct.Struct(">%isLL" % (len(header_pre_magic),))
@@ -98,12 +98,12 @@ class Xpak:
         cur_pos = 0
         for key, val in data.items():
             if isinstance(val, str):
-                val = val.encode('utf8')
+                val = val.encode("utf8")
             if isinstance(key, str):
                 key = key.encode()
-            new_index.append(struct.pack(
-                ">L%isLL" % len(key),
-                len(key), key, cur_pos, len(val)))
+            new_index.append(
+                struct.pack(">L%isLL" % len(key), len(key), key, cur_pos, len(val))
+            )
             new_data.append(val)
             cur_pos += len(val)
 
@@ -113,22 +113,26 @@ class Xpak:
         else:
             handle = target_source.bytes_fileobj(writable=True)
 
-        joiner = b''
+        joiner = b""
         new_index = joiner.join(new_index)
         new_data = joiner.join(new_data)
 
         handle.seek(start, 0)
-        cls.header.write(
-            handle, cls.header_pre_magic, len(new_index), len(new_data))
+        cls.header.write(handle, cls.header_pre_magic, len(new_index), len(new_data))
 
-        handle.write(struct.pack(
-            ">%is%is" % (len(new_index), len(new_data)), new_index, new_data))
+        handle.write(
+            struct.pack(
+                ">%is%is" % (len(new_index), len(new_data)), new_index, new_data
+            )
+        )
 
         # the +8 is for the longs for new_index/new_data
         cls.trailer.write(
-            handle, cls.trailer_pre_magic,
+            handle,
+            cls.trailer_pre_magic,
             len(new_index) + len(new_data) + cls.trailer.size + 8,
-            cls.trailer_post_magic)
+            cls.trailer_post_magic,
+        )
         handle.truncate()
         handle.close()
         return Xpak(target_source)
@@ -143,22 +147,26 @@ class Xpak:
         while index_len:
             key_len = struct.unpack(">L", fd.read(4))[0]
             key = fd.read(key_len)
-            key = key.decode('ascii')
+            key = key.decode("ascii")
             if len(key) != key_len:
                 raise MalformedXpak(
-                    "tried reading key %i of len %i, but hit EOF" % (
-                        len(keys_dict) + 1, key_len))
+                    "tried reading key %i of len %i, but hit EOF"
+                    % (len(keys_dict) + 1, key_len)
+                )
             try:
                 offset, data_len = struct.unpack(">LL", fd.read(8))
             except struct.error as e:
                 raise MalformedXpak(
-                    "key %i, tried reading data offset/len but hit EOF" % (
-                        len(keys_dict) + 1)) from e
+                    "key %i, tried reading data offset/len but hit EOF"
+                    % (len(keys_dict) + 1)
+                ) from e
             key = key_rewrite(key, key)
             keys_dict[key] = (
-                data_start + offset, data_len,
-                not key.startswith("environment"))
-            index_len -= (key_len + 12) # 12 for key_len, offset, data_len longs
+                data_start + offset,
+                data_len,
+                not key.startswith("environment"),
+            )
+            index_len -= key_len + 12  # 12 for key_len, offset, data_len longs
 
         return keys_dict
 
@@ -168,10 +176,12 @@ class Xpak:
             pre, size, post = self.trailer.read(fd)
             if pre != self.trailer_pre_magic or post != self.trailer_post_magic:
                 raise MalformedXpak(
-                    "not an xpak segment, trailer didn't match: %r" % fd)
+                    "not an xpak segment, trailer didn't match: %r" % fd
+                )
         except struct.error as e:
             raise MalformedXpak(
-                "not an xpak segment, failed parsing trailer: %r" % fd) from e
+                "not an xpak segment, failed parsing trailer: %r" % fd
+            ) from e
 
         # this is a bit daft, but the format seems to intentionally
         # have an off by 8 in the offset address. presumably cause the
@@ -182,11 +192,11 @@ class Xpak:
         try:
             pre, index_len, data_len = self.header.read(fd)
             if pre != self.header_pre_magic:
-                raise MalformedXpak(
-                    "not an xpak segment, header didn't match: %r" % fd)
+                raise MalformedXpak("not an xpak segment, header didn't match: %r" % fd)
         except struct.error as e:
             raise MalformedXpak(
-                "not an xpak segment, failed parsing header: %r" % fd) from e
+                "not an xpak segment, failed parsing header: %r" % fd
+            ) from e
 
         return self.xpak_start + self.header.size, index_len, data_len
 
@@ -200,9 +210,7 @@ class Xpak:
     def items(self):
         # note that it's an OrderedDict, so this works.
         fd = self._fd
-        return (
-            (k, self._get_data(fd, *v))
-            for k, v in self.keys_dict.items())
+        return ((k, self._get_data(fd, *v)) for k, v in self.keys_dict.items())
 
     def __len__(self):
         return len(self.keys_dict)

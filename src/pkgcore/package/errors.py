@@ -1,6 +1,11 @@
 __all__ = (
-    "PackageError", "InvalidPackageName", "MetadataException", "InvalidDependency",
-    "ChksumError", "MissingChksum", "ParseChksumError",
+    "PackageError",
+    "InvalidPackageName",
+    "MetadataException",
+    "InvalidDependency",
+    "ChksumError",
+    "MissingChksum",
+    "ParseChksumError",
 )
 
 import os
@@ -22,7 +27,7 @@ class InvalidPackageName(PackageError):
     def __str__(self):
         msg = self.name
         if self.msg is not None:
-            msg += f': {self.msg}'
+            msg += f": {self.msg}"
         return msg
 
 
@@ -38,9 +43,9 @@ class MetadataException(PackageError):
         s = self.error
         if self.verbose:
             if verbosity > 0:
-                s += ':\n'
+                s += ":\n"
             else:
-                s += ': '
+                s += ": "
             s += self.verbose.msg(verbosity)
         return s
 
@@ -54,21 +59,21 @@ class ChksumError(PkgcoreUserException):
 
 
 class MissingChksum(ChksumError):
-
     def __init__(self, pkg, filename):
         super().__init__(
-            f"{pkg.cpvstr}::{pkg.repo} missing chksum data for {filename!r}")
+            f"{pkg.cpvstr}::{pkg.repo} missing chksum data for {filename!r}"
+        )
         self.pkg = pkg
         self.file = filename
 
 
 class ParseChksumError(ChksumError):
-
     def __init__(self, filename, error, missing=False):
         filename = os.sep.join(filename.split(os.sep)[-3:])
         if missing:
             super().__init__(
-                f"failed parsing {filename!r}; data isn't available: {error}")
+                f"failed parsing {filename!r}; data isn't available: {error}"
+            )
         else:
             super().__init__(f"failed parsing {filename!r}: {error}")
         self.file = filename

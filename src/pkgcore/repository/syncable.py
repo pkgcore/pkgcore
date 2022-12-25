@@ -8,7 +8,7 @@ class tree:
     operations_kls = sync_operations
 
     def __init__(self, sync=None):
-        object.__setattr__(self, '_syncer', sync)
+        object.__setattr__(self, "_syncer", sync)
 
     @property
     def operations(self):

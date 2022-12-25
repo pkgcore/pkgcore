@@ -23,9 +23,11 @@ def change_offset_rewriter(orig_offset, new_offset, iterable):
         # slip in the '/' default to force it to still generate a
         # full path still
         yield x.change_attributes(
-            location=npf(pjoin(new_offset, x.location[offset_len:].lstrip(path_sep))))
+            location=npf(pjoin(new_offset, x.location[offset_len:].lstrip(path_sep)))
+        )
 
-offset_rewriter = partial(change_offset_rewriter, '/')
+
+offset_rewriter = partial(change_offset_rewriter, "/")
 
 
 def check_instance(obj):
@@ -36,9 +38,9 @@ def check_instance(obj):
 
 class contentsSet(metaclass=generic_equality):
     """set of :class:`pkgcore.fs.fs.fsBase` objects"""
-    __attr_comparison__ = ('_dict',)
-    __dict_kls__ = dict
 
+    __attr_comparison__ = ("_dict",)
+    __dict_kls__ = dict
 
     def __init__(self, initial=None, mutable=True):
 
@@ -54,14 +56,14 @@ class contentsSet(metaclass=generic_equality):
 
     def __str__(self):
         name = self.__class__.__name__
-        contents = ', '.join(map(str, self))
-        return f'{name}([{contents}])'
+        contents = ", ".join(map(str, self))
+        return f"{name}([{contents}])"
 
     def __repr__(self):
         name = self.__class__.__name__
-        contents = ', '.join(map(repr, self))
+        contents = ", ".join(map(repr, self))
         # this should include the id among other things
-        return f'{name}([{contents}])'
+        return f"{name}([{contents}])"
 
     def add(self, obj):
 
@@ -73,8 +75,7 @@ class contentsSet(metaclass=generic_equality):
 
         if not self.mutable:
             # weird, but keeping with set.
-            raise AttributeError(
-                f'{self.__class__} is frozen; no add functionality')
+            raise AttributeError(f"{self.__class__} is frozen; no add functionality")
         if not fs.isfs_obj(obj):
             raise TypeError(f"'{obj}' is not a fs.fsBase class")
         self._dict[obj.location] = obj
@@ -91,8 +92,7 @@ class contentsSet(metaclass=generic_equality):
 
         if not self.mutable:
             # weird, but keeping with set.
-            raise AttributeError(
-                f'{self.__class__} is frozen; no remove functionality')
+            raise AttributeError(f"{self.__class__} is frozen; no remove functionality")
         if fs.isfs_obj(obj):
             del self._dict[obj.location]
         else:
@@ -124,8 +124,7 @@ class contentsSet(metaclass=generic_equality):
         """
         if not self.mutable:
             # weird, but keeping with set.
-            raise AttributeError(
-                f'{self.__class__} is frozen; no clear functionality')
+            raise AttributeError(f"{self.__class__} is frozen; no clear functionality")
         self._dict.clear()
 
     @staticmethod
@@ -142,18 +141,19 @@ class contentsSet(metaclass=generic_equality):
         f = fs.isfs_obj
         for x in iterable:
             if not f(x):
-                raise ValueError(f'must be an fsBase derivative: got {x!r}')
+                raise ValueError(f"must be an fsBase derivative: got {x!r}")
             yield x
 
     def difference(self, other):
-        if not hasattr(other, '__contains__'):
+        if not hasattr(other, "__contains__"):
             other = set(self._convert_loc(other))
-        return contentsSet((x for x in self if x.location not in other),
-            mutable=self.mutable)
+        return contentsSet(
+            (x for x in self if x.location not in other), mutable=self.mutable
+        )
 
     def difference_update(self, other):
         if not self.mutable:
-            raise TypeError(f'immutable type {self!r}')
+            raise TypeError(f"immutable type {self!r}")
 
         rem = self.remove
         for x in other:
@@ -161,13 +161,12 @@ class contentsSet(metaclass=generic_equality):
                 rem(x)
 
     def intersection(self, other):
-        return contentsSet((x for x in other if x in self),
-            mutable=self.mutable)
+        return contentsSet((x for x in other if x in self), mutable=self.mutable)
 
     def intersection_update(self, other):
         if not self.mutable:
-            raise TypeError(f'immutable type {self!r}')
-        if not hasattr(other, '__contains__'):
+            raise TypeError(f"immutable type {self!r}")
+        if not hasattr(other, "__contains__"):
             other = set(self._convert_loc(other))
 
         l = [x for x in self if x.location not in other]
@@ -175,17 +174,17 @@ class contentsSet(metaclass=generic_equality):
             self.remove(x)
 
     def issubset(self, other):
-        if not hasattr(other, '__contains__'):
+        if not hasattr(other, "__contains__"):
             other = set(self._convert_loc(other))
         return all(x in other for x in self._dict)
 
     def issuperset(self, other):
-        if not hasattr(other, '__contains__'):
+        if not hasattr(other, "__contains__"):
             other = set(self._convert_loc(other))
         return all(x in self for x in other)
 
     def isdisjoint(self, other):
-        if not hasattr(other, '__contains__'):
+        if not hasattr(other, "__contains__"):
             other = set(self._convert_loc(other))
         return not any(x in other for x in self._dict)
 
@@ -204,13 +203,13 @@ class contentsSet(metaclass=generic_equality):
         c = contentsSet(mutable=True)
         c.update(self)
         c.symmetric_difference_update(other)
-        object.__setattr__(c, 'mutable', self.mutable)
+        object.__setattr__(c, "mutable", self.mutable)
         return c
 
     def symmetric_difference_update(self, other):
         if not self.mutable:
-            raise TypeError(f'immutable type {self!r}')
-        if not hasattr(other, '__contains__'):
+            raise TypeError(f"immutable type {self!r}")
+        if not hasattr(other, "__contains__"):
             other = contentsSet(self._ensure_fsbase(other))
         l = []
         for x in self:
@@ -239,7 +238,7 @@ class contentsSet(metaclass=generic_equality):
 
         if invert:
             return (x for x in self if not x.is_reg)
-        return filter(attrgetter('is_reg'), self)
+        return filter(attrgetter("is_reg"), self)
 
     def files(self, invert=False):
         """Returns a list of just :obj:`pkgcore.fs.fs.fsFile` instances.
@@ -252,7 +251,7 @@ class contentsSet(metaclass=generic_equality):
     def iterdirs(self, invert=False):
         if invert:
             return (x for x in self if not x.is_dir)
-        return filter(attrgetter('is_dir'), self)
+        return filter(attrgetter("is_dir"), self)
 
     def dirs(self, invert=False):
         return list(self.iterdirs(invert=invert))
@@ -260,18 +259,18 @@ class contentsSet(metaclass=generic_equality):
     def itersymlinks(self, invert=False):
         if invert:
             return (x for x in self if not x.is_sym)
-        return filter(attrgetter('is_sym'), self)
+        return filter(attrgetter("is_sym"), self)
 
     def symlinks(self, invert=False):
         return list(self.iterlinks(invert=invert))
 
-    iterlinks = alias_method('itersymlinks')
-    links = alias_method('symlinks')
+    iterlinks = alias_method("itersymlinks")
+    links = alias_method("symlinks")
 
     def iterdevs(self, invert=False):
         if invert:
             return (x for x in self if not x.is_dev)
-        return filter(attrgetter('is_dev'), self)
+        return filter(attrgetter("is_dev"), self)
 
     def devs(self, invert=False):
         return list(self.iterdevs(invert=invert))
@@ -279,16 +278,18 @@ class contentsSet(metaclass=generic_equality):
     def iterfifos(self, invert=False):
         if invert:
             return (x for x in self if not x.is_fifo)
-        return filter(attrgetter('is_fifo'), self)
+        return filter(attrgetter("is_fifo"), self)
 
     def fifos(self, invert=False):
         return list(self.iterfifos(invert=invert))
 
-    for k in ('file', 'dir', 'symlink', 'dev', 'fifo'):
-        locals()[f'iter{k}s'].__doc__ = \
-            iterfiles.__doc__.replace('fsFile', f'fs{k.capitalize()}')
-        locals()[f'{k}s'].__doc__ = \
-            files.__doc__.replace('fsFile', f'fs{k.capitalize()}')
+    for k in ("file", "dir", "symlink", "dev", "fifo"):
+        locals()[f"iter{k}s"].__doc__ = iterfiles.__doc__.replace(
+            "fsFile", f"fs{k.capitalize()}"
+        )
+        locals()[f"{k}s"].__doc__ = files.__doc__.replace(
+            "fsFile", f"fs{k.capitalize()}"
+        )
     del k
 
     def inode_map(self):
@@ -358,7 +359,9 @@ class contentsSet(metaclass=generic_equality):
                 obj.remove(conflict)
                 subset = obj.child_nodes(conflict.location)
                 obj.difference_update(subset)
-                subset = subset.change_offset(conflict.location, conflict.resolved_target)
+                subset = subset.change_offset(
+                    conflict.location, conflict.resolved_target
+                )
                 obj.update(subset)
                 if add_conflicting_sym:
                     obj.add(other[conflicts_d[conflict]])
@@ -382,14 +385,14 @@ class contentsSet(metaclass=generic_equality):
                 missing.add(target)
                 target = os.path.dirname(target)
         missing.discard("/")
-        self.update(fs.fsDir(location=x, mode=mode, uid=uid, gid=gid, mtime=mtime)
-            for x in missing)
+        self.update(
+            fs.fsDir(location=x, mode=mode, uid=uid, gid=gid, mtime=mtime)
+            for x in missing
+        )
 
 
 class OrderedContentsSet(contentsSet):
-
-    def __init__(self, initial=None, mutable=False,
-                 add_missing_directories=False):
+    def __init__(self, initial=None, mutable=False, add_missing_directories=False):
         contentsSet.__init__(self, mutable=True)
         self._dict = OrderedDict()
         if initial:

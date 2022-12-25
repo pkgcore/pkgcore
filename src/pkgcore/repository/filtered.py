@@ -21,9 +21,10 @@ class tree(prototype.tree):
     def __init__(self, repo, restrict, sentinel_val=False):
         self.raw_repo = repo
         self.sentinel_val = sentinel_val
-        if not hasattr(self.raw_repo, 'itermatch'):
+        if not hasattr(self.raw_repo, "itermatch"):
             raise errors.InitializationError(
-                f"{self.raw_repo} is not a repository tree derivative")
+                f"{self.raw_repo} is not a repository tree derivative"
+            )
         if not isinstance(restrict, restriction.base):
             raise errors.InitializationError(f"{restrict} is not a restriction")
         self.restrict = restrict
@@ -40,10 +41,12 @@ class tree(prototype.tree):
         # (determined by repo's attributes) versus what does cost
         # (metadata pull for example).
         return self._filterfunc(
-            self.restrict.match, self.raw_repo.itermatch(restrict, **kwds))
+            self.restrict.match, self.raw_repo.itermatch(restrict, **kwds)
+        )
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
-        "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")
+        "@param", "@keyword"
+    ).replace(":keyword restrict:", ":param restrict:")
 
     def __len__(self):
         count = 0
@@ -61,9 +64,10 @@ class tree(prototype.tree):
         return v
 
     def __repr__(self):
-        return '<%s raw_repo=%r restrict=%r sentinel=%r @%#8x>' % (
+        return "<%s raw_repo=%r restrict=%r sentinel=%r @%#8x>" % (
             self.__class__.__name__,
-            getattr(self, 'raw_repo', 'unset'),
-            getattr(self, 'restrict', 'unset'),
-            getattr(self, 'sentinel_val', 'unset'),
-            id(self))
+            getattr(self, "raw_repo", "unset"),
+            getattr(self, "restrict", "unset"),
+            getattr(self, "sentinel_val", "unset"),
+            id(self),
+        )

@@ -5,23 +5,31 @@ import time
 from ..util import commandline
 
 argparser = commandline.ArgumentParser(
-    domain=False, description=__doc__, script=(__file__, __name__))
+    domain=False, description=__doc__, script=(__file__, __name__)
+)
 argparser.add_argument(
-    "source", config_type='cache', priority=20,
+    "source",
+    config_type="cache",
+    priority=20,
     action=commandline.StoreConfigObject,
-    help="source cache to copy data from")
+    help="source cache to copy data from",
+)
 argparser.add_argument(
-    "target", config_type='cache', priority=21,
-    action=commandline.StoreConfigObject, writable=True,
-    help="target cache to update.  Must be writable.")
+    "target",
+    config_type="cache",
+    priority=21,
+    action=commandline.StoreConfigObject,
+    writable=True,
+    help="target cache to update.  Must be writable.",
+)
 
 
 @argparser.bind_main_func
 def main(options, out, err):
     if options.target.readonly:
         argparser.error(
-            "can't update cache label '%s', it's marked readonly." %
-            (options.target,))
+            "can't update cache label '%s', it's marked readonly." % (options.target,)
+        )
 
     source, target = options.source, options.target
     if not target.autocommits:

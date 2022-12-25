@@ -32,8 +32,11 @@ class tree(prototype.tree):
 
     def _mk_kls(self, pkg_kls_injections):
         return make_wrapper(
-            self, self.configurable, self.wrapped_attrs,
-            kls_injections=pkg_kls_injections)
+            self,
+            self.configurable,
+            self.wrapped_attrs,
+            kls_injections=pkg_kls_injections,
+        )
 
     def _get_pkg_kwds(self, pkg):
         raise NotImplementedError
@@ -59,7 +62,8 @@ class tree(prototype.tree):
         return self.raw_repo.itermatch(restrict, **kwds)
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
-        "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")
+        "@param", "@keyword"
+    ).replace(":keyword restrict:", ":param restrict:")
 
     def __getitem__(self, key):
         obj = self.package_class(self.raw_repo[key])
@@ -68,8 +72,10 @@ class tree(prototype.tree):
         return obj
 
     def __repr__(self):
-        return '<%s.%s raw_repo=%r wrapped=%r @%#8x>' % (
-            self.__class__.__module__, self.__class__.__name__,
-            getattr(self, 'raw_repo', 'unset'),
-            list(getattr(self, 'wrapped_attrs', {}).keys()),
-            id(self))
+        return "<%s.%s raw_repo=%r wrapped=%r @%#8x>" % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            getattr(self, "raw_repo", "unset"),
+            list(getattr(self, "wrapped_attrs", {}).keys()),
+            id(self),
+        )

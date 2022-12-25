@@ -26,9 +26,12 @@ class Test_collapsed_restrict_to_data:
         # ensure AlwaysFalse is ignored.
         self.assert_state(self.kls([(AlwaysFalse, srange)]))
         # check always ordering.
-        self.assert_state(self.kls([(AlwaysTrue, ['x'])],
-            [(AlwaysTrue, ['x', 'y']), (AlwaysTrue, ['-x'])]),
-            defaults=['y'])
+        self.assert_state(
+            self.kls(
+                [(AlwaysTrue, ["x"])], [(AlwaysTrue, ["x", "y"]), (AlwaysTrue, ["-x"])]
+            ),
+            defaults=["y"],
+        )
 
 
 class TestIncrementalExpansion:
@@ -39,7 +42,7 @@ class TestIncrementalExpansion:
         self.f(("-a", "b", "-b", "-b", "c"), orig=s)
         assert set(s) == {"c"}
         with pytest.raises(ValueError):
-            self.f({'-'})
+            self.f({"-"})
 
     def test_non_finalized(self):
         s = set("ab")
@@ -47,9 +50,9 @@ class TestIncrementalExpansion:
         assert set(s) == {"-a", "-b", "c"}
 
     def test_starred(self):
-        s = set('ab')
-        self.f(('c', '-*', 'd'), orig=s)
-        assert set(s) == {'d'}
+        s = set("ab")
+        self.f(("c", "-*", "d"), orig=s)
+        assert set(s) == {"d"}
 
 
 def test_IncrementalsDict():
@@ -68,7 +71,7 @@ def test_IncrementalsDict():
     del d["a1"]
     del expected["a1"]
     assert d == expected
-    assert d['i1'] == "1 2"
+    assert d["i1"] == "1 2"
     assert d
     assert set(d) == {"i1"}
     d.clear()
@@ -76,17 +79,24 @@ def test_IncrementalsDict():
     assert len(d) == 0
 
 
-@pytest.mark.parametrize('expected,source,target',
-    [('../../bin/foo', '/bin/foo', '/usr/bin/foo'),
-     ('../../../doc/foo-1', '/usr/share/doc/foo-1', '/usr/share/texmf-site/doc/fonts/foo'),
-     ('../../opt/bar/foo', '/opt/bar/foo', '/usr/bin/foo'),
-     ('../c/d/e', '/a/b/c/d/e', 'a/b/f/g'),
-     ('b/f', '/a/b///./c/d/../e/..//../f', '/a/././///g/../h'),
-     ('../h', '/a/././///g/../h', '/a/b///./c/d/../e/..//../f'),
-     ('.', '/foo', '/foo/bar'),
-     ('..', '/foo', '/foo/bar/baz'),
-     ('../../fo . o/b ar', '/fo . o/b ar', '/baz / qu .. ux/qu x'),
-     (r'../../f"o\o/b$a[]r', r'/f"o\o/b$a[]r', r'/ba\z/qu$u"x/qux'),
-     ])
+@pytest.mark.parametrize(
+    "expected,source,target",
+    [
+        ("../../bin/foo", "/bin/foo", "/usr/bin/foo"),
+        (
+            "../../../doc/foo-1",
+            "/usr/share/doc/foo-1",
+            "/usr/share/texmf-site/doc/fonts/foo",
+        ),
+        ("../../opt/bar/foo", "/opt/bar/foo", "/usr/bin/foo"),
+        ("../c/d/e", "/a/b/c/d/e", "a/b/f/g"),
+        ("b/f", "/a/b///./c/d/../e/..//../f", "/a/././///g/../h"),
+        ("../h", "/a/././///g/../h", "/a/b///./c/d/../e/..//../f"),
+        (".", "/foo", "/foo/bar"),
+        ("..", "/foo", "/foo/bar/baz"),
+        ("../../fo . o/b ar", "/fo . o/b ar", "/baz / qu .. ux/qu x"),
+        (r'../../f"o\o/b$a[]r', r'/f"o\o/b$a[]r', r'/ba\z/qu$u"x/qux'),
+    ],
+)
 def test_get_relative_dosym_target(expected, source, target):
     assert expected == misc.get_relative_dosym_target(source, target)

@@ -32,9 +32,9 @@ valid_slot_chars.update(".+_-")
 alphanum = frozenset(alphanum)
 valid_repo_chars = frozenset(valid_repo_chars)
 valid_slot_chars = frozenset(valid_slot_chars)
-valid_ops = frozenset(['<', '<=', '=', '~', '>=', '>'])
+valid_ops = frozenset(["<", "<=", "=", "~", ">=", ">"])
 
-demand_compile_regexp('valid_use_flag', r'^[A-Za-z0-9][A-Za-z0-9+_@-]*$')
+demand_compile_regexp("valid_use_flag", r"^[A-Za-z0-9][A-Za-z0-9+_@-]*$")
 
 
 class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
@@ -45,8 +45,18 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
     # note we don't need _hash
     __slots__ = (
-        "blocks", "blocks_strongly", "op", "cpvstr", "negate_vers", "use",
-        "slot_operator", "slot", "subslot", "repo_id", "_hash", "_cpv",
+        "blocks",
+        "blocks_strongly",
+        "op",
+        "cpvstr",
+        "negate_vers",
+        "use",
+        "slot_operator",
+        "slot",
+        "subslot",
+        "repo_id",
+        "_hash",
+        "_cpv",
         "_restrictions",
     )
 
@@ -57,8 +67,16 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
     _evaluate_collapse = True
 
     __attr_comparison__ = (
-        "cpvstr", "op", "blocks", "negate_vers",
-        "use", "slot", "subslot", "slot_operator", "repo_id")
+        "cpvstr",
+        "op",
+        "blocks",
+        "negate_vers",
+        "use",
+        "slot",
+        "subslot",
+        "slot_operator",
+        "repo_id",
+    )
 
     klass.inject_richcmp_methods_from_cmp(locals())
     # hack; combine these 2 metaclasses at some point...
@@ -69,7 +87,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
     # overrided in child class if it's supported
     evaluate_depset = None
 
-    def __init__(self, atom: str, negate_vers: bool=False, eapi: str='-1'):
+    def __init__(self, atom: str, negate_vers: bool = False, eapi: str = "-1"):
         """
         :param atom: string, see gentoo ebuild atom syntax
         :keyword negate_vers: boolean controlling whether the version should be
@@ -89,99 +107,117 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             # use dep
             use_end = atom.find("]", use_start)
             if use_start < slot_start:
-                raise errors.MalformedAtom(orig_atom,
-                    "slot restriction must proceed use")
+                raise errors.MalformedAtom(
+                    orig_atom, "slot restriction must proceed use"
+                )
             elif use_end == -1:
-                raise errors.MalformedAtom(
-                    orig_atom, "use restriction isn't completed")
+                raise errors.MalformedAtom(orig_atom, "use restriction isn't completed")
             elif use_end != len(atom) - 1:
-                raise errors.MalformedAtom(
-                    orig_atom, "trailing garbage after use dep")
-            sf(self, "use", tuple(sorted(atom[use_start + 1:use_end].split(','))))
+                raise errors.MalformedAtom(orig_atom, "trailing garbage after use dep")
+            sf(self, "use", tuple(sorted(atom[use_start + 1 : use_end].split(","))))
             for x in self.use:
                 # stripped purely for validation reasons
                 try:
                     if x[-1] in "=?":
                         override_kls = True
                         x = x[:-1]
-                        if x[0] == '!':
+                        if x[0] == "!":
                             x = x[1:]
-                        if x[0] == '-':
+                        if x[0] == "-":
                             raise errors.MalformedAtom(
-                                orig_atom, f"malformed use flag: {x}")
-                    elif x[0] == '-':
+                                orig_atom, f"malformed use flag: {x}"
+                            )
+                    elif x[0] == "-":
                         x = x[1:]
 
-                    if x[-1] == ')' and eapi not in ('0', '1', '2', '3'):
+                    if x[-1] == ")" and eapi not in ("0", "1", "2", "3"):
                         # use defaults.
                         if x[-3:] in ("(+)", "(-)"):
                             x = x[:-3]
 
                     if not x:
-                        raise errors.MalformedAtom(orig_atom, 'empty use dep detected')
+                        raise errors.MalformedAtom(orig_atom, "empty use dep detected")
                     if not valid_use_flag.match(x):
-                        raise errors.MalformedAtom(orig_atom, f'invalid USE flag: {x!r}')
+                        raise errors.MalformedAtom(
+                            orig_atom, f"invalid USE flag: {x!r}"
+                        )
                 except IndexError:
-                    raise errors.MalformedAtom(orig_atom, 'empty use dep detected')
+                    raise errors.MalformedAtom(orig_atom, "empty use dep detected")
             if override_kls:
-                sf(self, '__class__', transitive_use_atom)
-            atom = atom[0:use_start]+atom[use_end + 1:]
+                sf(self, "__class__", transitive_use_atom)
+            atom = atom[0:use_start] + atom[use_end + 1 :]
         else:
             sf(self, "use", None)
         if slot_start != -1:
             i2 = atom.find("::", slot_start)
             if i2 != -1:
-                repo_id = atom[i2 + 2:]
+                repo_id = atom[i2 + 2 :]
                 if not repo_id:
                     raise errors.MalformedAtom(orig_atom, "repo_id must not be empty")
-                elif repo_id[0] in '-':
-                    raise errors.MalformedAtom(orig_atom,
-                        f"invalid first char of repo_id '{repo_id}' (must not begin with a hyphen)")
+                elif repo_id[0] in "-":
+                    raise errors.MalformedAtom(
+                        orig_atom,
+                        f"invalid first char of repo_id '{repo_id}' (must not begin with a hyphen)",
+                    )
                 elif not valid_repo_chars.issuperset(repo_id):
-                    raise errors.MalformedAtom(orig_atom,
-                        f"repo_id may contain only [a-Z0-9_-/], found {repo_id!r}")
+                    raise errors.MalformedAtom(
+                        orig_atom,
+                        f"repo_id may contain only [a-Z0-9_-/], found {repo_id!r}",
+                    )
                 atom = atom[:i2]
                 sf(self, "repo_id", repo_id)
             else:
                 sf(self, "repo_id", None)
             # slot dep.
-            slot = atom[slot_start+1:]
+            slot = atom[slot_start + 1 :]
             slot_operator = subslot = None
             if not slot:
                 # if the slot char came in only due to repo_id, force slots to None
                 if i2 == -1:
-                    raise errors.MalformedAtom(orig_atom, "Empty slot targets aren't allowed")
+                    raise errors.MalformedAtom(
+                        orig_atom, "Empty slot targets aren't allowed"
+                    )
                 slot = None
             else:
                 slots = (slot,)
-                if eapi not in ('0', '1', '2', '3', '4'):
+                if eapi not in ("0", "1", "2", "3", "4"):
                     if slot[0:1] in ("*", "="):
                         if len(slot) > 1:
-                            raise errors.MalformedAtom(orig_atom,
-                                "Slot operators '*' and '=' do not take slot targets")
+                            raise errors.MalformedAtom(
+                                orig_atom,
+                                "Slot operators '*' and '=' do not take slot targets",
+                            )
                         slot_operator = slot
                         slot, slots = None, ()
                     else:
-                        if slot.endswith('='):
-                            slot_operator = '='
+                        if slot.endswith("="):
+                            slot_operator = "="
                             slot = slot[:-1]
-                        slots = slot.split('/', 1)
-                elif eapi == '0':
-                    raise errors.MalformedAtom(orig_atom,
-                        "slot dependencies aren't allowed in EAPI 0")
+                        slots = slot.split("/", 1)
+                elif eapi == "0":
+                    raise errors.MalformedAtom(
+                        orig_atom, "slot dependencies aren't allowed in EAPI 0"
+                    )
 
                 for chunk in slots:
                     if not chunk:
-                        raise errors.MalformedAtom(orig_atom,
-                            "Empty slot targets aren't allowed")
+                        raise errors.MalformedAtom(
+                            orig_atom, "Empty slot targets aren't allowed"
+                        )
 
-                    if chunk[0] in '-.':
-                        raise errors.MalformedAtom(orig_atom,
-                            "Slot targets must not start with a hypen or dot: {chunk!r}")
+                    if chunk[0] in "-.":
+                        raise errors.MalformedAtom(
+                            orig_atom,
+                            "Slot targets must not start with a hypen or dot: {chunk!r}",
+                        )
                     elif not valid_slot_chars.issuperset(chunk):
-                        invalid_chars = ', '.join(map(repr, sorted(set(chunk).difference(valid_slot_chars))))
-                        raise errors.MalformedAtom(orig_atom,
-                            f"Invalid character(s) in slot target: {invalid_chars}")
+                        invalid_chars = ", ".join(
+                            map(repr, sorted(set(chunk).difference(valid_slot_chars)))
+                        )
+                        raise errors.MalformedAtom(
+                            orig_atom,
+                            f"Invalid character(s) in slot target: {invalid_chars}",
+                        )
 
                 if len(slots) == 2:
                     slot, subslot = slots
@@ -201,7 +237,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             atom = atom[1:]
             # hackish/slow, but lstrip doesn't take a 'prune this many' arg
             # open to alternatives
-            if eapi not in ('0', '1') and atom.startswith("!"):
+            if eapi not in ("0", "1") and atom.startswith("!"):
                 atom = atom[1:]
                 sf(self, "blocks_strongly", True)
             else:
@@ -209,40 +245,43 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         else:
             sf(self, "blocks_strongly", False)
 
-        if atom[0] in ('<', '>'):
-            if atom[1] == '=':
-                sf(self, 'op', atom[:2])
+        if atom[0] in ("<", ">"):
+            if atom[1] == "=":
+                sf(self, "op", atom[:2])
                 atom = atom[2:]
             else:
-                sf(self, 'op', atom[0])
+                sf(self, "op", atom[0])
                 atom = atom[1:]
-        elif atom[0] == '=':
-            if atom[-1] == '*':
-                sf(self, 'op', '=*')
+        elif atom[0] == "=":
+            if atom[-1] == "*":
+                sf(self, "op", "=*")
                 atom = atom[1:-1]
             else:
                 atom = atom[1:]
-                sf(self, 'op', '=')
-        elif atom[0] == '~':
-            sf(self, 'op', '~')
+                sf(self, "op", "=")
+        elif atom[0] == "~":
+            sf(self, "op", "~")
             atom = atom[1:]
         else:
-            sf(self, 'op', '')
-        sf(self, 'cpvstr', atom)
+            sf(self, "op", "")
+        sf(self, "cpvstr", atom)
 
-        if eapi == '0':
-            for x in ('use', 'slot'):
+        if eapi == "0":
+            for x in ("use", "slot"):
                 if getattr(self, x) is not None:
-                    raise errors.MalformedAtom(orig_atom,
-                        f"{x} atoms aren't supported for EAPI 0")
-        elif eapi == '1':
+                    raise errors.MalformedAtom(
+                        orig_atom, f"{x} atoms aren't supported for EAPI 0"
+                    )
+        elif eapi == "1":
             if self.use is not None:
-                raise errors.MalformedAtom(orig_atom,
-                    "use atoms aren't supported for EAPI < 2")
-        if eapi != '-1':
+                raise errors.MalformedAtom(
+                    orig_atom, "use atoms aren't supported for EAPI < 2"
+                )
+        if eapi != "-1":
             if self.repo_id is not None:
-                raise errors.MalformedAtom(orig_atom,
-                    f"repo_id atoms aren't supported for EAPI {eapi}")
+                raise errors.MalformedAtom(
+                    orig_atom, f"repo_id atoms aren't supported for EAPI {eapi}"
+                )
         try:
             sf(self, "_cpv", cpv.CPV(self.cpvstr, versioned=bool(self.op)))
         except errors.InvalidCPV as e:
@@ -251,11 +290,12 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         if self.op:
             if self.version is None:
                 raise errors.MalformedAtom(orig_atom, "operator requires a version")
-            elif self.op == '~' and self.revision:
-                raise errors.MalformedAtom(orig_atom,
-                    "~ revision operator cannot be combined with a revision")
+            elif self.op == "~" and self.revision:
+                raise errors.MalformedAtom(
+                    orig_atom, "~ revision operator cannot be combined with a revision"
+                )
         elif self.version is not None:
-            raise errors.MalformedAtom(orig_atom, 'versioned atom requires an operator')
+            raise errors.MalformedAtom(orig_atom, "versioned atom requires an operator")
         sf(self, "_hash", hash(orig_atom))
         sf(self, "negate_vers", negate_vers)
 
@@ -269,26 +309,26 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
     weak_blocker = klass.alias_attr("blocks_temp_ignorable")
 
     def __repr__(self):
-        if self.op == '=*':
+        if self.op == "=*":
             atom = f"={self.cpvstr}*"
         else:
             atom = self.op + self.cpvstr
         if self.blocks:
-            atom = '!' + atom
+            atom = "!" + atom
         if self.blocks:
             if self.blocks_strongly:
-                atom = '!!' + atom
+                atom = "!!" + atom
             else:
-                atom = '!' + atom
+                atom = "!" + atom
         attrs = [atom]
         if self.use:
-            attrs.append(f'use={self.use!r}')
+            attrs.append(f"use={self.use!r}")
         if self.slot is not None:
-            attrs.append(f'slot={self.slot!r}')
+            attrs.append(f"slot={self.slot!r}")
         if self.subslot is not None:
-            attrs.append(f'subslot={self.subslot!r}')
+            attrs.append(f"subslot={self.subslot!r}")
         if self.repo_id is not None:
-            attrs.append(f'repo_id={self.repo_id!r}')
+            attrs.append(f"repo_id={self.repo_id!r}")
         return f'<{self.__class__.__name__} {" ".join(attrs)} @#{id(self):x}>'
 
     def __reduce__(self):
@@ -329,12 +369,18 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             r.insert(0, restricts.RepositoryDep(self.repo_id))
 
         if self.fullver is not None:
-            if self.op == '=*':
-                r.append(packages.PackageRestriction(
-                    "fullver", values.StrGlobMatch(self.fullver)))
+            if self.op == "=*":
+                r.append(
+                    packages.PackageRestriction(
+                        "fullver", values.StrGlobMatch(self.fullver)
+                    )
+                )
             else:
-                r.append(restricts.VersionMatch(
-                    self.op, self.version, self.revision, negate=self.negate_vers))
+                r.append(
+                    restricts.VersionMatch(
+                        self.op, self.version, self.revision, negate=self.negate_vers
+                    )
+                )
 
         if self.slot is not None:
             r.append(restricts.SlotDep(self.slot))
@@ -347,15 +393,15 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         return tuple(r)
 
     def __str__(self):
-        if self.op == '=*':
+        if self.op == "=*":
             s = f"={self.cpvstr}*"
         else:
             s = self.op + self.cpvstr
         if self.blocks:
             if self.blocks_strongly:
-                s = '!!' + s
+                s = "!!" + s
             else:
-                s = '!' + s
+                s = "!" + s
         if self.slot:
             s += f":{self.slot}"
             if self.subslot:
@@ -367,11 +413,11 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         if self.repo_id:
             s += f"::{self.repo_id}"
         if self.use:
-            use = ','.join(self.use)
+            use = ",".join(self.use)
             s += f"[{use}]"
         return s
 
-    __hash__ = klass.reflective_hash('_hash')
+    __hash__ = klass.reflective_hash("_hash")
 
     def __iter__(self):
         return iter(self.restrictions)
@@ -381,8 +427,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
     def __cmp__(self, other):
         if not isinstance(other, atom):
-            raise TypeError(
-                f"other isn't of {atom!r} type, is {other.__class__}")
+            raise TypeError(f"other isn't of {atom!r} type, is {other.__class__}")
 
         c = cmp(self.category, other.category)
         if c:
@@ -396,8 +441,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         if c:
             return c
 
-        c = cpv.ver_cmp(self.version, self.revision,
-                        other.version, other.revision)
+        c = cpv.ver_cmp(self.version, self.revision, other.version, other.revision)
         if c:
             return c
 
@@ -417,7 +461,8 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             return c
 
         def f(v):
-            return '' if v is None else v
+            return "" if v is None else v
+
         c = cmp(f(self.slot), f(other.slot))
         if c:
             return c
@@ -435,18 +480,18 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         """Return atom object stripped of USE dependencies."""
         if not self.use:
             return self
-        if self.op == '=*':
-            s = f'={self.cpvstr}*'
+        if self.op == "=*":
+            s = f"={self.cpvstr}*"
         else:
             s = self.op + self.cpvstr
         if self.blocks:
-            s = '!' + s
+            s = "!" + s
             if not self.blocks_temp_ignorable:
-                s = '!' + s
+                s = "!" + s
         if self.slot:
-            s += f':{self.slot}'
+            s += f":{self.slot}"
         if self.subslot:
-            s += f'/{self.subslot}'
+            s += f"/{self.subslot}"
         return atom(s)
 
     def intersects(self, other):
@@ -471,18 +516,23 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
         # Slot dep only matters if we both have one. If we do they
         # must be identical:
-        if (self.slot is not None and other.slot is not None and
-                self.slot != other.slot):
+        if self.slot is not None and other.slot is not None and self.slot != other.slot:
             return False
 
         # Subslot dep only matters if we both have one. If we do they
         # must be identical:
-        if (self.subslot is not None and other.subslot is not None and
-                self.subslot != other.subslot):
+        if (
+            self.subslot is not None
+            and other.subslot is not None
+            and self.subslot != other.subslot
+        ):
             return False
 
-        if (self.repo_id is not None and other.repo_id is not None and
-                self.repo_id != other.repo_id):
+        if (
+            self.repo_id is not None
+            and other.repo_id is not None
+            and self.repo_id != other.repo_id
+        ):
             return False
 
         # Use deps are similar: if one of us forces a flag on and the
@@ -495,7 +545,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             flags = set(self.use) ^ set(other.use)
             for flag in flags:
                 # If this is unset and we also have the set version we fail:
-                if flag[0] == '-' and flag[1:] in flags:
+                if flag[0] == "-" and flag[1:] in flags:
                     return False
 
         # Remaining thing to check is version restrictions. Get the
@@ -507,8 +557,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             return True
 
         # If we are both "unbounded" in the same direction we intersect:
-        if (('<' in self.op and '<' in other.op) or
-                ('>' in self.op and '>' in other.op)):
+        if ("<" in self.op and "<" in other.op) or (">" in self.op and ">" in other.op):
             return True
 
         # Trick used here: just use the atoms as sufficiently
@@ -516,74 +565,81 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         # needed is a version and revision attr).
 
         # If one of us is an exact match we intersect if the other matches it:
-        if self.op == '=':
-            if other.op == '=*':
+        if self.op == "=":
+            if other.op == "=*":
                 return self.fullver.startswith(other.fullver)
             return restricts.VersionMatch(
-                other.op, other.version, other.revision).match(self)
-        if other.op == '=':
-            if self.op == '=*':
+                other.op, other.version, other.revision
+            ).match(self)
+        if other.op == "=":
+            if self.op == "=*":
                 return other.fullver.startswith(self.fullver)
-            return restricts.VersionMatch(
-                self.op, self.version, self.revision).match(other)
+            return restricts.VersionMatch(self.op, self.version, self.revision).match(
+                other
+            )
 
         # If we are both ~ matches we match if we are identical:
-        if self.op == other.op == '~':
-            return (self.version == other.version and
-                    self.revision == other.revision)
+        if self.op == other.op == "~":
+            return self.version == other.version and self.revision == other.revision
 
         # If we are both glob matches we match if one of us matches the other.
-        if self.op == other.op == '=*':
-            return (self.fullver.startswith(other.fullver) or
-                    other.fullver.startswith(self.fullver))
+        if self.op == other.op == "=*":
+            return self.fullver.startswith(other.fullver) or other.fullver.startswith(
+                self.fullver
+            )
 
         # If one of us is a glob match and the other a ~ we match if the glob
         # matches the ~ (ignoring a revision on the glob):
-        if self.op == '=*' and other.op == '~':
+        if self.op == "=*" and other.op == "~":
             return other.fullver.startswith(self.version)
-        if other.op == '=*' and self.op == '~':
+        if other.op == "=*" and self.op == "~":
             return self.fullver.startswith(other.version)
 
         # If we get here at least one of us is a <, <=, > or >=:
-        if self.op in ('<', '<=', '>', '>='):
+        if self.op in ("<", "<=", ">", ">="):
             ranged, other = self, other
         else:
             ranged, other = other, self
 
-        if '<' in other.op or '>' in other.op:
+        if "<" in other.op or ">" in other.op:
             # We are both ranged, and in the opposite "direction" (or
             # we would have matched above). We intersect if we both
             # match the other's endpoint (just checking one endpoint
             # is not enough, it would give a false positive on <=2 vs >2)
-            return (
-                restricts.VersionMatch(
-                    other.op, other.version, other.revision).match(ranged) and
-                restricts.VersionMatch(
-                    ranged.op, ranged.version, ranged.revision).match(other))
+            return restricts.VersionMatch(
+                other.op, other.version, other.revision
+            ).match(ranged) and restricts.VersionMatch(
+                ranged.op, ranged.version, ranged.revision
+            ).match(
+                other
+            )
 
-        if other.op == '~':
+        if other.op == "~":
             # Other definitely matches its own version. If ranged also
             # does we're done:
-            if restricts.VersionMatch(
-                    ranged.op, ranged.version, ranged.revision).match(other):
+            if restricts.VersionMatch(ranged.op, ranged.version, ranged.revision).match(
+                other
+            ):
                 return True
             # The only other case where we intersect is if ranged is a
             # > or >= on other's version and a nonzero revision. In
             # that case other will match ranged. Be careful not to
             # give a false positive for ~2 vs <2 here:
-            return ranged.op in ('>', '>=') and restricts.VersionMatch(
-                other.op, other.version, other.revision).match(ranged)
+            return ranged.op in (">", ">=") and restricts.VersionMatch(
+                other.op, other.version, other.revision
+            ).match(ranged)
 
-        if other.op == '=*':
+        if other.op == "=*":
             # The fun one, since glob matches do not correspond to a
             # single contiguous region of versions.
 
             # a glob match definitely matches its own version, so if
             # ranged does too we're done:
-            if restricts.VersionMatch(
-                    ranged.op, ranged.version, ranged.revision).match(other):
+            if restricts.VersionMatch(ranged.op, ranged.version, ranged.revision).match(
+                other
+            ):
                 return True
-            if '<' in ranged.op:
+            if "<" in ranged.op:
                 # Remaining cases where this intersects: there is a
                 # package smaller than ranged.fullver and
                 # other.fullver that they both match.
@@ -616,7 +672,8 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
         # Handled all possible ops.
         raise NotImplementedError(
-            'Someone added an op to atom without adding it to intersects')
+            "Someone added an op to atom without adding it to intersects"
+        )
 
     def evaluate_conditionals(self, parent_cls, parent_seq, enabled, tristate=None):
         parent_seq.append(self)
@@ -635,75 +692,102 @@ class transitive_use_atom(atom):
 
     @staticmethod
     def _mk_conditional(flag, payload, negate=False):
-        return Conditional('use', ContainmentMatch(flag, negate=negate), payload)
+        return Conditional("use", ContainmentMatch(flag, negate=negate), payload)
 
     def _recurse_transitive_use_conds(self, atom_str, forced_use, varied):
         if not varied:
-            s = ','.join(forced_use)
+            s = ",".join(forced_use)
             if s:
-                s = f'[{s}]'
-            return (self._nontransitive_use_atom(atom_str + s), )
+                s = f"[{s}]"
+            return (self._nontransitive_use_atom(atom_str + s),)
 
         flag = varied[0]
-        use = flag.lstrip('!').rstrip('?=')
+        use = flag.lstrip("!").rstrip("?=")
         varied = varied[1:]
-        if flag[-1] == '?':
+        if flag[-1] == "?":
             # a[x?] == x? ( a[x] ) !x? ( a )
             # a[!x?] == x? ( a ) !x? ( a[-x] )
-            if flag[0] != '!':
-                return (self._mk_conditional(use,
-                        self._recurse_transitive_use_conds(
-                            atom_str, forced_use + [use], varied)),
-                        self._mk_conditional(
-                            use, self._recurse_transitive_use_conds(
-                                atom_str, forced_use, varied), negate=True))
-            return (self._mk_conditional(
-                    use, self._recurse_transitive_use_conds(
-                        atom_str, forced_use, varied)),
+            if flag[0] != "!":
+                return (
                     self._mk_conditional(
-                        use, self._recurse_transitive_use_conds(
-                            atom_str, forced_use + ['-' + use], varied), negate=True))
+                        use,
+                        self._recurse_transitive_use_conds(
+                            atom_str, forced_use + [use], varied
+                        ),
+                    ),
+                    self._mk_conditional(
+                        use,
+                        self._recurse_transitive_use_conds(
+                            atom_str, forced_use, varied
+                        ),
+                        negate=True,
+                    ),
+                )
+            return (
+                self._mk_conditional(
+                    use,
+                    self._recurse_transitive_use_conds(atom_str, forced_use, varied),
+                ),
+                self._mk_conditional(
+                    use,
+                    self._recurse_transitive_use_conds(
+                        atom_str, forced_use + ["-" + use], varied
+                    ),
+                    negate=True,
+                ),
+            )
 
         # a[x=] == x? ( a[x] ) !x? ( a[-x] )
         # a[!x=] == x? ( a[-x] ) !x? ( a[x] )
-        if flag[0] != '!':
-            use_states = [[use], ['-' + use]]
+        if flag[0] != "!":
+            use_states = [[use], ["-" + use]]
         else:
-            use_states = [['-' + use], [use]]
+            use_states = [["-" + use], [use]]
 
-        return (self._mk_conditional(
-                use, self._recurse_transitive_use_conds(
-                    atom_str, forced_use + use_states[0], varied)),
-                self._mk_conditional(
-                    use, self._recurse_transitive_use_conds(
-                        atom_str, forced_use + use_states[1], varied), negate=True))
+        return (
+            self._mk_conditional(
+                use,
+                self._recurse_transitive_use_conds(
+                    atom_str, forced_use + use_states[0], varied
+                ),
+            ),
+            self._mk_conditional(
+                use,
+                self._recurse_transitive_use_conds(
+                    atom_str, forced_use + use_states[1], varied
+                ),
+                negate=True,
+            ),
+        )
 
     @klass.jit_attr
     def restrictions(self):
         return self.convert_to_conditionals()
 
     def convert_to_conditionals(self):
-        static_use = [use for use in self.use if use[-1] not in '?=']
-        variable = [use for use in self.use if use[-1] in '?=']
+        static_use = [use for use in self.use if use[-1] not in "?="]
+        variable = [use for use in self.use if use[-1] in "?="]
         return PkgAndRestriction(
             *self._recurse_transitive_use_conds(
-                self._stripped_use(), static_use, variable))
+                self._stripped_use(), static_use, variable
+            )
+        )
 
     def _evaluate_depset_qa_in_place(self, flags, variable_flags, enabled, tristate):
         # note this mutates flags
         for flag in variable_flags:
             conditional = flag[-1]
-            negated = flag[0] == '!'
+            negated = flag[0] == "!"
             if negated:
                 flag = flag[1:-1]
             else:
                 flag = flag[:-1]
 
             real_flag = flag
-            if flag[-1] == ')':
+            if flag[-1] == ")":
                 flag = flag[:-3]
 
-            if conditional == '=':
+            if conditional == "=":
                 # if it's locked to a state, take that state; else use whatever
                 # the default state was.
                 if flag in tristate:
@@ -712,7 +796,7 @@ class transitive_use_atom(atom):
                     # roughly if locked to enabled: x= == x, !x= == -x
                     # if locked to disabled: x= == -x , !x= == x
                     if (flag in enabled) == negated:
-                        real_flag = '-' + real_flag
+                        real_flag = "-" + real_flag
             else:
                 if flag in tristate:
                     # if the flag was on, but it was !x?, then skip it.
@@ -721,41 +805,44 @@ class transitive_use_atom(atom):
                         continue
                     # enforce the allowed state.
                     if flag not in enabled:
-                        real_flag = '-' + real_flag
+                        real_flag = "-" + real_flag
                 else:
                     # enforce the state that gets us a flag to test on the target.
                     # thus if !x?, we want -x, or +x; take the negation basically.
                     if negated:
-                        real_flag = '-' + real_flag
+                        real_flag = "-" + real_flag
             flags.append(real_flag)
 
-    def evaluate_conditionals(self, parent_cls, parent_seq, enabled, tristate_filter=None):
-        new_flags = [use for use in self.use if use[-1] not in '?=']
-        variable_flags = [use for use in self.use if use[-1] in '?=']
+    def evaluate_conditionals(
+        self, parent_cls, parent_seq, enabled, tristate_filter=None
+    ):
+        new_flags = [use for use in self.use if use[-1] not in "?="]
+        variable_flags = [use for use in self.use if use[-1] in "?="]
 
         if tristate_filter is not None:
             # note this updates the flags in place.
             self._evaluate_depset_qa_in_place(
-                new_flags, variable_flags, enabled, tristate_filter)
+                new_flags, variable_flags, enabled, tristate_filter
+            )
         else:
             for flag in variable_flags:
                 conditional = flag[-1]
-                negated = flag[0] == '!'
+                negated = flag[0] == "!"
                 if negated:
                     flag = raw_flag = flag[1:-1]
                 else:
                     flag = raw_flag = flag[:-1]
 
-                if raw_flag[-1] == ')':
+                if raw_flag[-1] == ")":
                     # use default... strip "(+)"
                     raw_flag = raw_flag[:-3]
 
-                if conditional == '=':
+                if conditional == "=":
                     # given '!x=', if x is off, force x on for the target,
                     # and vice versa.  render out a non relative - or ''.
-                    negated = ((raw_flag in enabled) == negated)
+                    negated = (raw_flag in enabled) == negated
                     if negated:
-                        flag = '-' + flag
+                        flag = "-" + flag
                 else:
                     # enforce the flag only if our state matches.  !x? and x is on, means no dep.
                     # for !x? with -x, the assertion becomes !x; conditionally transitive basically.
@@ -768,7 +855,8 @@ class transitive_use_atom(atom):
             a = self._nontransitive_use_atom(self._stripped_use())
         else:
             a = self._nontransitive_use_atom(
-                "%s[%s]" % (self._stripped_use(), ','.join(new_flags)))
+                "%s[%s]" % (self._stripped_use(), ",".join(new_flags))
+            )
         parent_seq.append(a)
 
     iter_dnf_solutions = boolean.AndRestriction.iter_dnf_solutions

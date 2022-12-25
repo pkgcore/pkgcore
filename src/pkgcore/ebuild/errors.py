@@ -22,18 +22,19 @@ class MalformedAtom(errors.InvalidDependency):
         super().__init__(str(self))
 
     def __str__(self):
-        msg = f'invalid package atom: {self.atom!r}'
+        msg = f"invalid package atom: {self.atom!r}"
         if self.err:
-            msg += f': {self.err}'
+            msg += f": {self.err}"
         return msg
 
 
 class InvalidVersion(errors.InvalidDependency):
     """Package version doesn't follow required specifications."""
 
-    def __init__(self, ver, rev, err=''):
+    def __init__(self, ver, rev, err=""):
         super().__init__(
-            f"Version restriction ver='{ver}', rev='{rev}', is malformed: error {err}")
+            f"Version restriction ver='{ver}', rev='{rev}', is malformed: error {err}"
+        )
         self.ver, self.rev, self.err = ver, rev, err
 
 
@@ -42,7 +43,6 @@ class InvalidCPV(errors.InvalidPackageName):
 
 
 class DepsetParseError(errors.InvalidDependency):
-
     def __init__(self, s, token=None, msg=None, attr=None):
         self.dep_str = s
         self.token = token
@@ -52,23 +52,23 @@ class DepsetParseError(errors.InvalidDependency):
     def __str__(self):
         msg = []
         if self.attr is not None:
-            msg.append(f'failed parsing {self.attr}')
-        msg.append(f'{self.dep_str!r} is unparseable')
+            msg.append(f"failed parsing {self.attr}")
+        msg.append(f"{self.dep_str!r} is unparseable")
         if self.token is not None:
-            msg.append(f'flagged token- {self.token}')
+            msg.append(f"flagged token- {self.token}")
         if self.msg is not None:
-            msg.append(f'{self.msg}')
-        return ': '.join(msg)
+            msg.append(f"{self.msg}")
+        return ": ".join(msg)
 
 
 class SanityCheckError(PkgcoreException):
     """Generic error for sanity check failures."""
 
-    def msg(self, verbosity, prefix='  '):
+    def msg(self, verbosity, prefix="  "):
         if verbosity > 0:
             return self.verbose_msg(prefix)
         else:
-            return f'{prefix}{self}'
+            return f"{prefix}{self}"
 
 
 class PkgPretendError(SanityCheckError):
@@ -79,17 +79,17 @@ class PkgPretendError(SanityCheckError):
         self.output = output
         self.error = error
 
-    def msg(self, verbosity=0, prefix=' '):
-        header = f'>>> {self.pkg.cpvstr}: failed pkg_pretend'
+    def msg(self, verbosity=0, prefix=" "):
+        header = f">>> {self.pkg.cpvstr}: failed pkg_pretend"
         msg = []
         error_msg = self.error.msg(verbosity=verbosity)
         if verbosity > 0:
             msg.extend(self.output.splitlines())
             msg.extend(error_msg.splitlines())
-            msg = [f'{prefix}{l}' for l in msg]
+            msg = [f"{prefix}{l}" for l in msg]
         elif error_msg:
-            header += f': {error_msg}'
-        return '\n'.join([header] + msg)
+            header += f": {error_msg}"
+        return "\n".join([header] + msg)
 
 
 class RequiredUseError(SanityCheckError):
@@ -99,16 +99,18 @@ class RequiredUseError(SanityCheckError):
         self.pkg = pkg
         self.unmatched = unmatched
 
-    def msg(self, verbosity=0, prefix='  '):
-        header = f'>>> {self.pkg.cpvstr}: failed REQUIRED_USE'
+    def msg(self, verbosity=0, prefix="  "):
+        header = f">>> {self.pkg.cpvstr}: failed REQUIRED_USE"
         errors = []
         for node in self.unmatched:
-            errors.append(textwrap.dedent(
-                f"""
+            errors.append(
+                textwrap.dedent(
+                    f"""
                 Failed to match: {node}
                 from: {self.pkg.required_use}
                 for USE: {' '.join(sorted(self.pkg.use))}
                 """
-            ))
-        msg = [f'{prefix}{line}' for e in errors for line in e.strip().splitlines()]
-        return '\n'.join([header] + msg)
+                )
+            )
+        msg = [f"{prefix}{line}" for e in errors for line in e.strip().splitlines()]
+        return "\n".join([header] + msg)

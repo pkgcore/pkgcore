@@ -12,13 +12,13 @@ class svn_syncer(base.ExternalSyncer):
     binary = "svn"
 
     supported_uris = (
-        ('svn://', 5),
-        ('svn+', 5),
+        ("svn://", 5),
+        ("svn+", 5),
     )
 
     @classmethod
     def is_usable_on_filepath(cls, path):
-        svn_path = os.path.join(path, '.svn')
+        svn_path = os.path.join(path, ".svn")
         if cls.disabled or not os.path.isdir(svn_path):
             return None
         code, data = spawn_get_output([cls.binary, "info", path])
@@ -29,7 +29,7 @@ class svn_syncer(base.ExternalSyncer):
             line = line.strip().split(":", 1)
             if len(line) != 2:
                 continue
-            if line[0] == 'URL':
+            if line[0] == "URL":
                 uri = f"svn+{line[1].strip()}"
                 return (cls._rewrite_uri_from_stat(svn_path, uri),)
         return None
@@ -52,14 +52,17 @@ class svn_syncer(base.ExternalSyncer):
 
     def _sync(self, verbosity, output_fd):
         uri = self.uri
-        if uri.startswith('svn+http://'):
-            uri = uri.replace('svn+http://', 'http://')
-        elif uri.startswith('svn+https://'):
-            uri = uri.replace('svn+https://', 'https://')
+        if uri.startswith("svn+http://"):
+            uri = uri.replace("svn+http://", "http://")
+        elif uri.startswith("svn+https://"):
+            uri = uri.replace("svn+https://", "https://")
         if not os.path.exists(self.basedir):
             return 0 == self._spawn(
                 [self.binary_path, "co", uri, self.basedir],
-                {1: output_fd, 2: output_fd, 0: 0})
+                {1: output_fd, 2: output_fd, 0: 0},
+            )
         return 0 == self._spawn(
             [self.binary_path, "update"],
-            {1: output_fd, 2: output_fd, 0: 0}, cwd=self.basedir)
+            {1: output_fd, 2: output_fd, 0: 0},
+            cwd=self.basedir,
+        )

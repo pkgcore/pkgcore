@@ -9,39 +9,68 @@ def generate_misc_sufs():
     suf_nums = list(range(100))
     shuffle(suf_nums)
 
-    good_sufs = (simple_good_sufs + [f"{x}{suf_nums.pop()}" for x in simple_good_sufs])
+    good_sufs = simple_good_sufs + [f"{x}{suf_nums.pop()}" for x in simple_good_sufs]
 
     l = len(good_sufs)
-    good_sufs = good_sufs + [
-        good_sufs[x] + good_sufs[l - x - 1] for x in range(l)]
+    good_sufs = good_sufs + [good_sufs[x] + good_sufs[l - x - 1] for x in range(l)]
 
-    bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
+    bad_sufs = ["_a", "_9", "_"] + [x + " " for x in simple_good_sufs]
     return good_sufs, bad_sufs
 
 
 class TestCPV:
 
     good_cats = (
-        "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
-        "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a",
-        "foo---", "multi--hyphen")
-    bad_cats  = (".util", "_dev", "", "dev-util ", "multi//depth")
-    good_pkgs = ("diffball", "a9", "a9+", "a-100dpi", "diff-mode-",
-                 "multi--hyphen", "timidity--", "frob---", "diffball-9-")
-    bad_pkgs  = ("diffball ", "diffball-9", "a-3D", "-df", "+dfa",
-                 "timidity--9f", "ormaybe---13_beta")
+        "dev-util",
+        "dev+",
+        "dev-util+",
+        "DEV-UTIL",
+        "aaa0",
+        "aaa-0",
+        "multi/depth",
+        "cross-dev_idiot.hacks-suck",
+        "a",
+        "foo---",
+        "multi--hyphen",
+    )
+    bad_cats = (".util", "_dev", "", "dev-util ", "multi//depth")
+    good_pkgs = (
+        "diffball",
+        "a9",
+        "a9+",
+        "a-100dpi",
+        "diff-mode-",
+        "multi--hyphen",
+        "timidity--",
+        "frob---",
+        "diffball-9-",
+    )
+    bad_pkgs = (
+        "diffball ",
+        "diffball-9",
+        "a-3D",
+        "-df",
+        "+dfa",
+        "timidity--9f",
+        "ormaybe---13_beta",
+    )
 
-    good_cp   = (
-        "bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9",
-        "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi",
-        "dev-util/diffball-blah-monkeys", "virtual/7z")
+    good_cp = (
+        "bbb-9/foon",
+        "dev-util/diffball",
+        "dev-util/diffball-a9",
+        "dev-ut-asdf/emacs-cvs",
+        "xfce-base/xfce4",
+        "bah/f-100dpi",
+        "dev-util/diffball-blah-monkeys",
+        "virtual/7z",
+    )
 
     good_vers = ("1", "2.3.4", "2.3.4a", "02.3", "2.03", "3d", "3D")
-    bad_vers  = ("2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3.", "cvs.2")
+    bad_vers = ("2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3.", "cvs.2")
 
     good_sufs, bad_sufs = generate_misc_sufs()
-    good_revs = ("-r1", "-r300", "-r0", "",
-        "-r1000000000000000000")
+    good_revs = ("-r1", "-r300", "-r0", "", "-r1000000000000000000")
     bad_revs = ("-r", "-ra", "-r", "-R1")
 
     testing_secondary_args = False
@@ -56,12 +85,14 @@ class TestCPV:
     def test_simple_key(self):
         with pytest.raises(cpv.InvalidCPV):
             self.make_inst("da", "ba-3", "3.3")
-        for src in [[("dev-util", "diffball", "0.7.1"), "dev-util/diffball"],
+        for src in [
+            [("dev-util", "diffball", "0.7.1"), "dev-util/diffball"],
             ["dev-util/diffball"],
             ["dev-perl/mod_perl"],
             ["dev-perl/mod_p"],
             [("dev-perl", "mod-p", ""), "dev-perl/mod-p"],
-            ["dev-perl/mod-p-1", "dev-perl/mod-p"],]:
+            ["dev-perl/mod-p-1", "dev-perl/mod-p"],
+        ]:
             if len(src) == 1:
                 key = src[0]
             else:
@@ -71,7 +102,7 @@ class TestCPV:
                 vals = pkgver.rsplit("-", 1)
                 if len(vals) == 1:
                     pkg = pkgver
-                    ver = ''
+                    ver = ""
                 else:
                     pkg, ver = vals
             else:
@@ -88,32 +119,32 @@ class TestCPV:
 
     def test_parsing(self):
         # check for gentoo bug 263787
-        self.process_pkg(False, 'app-text', 'foo-123-bar')
-        self.process_ver(False, 'app-text', 'foo-123-bar', '2.0017a_p', '-r5')
+        self.process_pkg(False, "app-text", "foo-123-bar")
+        self.process_ver(False, "app-text", "foo-123-bar", "2.0017a_p", "-r5")
         with pytest.raises(cpv.InvalidCPV):
-            cpv.UnversionedCPV('app-text/foo-123')
+            cpv.UnversionedCPV("app-text/foo-123")
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
             for cat in cats:
-                for pkg_ret, pkgs in [[False, self.good_pkgs],
-                                      [True, self.bad_pkgs]]:
+                for pkg_ret, pkgs in [[False, self.good_pkgs], [True, self.bad_pkgs]]:
                     for pkg in pkgs:
                         self.process_pkg(cat_ret or pkg_ret, cat, pkg)
 
         for cp in self.good_cp:
             cat, pkg = cp.rsplit("/", 1)
-            for rev_ret, revs in [[False, self.good_revs],
-                                  [True, self.bad_revs]]:
+            for rev_ret, revs in [[False, self.good_revs], [True, self.bad_revs]]:
                 for rev in revs:
-                    for ver_ret, vers in [[False, self.good_vers],
-                                          [True, self.bad_vers]]:
+                    for ver_ret, vers in [
+                        [False, self.good_vers],
+                        [True, self.bad_vers],
+                    ]:
                         for ver in vers:
-                            self.process_ver(ver_ret or rev_ret, cat, pkg,
-                                             ver, rev)
+                            self.process_ver(ver_ret or rev_ret, cat, pkg, ver, rev)
 
         for x in (10, 18, 19, 36, 100):
             assert cpv.CPV("da", "ba", f"1-r0{'0' * x}").revision == 0
-            assert \
-                int(cpv.CPV("da", "ba", f"1-r1{'0' * x}1").revision) == int(f"1{'0' * x}1")
+            assert int(cpv.CPV("da", "ba", f"1-r1{'0' * x}1").revision) == int(
+                f"1{'0' * x}1"
+            )
 
     def process_pkg(self, ret, cat, pkg):
         if ret:
@@ -161,16 +192,16 @@ class TestCPV:
 
         for suf in self.bad_sufs:
             # check standalone.
-            self.process_suf(True, cat, pkg, ver+suf, rev)
+            self.process_suf(True, cat, pkg, ver + suf, rev)
 
     def process_suf(self, ret, cat, pkg, ver, rev):
         if ret:
             with pytest.raises(cpv.InvalidCPV):
-                self.make_inst(cat, pkg, ver+rev)
+                self.make_inst(cat, pkg, ver + rev)
         else:
             # redundant in light of process_ver... combine these somehow.
             c = self.make_inst(cat, pkg, ver + rev)
-            if rev == '' or rev == '-r0':
+            if rev == "" or rev == "-r0":
                 assert c.cpvstr == f"{cat}/{pkg}-{ver}"
                 assert c.revision == 0
                 if rev:
@@ -198,10 +229,10 @@ class TestCPV:
                 if suf == "":
                     sufs = [suf]
                 else:
-                    sufs = [suf, f'{suf}4']
+                    sufs = [suf, f"{suf}4"]
                 for x in sufs:
-                    cur = vkls(f'{base}{x}{rev}')
-                    assert cur == vkls(f'{base}{x}{rev}')
+                    cur = vkls(f"{base}{x}{rev}")
+                    assert cur == vkls(f"{base}{x}{rev}")
                     if last is not None:
                         assert cur > last
 
@@ -234,9 +265,11 @@ class TestCPV:
         assert vkls("da/ba-6.01.0-r0") == vkls("da/ba-6.01.0-r00")
         assert vkls("da/ba-6.01.0-r1") == vkls("da/ba-6.01.0-r001")
 
-        for v1, v2 in (("1.001000000000000000001", "1.001000000000000000002"),
+        for v1, v2 in (
+            ("1.001000000000000000001", "1.001000000000000000002"),
             ("1.00100000000", "1.0010000000000000001"),
-            ("1.01", "1.1")):
+            ("1.01", "1.1"),
+        ):
             assert vkls(f"da/ba-{v2}") > vkls(f"da/ba-{v1}")
 
         for x in (18, 36, 100):
@@ -247,14 +280,17 @@ class TestCPV:
             s = "0" * x
             assert vkls(f"da/ba-1-r10{s}1") > vkls(f"da/ba-1-r1{s}1")
 
-        assert vkls('sys-apps/net-tools-1.60_p2010081516093') > \
-            vkls('sys-apps/net-tools-1.60_p2009072801401')
+        assert vkls("sys-apps/net-tools-1.60_p2010081516093") > vkls(
+            "sys-apps/net-tools-1.60_p2009072801401"
+        )
 
-        assert vkls('sys-apps/net-tools-1.60_p20100815160931') > \
-            vkls('sys-apps/net-tools-1.60_p20090728014017')
+        assert vkls("sys-apps/net-tools-1.60_p20100815160931") > vkls(
+            "sys-apps/net-tools-1.60_p20090728014017"
+        )
 
-        assert vkls('sys-apps/net-tools-1.60_p20100815160931') > \
-            vkls('sys-apps/net-tools-1.60_p20090728014017-r1')
+        assert vkls("sys-apps/net-tools-1.60_p20100815160931") > vkls(
+            "sys-apps/net-tools-1.60_p20090728014017-r1"
+        )
 
         # Regression test: python does comparison slightly differently
         # if the classes do not match exactly (it prefers rich
@@ -262,12 +298,17 @@ class TestCPV:
         class DummySubclass(cpv.CPV):
             pass
 
-        assert DummySubclass("da/ba-6.0_alpha0_p1", versioned=True) != vkls("da/ba-6.0_alpha")
-        assert DummySubclass("da/ba-6.0_alpha0", versioned=True) == vkls("da/ba-6.0_alpha")
+        assert DummySubclass("da/ba-6.0_alpha0_p1", versioned=True) != vkls(
+            "da/ba-6.0_alpha"
+        )
+        assert DummySubclass("da/ba-6.0_alpha0", versioned=True) == vkls(
+            "da/ba-6.0_alpha"
+        )
 
         assert DummySubclass("da/ba-6.0", versioned=True) != "foon"
-        assert DummySubclass("da/ba-6.0", versioned=True) == \
-            DummySubclass("da/ba-6.0-r0", versioned=True)
+        assert DummySubclass("da/ba-6.0", versioned=True) == DummySubclass(
+            "da/ba-6.0-r0", versioned=True
+        )
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.
@@ -279,10 +320,10 @@ class TestCPV:
         uninited = cpv.CPV.__new__(cpv.CPV)
         broken = cpv.CPV.__new__(cpv.CPV)
         with pytest.raises(cpv.InvalidCPV):
-            broken.__init__('broken', versioned=True)
+            broken.__init__("broken", versioned=True)
         for thing in (uninited, broken):
             # the c version returns None, the py version does not have the attr
-            getattr(thing, 'cpvstr', None)
+            getattr(thing, "cpvstr", None)
             repr(thing)
             str(thing)
             # The c version returns a constant, the py version raises

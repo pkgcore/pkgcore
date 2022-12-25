@@ -2,9 +2,7 @@
 base repository template
 """
 
-__all__ = (
-    "CategoryIterValLazyDict", "PackageMapping", "VersionMapping", "tree"
-)
+__all__ = ("CategoryIterValLazyDict", "PackageMapping", "VersionMapping", "tree")
 
 from pathlib import Path
 
@@ -55,7 +53,6 @@ class CategoryIterValLazyDict(IterValLazyDict):
 
 
 class PackageMapping(DictMixin):
-
     def __init__(self, parent_mapping, pull_vals):
         self._cache = {}
         self._parent = parent_mapping
@@ -84,7 +81,6 @@ class PackageMapping(DictMixin):
 
 
 class VersionMapping(DictMixin):
-
     def __init__(self, parent_mapping, pull_vals):
         self._cache = {}
         self._parent = parent_mapping
@@ -146,7 +142,8 @@ class tree:
 
     def __init__(self, frozen=False):
         self.categories = CategoryIterValLazyDict(
-            self._get_categories, self._get_categories)
+            self._get_categories, self._get_categories
+        )
         self.packages = PackageMapping(self.categories, self._get_packages)
         self.versions = VersionMapping(self.packages, self._get_versions)
 
@@ -197,7 +194,7 @@ class tree:
         if isinstance(obj, str):
             path = Path(obj)
             try:
-                repo_path = Path(getattr(self, 'location')).resolve()
+                repo_path = Path(getattr(self, "location")).resolve()
             except AttributeError:
                 return False
 
@@ -229,8 +226,17 @@ class tree:
     def match(self, atom, **kwds):
         return list(self.itermatch(atom, **kwds))
 
-    def itermatch(self, restrict, sorter=None, pkg_filter=None, versioned=True,
-                  raw_pkg_cls=None, pkg_cls=None, force=None, yield_none=False):
+    def itermatch(
+        self,
+        restrict,
+        sorter=None,
+        pkg_filter=None,
+        versioned=True,
+        raw_pkg_cls=None,
+        pkg_cls=None,
+        force=None,
+        yield_none=False,
+    ):
         """Generator that yields packages match a restriction.
 
         :type restrict: :obj:`pkgcore.restrictions.packages.PackageRestriction`
@@ -254,7 +260,8 @@ class tree:
         if not isinstance(restrict, restriction.base):
             raise TypeError(
                 f"restrict must be a pkgcore.restriction.restrictions.base instance: "
-                f"got {restrict!r}")
+                f"got {restrict!r}"
+            )
 
         if sorter is None:
             sorter = iter
@@ -278,14 +285,24 @@ class tree:
         else:
             match = restrict.force_False
         return self._internal_match(
-            candidates, match, raw_pkg_cls=raw_pkg_cls, pkg_cls=pkg_cls,
-            yield_none=yield_none, sorter=sorter, pkg_filter=pkg_filter,
-            versioned=versioned)
+            candidates,
+            match,
+            raw_pkg_cls=raw_pkg_cls,
+            pkg_cls=pkg_cls,
+            yield_none=yield_none,
+            sorter=sorter,
+            pkg_filter=pkg_filter,
+            versioned=versioned,
+        )
 
-    def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, pkg_filter, versioned):
+    def _internal_gen_candidates(
+        self, candidates, sorter, raw_pkg_cls, pkg_filter, versioned
+    ):
         for cp in sorter(candidates):
             if versioned:
-                pkgs = (raw_pkg_cls(cp[0], cp[1], ver) for ver in self.versions.get(cp, ()))
+                pkgs = (
+                    raw_pkg_cls(cp[0], cp[1], ver) for ver in self.versions.get(cp, ())
+                )
             else:
                 if self.versions.get(cp, ()):
                     pkgs = (raw_pkg_cls(cp[0], cp[1]),)
@@ -294,7 +311,9 @@ class tree:
                 pkgs = iter(pkgs)
             yield from sorter(pkg_filter(pkgs))
 
-    def _internal_match(self, candidates, match_func, pkg_cls, yield_none=False, **kwargs):
+    def _internal_match(
+        self, candidates, match_func, pkg_cls, yield_none=False, **kwargs
+    ):
         for pkg in self._internal_gen_candidates(candidates, **kwargs):
             if pkg_cls is not None:
                 pkg = pkg_cls(pkg)
@@ -309,11 +328,12 @@ class tree:
         if not isinstance(restrict, boolean.base) or isinstance(restrict, atom):
             return self._fast_identify_candidates(restrict, sorter)
         dsolutions = [
-            ([c.restriction
-              for c in collect_package_restrictions(x, ("category",))],
-             [p.restriction
-              for p in collect_package_restrictions(x, ("package",))])
-            for x in restrict.iter_dnf_solutions(True)]
+            (
+                [c.restriction for c in collect_package_restrictions(x, ("category",))],
+                [p.restriction for p in collect_package_restrictions(x, ("package",))],
+            )
+            for x in restrict.iter_dnf_solutions(True)
+        ]
 
         # see if any solution state isn't dependent on cat/pkg in anyway.
         # if so, search whole search space.
@@ -324,7 +344,8 @@ class tree:
                 return (
                     (c, p)
                     for c in sorter(self.categories)
-                    for p in sorter(self.packages.get(c, ())))
+                    for p in sorter(self.packages.get(c, ()))
+                )
 
         # simple cases first.
         # if one specifies categories, and one doesn't
@@ -340,22 +361,24 @@ class tree:
             # ok. so... one doesn't specify a category, but they all
             # specify packages (or don't)
             pr = values.OrRestriction(
-                *tuple(iflatten_instance(
-                    (x[1] for x in dsolutions if x[1]), values.base)))
+                *tuple(
+                    iflatten_instance((x[1] for x in dsolutions if x[1]), values.base)
+                )
+            )
             return (
                 (c, p)
                 for c in sorter(self.categories)
-                for p in sorter(pgetter(c, [])) if pr.match(p))
+                for p in sorter(pgetter(c, []))
+                if pr.match(p)
+            )
 
         elif any(True for x in dsolutions[1:] if bool(x[1]) != pkg_specified):
             # one (or more) don't specify pkgs, but they all specify cats.
             cr = values.OrRestriction(
-                *tuple(iflatten_instance(
-                    (x[0] for x in dsolutions), values.base)))
+                *tuple(iflatten_instance((x[0] for x in dsolutions), values.base))
+            )
             cats_iter = (c for c in sorter(self.categories) if cr.match(c))
-            return (
-                (c, p)
-                for c in cats_iter for p in sorter(pgetter(c, [])))
+            return ((c, p) for c in cats_iter for p in sorter(pgetter(c, [])))
 
         return self._fast_identify_candidates(restrict, sorter)
 
@@ -365,16 +388,20 @@ class tree:
         cat_exact = set()
         pkg_exact = set()
 
-        for x in collect_package_restrictions(restrict,
-                                              ("category", "package",)):
+        for x in collect_package_restrictions(
+            restrict,
+            (
+                "category",
+                "package",
+            ),
+        ):
             if x.attr == "category":
                 cat_restrict.add(x.restriction)
             elif x.attr == "package":
                 pkg_restrict.add(x.restriction)
 
         for e, s in ((pkg_exact, pkg_restrict), (cat_exact, cat_restrict)):
-            l = [x for x in s
-                 if isinstance(x, values.StrExactMatch) and not x.negate]
+            l = [x for x in s if isinstance(x, values.StrExactMatch) and not x.negate]
             s.difference_update(l)
             e.update(x.exact for x in l)
         del l
@@ -396,8 +423,7 @@ class tree:
                 cat_restrict.add(values.ContainmentMatch(frozenset(cat_exact)))
                 cats_iter = sorter(self._cat_filter(cat_restrict))
         elif cat_restrict:
-            cats_iter = self._cat_filter(
-                cat_restrict, negate=restrict.negate)
+            cats_iter = self._cat_filter(cat_restrict, negate=restrict.negate)
         else:
             cats_iter = sorter(self.categories)
 
@@ -407,25 +433,20 @@ class tree:
                     pkg_exact = tuple(pkg_exact)
                 else:
                     pkg_exact = sorter(pkg_exact)
-                return (
-                    (c, p)
-                    for c in cats_iter for p in pkg_exact)
+                return ((c, p) for c in cats_iter for p in pkg_exact)
             else:
                 pkg_restrict.add(values.ContainmentMatch(frozenset(pkg_exact)))
 
         if pkg_restrict:
-            return self._package_filter(
-                cats_iter, pkg_restrict, negate=restrict.negate)
+            return self._package_filter(cats_iter, pkg_restrict, negate=restrict.negate)
         elif not cat_restrict:
             if sorter is iter and not cat_exact:
                 return self.versions
             else:
                 return (
-                    (c, p) for c in
-                    cats_iter for p in sorter(self.packages.get(c, ())))
-        return (
-            (c, p)
-            for c in cats_iter for p in sorter(self.packages.get(c, ())))
+                    (c, p) for c in cats_iter for p in sorter(self.packages.get(c, ()))
+                )
+        return ((c, p) for c in cats_iter for p in sorter(self.packages.get(c, ())))
 
     def _cat_filter(self, cat_restricts, negate=False):
         sentinel = not negate
@@ -496,7 +517,7 @@ class tree:
 
     @property
     def aliases(self):
-        potentials = (getattr(self, key, None) for key in ('repo_id', 'location'))
+        potentials = (getattr(self, key, None) for key in ("repo_id", "location"))
         return tuple(x for x in potentials if x is not None)
 
     @jit_attr

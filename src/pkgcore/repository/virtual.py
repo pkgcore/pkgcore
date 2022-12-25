@@ -36,9 +36,10 @@ class tree(prototype.tree):
         pkls = self.package_class
         for cp in candidates:
             for pkg in sorter(
-                    pkls(provider, cp[0], cp[1], ver)
-                    for ver in self.versions.get(cp, ())
-                    for provider in self._expand_vers(cp, ver)):
+                pkls(provider, cp[0], cp[1], ver)
+                for ver in self.versions.get(cp, ())
+                for provider in self._expand_vers(cp, ver)
+            ):
                 yield pkg
 
     def _get_categories(self, *optional_category):
@@ -51,8 +52,8 @@ class tree(prototype.tree):
         raise NotImplementedError(self, "_load_data")
 
     def _get_packages(self, category):
-        if category != 'virtual':
-            raise KeyError(f'no {category} category for this repository')
+        if category != "virtual":
+            raise KeyError(f"no {category} category for this repository")
         self._load_data()
         return self.packages[category]
 
@@ -60,10 +61,21 @@ class tree(prototype.tree):
 class InjectedPkg(pkg_base.wrapper):
 
     __slots__ = (
-        "bdepend", "depend", "rdepend", "pdepend", "idepend",
-        "repo", "repo_id", "built", "versioned_atom", "unversioned_atom", "data",
+        "bdepend",
+        "depend",
+        "rdepend",
+        "pdepend",
+        "idepend",
+        "repo",
+        "repo_id",
+        "built",
+        "versioned_atom",
+        "unversioned_atom",
+        "data",
     )
-    default_bdepend = default_depend = default_rdepend = default_pdepend = default_idepend = DepSet()
+    default_bdepend = (
+        default_depend
+    ) = default_rdepend = default_pdepend = default_idepend = DepSet()
     package_is_real = False
     is_supported = True
 
@@ -111,7 +123,7 @@ class InjectedPkg(pkg_base.wrapper):
         return not self._raw_pkg.intersects(other)
 
     def __str__(self):
-        return f'injected restriction pkg: {self._raw_pkg}'
+        return f"injected restriction pkg: {self._raw_pkg}"
 
     def __repr__(self):
         return "<%s cpv=%r @%#8x>" % (self.__class__, self.cpvstr, id(self))

@@ -53,16 +53,18 @@ class package(ebuild_src.base):
     # if returned data is effectively empty).  Finally, note that this just maps the list across;
     # it's expected that certain attributes that are known to have no meaning for a 'built' package
     # are nulled (for example, fetchables: nothing to fetch).
-    locals().update({
-        attr_name: DynamicGetattrSetter.register(
-            post_curry(
-                _render_and_evaluate_attr,
-                ebuild_src.package._get_attr[attr_name],
-                render_func
+    locals().update(
+        {
+            attr_name: DynamicGetattrSetter.register(
+                post_curry(
+                    _render_and_evaluate_attr,
+                    ebuild_src.package._get_attr[attr_name],
+                    render_func,
+                )
             )
-        )
-        for attr_name, render_func in ebuild_src.package._config_wrappables.items()
-    })
+            for attr_name, render_func in ebuild_src.package._config_wrappables.items()
+        }
+    )
 
     @property
     def _operations(self):
@@ -73,18 +75,20 @@ class package(ebuild_src.base):
 
     built = True
 
-    cbuild = DynamicGetattrSetter.register(partial(_chost_fallback, 'CBUILD'))
-    chost = DynamicGetattrSetter.register(partial(_chost_fallback, 'CHOST'))
-    ctarget = DynamicGetattrSetter.register(partial(_chost_fallback, 'CTARGET'))
-    contents = DynamicGetattrSetter.register(post_curry(_passthrough, 'contents'))
-    environment = DynamicGetattrSetter.register(post_curry(_passthrough, 'environment'))
+    cbuild = DynamicGetattrSetter.register(partial(_chost_fallback, "CBUILD"))
+    chost = DynamicGetattrSetter.register(partial(_chost_fallback, "CHOST"))
+    ctarget = DynamicGetattrSetter.register(partial(_chost_fallback, "CTARGET"))
+    contents = DynamicGetattrSetter.register(post_curry(_passthrough, "contents"))
+    environment = DynamicGetattrSetter.register(post_curry(_passthrough, "environment"))
 
     @property
     def tracked_attributes(self):
         # tracked attributes varies depending on EAPI, thus this has to be runtime computed
-        return tuple(itertools.chain(
-            super().tracked_attributes, ('contents', 'use', 'environment')
-        ))
+        return tuple(
+            itertools.chain(
+                super().tracked_attributes, ("contents", "use", "environment")
+            )
+        )
 
     @DynamicGetattrSetter.register
     def cflags(self):
@@ -116,14 +120,14 @@ class package(ebuild_src.base):
 
     @DynamicGetattrSetter.register
     def source_repository(self):
-        repo = self.data.get('source_repository')
+        repo = self.data.get("source_repository")
         if repo is None:
-            repo = self.data.get('repository')
+            repo = self.data.get("repository")
             # work around managers storing this in different places.
             if repo is None:
                 # finally, do the strip ourselves since this can come
                 # back as '\n' from binpkg Packages caches...
-                repo = self.data.get('REPO', '').strip()
+                repo = self.data.get("REPO", "").strip()
                 if not repo:
                     repo = None
         if isinstance(repo, str):
@@ -131,7 +135,9 @@ class package(ebuild_src.base):
         return repo if repo else None
 
     @DynamicGetattrSetter.register
-    def fetchables(self, ret=conditionals.DepSet.parse('', fetch.fetchable, operators={})):
+    def fetchables(
+        self, ret=conditionals.DepSet.parse("", fetch.fetchable, operators={})
+    ):
         return ret
 
     @DynamicGetattrSetter.register
@@ -145,7 +151,7 @@ class package(ebuild_src.base):
         eapi_magic = self.data.pop("EAPI", "0")
         if not eapi_magic:
             # "" means EAPI 0
-            eapi_magic = '0'
+            eapi_magic = "0"
         eapi = get_eapi(str(eapi_magic).strip())
         # This can return None... definitely the wrong thing right now
         # for an unsupported eapi. Fix it later.
@@ -194,9 +200,12 @@ class fresh_built_package(package):
 
 
 def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
-    if (engine_inst.mode in (engine.REPLACE_MODE, engine.INSTALL_MODE)
-            and pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
-        if 'preinst' in pkg.mandatory_phases:
+    if (
+        engine_inst.mode in (engine.REPLACE_MODE, engine.INSTALL_MODE)
+        and pkg == engine_inst.new
+        and pkg.repo is engine_inst.new.repo
+    ):
+        if "preinst" in pkg.mandatory_phases:
             t = triggers.preinst_contents_reset(format_op_inst)
             t.register(engine_inst)
         # for ebuild format, always check the syms.

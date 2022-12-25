@@ -15,4 +15,4 @@ import logging
 logging.basicConfig()
 
 # Our main logger.
-logger = logging.getLogger('pkgcore')
+logger = logging.getLogger("pkgcore")

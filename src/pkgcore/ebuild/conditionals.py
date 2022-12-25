@@ -18,28 +18,39 @@ from .errors import DepsetParseError
 class DepSet(boolean.AndRestriction):
     """Gentoo DepSet syntax parser"""
 
-    __slots__ = ('element_class', '_node_conds', '_known_conditionals')
+    __slots__ = ("element_class", "_node_conds", "_known_conditionals")
 
     _evaluate_collapse = True
 
     # do not enable instance caching w/out adjust evaluate_depset!
     __inst_caching__ = False
 
-    def __init__(self, restrictions='', element_class=atom,
-                 node_conds=True, known_conditionals=None):
+    def __init__(
+        self,
+        restrictions="",
+        element_class=atom,
+        node_conds=True,
+        known_conditionals=None,
+    ):
         sf = object.__setattr__
-        sf(self, '_known_conditionals', known_conditionals)
-        sf(self, 'element_class', element_class)
-        sf(self, 'restrictions', restrictions)
-        sf(self, '_node_conds', node_conds)
-        sf(self, 'type', restriction.package_type)
-        sf(self, 'negate', False)
+        sf(self, "_known_conditionals", known_conditionals)
+        sf(self, "element_class", element_class)
+        sf(self, "restrictions", restrictions)
+        sf(self, "_node_conds", node_conds)
+        sf(self, "type", restriction.package_type)
+        sf(self, "negate", False)
 
     @classmethod
-    def parse(cls, dep_str, element_class,
-              operators=None, attr=None,
-              element_func=None, transitive_use_atoms=False,
-              allow_src_uri_file_renames=False):
+    def parse(
+        cls,
+        dep_str,
+        element_class,
+        operators=None,
+        attr=None,
+        element_func=None,
+        transitive_use_atoms=False,
+        allow_src_uri_file_renames=False,
+    ):
         """
         :param dep_str: string abiding by DepSet syntax
         :param operators: mapping of node -> callable for special operators
@@ -81,7 +92,8 @@ class DepSet(boolean.AndRestriction):
                             depsets[-2].append(depsets[-1][0])
                         else:
                             depsets[-2].append(
-                                operators[raw_conditionals[-1]](*depsets[-1]))
+                                operators[raw_conditionals[-1]](*depsets[-1])
+                            )
                     else:
                         node_conds = True
                         c = raw_conditionals[-1]
@@ -91,18 +103,19 @@ class DepSet(boolean.AndRestriction):
                             c = values.ContainmentMatch(c[:-1])
 
                         depsets[-2].append(
-                            packages.Conditional("use", c, tuple(depsets[-1])))
+                            packages.Conditional("use", c, tuple(depsets[-1]))
+                        )
 
                     raw_conditionals.pop()
                     depsets.pop()
 
                 elif "(" == k:
-                    k = ''
+                    k = ""
                     # push another frame on
                     depsets.append([])
                     raw_conditionals.append(k)
 
-                elif k[-1] == '?' or k in operators:
+                elif k[-1] == "?" or k in operators:
                     # use conditional or custom op.
                     # no tokens left == bad dep_str.
                     k2 = next(words)
@@ -122,7 +135,7 @@ class DepSet(boolean.AndRestriction):
                     except StopIteration:
                         depsets[-1].append(element_func(k))
                     else:
-                        if k2 != '->':
+                        if k2 != "->":
                             depsets[-1].append(element_func(k))
                             words.appendleft((k2,))
                         else:
@@ -178,8 +191,8 @@ class DepSet(boolean.AndRestriction):
 
         results = []
         self.evaluate_conditionals(
-            self.__class__, results,
-            cond_dict, tristate_filter, force_collapse=True)
+            self.__class__, results, cond_dict, tristate_filter, force_collapse=True
+        )
 
         return self.__class__(tuple(results), self.element_class, False)
 
@@ -193,12 +206,11 @@ class DepSet(boolean.AndRestriction):
                 new_set.appendleft(list(cur_node.payload) + [None])
             elif isinstance(cur_node, transitive_use_atom):
                 new_set.appendleft(cur_node.convert_to_conditionals())
-            elif (isinstance(cur_node, boolean.base) and
-                    not isinstance(cur_node, atom)):
+            elif isinstance(cur_node, boolean.base) and not isinstance(cur_node, atom):
                 new_set.appendleft(cur_node.restrictions)
             elif cur_node is None:
                 conditions_stack.pop()
-            elif conditions_stack or yield_non_conditionals: # leaf
+            elif conditions_stack or yield_non_conditionals:  # leaf
                 yield (cur_node, conditions_stack[:])
 
     @property
@@ -285,7 +297,8 @@ def stringify_boolean(node, func=str, domain=None):
             _internal_stringify_boolean(x, domain, func, l.append)
     else:
         _internal_stringify_boolean(node, domain, func, l.append)
-    return ' '.join(l)
+    return " ".join(l)
+
 
 def _internal_stringify_boolean(node, domain, func, visit):
     """func is used to stringify the actual content. Useful for fetchables."""
@@ -293,19 +306,20 @@ def _internal_stringify_boolean(node, domain, func, visit):
     if isinstance(node, boolean.OrRestriction):
         visit("|| (")
         iterable = node.restrictions
-    elif (isinstance(node, boolean.AndRestriction) and
-            not isinstance(node, atom)):
+    elif isinstance(node, boolean.AndRestriction) and not isinstance(node, atom):
         visit("(")
         iterable = node.restrictions
     elif isinstance(node, packages.Conditional):
         assert len(node.restriction.vals) == 1
         iterable = node.payload
-        visit("%s%s? (" % (
-            node.restriction.negate and "!" or "",
-            list(node.restriction.vals)[0]))
+        visit(
+            "%s%s? ("
+            % (node.restriction.negate and "!" or "", list(node.restriction.vals)[0])
+        )
     else:
-        if (domain is not None and
-                (isinstance(node, atom) and node.slot_operator == '=')):
+        if domain is not None and (
+            isinstance(node, atom) and node.slot_operator == "="
+        ):
             pkg = max(sorted(domain.all_installed_repos.itermatch(node)))
             object.__setattr__(node, "slot", pkg.slot)
             object.__setattr__(node, "subslot", pkg.subslot)

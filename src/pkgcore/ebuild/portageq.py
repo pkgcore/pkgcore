@@ -27,17 +27,26 @@ def get_atom_kls(value):
         raise ValueError(f"EAPI {value} isn't known/supported")
     return eapi.atom_kls
 
+
 def default_portageq_args(parser):
-    parser.add_argument("--eapi", dest='atom_kls', type=get_atom_kls,
+    parser.add_argument(
+        "--eapi",
+        dest="atom_kls",
+        type=get_atom_kls,
         default=atom.atom,
-        help="limit all operations to just what the given EAPI supports.")
-    parser.add_argument("--use", default=None,
+        help="limit all operations to just what the given EAPI supports.",
+    )
+    parser.add_argument(
+        "--use",
+        default=None,
         help="override the use flags used for transititive USE deps- "
-       "dev-lang/python[threads=] for example")
+        "dev-lang/python[threads=] for example",
+    )
 
 
 def make_atom(value):
     return arghparse.DelayedValue(partial(_render_atom, value), 100)
+
 
 def _render_atom(value, namespace, attr):
     a = namespace.atom_kls(value)
@@ -45,7 +54,7 @@ def _render_atom(value, namespace, attr):
         a.restrictions
         # XXX bit of a hack.
         a = conditionals.DepSet(a.restrictions, atom.atom, True)
-        a = a.evaluate_depset(getattr(namespace, 'use', ()))
+        a = a.evaluate_depset(getattr(namespace, "use", ()))
         a = AndRestriction(*a.restrictions)
     setattr(namespace, attr, a)
 
@@ -67,40 +76,55 @@ class BaseCommand(arghparse.ArgparseCommand):
                     kwds["nargs"] = "?"
                     kwds["default"] = self._compat_root_default
                 parser.add_argument(
-                    dest="domain", metavar="root",
+                    dest="domain",
+                    metavar="root",
                     action=commandline.DomainFromPath,
-                    help="the domain that lives at root will be used", **kwds)
+                    help="the domain that lives at root will be used",
+                    **kwds,
+                )
             else:
                 mux = parser.add_mutually_exclusive_group()
                 commandline._mk_domain(mux)
                 mux.add_argument(
-                    '--domain-at-root', action=commandline.DomainFromPath,
-                    dest="domain", help="specify the domain to use via its root path")
+                    "--domain-at-root",
+                    action=commandline.DomainFromPath,
+                    dest="domain",
+                    help="specify the domain to use via its root path",
+                )
 
         for token in self.arg_spec:
             kwds = {}
-            if token[-1] in '+?*':
+            if token[-1] in "+?*":
                 kwds["nargs"] = token[-1]
                 token = token[:-1]
-            if token == 'atom':
+            if token == "atom":
                 parser.add_argument(
-                    'atom', help="atom to inspect",
-                    type=make_atom, **kwds)
+                    "atom", help="atom to inspect", type=make_atom, **kwds
+                )
             else:
-                parser.add_argument(
-                    token, help=f"{token} to inspect", **kwds)
+                parser.add_argument(token, help=f"{token} to inspect", **kwds)
 
     @classmethod
-    def make_command(cls, arg_spec='', requires_root=True, bind=None,
-                     root_default=None, name=None, **kwds):
+    def make_command(
+        cls,
+        arg_spec="",
+        requires_root=True,
+        bind=None,
+        root_default=None,
+        name=None,
+        **kwds,
+    ):
         kwds = dict(
-            arg_spec=tuple(arg_spec.split()), requires_root=requires_root,
-            _compat_root_default=root_default, **kwds)
+            arg_spec=tuple(arg_spec.split()),
+            requires_root=requires_root,
+            _compat_root_default=root_default,
+            **kwds,
+        )
 
         def internal_function(functor, name=name):
             class mycommand(BaseCommand):
                 function = __call__ = staticmethod(functor)
-                __doc__ = getattr(functor, '__doc__', None)
+                __doc__ = getattr(functor, "__doc__", None)
                 locals().update(kwds)
 
             if name is None:
@@ -118,27 +142,31 @@ common_commands = []
 query_commands = []
 portageq_commands = []
 
+
 @BaseCommand.make_command("variable+", bind=query_commands)
 def env_var(options, out, err):
     """
     return configuration defined variables.
     """
     for x in options.variable:
-        val = options.domain.settings.get(x, '')
+        val = options.domain.settings.get(x, "")
         if not isinstance(val, str):
-            val = ' '.join(val)
+            val = " ".join(val)
         out.write(str(val))
     return 0
 
-@BaseCommand.make_command("variable+", bind=portageq_commands, name='envvar',
-    root_default='/')
+
+@BaseCommand.make_command(
+    "variable+", bind=portageq_commands, name="envvar", root_default="/"
+)
 def portageq_envvar(options, out, err):
     """
     return configuration defined variables.  Use envvar2 instead, this will be removed.
     """
     return env_var.function(options, out, err)
 
-@BaseCommand.make_command("variable+", bind=portageq_commands, name='envvar2')
+
+@BaseCommand.make_command("variable+", bind=portageq_commands, name="envvar2")
 def portageq_envvar2(options, out, err):
     """
     return configuration defined variables.
@@ -161,8 +189,9 @@ def _best_version(domain, restrict):
         p = max(domain.all_installed_repos.itermatch(restrict))
     except ValueError:
         # empty sequence.
-        return ''
+        return ""
     return str_pkg(p)
+
 
 @BaseCommand.make_command("atom+", bind=common_commands)
 def mass_best_version(options, out, err):
@@ -170,9 +199,9 @@ def mass_best_version(options, out, err):
     multiple best_version calls.
     """
     for x in options.atom:
-        out.write("%s:%s" %
-            (x, _best_version(options.domain, x).rstrip()))
+        out.write("%s:%s" % (x, _best_version(options.domain, x).rstrip()))
     return 0
+
 
 @BaseCommand.make_command("atom", bind=common_commands)
 def best_version(options, out, err):
@@ -192,11 +221,11 @@ def match(options, out, err):
     return 0
 
 
-@BaseCommand.make_command(bind=common_commands, root_default='/')
+@BaseCommand.make_command(bind=common_commands, root_default="/")
 def get_repos(options, out, err):
     l = []
     for repo in options.domain.ebuild_repos_raw:
-        repo_id = getattr(repo, 'repo_id', getattr(repo, 'location', None))
+        repo_id = getattr(repo, "repo_id", getattr(repo, "location", None))
         l.append(repo_id)
     for x in sorted(set(l)):
         out.write(x)
@@ -205,22 +234,25 @@ def get_repos(options, out, err):
 
 def find_profile_paths_by_repo_id(config, repo_id, fullpath=False):
     repo = config.repo.get(repo_id, None)
-    if repo is not None and getattr(repo, 'location', None) is not None:
+    if repo is not None and getattr(repo, "location", None) is not None:
         profiles = repo.config.profiles.arch_profiles
         for arch in profiles.keys():
             for path, stability in profiles[arch]:
                 if fullpath:
-                    path = os.path.join(repo.location, 'profiles', path)
+                    path = os.path.join(repo.location, "profiles", path)
                 yield path
 
 
 @BaseCommand.make_command("repo_id", bind=query_commands)
 def get_profiles(options, out, err):
-    if options.repo_id == 'all':
+    if options.repo_id == "all":
         profiles = (
-            profile for repo in options.domain.ebuild_repos_raw
+            profile
+            for repo in options.domain.ebuild_repos_raw
             for profile in find_profile_paths_by_repo_id(
-                options.config, repo.repo_id, fullpath=True))
+                options.config, repo.repo_id, fullpath=True
+            )
+        )
     else:
         profiles = find_profile_paths_by_repo_id(options.config, options.repo_id)
     for x in sorted(set(profiles)):
@@ -231,24 +263,27 @@ def get_profiles(options, out, err):
 @BaseCommand.make_command("repo_id", bind=portageq_commands)
 def get_repo_path(options, out, err):
     repo = options.config.repo.get(options.repo_id, None)
-    if repo is not None and getattr(repo, 'location', None) is not None:
+    if repo is not None and getattr(repo, "location", None) is not None:
         out.write(repo.location)
         return 0
     return 1
 
+
 get_repo_path = BaseCommand.make_command(
-    "repo_id", bind=query_commands, name='get_repo_path')(get_repo_path.function)
+    "repo_id", bind=query_commands, name="get_repo_path"
+)(get_repo_path.function)
 
 
 @BaseCommand.make_command("repo_id", bind=portageq_commands)
 def get_repo_news_path(options, out, err):
     repo = options.config.repo.get(options.repo_id, None)
-    if repo is not None and getattr(repo, 'location', None) is not None:
-        out.write(osutils.normpath(osutils.pjoin(repo.location, 'metadata', 'news')))
+    if repo is not None and getattr(repo, "location", None) is not None:
+        out.write(osutils.normpath(osutils.pjoin(repo.location, "metadata", "news")))
         return 0
     return 1
 
-def bind_parser(parser, compat=False, name='portageq'):
+
+def bind_parser(parser, compat=False, name="portageq"):
     subparsers = parser.add_subparsers(description=f"{name} commands")
     l = common_commands[:]
     if compat:
@@ -256,7 +291,8 @@ def bind_parser(parser, compat=False, name='portageq'):
     else:
         l += query_commands
 
-    for command in sorted(l, key=lambda x:x.__name__):
+    for command in sorted(l, key=lambda x: x.__name__):
         subparser = subparsers.add_parser(
-            command.__name__, help=command.__doc__, description=command.__doc__)
+            command.__name__, help=command.__doc__, description=command.__doc__
+        )
         command().bind_to_parser(subparser, compat=compat)

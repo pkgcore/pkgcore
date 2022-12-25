@@ -21,11 +21,18 @@ __all__ = ["gen_obj", "scan", "iter_scan", "sorted_scan"]
 def gen_chksums(handlers, location):
     def f(key):
         return handlers[key](location)
+
     return LazyValDict(handlers, f)
 
 
-def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
-            stat_func=os.lstat, **overrides):
+def gen_obj(
+    path,
+    stat=None,
+    chksum_handlers=None,
+    real_location=None,
+    stat_func=os.lstat,
+    **overrides
+):
     """
     given a fs path, and an optional stat, create an appropriate fs obj.
 
@@ -47,8 +54,12 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
             stat = os.lstat(real_location)
 
     mode = stat.st_mode
-    d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode),
-         "uid":stat.st_uid, "gid":stat.st_gid}
+    d = {
+        "mtime": stat.st_mtime,
+        "mode": S_IMODE(mode),
+        "uid": stat.st_uid,
+        "gid": stat.st_gid,
+    }
     if S_ISREG(mode):
         d["size"] = stat.st_size
         d["data"] = local_source(real_location)
@@ -84,37 +95,42 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
 # fine doing it this way (specially since we're relying on
 # os.path.sep, not '/' :P)
 
-def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat,
-                        hidden=True, backup=True):
+
+def _internal_iter_scan(
+    path, chksum_handlers, stat_func=os.lstat, hidden=True, backup=True
+):
     dirs = collections.deque([normpath(path)])
-    obj = gen_obj(dirs[0], chksum_handlers=chksum_handlers,
-        stat_func=stat_func)
+    obj = gen_obj(dirs[0], chksum_handlers=chksum_handlers, stat_func=stat_func)
     yield obj
     if not obj.is_dir:
         return
     while dirs:
         base = dirs.popleft()
         for x in listdir(base):
-            if not hidden and x.startswith('.'):
+            if not hidden and x.startswith("."):
                 continue
-            if not backup and x.endswith('~'):
+            if not backup and x.endswith("~"):
                 continue
             path = pjoin(base, x)
-            obj = gen_obj(path, chksum_handlers=chksum_handlers,
-                        real_location=path, stat_func=stat_func)
+            obj = gen_obj(
+                path,
+                chksum_handlers=chksum_handlers,
+                real_location=path,
+                stat_func=stat_func,
+            )
             yield obj
             if obj.is_dir:
                 dirs.append(path)
 
 
-def _internal_offset_iter_scan(path, chksum_handlers, offset, stat_func=os.lstat,
-                               hidden=True, backup=True):
+def _internal_offset_iter_scan(
+    path, chksum_handlers, offset, stat_func=os.lstat, hidden=True, backup=True
+):
     offset = normpath(offset)
     path = normpath(path)
-    dirs = collections.deque([path[len(offset):]])
+    dirs = collections.deque([path[len(offset) :]])
     if dirs[0]:
-        yield gen_obj(dirs[0], chksum_handlers=chksum_handlers,
-            stat_func=stat_func)
+        yield gen_obj(dirs[0], chksum_handlers=chksum_handlers, stat_func=stat_func)
 
     sep = os.path.sep
     while dirs:
@@ -122,21 +138,30 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset, stat_func=os.lstat
         real_base = pjoin(offset, base.lstrip(sep))
         base = base.rstrip(sep) + sep
         for x in listdir(real_base):
-            if not hidden and x.startswith('.'):
+            if not hidden and x.startswith("."):
                 continue
-            if not backup and x.endswith('~'):
+            if not backup and x.endswith("~"):
                 continue
             path = pjoin(base, x)
-            obj = gen_obj(path, chksum_handlers=chksum_handlers,
-                        real_location=pjoin(real_base, x),
-                        stat_func=os.lstat)
+            obj = gen_obj(
+                path,
+                chksum_handlers=chksum_handlers,
+                real_location=pjoin(real_base, x),
+                stat_func=os.lstat,
+            )
             yield obj
             if obj.is_dir:
                 dirs.append(path)
 
 
-def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None,
-              hidden=True, backup=True):
+def iter_scan(
+    path,
+    offset=None,
+    follow_symlinks=False,
+    chksum_types=None,
+    hidden=True,
+    backup=True,
+):
     """
     Recursively scan a path.
 
@@ -156,9 +181,11 @@ def iter_scan(path, offset=None, follow_symlinks=False, chksum_types=None,
     stat_func = follow_symlinks and os.stat or os.lstat
     if offset is None:
         return _internal_iter_scan(
-            path, chksum_handlers, stat_func, hidden=hidden, backup=backup)
+            path, chksum_handlers, stat_func, hidden=hidden, backup=backup
+        )
     return _internal_offset_iter_scan(
-        path, chksum_handlers, offset, stat_func, hidden=hidden, backup=backup)
+        path, chksum_handlers, offset, stat_func, hidden=hidden, backup=backup
+    )
 
 
 def sorted_scan(path, nonexistent=False, *args, **kwargs):
@@ -197,6 +224,7 @@ def scan(*a, **kw):
     mutable = kw.pop("mutable", True)
     return contentsSet(iter_scan(*a, **kw), mutable=mutable)
 
+
 class _realpath_dir:
 
     _realpath_func = staticmethod(os.path.realpath)
@@ -220,7 +248,7 @@ def intersect(cset, realpath=False):
     if realpath:
         f2 = _realpath_dir()
     else:
-        f2 = lambda x:x
+        f2 = lambda x: x
     for x in cset:
         try:
             yield f(f2(x.location))

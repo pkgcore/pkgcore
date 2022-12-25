@@ -7,9 +7,7 @@ class darcs_syncer(base.VcsSyncer):
 
     binary = "darcs"
 
-    supported_uris = (
-        ('darcs+', 5),
-    )
+    supported_uris = (("darcs+", 5),)
 
     @staticmethod
     def parse_uri(raw_uri):

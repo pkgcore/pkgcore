@@ -4,47 +4,62 @@ from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 
 class fake_package:
-
     def __init__(self, **kwds):
         for k, v in (
-                ("bdepend", AndRestriction()),
-                ("depend", AndRestriction()),
-                ("rdepend", AndRestriction()),
-                ("pdepend", AndRestriction()),
-                ("idepend", AndRestriction()),
-                ("slot", 0),
-                ("key", None),
-                ("marker", None)):
+            ("bdepend", AndRestriction()),
+            ("depend", AndRestriction()),
+            ("rdepend", AndRestriction()),
+            ("pdepend", AndRestriction()),
+            ("idepend", AndRestriction()),
+            ("slot", 0),
+            ("key", None),
+            ("marker", None),
+        ):
             setattr(self, k, kwds.get(k, v))
 
-class TestChoicePoint:
 
+class TestChoicePoint:
     @staticmethod
     def gen_choice_point():
-        return choice_point("asdf", (
-            fake_package(marker=1, depend=OrRestriction(
-                        "ordep1", "ordep2", "dependordep"),
-                rdepend=AndRestriction(
+        return choice_point(
+            "asdf",
+            (
+                fake_package(
+                    marker=1,
+                    depend=OrRestriction("ordep1", "ordep2", "dependordep"),
+                    rdepend=AndRestriction(
                         OrRestriction("ordep1", "andordep2"),
-                        "anddep1", "anddep2", "pkg1and"),
-                pdepend=OrRestriction("prdep1", "or3")),
-            fake_package(marker=2, depend=AndRestriction(
-                        "anddep1", "anddep2"),
-                rdepend=OrRestriction("or1", "or2"),
-                pdepend=OrRestriction("prdep1", "or3"))))
+                        "anddep1",
+                        "anddep2",
+                        "pkg1and",
+                    ),
+                    pdepend=OrRestriction("prdep1", "or3"),
+                ),
+                fake_package(
+                    marker=2,
+                    depend=AndRestriction("anddep1", "anddep2"),
+                    rdepend=OrRestriction("or1", "or2"),
+                    pdepend=OrRestriction("prdep1", "or3"),
+                ),
+            ),
+        )
 
     def test_depend_rdepend_stepping(self):
         c = self.gen_choice_point()
         assert c.depend == [["ordep1", "ordep2", "dependordep"]]
-        assert sorted(c.rdepend) == sorted([['anddep1'], ['anddep2'], ['ordep1', 'andordep2'], ['pkg1and']])
+        assert sorted(c.rdepend) == sorted(
+            [["anddep1"], ["anddep2"], ["ordep1", "andordep2"], ["pkg1and"]]
+        )
         c.reduce_atoms("ordep1")
-        assert c.depend == [['ordep2', 'dependordep']]
-        assert sorted(c.rdepend) == sorted([['anddep1'], ['anddep2'], ['andordep2'], ['pkg1and']])
+        assert c.depend == [["ordep2", "dependordep"]]
+        assert sorted(c.rdepend) == sorted(
+            [["anddep1"], ["anddep2"], ["andordep2"], ["pkg1and"]]
+        )
         c.reduce_atoms("pkg1and")
         c.reduce_atoms("or1")
         assert c.rdepend == [["or2"]]
         c.reduce_atoms("prdep1")
-        assert c.depend == [['anddep1'], ['anddep2']]
+        assert c.depend == [["anddep1"], ["anddep2"]]
         assert c.pdepend == [["or3"]]
         c.reduce_atoms("or3")
         with pytest.raises(IndexError):

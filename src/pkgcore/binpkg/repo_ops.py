@@ -23,7 +23,7 @@ from ..operations import repo as repo_interfaces
 from . import xpak
 
 
-def discern_loc(base, pkg, extension='.tbz2'):
+def discern_loc(base, pkg, extension=".tbz2"):
     return pjoin(base, pkg.category, f"{pkg.package}-{pkg.fullver}{extension}")
 
 
@@ -40,13 +40,12 @@ def generate_attr_dict(pkg, portage_compatible=True):
         if k == "contents":
             continue
         v = getattr(pkg, k)
-        if k == 'environment':
-            d['environment.bz2'] = compress_data(
-                'bzip2', v.bytes_fileobj().read())
+        if k == "environment":
+            d["environment.bz2"] = compress_data("bzip2", v.bytes_fileobj().read())
             continue
         elif not isinstance(v, str):
             try:
-                s = ' '.join(v)
+                s = " ".join(v)
             except TypeError:
                 s = str(v)
         else:
@@ -64,7 +63,6 @@ def generate_attr_dict(pkg, portage_compatible=True):
 
 
 class install(repo_interfaces.install):
-
     @steal_docs(repo_interfaces.install)
     def add_data(self):
         if self.observer is None:
@@ -76,18 +74,18 @@ class install(repo_interfaces.install):
         final_path = discern_loc(self.repo.base, pkg, self.repo.extension)
         tmp_path = pjoin(
             os.path.dirname(final_path),
-            ".tmp.%i.%s" % (os.getpid(), os.path.basename(final_path)))
+            ".tmp.%i.%s" % (os.getpid(), os.path.basename(final_path)),
+        )
 
         self.tmp_path, self.final_path = tmp_path, final_path
 
         if not ensure_dirs(os.path.dirname(tmp_path), mode=0o755):
             raise repo_interfaces.Failure(
-                f"failed creating directory: {os.path.dirname(tmp_path)!r}")
+                f"failed creating directory: {os.path.dirname(tmp_path)!r}"
+            )
         try:
             start(f"generating tarball: {tmp_path}")
-            tar.write_set(
-                pkg.contents, tmp_path, compressor='bzip2',
-                parallelize=True)
+            tar.write_set(pkg.contents, tmp_path, compressor="bzip2", parallelize=True)
             end("tarball created", True)
             start("writing Xpak")
             # ok... got a tarball.  now add xpak.
@@ -109,7 +107,6 @@ class install(repo_interfaces.install):
 
 
 class uninstall(repo_interfaces.uninstall):
-
     @steal_docs(repo_interfaces.uninstall)
     def remove_data(self):
         return True
@@ -121,7 +118,6 @@ class uninstall(repo_interfaces.uninstall):
 
 
 class replace(install, uninstall, repo_interfaces.replace):
-
     @steal_docs(repo_interfaces.replace)
     def finalize_data(self):
         # we just invoke install finalize_data, since it atomically
@@ -131,7 +127,6 @@ class replace(install, uninstall, repo_interfaces.replace):
 
 
 class operations(repo_interfaces.operations):
-
     def _cmd_implementation_install(self, *args):
         return install(self.repo, *args)
 

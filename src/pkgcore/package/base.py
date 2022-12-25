@@ -83,7 +83,7 @@ class wrapper(base):
     built = klass.alias_attr("_raw_pkg.built")
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
     unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
-    is_supported = klass.alias_attr('_raw_pkg.is_supported')
+    is_supported = klass.alias_attr("_raw_pkg.is_supported")
 
     def __hash__(self):
         return hash(self._raw_pkg)
@@ -126,7 +126,7 @@ class DynamicGetattrSetter(type):
     class register:
         """Decorator used to mark a function as an attribute loader."""
 
-        __slots__ = ('functor',)
+        __slots__ = ("functor",)
 
         def __init__(self, functor):
             self.functor = functor
@@ -140,25 +140,26 @@ class DynamicGetattrSetter(type):
 
         existing = {}
         for base in bases:
-            existing.update(getattr(base, '_get_attr', {}))
+            existing.update(getattr(base, "_get_attr", {}))
 
-        slots = class_dict.get('__slots__', None)
+        slots = class_dict.get("__slots__", None)
         if slots is not None:
             # only add slots for new attr's; assume the layer above already slotted
             # if this layer is setting slots.
-            class_dict['__slots__'] = tuple(
+            class_dict["__slots__"] = tuple(
                 sequences.iter_stable_unique(
-                    itertools.chain(
-                        slots,
-                        set(new_functions).difference(existing)
-                    )
+                    itertools.chain(slots, set(new_functions).difference(existing))
                 )
             )
 
-        d = existing if class_dict.pop('__DynamicGetattrSetter_auto_inherit__', True) else {}
+        d = (
+            existing
+            if class_dict.pop("__DynamicGetattrSetter_auto_inherit__", True)
+            else {}
+        )
         d.update(new_functions)
-        d.update(class_dict.pop('_get_attr', {}))
-        class_dict['_get_attr'] = d
-        class_dict.setdefault('__getattr__', dynamic_getattr_dict)
+        d.update(class_dict.pop("_get_attr", {}))
+        class_dict["_get_attr"] = d
+        class_dict.setdefault("__getattr__", dynamic_getattr_dict)
 
         return type.__new__(cls, name, bases, class_dict)

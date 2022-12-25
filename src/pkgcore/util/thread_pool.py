@@ -26,7 +26,7 @@ def map_async(iterable, functor, *args, **kwds):
     if parallelism is None:
         parallelism = cpu_count()
 
-    if hasattr(iterable, '__len__'):
+    if hasattr(iterable, "__len__"):
         # if there are less items than parallelism, don't
         # spawn pointless threads.
         parallelism = max(min(len(iterable), parallelism), 0)

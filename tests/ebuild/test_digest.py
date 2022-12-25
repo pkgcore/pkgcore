@@ -8,8 +8,7 @@ from snakeoil.data_source import local_source
 # "Line too long" (and our custom more aggressive version of that)
 # pylint: disable-msg=C0301,CPC01
 
-digest_contents = \
-"""MD5 98db1465629693fc434d4dc52db93838 Python-2.4.2.tar.bz2 7853169
+digest_contents = """MD5 98db1465629693fc434d4dc52db93838 Python-2.4.2.tar.bz2 7853169
 RMD160 c511d2b76b5394742d285e71570a2bcd3c1fa871 Python-2.4.2.tar.bz2 7853169
 SHA256 e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e Python-2.4.2.tar.bz2 7853169
 MD5 2fa54dd51b6a8f1c46e5baf741e90f7e python-2.4-patches-1.tar.bz2 7820
@@ -19,12 +18,14 @@ digest_chksum = (
     ("size", int(7853169)),
     ("md5", int("98db1465629693fc434d4dc52db93838", 16)),
     ("rmd160", int("c511d2b76b5394742d285e71570a2bcd3c1fa871", 16)),
-    ("sha256", int("e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e", 16))
+    (
+        "sha256",
+        int("e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e", 16),
+    ),
 )
 
 # ripped straight from the glep
-pure_manifest2 = \
-"""AUX ldif-buffer-overflow-fix.diff 5007 RMD160 1354a6bd2687430b628b78aaf43f5c793d2f0704 SHA1 424e1dfca06488f605b9611160020227ecdd03ac
+pure_manifest2 = """AUX ldif-buffer-overflow-fix.diff 5007 RMD160 1354a6bd2687430b628b78aaf43f5c793d2f0704 SHA1 424e1dfca06488f605b9611160020227ecdd03ac
 AUX procmime.patch 977 RMD160 39a51a4d654759b15d1644a79fb6e8921130df3c SHA1 d76929f6dfc2179281f7ccee5789aab4e970ba9e
 EBUILD sylpheed-claws-1.0.5-r1.ebuild 3906 RMD160 cdd546c128db2dea7044437de01ec96e12b4f5bf SHA1 a84b49e76961d7a9100852b64c2bfbf9b053d45e
 EBUILD sylpheed-claws-1.9.100.ebuild 4444 RMD160 89326038bfc694dafd22f10400a08d3f930fb2bd SHA1 8895342f3f0cc6fcbdd0fdada2ad8e23ce539d23
@@ -50,7 +51,7 @@ for x in pure_manifest2.split("\n"):
 
 class TestManifest:
 
-    convert_source = staticmethod(lambda x:x)
+    convert_source = staticmethod(lambda x: x)
 
     def get_manifest(self, data):
         fd, fn = tempfile.mkstemp()
@@ -71,11 +72,14 @@ class TestManifest:
         (dist, aux, ebuild, misc) = self.get_manifest(s)
 
     def test_manifest2(self):
-        (dist, aux, ebuild, misc) = \
-            self.get_manifest(pure_manifest2)
+        (dist, aux, ebuild, misc) = self.get_manifest(pure_manifest2)
 
-        for dtype, d in (("DIST", dist), ("AUX", aux),
-            ("EBUILD", ebuild), ("MISC", misc)):
+        for dtype, d in (
+            ("DIST", dist),
+            ("AUX", aux),
+            ("EBUILD", ebuild),
+            ("MISC", misc),
+        ):
             req_d = pure_manifest2_chksums[dtype]
             assert set(req_d) == set(d)
             for k, v in req_d.items():

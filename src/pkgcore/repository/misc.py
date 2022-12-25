@@ -12,7 +12,9 @@ from ..restrictions import packages
 class nodeps_repo:
     """Repository wrapper that returns wrapped pkgs with deps wiped."""
 
-    default_bdepend = default_depend = default_rdepend = default_pdepend = default_idepend = DepSet()
+    default_bdepend = (
+        default_depend
+    ) = default_rdepend = default_pdepend = default_idepend = DepSet()
 
     def __init__(self, repo):
         """
@@ -21,14 +23,19 @@ class nodeps_repo:
         self.raw_repo = repo
 
     def itermatch(self, *a, **kwds):
-        return (MutatedPkg(
-            x, overrides={"bdepend": self.default_bdepend,
-                          "depend": self.default_depend,
-                          "rdepend": self.default_rdepend,
-                          "pdepend": self.default_pdepend,
-                          "idepend": self.default_idepend}
+        return (
+            MutatedPkg(
+                x,
+                overrides={
+                    "bdepend": self.default_bdepend,
+                    "depend": self.default_depend,
+                    "rdepend": self.default_rdepend,
+                    "pdepend": self.default_pdepend,
+                    "idepend": self.default_idepend,
+                },
             )
-            for x in self.raw_repo.itermatch(*a, **kwds))
+            for x in self.raw_repo.itermatch(*a, **kwds)
+        )
 
     def match(self, *a, **kwds):
         return list(self.itermatch(*a, **kwds))
@@ -53,8 +60,8 @@ class restrict_repo:
 
     def itermatch(self, *a, **kwds):
         return (
-            x for x in self.raw_repo.itermatch(*a, **kwds)
-            if not self.restrict.match(x))
+            x for x in self.raw_repo.itermatch(*a, **kwds) if not self.restrict.match(x)
+        )
 
     def match(self, *a, **kwds):
         return list(self.itermatch(*a, **kwds))
@@ -102,9 +109,9 @@ class caching_repo:
     def match(self, restrict):
         v = self.__cache__.get(restrict)
         if v is None:
-            v = self.__cache__[restrict] = \
-                caching_iter(
-                    self.__db__.itermatch(restrict, sorter=self.__strategy__))
+            v = self.__cache__[restrict] = caching_iter(
+                self.__db__.itermatch(restrict, sorter=self.__strategy__)
+            )
         return v
 
     def itermatch(self, restrict):
@@ -118,7 +125,6 @@ class caching_repo:
 
 
 class multiplex_sorting_repo:
-
     def __init__(self, sorter, repos):
         self.__repos__ = tuple(repos)
         self.__sorter__ = sorter

@@ -1,6 +1,8 @@
 __all__ = (
-    "SimpleTree", "RepositoryGroup",
-    "get_raw_repos", "get_virtual_repos",
+    "SimpleTree",
+    "RepositoryGroup",
+    "get_raw_repos",
+    "get_virtual_repos",
 )
 
 from snakeoil import klass
@@ -21,8 +23,9 @@ class SimpleTree(prototype.tree):
         repo_id (str): repo ID
     """
 
-    def __init__(self, cpv_dict, pkg_klass=None, livefs=False, frozen=True,
-                 repo_id=None):
+    def __init__(
+        self, cpv_dict, pkg_klass=None, livefs=False, frozen=True, repo_id=None
+    ):
         self.cpv_dict = cpv_dict
         if pkg_klass is None:
             pkg_klass = VersionedCPV
@@ -54,8 +57,9 @@ class SimpleTree(prototype.tree):
         super().notify_remove_package(pkg)
 
     def notify_add_package(self, pkg):
-        self.cpv_dict.setdefault(
-            pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
+        self.cpv_dict.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(
+            pkg.fullver
+        )
         super().notify_add_package(pkg)
 
 
@@ -119,7 +123,8 @@ class RepositoryGroup(DictMixin):
             return RepositoryGroup(self.repos + tuple(other))
         raise TypeError(
             "cannot add '%s' and '%s' objects"
-            % (self.__class__.__name__, other.__class__.__name__))
+            % (self.__class__.__name__, other.__class__.__name__)
+        )
 
     def __radd__(self, other):
         if isinstance(other, prototype.tree):
@@ -133,7 +138,8 @@ class RepositoryGroup(DictMixin):
             return RepositoryGroup(tuple(other) + self.repos)
         raise TypeError(
             "cannot add '%s' and '%s' objects"
-            % (other.__class__.__name__, self.__class__.__name__))
+            % (other.__class__.__name__, self.__class__.__name__)
+        )
 
     @classmethod
     def change_repos(cls, repos):

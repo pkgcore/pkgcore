@@ -12,7 +12,7 @@ from flit_core import buildapi
 @contextmanager
 def sys_path():
     orig_path = sys.path[:]
-    sys.path.insert(0, str(Path.cwd() / 'src'))
+    sys.path.insert(0, str(Path.cwd() / "src"))
     try:
         yield
     finally:
@@ -27,7 +27,9 @@ def write_pkgcore_lookup_configs(cleanup_files):
 
     with open(path, "w") as f:
         os.chmod(path, 0o644)
-        f.write(textwrap.dedent("""\
+        f.write(
+            textwrap.dedent(
+                """\
             from os.path import abspath, exists, join
             import sys
 
@@ -39,7 +41,9 @@ def write_pkgcore_lookup_configs(cleanup_files):
             LIBDIR_PATH = join(INSTALL_PREFIX, 'lib/pkgcore')
             EBD_PATH = join(LIBDIR_PATH, 'ebd')
             INJECTED_BIN_PATH = ()
-        """))
+        """
+            )
+        )
 
 
 def write_verinfo(cleanup_files):
@@ -47,6 +51,7 @@ def write_verinfo(cleanup_files):
     path.parent.mkdir(parents=True, exist_ok=True)
     print(f"generating version info: {path}")
     from snakeoil.version import get_git_version
+
     path.write_text(f"version_info={get_git_version(Path.cwd())!r}")
 
 
@@ -62,7 +67,14 @@ def prepare_pkgcore(callback, consts: bool):
                 write_pkgcore_lookup_configs(cleanup_files)
 
             # generate function lists so they don't need to be created on install
-            if subprocess.call(['make', f'PYTHON={sys.executable}', 'PYTHONPATH=' + ':'.join(sys.path)], cwd=Path.cwd() / 'data/lib/pkgcore/ebd'):
+            if subprocess.call(
+                [
+                    "make",
+                    f"PYTHON={sys.executable}",
+                    "PYTHONPATH=" + ":".join(sys.path),
+                ],
+                cwd=Path.cwd() / "data/lib/pkgcore/ebd",
+            ):
                 raise Exception("Running makefile failed")
 
             return callback()
@@ -76,13 +88,17 @@ def prepare_pkgcore(callback, consts: bool):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
-    callback = partial(buildapi.build_wheel, wheel_directory, config_settings, metadata_directory)
+    callback = partial(
+        buildapi.build_wheel, wheel_directory, config_settings, metadata_directory
+    )
     return prepare_pkgcore(callback, consts=True)
 
 
 def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds an "editable" wheel, places it in wheel_directory"""
-    callback = partial(buildapi.build_editable, wheel_directory, config_settings, metadata_directory)
+    callback = partial(
+        buildapi.build_editable, wheel_directory, config_settings, metadata_directory
+    )
     return prepare_pkgcore(callback, consts=False)
 
 

@@ -2,21 +2,22 @@ __all__ = ("skip_signatures",)
 
 msg_header = "-----BEGIN PGP SIGNED MESSAGE-----\n"
 msg_header_len = len(msg_header)
-msg_hash = 'Hash:'
+msg_hash = "Hash:"
 msg_hash_len = len(msg_hash)
 sig_header = "-----BEGIN PGP SIGNATURE-----\n"
 sig_header_len = len(sig_header)
 sig_footer = "-----END PGP SIGNATURE-----\n"
 sig_footer_len = len(sig_footer)
 
+
 def skip_signatures(iterable):
     i = iter(iterable)
-# format is-
-#"""
-#-----BEGIN PGP SIGNED MESSAGE-----
-#Hash: SHA1
-#
-#"""
+    # format is-
+    # """
+    # -----BEGIN PGP SIGNED MESSAGE-----
+    # Hash: SHA1
+    #
+    # """
 
     for line in i:
         # so... prune msg first, then

@@ -10,6 +10,7 @@ from snakeoil.klass import inject_richcmp_methods_from_cmp
 def passthru(val, self):
     return val
 
+
 class FakePkg(base):
 
     # XXX why isn't this using existing classes?
@@ -32,10 +33,9 @@ class FakePkg(base):
 
 
 class TestMutatedPkg:
-
     def make_fakepkg(self, pkg="dar", ver=1, data=None):
         if data is None:
-            data = {"a":1}
+            data = {"a": 1}
         return FakePkg(pkg, ver, data)
 
     def test_raw_pkg(self):
@@ -57,6 +57,6 @@ class TestMutatedPkg:
     def test_getattr(self):
         pkg = self.make_fakepkg()
         assert MutatedPkg(pkg, {}).a == 1
-        assert MutatedPkg(pkg, {"a":2}).a == 2
+        assert MutatedPkg(pkg, {"a": 2}).a == 2
         with pytest.raises(AttributeError):
             getattr(MutatedPkg(pkg, {}), "b")

@@ -14,6 +14,7 @@ class base(klass.SlotsPicklingMixin, metaclass=caching.WeakInstMeta):
     all derivatives *should* be __slots__ based (lot of instances may
     wind up in memory).
     """
+
     __inst_caching__ = True
 
     # __weakref__ here is implicit via the metaclass
@@ -68,8 +69,7 @@ class AlwaysBool(base):
         return f"always '{self.negate}'"
 
     def __repr__(self):
-        return '<%s always %r @%#8x>' % (
-            self.__class__.__name__, self.negate, id(self))
+        return "<%s always %r @%#8x>" % (self.__class__.__name__, self.negate, id(self))
 
     def __getstate__(self):
         return self.negate, self.type
@@ -128,7 +128,7 @@ class FakeType(base):
 class AnyMatch(base):
     """Apply a nested restriction to every item in a sequence."""
 
-    __slots__ = ('restriction', 'type', 'negate')
+    __slots__ = ("restriction", "type", "negate")
 
     def __init__(self, childrestriction, node_type, negate=False):
         """Initialize.
@@ -153,8 +153,11 @@ class AnyMatch(base):
         return "any: %s match" % (self.restriction,)
 
     def __repr__(self):
-        return '<%s restriction=%r @%#8x>' % (
-            self.__class__.__name__, self.restriction, id(self))
+        return "<%s restriction=%r @%#8x>" % (
+            self.__class__.__name__,
+            self.restriction,
+            id(self),
+        )
 
 
 def curry_node_type(cls, node_type, extradoc=None):
@@ -175,7 +178,7 @@ def curry_node_type(cls, node_type, extradoc=None):
     doc = cls.__doc__
     result = partial(cls, node_type=node_type)
     if doc is None:
-        doc = ''
+        doc = ""
     else:
         # do this so indentation on pydoc __doc__ is sane
         doc = "\n".join(line.lstrip() for line in doc.split("\n")) + "\n"

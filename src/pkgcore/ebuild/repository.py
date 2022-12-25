@@ -38,12 +38,12 @@ from .eapi import get_eapi
 
 
 class repo_operations(_repo_ops.operations):
-
-    def _cmd_implementation_manifest(self, domain, restriction, observer,
-                                     mirrors=False, force=False, distdir=None):
+    def _cmd_implementation_manifest(
+        self, domain, restriction, observer, mirrors=False, force=False, distdir=None
+    ):
         manifest_config = self.repo.config.manifests
         if manifest_config.disabled:
-            observer.info(f'{self.repo.repo_id} repo has manifests disabled')
+            observer.info(f"{self.repo.repo_id} repo has manifests disabled")
             return
         required_chksums = set(manifest_config.required_hashes)
         write_chksums = manifest_config.hashes
@@ -69,17 +69,22 @@ class repo_operations(_repo_ops.operations):
 
             all_pkgdir_fetchables = {
                 pkg: {
-                    fetchable.filename: fetchable for fetchable in
-                    iflatten_instance(pkg.generate_fetchables(
-                        allow_missing_checksums=True,
-                        skip_default_mirrors=(not mirrors)),
-                        fetch.fetchable)
-                } for pkg in self.repo.itermatch(pkgs[0].unversioned_atom)
+                    fetchable.filename: fetchable
+                    for fetchable in iflatten_instance(
+                        pkg.generate_fetchables(
+                            allow_missing_checksums=True,
+                            skip_default_mirrors=(not mirrors),
+                        ),
+                        fetch.fetchable,
+                    )
+                }
+                for pkg in self.repo.itermatch(pkgs[0].unversioned_atom)
             }
 
             # all pkgdir fetchables
-            pkgdir_fetchables = dict(chain.from_iterable(
-                all_pkgdir_fetchables[pkg].items() for pkg in pkgs))
+            pkgdir_fetchables = dict(
+                chain.from_iterable(all_pkgdir_fetchables[pkg].items() for pkg in pkgs)
+            )
 
             # fetchables targeted for (re-)manifest generation
             fetchables = {}
@@ -87,7 +92,8 @@ class repo_operations(_repo_ops.operations):
             for filename, fetchable in pkgdir_fetchables.items():
                 if force or not required_chksums.issubset(fetchable.chksums):
                     fetchable.chksums = {
-                        k: v for k, v in fetchable.chksums.items() if k in chksum_set}
+                        k: v for k, v in fetchable.chksums.items() if k in chksum_set
+                    }
                     fetchables[filename] = fetchable
 
             # Manifest files aren't necessary with thin manifests and no distfiles
@@ -97,8 +103,9 @@ class repo_operations(_repo_ops.operations):
                         os.remove(manifest.path)
                     except EnvironmentError as exc:
                         observer.error(
-                            'failed removing old manifest: '
-                            f'{key}::{self.repo.repo_id}: {exc}')
+                            "failed removing old manifest: "
+                            f"{key}::{self.repo.repo_id}: {exc}"
+                        )
                         ret.add(key)
                 continue
 
@@ -109,7 +116,9 @@ class repo_operations(_repo_ops.operations):
             # fetch distfiles
             pkg_ops = domain.pkg_operations(pkgs[0], observer=observer)
             try:
-                if not pkg_ops.fetch(list(fetchables.values()), observer, distdir=distdir):
+                if not pkg_ops.fetch(
+                    list(fetchables.values()), observer, distdir=distdir
+                ):
                     ret.add(key)
                     continue
             except OperationError:
@@ -117,12 +126,14 @@ class repo_operations(_repo_ops.operations):
                 try:
                     os.makedirs(distdir, exist_ok=True)
                 except OSError as exc:
-                    observer.error(f'failed to create distdir {distdir!r}: {exc.strerror}')
-                    return ('failed to create distdir', )
+                    observer.error(
+                        f"failed to create distdir {distdir!r}: {exc.strerror}"
+                    )
+                    return ("failed to create distdir",)
 
                 if not os.access(distdir, os.W_OK):
-                    observer.error(f'no write access to distdir: {distdir!r}')
-                    return ('no write access to distdir', )
+                    observer.error(f"no write access to distdir: {distdir!r}")
+                    return ("no write access to distdir",)
 
                 raise
 
@@ -130,18 +141,21 @@ class repo_operations(_repo_ops.operations):
             try:
                 for fetchable in fetchables.values():
                     chksums = chksum.get_chksums(
-                        pjoin(distdir, fetchable.filename), *write_chksums)
+                        pjoin(distdir, fetchable.filename), *write_chksums
+                    )
                     fetchable.chksums = dict(zip(write_chksums, chksums))
             except chksum.MissingChksumHandler as exc:
-                observer.error(f'failed generating chksum: {exc}')
+                observer.error(f"failed generating chksum: {exc}")
                 ret.add(key)
                 break
 
             if key not in ret:
-                all_fetchables = {filename: fetchable
+                all_fetchables = {
+                    filename: fetchable
                     for fetchables in all_pkgdir_fetchables.values()
                     for filename, fetchable in fetchables.items()
-                    if required_chksums.issubset(fetchable.chksums)}
+                    if required_chksums.issubset(fetchable.chksums)
+                }
                 all_fetchables.update(fetchables)
                 observer.info(f"generating manifest: {key}::{self.repo.repo_id}")
                 manifest.update(sorted(all_fetchables.values()), chfs=write_chksums)
@@ -154,7 +168,7 @@ def _sort_eclasses(config, repo_config):
     masters = repo_config.masters
     eclasses = []
 
-    default = config.get_default('repo_config')
+    default = config.get_default("repo_config")
     if repo_config._missing_masters and default is not None:
         # use default repo's eclasses for overlays with missing masters
         location = default.location
@@ -165,8 +179,10 @@ def _sort_eclasses(config, repo_config):
         eclasses = [location]
     else:
         repo_map = {
-            alias: r.location for r in config.objects['repo_config'].values()
-            for alias in r.aliases}
+            alias: r.location
+            for r in config.objects["repo_config"].values()
+            for alias in r.aliases
+        }
         eclasses = [repo_map[x] for x in masters]
 
     # add the repo's eclass directories if it's not specified.
@@ -176,15 +192,17 @@ def _sort_eclasses(config, repo_config):
     if repo_path not in eclasses:
         eclasses.append(repo_path)
 
-    eclasses = [eclass_cache_mod.cache(pjoin(x, 'eclass'), location=location)
-                for x in eclasses]
+    eclasses = [
+        eclass_cache_mod.cache(pjoin(x, "eclass"), location=location) for x in eclasses
+    ]
 
     if len(eclasses) == 1:
         eclasses = eclasses[0]
     else:
         eclasses = list(reversed(eclasses))
         eclasses = eclass_cache_mod.StackedCaches(
-            eclasses, location=location, eclassdir=location)
+            eclasses, location=location, eclassdir=location
+        )
     return eclasses
 
 
@@ -192,13 +210,12 @@ class ProvidesRepo(util.SimpleTree):
     """Fake, installed repo populated with entries from package.provided."""
 
     class PkgProvidedParent:
-
         def __init__(self, **kwds):
             self.__dict__.update(kwds)
 
     class PkgProvided(ebuild_src.base):
 
-        __slots__ = ('arches', 'use')
+        __slots__ = ("arches", "use")
 
         package_is_real = False
         __inst_caching__ = True
@@ -212,16 +229,22 @@ class ProvidesRepo(util.SimpleTree):
             object.__setattr__(self, "use", [])
             object.__setattr__(self, "arches", arches)
             object.__setattr__(self, "data", {"SLOT": "0"})
-            object.__setattr__(self, "eapi", get_eapi('0'))
+            object.__setattr__(self, "eapi", get_eapi("0"))
 
-    def __init__(self, pkgs, arches, repo_id='package.provided'):
+    def __init__(self, pkgs, arches, repo_id="package.provided"):
         d = {}
         for pkg in pkgs:
-            d.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(pkg.fullver)
+            d.setdefault(pkg.category, {}).setdefault(pkg.package, []).append(
+                pkg.fullver
+            )
         intermediate_parent = self.PkgProvidedParent()
         super().__init__(
-            d, pkg_klass=partial(self.PkgProvided, intermediate_parent, arches=arches),
-            livefs=True, frozen=True, repo_id=repo_id)
+            d,
+            pkg_klass=partial(self.PkgProvided, intermediate_parent, arches=arches),
+            livefs=True,
+            frozen=True,
+            repo_id=repo_id,
+        )
         intermediate_parent._parent_repo = self
 
         if not d:
@@ -248,24 +271,34 @@ class UnconfiguredTree(prototype.tree):
     configurables = ("domain", "settings")
     package_factory = staticmethod(ebuild_src.generate_new_factory)
     enable_gpg = False
-    extension = '.ebuild'
+    extension = ".ebuild"
 
     operations_kls = repo_operations
 
-    pkgcore_config_type = ConfigHint({
-        'location': 'str',
-        'eclass_cache': 'ref:eclass_cache',
-        'masters': 'refs:repo',
-        'cache': 'refs:cache',
-        'default_mirrors': 'list',
-        'allow_missing_manifests': 'bool',
-        'repo_config': 'ref:repo_config',
+    pkgcore_config_type = ConfigHint(
+        {
+            "location": "str",
+            "eclass_cache": "ref:eclass_cache",
+            "masters": "refs:repo",
+            "cache": "refs:cache",
+            "default_mirrors": "list",
+            "allow_missing_manifests": "bool",
+            "repo_config": "ref:repo_config",
         },
-        typename='repo')
+        typename="repo",
+    )
 
-    def __init__(self, location, eclass_cache=None, masters=(), cache=(),
-                 default_mirrors=None, allow_missing_manifests=False, package_cache=True,
-                 repo_config=None):
+    def __init__(
+        self,
+        location,
+        eclass_cache=None,
+        masters=(),
+        cache=(),
+        default_mirrors=None,
+        allow_missing_manifests=False,
+        package_cache=True,
+        repo_config=None,
+    ):
         """
         :param location: on disk location of the tree
         :param cache: sequence of :obj:`pkgcore.cache.template.database` instances
@@ -288,7 +321,9 @@ class UnconfiguredTree(prototype.tree):
 
         # profiles dir is required by PMS
         if not os.path.isdir(self.config.profiles_base):
-            raise errors.InvalidRepo(f'missing required profiles dir: {self.location!r}')
+            raise errors.InvalidRepo(
+                f"missing required profiles dir: {self.location!r}"
+            )
 
         # verify we support the repo's EAPI
         if not self.is_supported:
@@ -296,7 +331,8 @@ class UnconfiguredTree(prototype.tree):
 
         if eclass_cache is None:
             eclass_cache = eclass_cache_mod.cache(
-                pjoin(self.location, 'eclass'), location=self.location)
+                pjoin(self.location, "eclass"), location=self.location
+            )
         self.eclass_cache = eclass_cache
 
         self.masters = tuple(masters)
@@ -323,19 +359,21 @@ class UnconfiguredTree(prototype.tree):
         self.cache = cache
         self._allow_missing_chksums = allow_missing_manifests
         self.package_class = self.package_factory(
-            self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
+            self, cache, self.eclass_cache, self.mirrors, self.default_mirrors
+        )
         self._shared_pkg_cache = WeakValueDictionary()
-        self._bad_masked = RestrictionRepo(repo_id='bad_masked')
+        self._bad_masked = RestrictionRepo(repo_id="bad_masked")
         self.projects_xml = repo_objs.LocalProjectsXml(
-            pjoin(self.location, 'metadata', 'projects.xml'))
+            pjoin(self.location, "metadata", "projects.xml")
+        )
 
-    repo_id = klass.alias_attr('config.repo_id')
-    repo_name = klass.alias_attr('config.repo_name')
-    aliases = klass.alias_attr('config.aliases')
-    eapi = klass.alias_attr('config.eapi')
-    is_supported = klass.alias_attr('config.eapi.is_supported')
-    external = klass.alias_attr('config.external')
-    pkg_masks = klass.alias_attr('config.pkg_masks')
+    repo_id = klass.alias_attr("config.repo_id")
+    repo_name = klass.alias_attr("config.repo_name")
+    aliases = klass.alias_attr("config.aliases")
+    eapi = klass.alias_attr("config.eapi")
+    is_supported = klass.alias_attr("config.eapi.is_supported")
+    external = klass.alias_attr("config.external")
+    pkg_masks = klass.alias_attr("config.pkg_masks")
 
     def configure(self, *args):
         return ConfiguredTree(self, *args)
@@ -343,8 +381,7 @@ class UnconfiguredTree(prototype.tree):
     @klass.jit_attr
     def known_arches(self):
         """Return all known arches for a repo (including masters)."""
-        return frozenset(chain.from_iterable(
-            r.config.known_arches for r in self.trees))
+        return frozenset(chain.from_iterable(r.config.known_arches for r in self.trees))
 
     def path_restrict(self, path):
         """Return a restriction from a given path in a repo.
@@ -362,16 +399,17 @@ class UnconfiguredTree(prototype.tree):
             path_chunks = path.split(os.path.sep)
         else:
             path = os.path.realpath(os.path.abspath(path))
-            relpath = path[len(os.path.realpath(self.location)):].strip('/')
+            relpath = path[len(os.path.realpath(self.location)) :].strip("/")
             path_chunks = relpath.split(os.path.sep)
 
         if os.path.isfile(path):
-            if not path.endswith('.ebuild'):
+            if not path.endswith(".ebuild"):
                 raise ValueError(f"file is not an ebuild: {path!r}")
             elif len(path_chunks) != 3:
                 # ebuild isn't in a category/PN directory
                 raise ValueError(
-                    f"ebuild not in the correct directory layout: {path!r}")
+                    f"ebuild not in the correct directory layout: {path!r}"
+                )
 
         restrictions = []
 
@@ -381,8 +419,12 @@ class UnconfiguredTree(prototype.tree):
             if path_chunks[0] in self.categories:
                 restrictions.append(restricts.CategoryDep(path_chunks[0]))
                 restrictions.append(restricts.PackageDep(path_chunks[1]))
-                base = cpv.VersionedCPV(f"{path_chunks[0]}/{os.path.splitext(path_chunks[2])[0]}")
-                restrictions.append(restricts.VersionMatch('=', base.version, rev=base.revision))
+                base = cpv.VersionedCPV(
+                    f"{path_chunks[0]}/{os.path.splitext(path_chunks[2])[0]}"
+                )
+                restrictions.append(
+                    restricts.VersionMatch("=", base.version, rev=base.revision)
+                )
         except IndexError:
             pass
         return packages.AndRestriction(*restrictions)
@@ -407,7 +449,7 @@ class UnconfiguredTree(prototype.tree):
     @klass.jit_attr
     def thirdpartymirrors(self):
         mirrors = {}
-        fp = pjoin(self.location, 'profiles', 'thirdpartymirrors')
+        fp = pjoin(self.location, "profiles", "thirdpartymirrors")
         try:
             for k, v in read_dict(fp, splitter=None).items():
                 v = v.split()
@@ -446,9 +488,15 @@ class UnconfiguredTree(prototype.tree):
     @klass.jit_attr
     def category_dirs(self):
         try:
-            return frozenset(map(intern, filterfalse(
-                self.false_categories.__contains__,
-                (x for x in listdir_dirs(self.base) if not x.startswith('.')))))
+            return frozenset(
+                map(
+                    intern,
+                    filterfalse(
+                        self.false_categories.__contains__,
+                        (x for x in listdir_dirs(self.base) if not x.startswith(".")),
+                    ),
+                )
+            )
         except EnvironmentError as e:
             logger.error(f"failed listing categories: {e}")
         return ()
@@ -459,7 +507,9 @@ class UnconfiguredTree(prototype.tree):
         if optional_category:
             # raise KeyError
             return ()
-        categories = frozenset(chain.from_iterable(repo.config.categories for repo in self.trees))
+        categories = frozenset(
+            chain.from_iterable(repo.config.categories for repo in self.trees)
+        )
         if categories:
             return categories
         return self.category_dirs
@@ -475,7 +525,8 @@ class UnconfiguredTree(prototype.tree):
         except EnvironmentError as e:
             category = pjoin(self.base, category.lstrip(os.path.sep))
             raise KeyError(
-                f'failed fetching packages for category {category}: {e}') from e
+                f"failed fetching packages for category {category}: {e}"
+            ) from e
 
     def _get_versions(self, catpkg):
         """Determine available versions for a given package.
@@ -483,18 +534,21 @@ class UnconfiguredTree(prototype.tree):
         Ebuilds with mismatched or invalid package names are ignored.
         """
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
-        pkg = f'{catpkg[-1]}-'
+        pkg = f"{catpkg[-1]}-"
         lp = len(pkg)
         extension = self.extension
         ext_len = -len(extension)
         try:
             return tuple(
-                x[lp:ext_len] for x in listdir_files(cppath)
-                if x[ext_len:] == extension and x[:lp] == pkg)
+                x[lp:ext_len]
+                for x in listdir_files(cppath)
+                if x[ext_len:] == extension and x[:lp] == pkg
+            )
         except EnvironmentError as e:
             raise KeyError(
-                "failed fetching versions for package %s: %s" %
-                (pjoin(self.base, '/'.join(catpkg)), str(e))) from e
+                "failed fetching versions for package %s: %s"
+                % (pjoin(self.base, "/".join(catpkg)), str(e))
+            ) from e
 
     def _pkg_filter(self, raw, error_callback, pkgs):
         """Filter packages with bad metadata."""
@@ -509,14 +563,18 @@ class UnconfiguredTree(prototype.tree):
 
             if raw:
                 yield pkg
-            elif self._bad_masked.has_match(pkg.versioned_atom) and error_callback is not None:
+            elif (
+                self._bad_masked.has_match(pkg.versioned_atom)
+                and error_callback is not None
+            ):
                 error_callback(self._bad_masked[pkg.versioned_atom])
             else:
                 # check pkgs for unsupported/invalid EAPIs and bad metadata
                 try:
                     if not pkg.is_supported:
                         exc = pkg_errors.MetadataException(
-                            pkg, 'eapi', f"EAPI '{pkg.eapi}' is not supported")
+                            pkg, "eapi", f"EAPI '{pkg.eapi}' is not supported"
+                        )
                         self._bad_masked[pkg.versioned_atom] = exc
                         if error_callback is not None:
                             error_callback(exc)
@@ -533,18 +591,21 @@ class UnconfiguredTree(prototype.tree):
                 yield pkg
 
     def itermatch(self, *args, **kwargs):
-        raw = 'raw_pkg_cls' in kwargs or not kwargs.get('versioned', True)
-        error_callback = kwargs.pop('error_callback', None)
-        kwargs.setdefault('pkg_filter', partial(self._pkg_filter, raw, error_callback))
+        raw = "raw_pkg_cls" in kwargs or not kwargs.get("versioned", True)
+        error_callback = kwargs.pop("error_callback", None)
+        kwargs.setdefault("pkg_filter", partial(self._pkg_filter, raw, error_callback))
         return super().itermatch(*args, **kwargs)
 
     def _get_ebuild_path(self, pkg):
         return pjoin(
-            self.base, pkg.category, pkg.package,
-            f"{pkg.package}-{pkg.fullver}{self.extension}")
+            self.base,
+            pkg.category,
+            pkg.package,
+            f"{pkg.package}-{pkg.fullver}{self.extension}",
+        )
 
     def _get_ebuild_src(self, pkg):
-        return local_source(self._get_ebuild_path(pkg), encoding='utf8')
+        return local_source(self._get_ebuild_path(pkg), encoding="utf8")
 
     def _get_shared_pkg_data(self, category, package):
         key = (category, package)
@@ -557,14 +618,16 @@ class UnconfiguredTree(prototype.tree):
         return o
 
     def _get_metadata_xml(self, category, package):
-        return repo_objs.LocalMetadataXml(pjoin(
-            self.base, category, package, "metadata.xml"))
+        return repo_objs.LocalMetadataXml(
+            pjoin(self.base, category, package, "metadata.xml")
+        )
 
     def _get_manifest(self, category, package):
-        return digest.Manifest(pjoin(
-            self.base, category, package, "Manifest"),
+        return digest.Manifest(
+            pjoin(self.base, category, package, "Manifest"),
             thin=self.config.manifests.thin,
-            enforce_gpg=self.enable_gpg)
+            enforce_gpg=self.enable_gpg,
+        )
 
     def _get_digests(self, pkg, allow_missing=False):
         if self.config.manifests.disabled:
@@ -576,11 +639,14 @@ class UnconfiguredTree(prototype.tree):
         except pkg_errors.ParseChksumError as e:
             if e.missing and allow_missing:
                 return allow_missing, {}
-            raise pkg_errors.MetadataException(pkg, 'manifest', str(e))
+            raise pkg_errors.MetadataException(pkg, "manifest", str(e))
 
     def __repr__(self):
         return "<ebuild %s location=%r @%#8x>" % (
-            self.__class__.__name__, self.base, id(self))
+            self.__class__.__name__,
+            self.base,
+            id(self),
+        )
 
     @klass.jit_attr
     def deprecated(self):
@@ -592,30 +658,41 @@ class UnconfiguredTree(prototype.tree):
 
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(
-            self, force=bool(kwds.get('force', False)),
-            eclass_caching=bool(kwds.get('eclass_caching', True)))
+            self,
+            force=bool(kwds.get("force", False)),
+            eclass_caching=bool(kwds.get("eclass_caching", True)),
+        )
 
     def __getstate__(self):
         d = self.__dict__.copy()
-        del d['_shared_pkg_cache']
+        del d["_shared_pkg_cache"]
         return d
 
     def __setstate__(self, state):
         self.__dict__ = state.copy()
-        self.__dict__['_shared_pkg_cache'] = WeakValueDictionary()
+        self.__dict__["_shared_pkg_cache"] = WeakValueDictionary()
 
 
 @configurable(
-    typename='repo',
+    typename="repo",
     types={
-        'repo_config': 'ref:repo_config', 'cache': 'refs:cache',
-        'eclass_cache': 'ref:eclass_cache',
-        'default_mirrors': 'list',
-        'allow_missing_manifests': 'bool'},
-    requires_config='config')
-def tree(config, repo_config, cache=(), eclass_cache=None,
-         default_mirrors=None, allow_missing_manifests=False,
-         tree_cls=UnconfiguredTree):
+        "repo_config": "ref:repo_config",
+        "cache": "refs:cache",
+        "eclass_cache": "ref:eclass_cache",
+        "default_mirrors": "list",
+        "allow_missing_manifests": "bool",
+    },
+    requires_config="config",
+)
+def tree(
+    config,
+    repo_config,
+    cache=(),
+    eclass_cache=None,
+    default_mirrors=None,
+    allow_missing_manifests=False,
+    tree_cls=UnconfiguredTree,
+):
     """Initialize an unconfigured ebuild repository."""
     repo_id = repo_config.repo_id
     repo_path = repo_config.location
@@ -623,46 +700,55 @@ def tree(config, repo_config, cache=(), eclass_cache=None,
     if repo_config.masters is None:
         # if it's None, that means it's not a standalone, and is PMS, or misconfigured.
         # empty tuple means it's a standalone repository
-        default = config.get_default('repo_config')
+        default = config.get_default("repo_config")
         if default is None:
             raise errors.InitializationError(
-                f"repo {repo_id!r} at {repo_path!r} requires missing default repo")
+                f"repo {repo_id!r} at {repo_path!r} requires missing default repo"
+            )
 
     # map external repo ids to their config names
     config_map = {
-        r.repo_id: r.location for r in config.objects['repo_config'].values() if r.external}
+        r.repo_id: r.location
+        for r in config.objects["repo_config"].values()
+        if r.external
+    }
 
     try:
         masters = []
         missing = []
         for r in repo_config.masters:
-            if repo := config.objects['repo'].get(config_map.get(r, r)):
+            if repo := config.objects["repo"].get(config_map.get(r, r)):
                 masters.append(repo)
             else:
                 missing.append(r)
     except RecursionError:
         repo_id = repo_config.repo_id
-        masters = ', '.join(repo_config.masters)
+        masters = ", ".join(repo_config.masters)
         raise errors.InitializationError(
-            f'{repo_id!r} repo has cyclic masters: {masters}')
+            f"{repo_id!r} repo has cyclic masters: {masters}"
+        )
 
     if missing:
-        missing = ', '.join(map(repr, sorted(missing)))
+        missing = ", ".join(map(repr, sorted(missing)))
         raise errors.InitializationError(
-            f'repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}')
+            f"repo {repo_id!r} at path {repo_path!r} has missing masters: {missing}"
+        )
 
     if eclass_cache is None:
         eclass_cache = _sort_eclasses(config, repo_config)
 
     return tree_cls(
-        repo_config.location, eclass_cache=eclass_cache, masters=masters, cache=cache,
+        repo_config.location,
+        eclass_cache=eclass_cache,
+        masters=masters,
+        cache=cache,
         default_mirrors=default_mirrors,
         allow_missing_manifests=allow_missing_manifests,
-        repo_config=repo_config)
+        repo_config=repo_config,
+    )
 
 
 class _RegenOpHelper:
-
     def __init__(self, repo, force=False, eclass_caching=True):
         self.force = force
         self.eclass_caching = eclass_caching
@@ -695,8 +781,16 @@ class ConfiguredTree(configured.tree):
     config_wrappables = {
         x: klass.alias_method("evaluate_depset")
         for x in (
-            "bdepend", "depend", "rdepend", "pdepend", "idepend",
-            "fetchables", "license", "src_uri", "restrict", "required_use",
+            "bdepend",
+            "depend",
+            "rdepend",
+            "pdepend",
+            "idepend",
+            "fetchables",
+            "license",
+            "src_uri",
+            "restrict",
+            "required_use",
         )
     }
 
@@ -705,22 +799,24 @@ class ConfiguredTree(configured.tree):
         :param raw_repo: :obj:`UnconfiguredTree` instance
         :param domain_settings: environment settings to bind
         """
-        required_settings = {'USE', 'CHOST'}
+        required_settings = {"USE", "CHOST"}
         if missing_settings := required_settings.difference(domain_settings):
             s = pluralism(missing_settings)
             raise errors.InitializationError(
                 f"{self.__class__} missing required setting{s}: "
-                f"{', '.join(map(repr, missing_settings))}")
+                f"{', '.join(map(repr, missing_settings))}"
+            )
 
-        chost = domain_settings['CHOST']
-        scope_update = {'chost': chost}
+        chost = domain_settings["CHOST"]
+        scope_update = {"chost": chost}
         scope_update.update(
-            (x, domain_settings.get(x.upper(), chost))
-            for x in ('cbuild', 'ctarget'))
+            (x, domain_settings.get(x.upper(), chost)) for x in ("cbuild", "ctarget")
+        )
         scope_update.update(
-            (x, domain_settings.get(x.upper(), ''))
-            for x in ('cflags', 'cxxflags', 'ldflags'))
-        scope_update['operations_callback'] = self._generate_pkg_operations
+            (x, domain_settings.get(x.upper(), ""))
+            for x in ("cflags", "cxxflags", "ldflags")
+        )
+        scope_update["operations_callback"] = self._generate_pkg_operations
 
         # update wrapped attr funcs requiring access to the class instance
         for k, v in self.config_wrappables.items():
@@ -728,7 +824,8 @@ class ConfiguredTree(configured.tree):
                 self.config_wrappables[k] = getattr(self, v)
 
         super().__init__(
-            raw_repo, self.config_wrappables, pkg_kls_injections=scope_update)
+            raw_repo, self.config_wrappables, pkg_kls_injections=scope_update
+        )
 
         self.domain = domain
         self.domain_settings = domain_settings
@@ -736,13 +833,16 @@ class ConfiguredTree(configured.tree):
 
     def _wrap_attr(config_wrappables):
         """Register wrapped attrs that require class instance access."""
+
         def _wrap_func(func):
             @wraps(func)
             def wrapped(*args, **kwargs):
                 return func(*args, **kwargs)
-            attr = func.__name__.lstrip('_')
+
+            attr = func.__name__.lstrip("_")
             config_wrappables[attr] = func.__name__
             return wrapped
+
         return _wrap_func
 
     @_wrap_attr(config_wrappables)
@@ -762,20 +862,22 @@ class ConfiguredTree(configured.tree):
         # determine available user patches for >= EAPI 6
         if pkg.eapi.options.user_patches:
             patches = []
-            patchroot = pjoin(self.domain.config_dir, 'patches')
+            patchroot = pjoin(self.domain.config_dir, "patches")
             patch_dirs = [
                 pkg.PF,
-                f'{pkg.PF}:{pkg.slot}',
+                f"{pkg.PF}:{pkg.slot}",
                 pkg.P,
-                f'{pkg.P}:{pkg.slot}',
+                f"{pkg.P}:{pkg.slot}",
                 pkg.PN,
-                f'{pkg.PN}:{pkg.slot}',
+                f"{pkg.PN}:{pkg.slot}",
             ]
             for d in patch_dirs:
                 for root, _dirs, files in os.walk(pjoin(patchroot, pkg.category, d)):
                     files = (
-                        pjoin(root, f) for f in sorted(files, key=locale.strxfrm)
-                        if f.endswith(('.diff', '.patch')))
+                        pjoin(root, f)
+                        for f in sorted(files, key=locale.strxfrm)
+                        if f.endswith((".diff", ".patch"))
+                    )
                     patches.append((root, tuple(files)))
             return tuple(patches)
         return None
@@ -788,7 +890,9 @@ class ConfiguredTree(configured.tree):
         return {
             "initial_settings": enabled,
             "unchangable_settings": self._delayed_iuse(
-                self._get_delayed_immutable, pkg, immutable)}
+                self._get_delayed_immutable, pkg, immutable
+            ),
+        }
 
     def _generate_pkg_operations(self, domain, pkg, **kwds):
         return ebd.src_operations(domain, pkg, pkg.repo.eclass_cache, **kwds)

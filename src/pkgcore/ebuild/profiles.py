@@ -1,5 +1,8 @@
 __all__ = (
-    "ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
+    "ProfileError",
+    "ProfileNode",
+    "EmptyRootNode",
+    "OnDiskProfile",
     "UserProfile",
 )
 
@@ -28,7 +31,6 @@ from .eapi import EAPI, get_eapi
 
 
 class ProfileError(errors.ParsingError):
-
     def __init__(self, path, filename, error):
         self.path, self.filename, self.error = path, filename, error
 
@@ -50,19 +52,27 @@ def _read_profile_files(files, allow_line_cont=False):
     for path in files:
         # determine file path relative to the profiles dir
         try:
-            relpath = path.split('/profiles/')[1]
+            relpath = path.split("/profiles/")[1]
         except IndexError:
             # profiles base path
             relpath = os.path.basename(path)
 
         for lineno, line in iter_read_bash(
-                path, allow_line_cont=allow_line_cont, enum_line=True):
+            path, allow_line_cont=allow_line_cont, enum_line=True
+        ):
             yield line, lineno, relpath
 
 
-def load_property(filename, *, read_func=_read_profile_files, fallback=(),
-                  parse_func=lambda x: x, allow_line_cont=False, allow_recurse=False,
-                  eapi_optional=None):
+def load_property(
+    filename,
+    *,
+    read_func=_read_profile_files,
+    fallback=(),
+    parse_func=lambda x: x,
+    allow_line_cont=False,
+    allow_recurse=False,
+    eapi_optional=None,
+):
     """Decorator simplifying parsing profile files to generate a profile property.
 
     :param filename: The filename to parse within that profile directory.
@@ -78,20 +88,43 @@ def load_property(filename, *, read_func=_read_profile_files, fallback=(),
         the fallback is returned and no ondisk activity occurs.
     :return: A :py:`klass.jit.attr_named` property instance.
     """
+
     def f(func):
-        f2 = klass.jit_attr_named(f'_{func.__name__}')
-        return f2(partial(
-            _load_and_invoke, func, filename, read_func, fallback,
-            allow_recurse, allow_line_cont, parse_func, eapi_optional))
+        f2 = klass.jit_attr_named(f"_{func.__name__}")
+        return f2(
+            partial(
+                _load_and_invoke,
+                func,
+                filename,
+                read_func,
+                fallback,
+                allow_recurse,
+                allow_line_cont,
+                parse_func,
+                eapi_optional,
+            )
+        )
+
     return f
 
 
-def _load_and_invoke(func, filename, read_func, fallback, allow_recurse,
-                     allow_line_cont, parse_func, eapi_optional, self):
-    if eapi_optional is not None and not getattr(self.eapi.options, eapi_optional, None):
+def _load_and_invoke(
+    func,
+    filename,
+    read_func,
+    fallback,
+    allow_recurse,
+    allow_line_cont,
+    parse_func,
+    eapi_optional,
+    self,
+):
+    if eapi_optional is not None and not getattr(
+        self.eapi.options, eapi_optional, None
+    ):
         return func(self, fallback)
 
-    profile_path = self.path.rstrip('/')
+    profile_path = self.path.rstrip("/")
     base = pjoin(profile_path, filename)
 
     files = []
@@ -108,8 +141,7 @@ def _load_and_invoke(func, filename, read_func, fallback, allow_recurse,
             if read_func is None:
                 data = parse_func(files)
             else:
-                data = parse_func(read_func(
-                    files, allow_line_cont=allow_line_cont))
+                data = parse_func(read_func(files, allow_line_cont=allow_line_cont))
         else:
             data = fallback
         return func(self, data)
@@ -117,10 +149,12 @@ def _load_and_invoke(func, filename, read_func, fallback, allow_recurse,
         raise ProfileError(profile_path, filename, e) from e
     except IsADirectoryError as e:
         raise ProfileError(
-            self.path, filename,
+            self.path,
+            filename,
             "path is a directory, but this profile is PMS format- "
             "directories aren't allowed. See layout.conf profile-formats "
-            "to enable directory support") from e
+            "to enable directory support",
+        ) from e
 
 
 _make_incrementals_dict = partial(misc.IncrementalsDict, const.incrementals)
@@ -142,7 +176,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         return f"profile at {self.path!r}"
 
     def __repr__(self):
-        return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path, id(self))
+        return "<%s path=%r, @%#8x>" % (self.__class__.__name__, self.path, id(self))
 
     system = klass.alias_attr("packages.system")
     profile_set = klass.alias_attr("packages.profile")
@@ -151,38 +185,44 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def name(self):
         """Relative path to the profile from the profiles directory."""
         try:
-            return self.path.split('/profiles/')[1]
+            return self.path.split("/profiles/")[1]
         except IndexError:
             # profiles base path
-            return ''
+            return ""
 
     @load_property("packages")
     def packages(self, data):
         repo_config = self.repoconfig
         # TODO: get profile-set support into PMS
-        profile_set = repo_config is not None and 'profile-set' in repo_config.profile_formats
+        profile_set = (
+            repo_config is not None and "profile-set" in repo_config.profile_formats
+        )
         sys, neg_sys, pro, neg_pro = [], [], [], []
         neg_wildcard = False
         for line, lineno, relpath in data:
             try:
-                if line[0] == '-':
-                    if line == '-*':
+                if line[0] == "-":
+                    if line == "-*":
                         neg_wildcard = True
-                    elif line[1] == '*':
+                    elif line[1] == "*":
                         neg_sys.append(self.eapi_atom(line[2:]))
                     elif profile_set:
                         neg_pro.append(self.eapi_atom(line[1:]))
                     else:
-                        logger.error(f'{relpath!r}: invalid line format, line {lineno}: {line!r}')
+                        logger.error(
+                            f"{relpath!r}: invalid line format, line {lineno}: {line!r}"
+                        )
                 else:
-                    if line[0] == '*':
+                    if line[0] == "*":
                         sys.append(self.eapi_atom(line[1:]))
                     elif profile_set:
                         pro.append(self.eapi_atom(line))
                     else:
-                        logger.error(f'{relpath!r}: invalid line format, line {lineno}: {line!r}')
+                        logger.error(
+                            f"{relpath!r}: invalid line format, line {lineno}: {line!r}"
+                        )
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
+                logger.error(f"{relpath!r}, line {lineno}: parsing error: {e}")
         system = [tuple(neg_sys), tuple(sys)]
         profile = [tuple(neg_pro), tuple(pro)]
         if neg_wildcard:
@@ -193,10 +233,10 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     @load_property("parent")
     def parent_paths(self, data):
         repo_config = self.repoconfig
-        if repo_config is not None and 'portage-2' in repo_config.profile_formats:
+        if repo_config is not None and "portage-2" in repo_config.profile_formats:
             l = []
             for line, lineno, relpath in data:
-                repo_id, separator, profile_path = line.partition(':')
+                repo_id, separator, profile_path = line.partition(":")
                 if separator:
                     if repo_id:
                         try:
@@ -209,22 +249,30 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                                 location = repo_config.location
                             else:
                                 logger.error(
-                                    f'repo {repo_config.repo_id!r}: '
+                                    f"repo {repo_config.repo_id!r}: "
                                     f"{relpath!r} (line {lineno}), "
-                                    f'bad profile parent {line!r}: '
-                                    f'unknown repo {repo_id!r}'
+                                    f"bad profile parent {line!r}: "
+                                    f"unknown repo {repo_id!r}"
                                 )
                                 continue
-                    l.append((abspath(pjoin(location, 'profiles', profile_path)), line, lineno))
+                    l.append(
+                        (
+                            abspath(pjoin(location, "profiles", profile_path)),
+                            line,
+                            lineno,
+                        )
+                    )
                 else:
                     l.append((abspath(pjoin(self.path, repo_id)), line, lineno))
             return tuple(l)
-        return tuple((abspath(pjoin(self.path, line)), line, lineno)
-                     for line, lineno, relpath in data)
+        return tuple(
+            (abspath(pjoin(self.path, line)), line, lineno)
+            for line, lineno, relpath in data
+        )
 
     @klass.jit_attr
     def parents(self):
-        kls = getattr(self, 'parent_node_kls', self.__class__)
+        kls = getattr(self, "parent_node_kls", self.__class__)
         parents = []
         for path, line, lineno in self.parent_paths:
             try:
@@ -233,19 +281,21 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                 repo_id = self.repoconfig.repo_id
                 logger.error(
                     f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
-                    f'bad profile parent {line!r}: {e.error}'
+                    f"bad profile parent {line!r}: {e.error}"
                 )
                 continue
         return tuple(parents)
 
-    @load_property("package.provided", allow_recurse=True,
-                   eapi_optional='profile_pkg_provided')
+    @load_property(
+        "package.provided", allow_recurse=True, eapi_optional="profile_pkg_provided"
+    )
     def pkg_provided(self, data):
         def _parse_cpv(s):
             try:
                 return cpv.VersionedCPV(s)
             except cpv.InvalidCPV:
-                logger.error(f'invalid package.provided entry: {s!r}')
+                logger.error(f"invalid package.provided entry: {s!r}")
+
         data = (x[0] for x in data)
         return split_negations(data, _parse_cpv)
 
@@ -253,10 +303,12 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         """Parse files containing optionally negated package atoms."""
         neg, pos = [], []
         for line, lineno, relpath in data:
-            if line[0] == '-':
+            if line[0] == "-":
                 line = line[1:]
                 if not line:
-                    logger.error(f"{relpath!r}, line {lineno}: '-' negation without an atom")
+                    logger.error(
+                        f"{relpath!r}, line {lineno}: '-' negation without an atom"
+                    )
                     continue
                 l = neg
             else:
@@ -264,7 +316,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 l.append(self.eapi_atom(line))
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
+                logger.error(f"{relpath!r}, line {lineno}: parsing error: {e}")
         return tuple(neg), tuple(pos)
 
     def _package_keywords_splitter(self, iterable):
@@ -274,7 +326,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 yield (atom(v[0]), tuple(stable_unique(v[1:])))
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
+                logger.error(f"{relpath!r}, line {lineno}: parsing error: {e}")
 
     @load_property("package.mask", allow_recurse=True)
     def masks(self, data):
@@ -300,7 +352,8 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def pkg_use(self, data):
         c = misc.ChunkedDataDict()
         c.update_from_stream(
-            chain.from_iterable(self._parse_package_use(data).values()))
+            chain.from_iterable(self._parse_package_use(data).values())
+        )
         c.freeze()
         return c
 
@@ -324,18 +377,23 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 a = self.eapi_atom(l[0])
             except ebuild_errors.MalformedAtom as e:
-                logger.error(f'{relpath!r}, line {lineno}: parsing error: {e}')
+                logger.error(f"{relpath!r}, line {lineno}: parsing error: {e}")
                 continue
             if len(l) == 1:
-                logger.error(f'{relpath!r}, line {lineno}: missing USE flag(s): {line!r}')
+                logger.error(
+                    f"{relpath!r}, line {lineno}: missing USE flag(s): {line!r}"
+                )
                 continue
-            if any(s.endswith(':') for s in l[1:]):
-                logger.error(f'{relpath!r}, line {lineno}: USE_EXPAND syntax is invalid in this context: {line!r}')
+            if any(s.endswith(":") for s in l[1:]):
+                logger.error(
+                    f"{relpath!r}, line {lineno}: USE_EXPAND syntax is invalid in this context: {line!r}"
+                )
                 continue
             d[a.key].append(misc.chunked_data(a, *split_negations(l[1:])))
 
-        return ImmutableDict((k, misc._build_cp_atom_payload(v, atom(k)))
-                             for k, v in d.items())
+        return ImmutableDict(
+            (k, misc._build_cp_atom_payload(v, atom(k))) for k, v in d.items()
+        )
 
     def _parse_use(self, data):
         c = misc.ChunkedDataDict()
@@ -350,8 +408,9 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def use_force(self, data):
         return self._parse_use(data)
 
-    @load_property("use.stable.force", allow_recurse=True,
-                   eapi_optional='profile_stable_use')
+    @load_property(
+        "use.stable.force", allow_recurse=True, eapi_optional="profile_stable_use"
+    )
     def use_stable_force(self, data):
         return self._parse_use(data)
 
@@ -359,8 +418,11 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def pkg_use_force(self, data):
         return self._parse_package_use(data)
 
-    @load_property("package.use.stable.force", allow_recurse=True,
-                   eapi_optional='profile_stable_use')
+    @load_property(
+        "package.use.stable.force",
+        allow_recurse=True,
+        eapi_optional="profile_stable_use",
+    )
     def pkg_use_stable_force(self, data):
         return self._parse_package_use(data)
 
@@ -368,8 +430,9 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def use_mask(self, data):
         return self._parse_use(data)
 
-    @load_property("use.stable.mask", allow_recurse=True,
-                   eapi_optional='profile_stable_use')
+    @load_property(
+        "use.stable.mask", allow_recurse=True, eapi_optional="profile_stable_use"
+    )
     def use_stable_mask(self, data):
         return self._parse_use(data)
 
@@ -377,8 +440,11 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def pkg_use_mask(self, data):
         return self._parse_package_use(data)
 
-    @load_property("package.use.stable.mask", allow_recurse=True,
-                   eapi_optional='profile_stable_use')
+    @load_property(
+        "package.use.stable.mask",
+        allow_recurse=True,
+        eapi_optional="profile_stable_use",
+    )
     def pkg_use_stable_mask(self, data):
         return self._parse_package_use(data)
 
@@ -387,8 +453,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         c = self.use_mask
         if self.pkg_use_mask:
             c = c.clone(unfreeze=True)
-            c.update_from_stream(
-                chain.from_iterable(self.pkg_use_mask.values()))
+            c.update_from_stream(chain.from_iterable(self.pkg_use_mask.values()))
             c.freeze()
         return c
 
@@ -398,11 +463,9 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         if self.use_stable_mask:
             c.merge(self.use_stable_mask)
         if self.pkg_use_mask:
-            c.update_from_stream(
-                chain.from_iterable(self.pkg_use_mask.values()))
+            c.update_from_stream(chain.from_iterable(self.pkg_use_mask.values()))
         if self.pkg_use_stable_mask:
-            c.update_from_stream(
-                chain.from_iterable(self.pkg_use_stable_mask.values()))
+            c.update_from_stream(chain.from_iterable(self.pkg_use_stable_mask.values()))
         c.freeze()
         return c
 
@@ -411,8 +474,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         c = self.use_force
         if self.pkg_use_force:
             c = c.clone(unfreeze=True)
-            c.update_from_stream(
-                chain.from_iterable(self.pkg_use_force.values()))
+            c.update_from_stream(chain.from_iterable(self.pkg_use_force.values()))
             c.freeze()
         return c
 
@@ -422,22 +484,22 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         if self.use_stable_force:
             c.merge(self.use_stable_force)
         if self.pkg_use_force:
-            c.update_from_stream(
-                chain.from_iterable(self.pkg_use_force.values()))
+            c.update_from_stream(chain.from_iterable(self.pkg_use_force.values()))
         if self.pkg_use_stable_force:
             c.update_from_stream(
-                chain.from_iterable(self.pkg_use_stable_force.values()))
+                chain.from_iterable(self.pkg_use_stable_force.values())
+            )
         c.freeze()
         return c
 
-    @load_property('make.defaults', read_func=None, fallback=None)
+    @load_property("make.defaults", read_func=None, fallback=None)
     def make_defaults(self, data):
         d = {}
         if data is not None:
             d.update(read_bash_dict(data[0]))
         return ImmutableDict(d)
 
-    @load_property('make.defaults', read_func=None, fallback=None)
+    @load_property("make.defaults", read_func=None, fallback=None)
     def default_env(self, data):
         rendered = _make_incrementals_dict()
         for parent in self.parents:
@@ -458,7 +520,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     @load_property("package.bashrc", allow_recurse=True)
     def pkg_bashrc(self, data):
         repo_config = self.repoconfig
-        if repo_config is None or 'profile-bashrcs' not in repo_config.profile_formats:
+        if repo_config is None or "profile-bashrcs" not in repo_config.profile_formats:
             return ()
 
         d = defaultdict(list)
@@ -467,16 +529,18 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
             try:
                 a = self.eapi_atom(l[0])
             except ebuild_errors.MalformedAtom as exc:
-                logger.error(f'{relpath!r}, line {lineno}: parsing error: {exc}')
+                logger.error(f"{relpath!r}, line {lineno}: parsing error: {exc}")
                 continue
             if len(l) == 1:
-                logger.error(f'{relpath!r}, line {lineno}: missing bashrc files: {line!r}')
+                logger.error(
+                    f"{relpath!r}, line {lineno}: missing bashrc files: {line!r}"
+                )
                 continue
             for filename in l[1:]:
-                d[a].append(local_source(pjoin(self.path, 'bashrc', filename)))
+                d[a].append(local_source(pjoin(self.path, "bashrc", filename)))
         return tuple((k, tuple(v)) for k, v in d.items())
 
-    @load_property('eapi', fallback='0')
+    @load_property("eapi", fallback="0")
     def eapi(self, data):
         # handle fallback
         if isinstance(data, str):
@@ -485,19 +549,19 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         try:
             line, lineno, relpath = next(data)
         except StopIteration:
-            relpath = pjoin(self.name, 'eapi')
-            logger.error(f'{relpath!r}: empty file')
-            return get_eapi('0')
+            relpath = pjoin(self.name, "eapi")
+            logger.error(f"{relpath!r}: empty file")
+            return get_eapi("0")
 
         try:
             next(data)
-            logger.error(f'{relpath!r}: multiple lines detected')
+            logger.error(f"{relpath!r}: multiple lines detected")
         except StopIteration:
             pass
 
         eapi_str = line.strip()
         if eapi_str not in EAPI.known_eapis:
-            logger.error(f'{relpath!r}: unknown EAPI {eapi_str!r}')
+            logger.error(f"{relpath!r}: unknown EAPI {eapi_str!r}")
         return get_eapi(eapi_str)
 
     eapi_atom = klass.alias_attr("eapi.atom_kls")
@@ -510,13 +574,13 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
     def _load_repoconfig_from_path(path):
         path = abspath(path)
         # strip '/' so we don't get '/usr/portage' == ('', 'usr', 'portage')
-        chunks = path.lstrip('/').split('/')
+        chunks = path.lstrip("/").split("/")
         try:
-            pindex = max(idx for idx, x in enumerate(chunks) if x == 'profiles')
+            pindex = max(idx for idx, x in enumerate(chunks) if x == "profiles")
         except ValueError:
             # not in a repo...
             return None
-        repo_path = pjoin('/', *chunks[:pindex])
+        repo_path = pjoin("/", *chunks[:pindex])
         return repo_objs.RepoConfig(repo_path)
 
     @classmethod
@@ -528,13 +592,13 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         # caching is a bit overprotective, even if pms_strict defaults to True,
         # cls(path) is not cls(path, pms_strict=True)
 
-        if repo_config is not None and 'pms' not in repo_config.profile_formats:
+        if repo_config is not None and "pms" not in repo_config.profile_formats:
             profile = cls(path, pms_strict=False)
         else:
             profile = cls(path)
 
         # optimization to avoid re-parsing what we already did.
-        object.__setattr__(profile, '_repoconfig', repo_config)
+        object.__setattr__(profile, "_repoconfig", repo_config)
         return profile
 
 
@@ -544,7 +608,9 @@ class EmptyRootNode(ProfileNode):
 
     parents = ()
     deprecated = None
-    pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = misc.ChunkedDataDict()
+    pkg_use = (
+        masked_use
+    ) = stable_masked_use = forced_use = stable_forced_use = misc.ChunkedDataDict()
     forced_use.freeze()
     pkg_bashrc = ()
     pkg_use_force = pkg_use_mask = ImmutableDict()
@@ -577,12 +643,13 @@ class ProfileStack:
                     repo_id = node.repoconfig.repo_id
                     logger.error(
                         f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
-                        f'bad profile parent {line!r}: {e.error}'
+                        f"bad profile parent {line!r}: {e.error}"
                     )
                     continue
                 for y in f(x):
                     yield y
             yield node
+
         return tuple(f(self.node))
 
     @klass.jit_attr
@@ -639,13 +706,14 @@ class ProfileStack:
     def default_env(self):
         d = dict(self.node.default_env.items())
         for incremental in const.incrementals:
-            v = d.pop(incremental, '').split()
+            v = d.pop(incremental, "").split()
             if v:
                 if incremental in const.incrementals_unfinalized:
                     d[incremental] = tuple(v)
                 else:
                     v = misc.incremental_expansion(
-                        v, msg_prefix=f"While expanding {incremental}, value {v!r}: ")
+                        v, msg_prefix=f"While expanding {incremental}, value {v!r}: "
+                    )
                     if v:
                         d[incremental] = tuple(v)
         return ImmutableDict(d.items())
@@ -666,7 +734,7 @@ class ProfileStack:
     @klass.jit_attr
     def use(self):
         """USE flag settings for the profile."""
-        return tuple(list(self.default_env.get('USE', ())) + list(self.expand_use()))
+        return tuple(list(self.default_env.get("USE", ())) + list(self.expand_use()))
 
     def expand_use(self, env=None):
         """Expand USE_EXPAND settings to USE flags."""
@@ -678,7 +746,7 @@ class ProfileStack:
             value = env.get(u)
             if value is None:
                 continue
-            u2 = u.lower() + '_'
+            u2 = u.lower() + "_"
             use.extend(u2 + x for x in value.split())
         return tuple(use)
 
@@ -714,7 +782,9 @@ class ProfileStack:
         if self._system_profile.eapi.options.profile_iuse_injection:
             iuse_effective.extend(self.iuse_implicit)
             for v in self.use_expand_implicit.intersection(self.use_expand_unprefixed):
-                iuse_effective.extend(self.default_env.get("USE_EXPAND_VALUES_" + v, "").split())
+                iuse_effective.extend(
+                    self.default_env.get("USE_EXPAND_VALUES_" + v, "").split()
+                )
             for v in self.use_expand.intersection(self.use_expand_implicit):
                 for x in self.default_env.get("USE_EXPAND_VALUES_" + v, "").split():
                     iuse_effective.append(v.lower() + "_" + x)
@@ -730,7 +800,8 @@ class ProfileStack:
     def provides_repo(self):
         # delay importing to avoid circular imports
         from .repository import ProvidesRepo
-        pkgs = self._collapse_generic('pkg_provided')
+
+        pkgs = self._collapse_generic("pkg_provided")
         try:
             arches = self._system_profile.repoconfig.known_arches
         except AttributeError:
@@ -744,7 +815,7 @@ class ProfileStack:
 
     @klass.jit_attr
     def unmasks(self):
-        return frozenset(self._collapse_generic('unmasks'))
+        return frozenset(self._collapse_generic("unmasks"))
 
     @klass.jit_attr
     def pkg_deprecated(self):
@@ -781,19 +852,19 @@ class ProfileStack:
 
     @klass.jit_attr
     def system(self):
-        return frozenset(self._collapse_generic('system', clear=True))
+        return frozenset(self._collapse_generic("system", clear=True))
 
     @klass.jit_attr
     def profile_set(self):
-        return frozenset(self._collapse_generic('profile_set', clear=True))
+        return frozenset(self._collapse_generic("profile_set", clear=True))
 
 
 class OnDiskProfile(ProfileStack):
 
     pkgcore_config_type = ConfigHint(
-        {'basepath': 'str', 'profile': 'str'},
-        required=('basepath', 'profile'),
-        typename='profile',
+        {"basepath": "str", "profile": "str"},
+        required=("basepath", "profile"),
+        typename="profile",
     )
 
     def __init__(self, basepath, profile, load_profile_base=True):
@@ -809,11 +880,11 @@ class OnDiskProfile(ProfileStack):
         chunks = [x for x in path.split("/") if x]
         try:
             # poor mans rindex.
-            pbase = max(idx for idx, x in enumerate(chunks) if x == 'profiles')
+            pbase = max(idx for idx, x in enumerate(chunks) if x == "profiles")
         except ValueError:
             # no base found.
             return None
-        return pjoin("/", *chunks[:pbase+1]), '/'.join(chunks[pbase+1:])
+        return pjoin("/", *chunks[: pbase + 1]), "/".join(chunks[pbase + 1 :])
 
     @classmethod
     def from_abspath(cls, path):
@@ -864,9 +935,9 @@ class UserProfileNode(ProfileNode):
 class UserProfile(OnDiskProfile):
 
     pkgcore_config_type = ConfigHint(
-        {'user_path': 'str', 'parent_path': 'str', 'parent_profile': 'str'},
-        required=('user_path', 'parent_path', 'parent_profile'),
-        typename='profile',
+        {"user_path": "str", "parent_path": "str", "parent_profile": "str"},
+        required=("user_path", "parent_path", "parent_profile"),
+        typename="profile",
     )
 
     def __init__(self, user_path, parent_path, parent_profile, load_profile_base=True):

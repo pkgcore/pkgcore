@@ -22,17 +22,24 @@ class FakePkg:
 
 
 class TestInstalled:
-
     def test_iter(self):
-        fake_vdb = SimpleTree({
-            "dev-util": {
-                "diffball": ["1.0"],
-                "bsdiff": ["1.2", "1.3"],
-            }
-        }, pkg_klass=FakePkg)
+        fake_vdb = SimpleTree(
+            {
+                "dev-util": {
+                    "diffball": ["1.0"],
+                    "bsdiff": ["1.2", "1.3"],
+                }
+            },
+            pkg_klass=FakePkg,
+        )
 
-        assert set(installed.Installed([fake_vdb])) == \
-            {"dev-util/diffball", "dev-util/bsdiff"}
+        assert set(installed.Installed([fake_vdb])) == {
+            "dev-util/diffball",
+            "dev-util/bsdiff",
+        }
 
-        assert set(installed.VersionedInstalled([fake_vdb])) == \
-            {"dev-util/diffball-1.0", "dev-util/bsdiff-1.2", "dev-util/bsdiff-1.3"}
+        assert set(installed.VersionedInstalled([fake_vdb])) == {
+            "dev-util/diffball-1.0",
+            "dev-util/bsdiff-1.2",
+            "dev-util/bsdiff-1.3",
+        }

@@ -9,29 +9,31 @@ from snakeoil.osutils import pjoin
 
 
 class FakeEclassCache(eclass_cache.base):
-
     def __init__(self, path):
         eclass_cache.base.__init__(self, location=path, eclassdir=path)
         self.eclasses = {
-            "eclass1":LazilyHashedPath(path, mtime=100),
-            "eclass2":LazilyHashedPath(path, mtime=200)}
+            "eclass1": LazilyHashedPath(path, mtime=100),
+            "eclass2": LazilyHashedPath(path, mtime=200),
+        }
 
 
 class TestBase:
-
     @pytest.fixture(autouse=True)
     def _setup(self):
-        path = '/nonexistent/path/'
+        path = "/nonexistent/path/"
         self.ec = FakeEclassCache(path)
         self.ec_locs = {"eclass1": path, "eclass2": path}
 
-    @pytest.mark.parametrize(('result', 'ec', 'mtime'), (
-        (False, 'eclass3', 100),
-        (True,  'eclass1', 100),
-        (False, 'eclass1', 200),
-    ))
+    @pytest.mark.parametrize(
+        ("result", "ec", "mtime"),
+        (
+            (False, "eclass3", 100),
+            (True, "eclass1", 100),
+            (False, "eclass1", 200),
+        ),
+    )
     def test_rebuild_eclass_entry(self, result, ec, mtime):
-        data = [(ec, [('mtime', mtime)])]
+        data = [(ec, [("mtime", mtime)])]
         got = self.ec.rebuild_cache_entry(data)
         assert bool(got) == result
 
@@ -43,11 +45,10 @@ class TestBase:
         assert data is self.ec.get_eclass_data(keys)
         assert set(keys) == set(data)
         data = self.ec.get_eclass_data(["eclass1"])
-        assert data == {'eclass1': self.ec.eclasses['eclass1']}
+        assert data == {"eclass1": self.ec.eclasses["eclass1"]}
 
 
 class TestEclassCache(TestBase):
-
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
         for x, mtime in (("eclass1", 100), ("eclass2", 200)):
@@ -70,19 +71,18 @@ class TestEclassCache(TestBase):
 
 
 class TestStackedCaches(TestEclassCache):
-
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
         (loc1 := tmp_path / "stack1").mkdir()
-        (loc1 / 'eclass1.eclass').touch()
-        os.utime(loc1 / 'eclass1.eclass', (100, 100))
+        (loc1 / "eclass1.eclass").touch()
+        os.utime(loc1 / "eclass1.eclass", (100, 100))
         ec1 = eclass_cache.cache(str(loc1))
 
         (loc2 := tmp_path / "stack2").mkdir()
-        (loc2 / 'eclass2.eclass').touch()
-        os.utime(loc2 / 'eclass2.eclass', (100, 100))
+        (loc2 / "eclass2.eclass").touch()
+        os.utime(loc2 / "eclass2.eclass", (100, 100))
         ec2 = eclass_cache.cache(str(loc2))
         self.ec = eclass_cache.StackedCaches([ec1, ec2])
         self.ec_locs = {"eclass1": str(loc1), "eclass2": str(loc2)}
         # make a shadowed file to verify it's not seen
-        (loc2 / 'eclass1.eclass').touch()
+        (loc2 / "eclass1.eclass").touch()

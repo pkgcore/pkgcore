@@ -26,10 +26,16 @@ class MutatedPkg(wrapper):
         return getattr(self._raw_pkg, attr)
 
     def __repr__(self):
-        return '<%s pkg=%r overrides=%r @%#8x>' % (
-            self.__class__.__name__, self._raw_pkg, tuple(self._overrides),
-            id(self))
+        return "<%s pkg=%r overrides=%r @%#8x>" % (
+            self.__class__.__name__,
+            self._raw_pkg,
+            tuple(self._overrides),
+            id(self),
+        )
 
     def __str__(self):
-        return '%s(%s, overrides=%s)' % \
-            (self.__class__.__name__, self._raw_pkg, tuple(self._overrides))
+        return "%s(%s, overrides=%s)" % (
+            self.__class__.__name__,
+            self._raw_pkg,
+            tuple(self._overrides),
+        )

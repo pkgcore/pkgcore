@@ -17,7 +17,7 @@ from ..package.errors import InvalidDependency
 
 
 class FileList:
-    pkgcore_config_type = ConfigHint({'location': 'str'}, typename='pkgset')
+    pkgcore_config_type = ConfigHint({"location": "str"}, typename="pkgset")
     error_on_subsets = True
 
     def __init__(self, location, gid=os_data.portage_gid, mode=0o644):
@@ -36,12 +36,15 @@ class FileList:
                 elif x.startswith("@"):
                     if self.error_on_subsets:
                         raise ValueError(
-                            "set %s isn't a valid atom in pkgset %r" %
-                            (x, self.path))
+                            "set %s isn't a valid atom in pkgset %r" % (x, self.path)
+                        )
                     logger.warning(
                         "set item %r found in pkgset %r: it will be "
                         "wiped on update since portage/pkgcore store set items "
-                        "in a separate way", x[1:], self.path)
+                        "in a separate way",
+                        x[1:],
+                        self.path,
+                    )
                     continue
                 s.add(atom(x))
         except InvalidDependency as e:
@@ -78,11 +81,11 @@ class FileList:
 
 class WorldFile(FileList):
     """Set of packages contained in the world file."""
-    pkgcore_config_type = ConfigHint(typename='pkgset')
+
+    pkgcore_config_type = ConfigHint(typename="pkgset")
     error_on_subsets = False
 
-    def __init__(self, location=const.WORLD_FILE,
-                 gid=os_data.portage_gid, mode=0o644):
+    def __init__(self, location=const.WORLD_FILE, gid=os_data.portage_gid, mode=0o644):
         FileList.__init__(self, location, gid=gid, mode=mode)
 
     def add(self, atom_inst):
@@ -94,7 +97,7 @@ class WorldFile(FileList):
     def _modify(self, atom_inst, func):
         if atom_inst.slot:
             for slot in atom_inst.slot:
-                if slot == '0':
+                if slot == "0":
                     new_atom_inst = atom(atom_inst.key)
                 else:
                     new_atom_inst = atom(atom_inst.key + ":" + slot)

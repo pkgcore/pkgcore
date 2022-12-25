@@ -11,21 +11,22 @@ def assert_uri(obj, uri):
 
 
 class TestFetchable:
-
     def test_init(self):
-        o = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
+        o = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf": 1})
         assert o.filename == "dar"
         assert_uri(o.uri, ["asdf"])
-        assert o.chksums == {"asdf":1}
+        assert o.chksums == {"asdf": 1}
 
     def test_eq_ne(self):
-        o1 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
+        o1 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf": 1})
         assert o1 == o1
-        o2 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
+        o2 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf": 1})
         assert o1 == o2
-        assert o1 != fetch.fetchable("dar1", uri=["asdf"], chksums={"asdf":1})
-        assert o1 != fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf":1})
-        assert o1 != fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf":1, "foon":1})
+        assert o1 != fetch.fetchable("dar1", uri=["asdf"], chksums={"asdf": 1})
+        assert o1 != fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf": 1})
+        assert o1 != fetch.fetchable(
+            "dar", uri=["asdf1"], chksums={"asdf": 1, "foon": 1}
+        )
 
 
 class TestMirror:
@@ -53,8 +54,8 @@ class TestMirror:
         assert mirror[1] == self.default_mirrors[1]
 
     def test_eq_ne(self, mirror):
-        assert mirror == self.kls(self.default_mirrors, 'fork')
-        assert mirror != self.kls(self.default_mirrors + ['http://fark'], 'fork')
+        assert mirror == self.kls(self.default_mirrors, "fork")
+        assert mirror != self.kls(self.default_mirrors + ["http://fark"], "fork")
 
 
 class TestDefaultMirror(TestMirror):
@@ -63,7 +64,6 @@ class TestDefaultMirror(TestMirror):
 
 
 class Test_uri_list:
-
     @pytest.fixture
     def uril(self):
         return fetch.uri_list("cows")
@@ -86,21 +86,18 @@ class Test_uri_list:
         uril.add_mirror(mirror)
         assert list(uril) == ["me/cows", "WI/cows"]
         uril.add_mirror(mirror, "foon/boon")
-        assert_uri(uril,
-            ["me/cows", "WI/cows", "me/foon/boon", "WI/foon/boon"])
+        assert_uri(uril, ["me/cows", "WI/cows", "me/foon/boon", "WI/foon/boon"])
 
     def test_uris(self, uril):
         uril.add_uri("blar")
         assert_uri(uril, ["blar"])
 
     def test_combined(self, uril):
-        l = ["blarn", "me/cows", "WI/cows", "madison",
-            "belleville/cows", "verona/cows"]
+        l = ["blarn", "me/cows", "WI/cows", "madison", "belleville/cows", "verona/cows"]
         uril.add_uri("blarn")
         uril.add_mirror(fetch.mirror(["me", "WI"], "asdf"))
         uril.add_uri("madison")
-        uril.add_mirror(fetch.default_mirror(
-            ["belleville", "verona"], "foon"))
+        uril.add_mirror(fetch.default_mirror(["belleville", "verona"], "foon"))
         assert_uri(uril, l)
 
     def test_nonzero(self):

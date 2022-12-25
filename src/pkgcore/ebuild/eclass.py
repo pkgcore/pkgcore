@@ -26,7 +26,7 @@ class AttrDict(ImmutableDict):
             object.__getattribute__(self, name)
         except AttributeError as e:
             try:
-                return object.__getattribute__(self, '_dict')[name]
+                return object.__getattribute__(self, "_dict")[name]
             except KeyError:
                 raise e
 
@@ -41,7 +41,7 @@ def _rst_header(char, text, leading=False, newline=False):
     if leading:
         data = [sep] + data
     if newline:
-        data.append('')
+        data.append("")
     return data
 
 
@@ -71,18 +71,21 @@ class ParseEclassDoc:
     def __init__(self, tags):
         self.tags = tags
         # regex matching all known tags for the eclass doc block
-        self._block_tags_re = re.compile(rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)')
+        self._block_tags_re = re.compile(
+            rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)'
+        )
         # regex matching @CODE tags
-        self._code_tag = re.compile(r'^\s*@CODE\s*$')
+        self._code_tag = re.compile(r"^\s*@CODE\s*$")
         # regex matching @SUBSECTION tags
-        self._subsection_tag = re.compile(r'^\s*@SUBSECTION (?P<title>.+)$')
+        self._subsection_tag = re.compile(r"^\s*@SUBSECTION (?P<title>.+)$")
 
     def _tag_bool(self, block, tag, lineno):
         """Parse boolean tags."""
         try:
             args = next(x for x in block if x)
             logger.warning(
-                f'{repr(tag)}, line {lineno}: tag takes no args, got {repr(args)}')
+                f"{repr(tag)}, line {lineno}: tag takes no args, got {repr(args)}"
+            )
         except StopIteration:
             pass
         return True
@@ -90,9 +93,9 @@ class ParseEclassDoc:
     def _tag_inline_arg(self, block, tag, lineno):
         """Parse tags with inline argument."""
         if not block[0]:
-            logger.warning(f'{repr(tag)}, line {lineno}: missing inline arg')
+            logger.warning(f"{repr(tag)}, line {lineno}: missing inline arg")
         elif len(block) > 1:
-            logger.warning(f'{repr(tag)}, line {lineno}: non-inline arg')
+            logger.warning(f"{repr(tag)}, line {lineno}: non-inline arg")
         return block[0]
 
     def _tag_inline_list(self, block, tag, lineno):
@@ -103,9 +106,9 @@ class ParseEclassDoc:
     def _tag_multiline_args(self, block, tag, lineno):
         """Parse tags with multiline arguments."""
         if block[0]:
-            logger.warning(f'{repr(tag)}, line {lineno}: invalid inline arg')
+            logger.warning(f"{repr(tag)}, line {lineno}: invalid inline arg")
         if not block[1:]:
-            logger.warning(f'{repr(tag)}, line {lineno}: missing args')
+            logger.warning(f"{repr(tag)}, line {lineno}: missing args")
         return tuple(block[1:])
 
     def _tag_multiline_str(self, block, tag, lineno):
@@ -115,31 +118,31 @@ class ParseEclassDoc:
             return None
 
         # use literal blocks for all multiline text
-        data = ['::', '\n\n']
+        data = ["::", "\n\n"]
 
         for i, line in enumerate(lines, 1):
             if self._code_tag.match(line):
                 continue
             elif mo := self._subsection_tag.match(line):
-                header = _rst_header('~', mo.group('title'))
-                data.extend(f'{x}\n' for x in header)
-                data.extend(['::', '\n\n'])
+                header = _rst_header("~", mo.group("title"))
+                data.extend(f"{x}\n" for x in header)
+                data.extend(["::", "\n\n"])
             elif line:
-                data.append(f'  {line}\n')
+                data.append(f"  {line}\n")
             else:
-                data.append('\n')
+                data.append("\n")
 
-        return ''.join(data).rstrip('\n')
+        return "".join(data).rstrip("\n")
 
     def _tag_multiline_rst(self, block, tag, lineno):
         """Parse tags with multiline rST formatting."""
         lines = self._tag_multiline_args(block, tag, lineno)
-        return ''.join(lines).rstrip('\n')
+        return "".join(lines).rstrip("\n")
 
     def _tag_deprecated(self, block, tag, lineno):
         """Parse deprecated tags."""
         arg = self._tag_inline_arg(block, tag, lineno)
-        return True if arg.lower() == 'none' else arg
+        return True if arg.lower() == "none" else arg
 
     @klass.jit_attr
     def _required(self):
@@ -156,8 +159,11 @@ class ParseEclassDoc:
         variables = []
         # use no-op to fake a pipeline so pipeline specific vars are defined
         p = subprocess.run(
-            ['bash', '-c', ':; compgen -A variable'],
-            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
+            ["bash", "-c", ":; compgen -A variable"],
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            encoding="utf8",
+        )
         if p.returncode == 0:
             variables = p.stdout.splitlines()
         return frozenset(variables)
@@ -176,10 +182,10 @@ class ParseEclassDoc:
 
         # split eclass doc block into separate blocks by tag
         for i, line in enumerate(lines):
-            if (mo := self._block_tags_re.match(line)):
-                tag = mo.group('tag')
+            if mo := self._block_tags_re.match(line):
+                tag = mo.group("tag")
                 missing_tags.discard(tag)
-                value = mo.group('value').strip()
+                value = mo.group("value").strip()
                 blocks.append((tag, line_ind + i, [value]))
             else:
                 blocks[-1][-1].append(line)
@@ -191,10 +197,9 @@ class ParseEclassDoc:
 
         # check if any required tags are missing
         if missing_tags:
-            missing_tags_str = ', '.join(map(repr, missing_tags))
+            missing_tags_str = ", ".join(map(repr, missing_tags))
             s = pluralism(missing_tags)
-            logger.warning(
-                f'{repr(lines[0])}: missing tag{s}: {missing_tags_str}')
+            logger.warning(f"{repr(lines[0])}: missing tag{s}: {missing_tags_str}")
 
         return AttrDict(data)
 
@@ -202,21 +207,21 @@ class ParseEclassDoc:
 class EclassBlock(ParseEclassDoc):
     """ECLASS doc block."""
 
-    tag = '@ECLASS:'
+    tag = "@ECLASS:"
 
     def __init__(self):
         tags = {
-            '@ECLASS:': ('name', True, self._tag_inline_arg, None),
-            '@VCSURL:': ('vcsurl', False, self._tag_inline_arg, None),
-            '@BLURB:': ('blurb', True, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
-            '@PROVIDES:': ('raw_provides', False, self._tag_inline_list, ()),
-            '@MAINTAINER:': ('maintainers', True, self._tag_multiline_args, None),
-            '@AUTHOR:': ('authors', False, self._tag_multiline_args, None),
-            '@BUGREPORTS:': ('bugreports', False, self._tag_multiline_str, None),
-            '@DESCRIPTION:': ('description', False, self._tag_multiline_str, None),
-            '@EXAMPLE:': ('example', False, self._tag_multiline_str, None),
-            '@SUPPORTED_EAPIS:': ('supported_eapis', False, self._supported_eapis, ()),
+            "@ECLASS:": ("name", True, self._tag_inline_arg, None),
+            "@VCSURL:": ("vcsurl", False, self._tag_inline_arg, None),
+            "@BLURB:": ("blurb", True, self._tag_inline_arg, None),
+            "@DEPRECATED:": ("deprecated", False, self._tag_deprecated, False),
+            "@PROVIDES:": ("raw_provides", False, self._tag_inline_list, ()),
+            "@MAINTAINER:": ("maintainers", True, self._tag_multiline_args, None),
+            "@AUTHOR:": ("authors", False, self._tag_multiline_args, None),
+            "@BUGREPORTS:": ("bugreports", False, self._tag_multiline_str, None),
+            "@DESCRIPTION:": ("description", False, self._tag_multiline_str, None),
+            "@EXAMPLE:": ("example", False, self._tag_multiline_str, None),
+            "@SUPPORTED_EAPIS:": ("supported_eapis", False, self._supported_eapis, ()),
         }
         super().__init__(tags)
 
@@ -228,30 +233,31 @@ class EclassBlock(ParseEclassDoc):
         unknown = set(eapis) - self._known_eapis
         if unknown:
             s = pluralism(unknown)
-            unknown_str = ' '.join(sorted(unknown))
+            unknown_str = " ".join(sorted(unknown))
             logger.warning(
-                f'{repr(tag)}, line {lineno}: unknown EAPI{s}: {unknown_str}')
+                f"{repr(tag)}, line {lineno}: unknown EAPI{s}: {unknown_str}"
+            )
         return OrderedSet(eapis)
 
 
 class EclassVarBlock(ParseEclassDoc):
     """ECLASS_VARIABLE doc block."""
 
-    tag = '@ECLASS_VARIABLE:'
-    key = 'variables'
+    tag = "@ECLASS_VARIABLE:"
+    key = "variables"
     default = True
 
     def __init__(self):
         tags = {
-            '@ECLASS_VARIABLE:': ('name', True, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
-            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
-            '@INTERNAL': ('internal', False, self._tag_bool, False),
-            '@REQUIRED': ('required', False, self._tag_bool, False),
-            '@PRE_INHERIT': ('pre_inherit', False, self._tag_bool, False),
-            '@USER_VARIABLE': ('user_variable', False, self._tag_bool, False),
-            '@OUTPUT_VARIABLE': ('output_variable', False, self._tag_bool, False),
-            '@DESCRIPTION:': ('description', True, self._tag_multiline_str, None),
+            "@ECLASS_VARIABLE:": ("name", True, self._tag_inline_arg, None),
+            "@DEPRECATED:": ("deprecated", False, self._tag_deprecated, False),
+            "@DEFAULT_UNSET": ("default_unset", False, self._tag_bool, False),
+            "@INTERNAL": ("internal", False, self._tag_bool, False),
+            "@REQUIRED": ("required", False, self._tag_bool, False),
+            "@PRE_INHERIT": ("pre_inherit", False, self._tag_bool, False),
+            "@USER_VARIABLE": ("user_variable", False, self._tag_bool, False),
+            "@OUTPUT_VARIABLE": ("output_variable", False, self._tag_bool, False),
+            "@DESCRIPTION:": ("description", True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
 
@@ -260,48 +266,50 @@ class EclassVarBlock(ParseEclassDoc):
 class EclassVarBlockCompat(ParseEclassDoc):
     """ECLASS-VARIABLE doc block."""
 
-    tag = '@ECLASS-VARIABLE:'
-    key = 'variables'
+    tag = "@ECLASS-VARIABLE:"
+    key = "variables"
     default = True
 
     def __init__(self):
         tags = {
-            '@ECLASS-VARIABLE:': ('name', True, self._eclass_variable, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
-            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
-            '@INTERNAL': ('internal', False, self._tag_bool, False),
-            '@REQUIRED': ('required', False, self._tag_bool, False),
-            '@PRE_INHERIT': ('pre_inherit', False, self._tag_bool, False),
-            '@USER_VARIABLE': ('user_variable', False, self._tag_bool, False),
-            '@OUTPUT_VARIABLE': ('output_variable', False, self._tag_bool, False),
-            '@DESCRIPTION:': ('description', True, self._tag_multiline_str, None),
+            "@ECLASS-VARIABLE:": ("name", True, self._eclass_variable, None),
+            "@DEPRECATED:": ("deprecated", False, self._tag_deprecated, False),
+            "@DEFAULT_UNSET": ("default_unset", False, self._tag_bool, False),
+            "@INTERNAL": ("internal", False, self._tag_bool, False),
+            "@REQUIRED": ("required", False, self._tag_bool, False),
+            "@PRE_INHERIT": ("pre_inherit", False, self._tag_bool, False),
+            "@USER_VARIABLE": ("user_variable", False, self._tag_bool, False),
+            "@OUTPUT_VARIABLE": ("output_variable", False, self._tag_bool, False),
+            "@DESCRIPTION:": ("description", True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
 
     def _eclass_variable(self, block, tag, lineno):
         """Parse @ECLASS-VARIABLE tag."""
-        logger.warning(f"{repr(tag)}, line {lineno}: deprecated, use '@ECLASS_VARIABLE' instead")
+        logger.warning(
+            f"{repr(tag)}, line {lineno}: deprecated, use '@ECLASS_VARIABLE' instead"
+        )
         return self._tag_inline_arg(block, tag, lineno)
 
 
 class EclassFuncBlock(ParseEclassDoc):
     """FUNCTION doc block."""
 
-    tag = '@FUNCTION:'
-    key = 'functions'
+    tag = "@FUNCTION:"
+    key = "functions"
     default = True
 
     def __init__(self):
         tags = {
-            '@FUNCTION:': ('name', True, self._tag_inline_arg, None),
-            '@RETURN:': ('returns', False, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
-            '@INTERNAL': ('internal', False, self._tag_bool, False),
-            '@MAINTAINER:': ('maintainers', False, self._tag_multiline_args, None),
-            '@DESCRIPTION:': ('description', False, self._tag_multiline_str, None),
+            "@FUNCTION:": ("name", True, self._tag_inline_arg, None),
+            "@RETURN:": ("returns", False, self._tag_inline_arg, None),
+            "@DEPRECATED:": ("deprecated", False, self._tag_deprecated, False),
+            "@INTERNAL": ("internal", False, self._tag_bool, False),
+            "@MAINTAINER:": ("maintainers", False, self._tag_multiline_args, None),
+            "@DESCRIPTION:": ("description", False, self._tag_multiline_str, None),
             # TODO: The devmanual states this is required, but disabling for now since
             # many phase override functions don't document usage.
-            '@USAGE:': ('usage', False, self._usage, None),
+            "@USAGE:": ("usage", False, self._usage, None),
         }
         super().__init__(tags)
 
@@ -311,37 +319,40 @@ class EclassFuncBlock(ParseEclassDoc):
         Empty usage is allowed for functions with no arguments.
         """
         if len(block) > 1:
-            logger.warning(f'{repr(tag)}, line {lineno}: non-inline arg')
+            logger.warning(f"{repr(tag)}, line {lineno}: non-inline arg")
         return block[0]
 
     def parse(self, *args):
         data = super().parse(*args)
         if not (data.returns or data.description):
-            logger.warning(f"'{self.tag}:{data.name}', @RETURN or @DESCRIPTION required")
+            logger.warning(
+                f"'{self.tag}:{data.name}', @RETURN or @DESCRIPTION required"
+            )
         return data
 
 
 class EclassFuncVarBlock(ParseEclassDoc):
     """VARIABLE doc block."""
 
-    tag = '@VARIABLE:'
-    key = 'function_variables'
+    tag = "@VARIABLE:"
+    key = "function_variables"
     default = True
 
     def __init__(self):
         tags = {
-            '@VARIABLE:': ('name', True, self._tag_inline_arg, None),
-            '@DEPRECATED:': ('deprecated', False, self._tag_deprecated, False),
-            '@DEFAULT_UNSET': ('default_unset', False, self._tag_bool, False),
-            '@INTERNAL': ('internal', False, self._tag_bool, False),
-            '@REQUIRED': ('required', False, self._tag_bool, False),
-            '@DESCRIPTION:': ('description', True, self._tag_multiline_str, None),
+            "@VARIABLE:": ("name", True, self._tag_inline_arg, None),
+            "@DEPRECATED:": ("deprecated", False, self._tag_deprecated, False),
+            "@DEFAULT_UNSET": ("default_unset", False, self._tag_bool, False),
+            "@INTERNAL": ("internal", False, self._tag_bool, False),
+            "@REQUIRED": ("required", False, self._tag_bool, False),
+            "@DESCRIPTION:": ("description", True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
 
 
 _eclass_blocks_re = re.compile(
-    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)')
+    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)'
+)
 
 
 class EclassDoc(AttrDict):
@@ -355,9 +366,9 @@ class EclassDoc(AttrDict):
         # parse eclass doc
         data = self.parse(path)
 
-        data['provides'] = None
+        data["provides"] = None
         if repo is not None:
-            data['provides'] = self._get_provides(data['raw_provides'], repo)
+            data["provides"] = self._get_provides(data["raw_provides"], repo)
 
         # inject full lists of exported funcs and vars
         if sourced:
@@ -384,24 +395,32 @@ class EclassDoc(AttrDict):
         # TODO: support this via pkgcore's ebd
         # source eclass to determine PROPERTIES
         p = subprocess.run(
-            ['env', '-i', 'bash', '-c',
-                f'source {shlex.quote(path)}; '
-                f'compgen -A function; '
+            [
+                "env",
+                "-i",
+                "bash",
+                "-c",
+                f"source {shlex.quote(path)}; "
+                f"compgen -A function; "
                 f'echo "#"; '
-                f'compgen -A variable; '
+                f"compgen -A variable; "
                 f'echo "#"; '
-                f'echo ${{PROPERTIES}}'],
-            stderr=subprocess.DEVNULL, stdout=subprocess.PIPE, encoding='utf8')
+                f"echo ${{PROPERTIES}}",
+            ],
+            stderr=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            encoding="utf8",
+        )
         if p.returncode == 0:
-            eclass_obj = ParseEclassDoc.blocks['@ECLASS:']
-            funcs, variables, properties = p.stdout.split('#\n')
-            data['_exported_funcs'] = tuple(funcs.split())
-            data['_exported_vars'] = tuple(
-                x for x in variables.split()
-                if x not in eclass_obj.bash_env_vars
+            eclass_obj = ParseEclassDoc.blocks["@ECLASS:"]
+            funcs, variables, properties = p.stdout.split("#\n")
+            data["_exported_funcs"] = tuple(funcs.split())
+            data["_exported_vars"] = tuple(
+                x for x in variables.split() if x not in eclass_obj.bash_env_vars
             )
-            data['_properties'] = conditionals.DepSet.parse(
-                properties, str, operators={}, attr='PROPERTIES')
+            data["_properties"] = conditionals.DepSet.parse(
+                properties, str, operators={}, attr="PROPERTIES"
+            )
         return data
 
     @property
@@ -415,13 +434,13 @@ class EclassDoc(AttrDict):
         # include all internal tagged functions
         s = {x.name for x in self.functions if x.internal}
         # and all exported, underscore-prefixed functions
-        s.update(x for x in self._dict.get('_exported_funcs', ()) if x.startswith('_'))
+        s.update(x for x in self._dict.get("_exported_funcs", ()) if x.startswith("_"))
         return frozenset(s)
 
     @property
     def exported_function_names(self):
         """Set of all exported function names in the eclass."""
-        return frozenset(self._dict.get('_exported_funcs', ()))
+        return frozenset(self._dict.get("_exported_funcs", ()))
 
     @property
     def variable_names(self):
@@ -434,7 +453,7 @@ class EclassDoc(AttrDict):
         # include all internal tagged variables
         s = {x.name for x in self.variables if x.internal}
         # and all exported, underscore-prefixed variables
-        s.update(x for x in self._dict.get('_exported_vars', ()) if x.startswith('_'))
+        s.update(x for x in self._dict.get("_exported_vars", ()) if x.startswith("_"))
         return frozenset(s)
 
     @property
@@ -444,7 +463,7 @@ class EclassDoc(AttrDict):
         Ignores variables that start with underscores since
         it's assumed they are private.
         """
-        return frozenset(self._dict.get('_exported_vars', ()))
+        return frozenset(self._dict.get("_exported_vars", ()))
 
     @property
     def function_variable_names(self):
@@ -454,7 +473,7 @@ class EclassDoc(AttrDict):
     @property
     def live(self):
         """Eclass implements functionality to support a version control system."""
-        return 'live' in self._dict.get('_properties', ())
+        return "live" in self._dict.get("_properties", ())
 
     @staticmethod
     def parse(path):
@@ -466,18 +485,18 @@ class EclassDoc(AttrDict):
             line_ind = 0
 
             while line_ind < len(lines):
-                if (mo := _eclass_blocks_re.match(lines[line_ind])):
+                if mo := _eclass_blocks_re.match(lines[line_ind]):
                     # Isolate identified doc block by pulling all following
                     # lines with a matching prefix.
-                    prefix = mo.group('prefix')
-                    tag = mo.group('tag')
+                    prefix = mo.group("prefix")
+                    tag = mo.group("tag")
                     block = []
                     block_start = line_ind + 1
                     while line_ind < len(lines):
                         line = lines[line_ind]
                         if not line.startswith(prefix):
                             break
-                        line = line[len(prefix) + 1:]
+                        line = line[len(prefix) + 1 :]
                         block.append(line)
                         line_ind += 1
                     blocks.append((tag, block, block_start))
@@ -485,17 +504,23 @@ class EclassDoc(AttrDict):
 
         # set default fields
         data = {}
-        data.update(ParseEclassDoc.blocks['@ECLASS:'].defaults)
+        data.update(ParseEclassDoc.blocks["@ECLASS:"].defaults)
         for block_obj in ParseEclassDoc.blocks.values():
             if block_obj.default:
                 data[block_obj.key] = OrderedSet()
-        data.update({block.key: OrderedSet() for block in ParseEclassDoc.blocks.values() if block.default})
+        data.update(
+            {
+                block.key: OrderedSet()
+                for block in ParseEclassDoc.blocks.values()
+                if block.default
+            }
+        )
 
         # @ECLASS block must exist and be first in eclasses
         if not blocks:
             logger.error("'@ECLASS:' block missing")
             return data
-        elif blocks[0][0] != '@ECLASS:':
+        elif blocks[0][0] != "@ECLASS:":
             logger.warning("'@ECLASS:' block not first")
 
         # track duplicate tags
@@ -509,21 +534,22 @@ class EclassDoc(AttrDict):
             if block_obj.key is None:
                 # main @ECLASS block
                 if duplicates[tag]:
-                    logger.warning(
-                        f"'@ECLASS:', line {block_start}: duplicate block")
+                    logger.warning(f"'@ECLASS:', line {block_start}: duplicate block")
                 duplicates[tag] = True
                 # verify name is correct
                 file_name = os.path.basename(path)
                 if block_data.name != file_name:
                     logger.warning(
-                        f"'@ECLASS:' invalid name {block_data.name!r} (should be {file_name!r})")
+                        f"'@ECLASS:' invalid name {block_data.name!r} (should be {file_name!r})"
+                    )
                 data.update(block_data)
             else:
                 # item block
-                name = block_data['name']
+                name = block_data["name"]
                 if name in duplicates[tag]:
                     logger.warning(
-                        f'{repr(block[0])}, line {block_start}: duplicate block')
+                        f"{repr(block[0])}, line {block_start}: duplicate block"
+                    )
                 duplicates[tag].add(name)
                 data[block_obj.key].add(block_data)
 
@@ -532,106 +558,108 @@ class EclassDoc(AttrDict):
     def to_rst(self):
         """Convert eclassdoc object to reStructuredText."""
         if self.name is None:
-            raise ValueError('eclass lacking doc support')
+            raise ValueError("eclass lacking doc support")
 
         _header_only = partial(_rst_header, newline=True)
 
-        rst = _header_only('=', self.name, leading=True)
+        rst = _header_only("=", self.name, leading=True)
         if self.blurb:
-            rst.extend(_header_only('-', self.blurb, leading=True))
+            rst.extend(_header_only("-", self.blurb, leading=True))
 
         if self.description:
-            rst.extend(_rst_header('-', 'Description'))
+            rst.extend(_rst_header("-", "Description"))
             rst.append(self.description)
-            rst.append('')
+            rst.append("")
         if self.deprecated:
-            rst.extend(_rst_header('-', 'Deprecated'))
+            rst.extend(_rst_header("-", "Deprecated"))
             if isinstance(self.deprecated, bool):
-                replacement = 'none'
+                replacement = "none"
             else:
                 replacement = self.deprecated
-            rst.append(f'Replacement: {replacement}')
-            rst.append('')
+            rst.append(f"Replacement: {replacement}")
+            rst.append("")
         if self.supported_eapis:
-            rst.extend(_rst_header('-', 'Supported EAPIs'))
-            rst.append(' '.join(self.supported_eapis))
-            rst.append('')
+            rst.extend(_rst_header("-", "Supported EAPIs"))
+            rst.append(" ".join(self.supported_eapis))
+            rst.append("")
         if self.raw_provides:
-            rst.extend(_rst_header('-', 'Transitively Provided Eclasses'))
-            rst.append(' '.join(self.raw_provides))
-            rst.append('')
+            rst.extend(_rst_header("-", "Transitively Provided Eclasses"))
+            rst.append(" ".join(self.raw_provides))
+            rst.append("")
         if self.example:
-            rst.extend(_rst_header('-', 'Example'))
+            rst.extend(_rst_header("-", "Example"))
             rst.append(self.example)
-            rst.append('')
+            rst.append("")
 
         if external_funcs := [x for x in self.functions if not x.internal]:
-            rst.extend(_header_only('-', 'Functions'))
+            rst.extend(_header_only("-", "Functions"))
             for func in external_funcs:
                 header = [func.name]
                 if func.usage:
                     header.append(func.usage)
-                rst.extend(_rst_header('~', ' '.join(header)))
+                rst.extend(_rst_header("~", " ".join(header)))
                 if func.description:
                     rst.append(func.description)
                 if func.returns:
                     if func.description:
-                        rst.append('')
-                    rst.append(f'Return value: {func.returns}')
-                rst.append('')
+                        rst.append("")
+                    rst.append(f"Return value: {func.returns}")
+                rst.append("")
         if external_vars := [x for x in self.variables if not x.internal]:
-            rst.extend(_header_only('-', 'Variables'))
+            rst.extend(_header_only("-", "Variables"))
             for var in external_vars:
-                vartype = ''
+                vartype = ""
                 if var.required:
-                    vartype += ' (REQUIRED)'
+                    vartype += " (REQUIRED)"
                 if var.pre_inherit:
-                    vartype += ' (SET BEFORE INHERIT)'
+                    vartype += " (SET BEFORE INHERIT)"
                 if var.user_variable:
-                    vartype += ' (USER VARIABLE)'
+                    vartype += " (USER VARIABLE)"
                 if var.output_variable:
-                    vartype += ' (OUTPUT VARIABLE)'
+                    vartype += " (OUTPUT VARIABLE)"
 
-                rst.extend(_rst_header('~', var.name + vartype))
+                rst.extend(_rst_header("~", var.name + vartype))
                 if var.description:
                     rst.append(var.description)
-                rst.append('')
+                rst.append("")
         if external_func_vars := [x for x in self.function_variables if not x.internal]:
-            rst.extend(_header_only('-', 'Function Variables'))
+            rst.extend(_header_only("-", "Function Variables"))
             for var in external_func_vars:
-                vartype = ''
+                vartype = ""
                 if var.required:
-                    vartype += ' (REQUIRED)'
+                    vartype += " (REQUIRED)"
 
-                rst.extend(_rst_header('~', var.name + vartype))
+                rst.extend(_rst_header("~", var.name + vartype))
                 if var.description:
                     rst.append(var.description)
-                rst.append('')
+                rst.append("")
 
         if self.authors:
-            rst.extend(_rst_header('-', 'Authors'))
-            rst.append('\n'.join(f'| {x}' for x in self.authors))
-            rst.append('')
+            rst.extend(_rst_header("-", "Authors"))
+            rst.append("\n".join(f"| {x}" for x in self.authors))
+            rst.append("")
         if self.maintainers:
-            rst.extend(_rst_header('-', 'Maintainers'))
-            rst.append('\n'.join(f'| {x}' for x in self.maintainers))
-            rst.append('')
+            rst.extend(_rst_header("-", "Maintainers"))
+            rst.append("\n".join(f"| {x}" for x in self.maintainers))
+            rst.append("")
         if self.bugreports:
-            rst.extend(_rst_header('-', 'Bug Reports'))
+            rst.extend(_rst_header("-", "Bug Reports"))
             rst.append(self.bugreports)
-            rst.append('')
+            rst.append("")
 
-        return '\n'.join(rst)
+        return "\n".join(rst)
 
     def _to_docutils(self, writer):
         """Convert eclassdoc object using docutils."""
         from docutils.core import publish_string
+
         return publish_string(
-            source=self.to_rst(), writer=writer,
+            source=self.to_rst(),
+            writer=writer,
             settings_overrides={
-                'input_encoding': 'unicode',
-                'output_encoding': 'unicode',
-            }
+                "input_encoding": "unicode",
+                "output_encoding": "unicode",
+            },
         )
 
     def to_man(self):
@@ -639,17 +667,17 @@ class EclassDoc(AttrDict):
         from docutils.writers import manpage
 
         man_data = {
-            'manual_section': '5',
-            'manual_group': 'eclass-manpages',
-            'date': datetime.utcnow().strftime('%Y-%m-%d'),
-            'version': 'Gentoo Linux',
+            "manual_section": "5",
+            "manual_group": "eclass-manpages",
+            "date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "version": "Gentoo Linux",
         }
         if self.blurb:
-            man_data['subtitle'] = self.blurb
+            man_data["subtitle"] = self.blurb
 
         # add pkgcore version to header comment
-        pkgcore_version = get_version(__title__, __file__).split(' --')[0]
-        header_comment = f'\nCreated by {pkgcore_version}.'
+        pkgcore_version = get_version(__title__, __file__).split(" --")[0]
+        header_comment = f"\nCreated by {pkgcore_version}."
 
         class Translator(manpage.Translator):
             """Override docutils man page metadata defaults."""
@@ -667,4 +695,5 @@ class EclassDoc(AttrDict):
     def to_html(self):
         """Convert eclassdoc object to an HTML 5 document."""
         from docutils.writers import html5_polyglot
+
         return self._to_docutils(html5_polyglot.Writer())

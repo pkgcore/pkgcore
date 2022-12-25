@@ -23,13 +23,13 @@ def _write_manifest(handle, chf, filename, chksums):
     handle.write("%s %s %i" % (chf.upper(), filename, size))
     for chf in sorted(chksums):
         handle.write(" %s %s" % (chf.upper(), get_handler(chf).long2str(chksums[chf])))
-    handle.write('\n')
+    handle.write("\n")
 
 
 def convert_chksums(iterable):
     for chf, sum in iterable:
         chf = chf.lower()
-        if chf == 'size':
+        if chf == "size":
             # explicit size entries are stupid, format has implicit size
             continue
         else:
@@ -61,20 +61,21 @@ def parse_manifest(source, ignore_gpg=True):
             d = types.get(line[0])
             if d is None:
                 raise errors.ParseChksumError(
-                    source, f"unknown manifest type: {line[0]}: {line!r}")
+                    source, f"unknown manifest type: {line[0]}: {line!r}"
+                )
             if len(line) % 2 != 1:
                 raise errors.ParseChksumError(
                     source,
                     "manifest 2 entry doesn't have right "
-                    "number of tokens, %i: %r" %
-                    (len(line), line))
+                    "number of tokens, %i: %r" % (len(line), line),
+                )
             chf_types.update(line[3::2])
             # this is a trick to do pairwise collapsing;
             # [size, 1] becomes [(size, 1)]
             i = iter(line[3:])
             d[line[1]] = [("size", int(line[2]))] + list(convert_chksums(zip(i, i)))
     except (IndexError, ValueError):
-        raise errors.ParseChksumError(source, 'invalid data format')
+        raise errors.ParseChksumError(source, "invalid data format")
     finally:
         if f is not None and f.close:
             f.close()
@@ -86,7 +87,6 @@ def parse_manifest(source, ignore_gpg=True):
 
 
 class Manifest:
-
     def __init__(self, path, enforce_gpg=False, thin=False, allow_missing=False):
         self.path = path
         self.thin = thin
@@ -107,7 +107,7 @@ class Manifest:
             # recreate cpv from manifest path
             catpn = os.sep.join(self.path.split(os.sep)[-3:-1])
             pkg = cpv.UnversionedCPV(catpn)
-            raise errors.MetadataException(pkg, 'manifest', str(e))
+            raise errors.MetadataException(pkg, "manifest", str(e))
         self._dist, self._aux, self._ebuild, self._misc = data
         self._sourced = True
 
@@ -126,37 +126,45 @@ class Manifest:
         excludes = frozenset(["CVS", ".svn", "Manifest"])
         aux, ebuild, misc = {}, {}, {}
         if not self.thin:
-            filesdir = '/files/'
-            for obj in iter_scan('/', offset=os.path.dirname(self.path), chksum_types=chfs):
+            filesdir = "/files/"
+            for obj in iter_scan(
+                "/", offset=os.path.dirname(self.path), chksum_types=chfs
+            ):
                 if not obj.is_reg:
                     continue
                 pathname = obj.location
-                if excludes.intersection(pathname.split('/')):
+                if excludes.intersection(pathname.split("/")):
                     continue
                 if pathname.startswith(filesdir):
                     d = aux
-                    pathname = pathname[len(filesdir):]
-                elif obj.dirname == '/':
+                    pathname = pathname[len(filesdir) :]
+                elif obj.dirname == "/":
                     pathname = pathname[1:]
-                    if obj.location[-7:] == '.ebuild':
+                    if obj.location[-7:] == ".ebuild":
                         d = ebuild
                     else:
                         d = misc
                 else:
-                    raise Exception("Unexpected directory found in %r; %r" % (self.path, obj.dirname))
+                    raise Exception(
+                        "Unexpected directory found in %r; %r"
+                        % (self.path, obj.dirname)
+                    )
                 d[pathname] = dict(obj.chksums)
 
-        handle = open(self.path, 'w')
+        handle = open(self.path, "w")
 
         # write it in alphabetical order; aux gets flushed now.
         for path, chksums in sorted(aux.items(), key=_key_sort):
-            _write_manifest(handle, 'AUX', path, chksums)
+            _write_manifest(handle, "AUX", path, chksums)
 
         # next dist...
-        for fetchable in sorted(fetchables, key=operator.attrgetter('filename')):
+        for fetchable in sorted(fetchables, key=operator.attrgetter("filename")):
             _write_manifest(
-                handle, 'DIST', os.path.basename(fetchable.filename),
-                dict(fetchable.chksums))
+                handle,
+                "DIST",
+                os.path.basename(fetchable.filename),
+                dict(fetchable.chksums),
+            )
 
         # then ebuild and misc
         for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):

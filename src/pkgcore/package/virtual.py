@@ -23,8 +23,8 @@ class package(metadata.package):
 
     def __init__(self, repo, provider, *a, **kwds):
         super().__init__(repo, *a, **kwds)
-        object.__setattr__(self, 'provider', provider)
-        object.__setattr__(self, 'data', {})
+        object.__setattr__(self, "provider", provider)
+        object.__setattr__(self, "data", {})
 
     def __getattr__(self, key):
         val = None

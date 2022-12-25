@@ -22,7 +22,10 @@ class BlockModification(ModificationError):
 
     def __str__(self):
         return "Modification was blocked by %s: %s" % (
-            self.trigger.__class__.__name__, self.msg)
+            self.trigger.__class__.__name__,
+            self.msg,
+        )
+
 
 class TriggerUnknownCset(ModificationError):
     """Trigger's required content set isn't known"""
@@ -31,5 +34,6 @@ class TriggerUnknownCset(ModificationError):
         if not isinstance(csets, (tuple, list)):
             csets = (csets,)
         super().__init__(
-            f"{self.__class__}: trigger {trigger!r} unknown cset: {csets!r}")
+            f"{self.__class__}: trigger {trigger!r} unknown cset: {csets!r}"
+        )
         self.trigger, self.csets = trigger, csets

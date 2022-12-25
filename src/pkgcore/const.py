@@ -38,20 +38,24 @@ def _GET_CONST(attr, default_value):
 
 # determine XDG compatible paths
 for xdg_var, var_name, fallback_dir in (
-        ('XDG_CONFIG_HOME', 'USER_CONFIG_PATH', '~/.config'),
-        ('XDG_CACHE_HOME', 'USER_CACHE_PATH', '~/.cache'),
-        ('XDG_DATA_HOME', 'USER_DATA_PATH', '~/.local/share')):
-    setattr(_module, var_name,
-            os.environ.get(xdg_var, osp.join(osp.expanduser(fallback_dir), __title__)))
+    ("XDG_CONFIG_HOME", "USER_CONFIG_PATH", "~/.config"),
+    ("XDG_CACHE_HOME", "USER_CACHE_PATH", "~/.cache"),
+    ("XDG_DATA_HOME", "USER_DATA_PATH", "~/.local/share"),
+):
+    setattr(
+        _module,
+        var_name,
+        os.environ.get(xdg_var, osp.join(osp.expanduser(fallback_dir), __title__)),
+    )
 
-USER_CONF_FILE = osp.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcore.conf')
-SYSTEM_CONF_FILE = '/etc/pkgcore/pkgcore.conf'
-SYSTEM_CACHE_PATH = '/var/cache/pkgcore'
+USER_CONF_FILE = osp.join(getattr(_module, "USER_CONFIG_PATH"), "pkgcore.conf")
+SYSTEM_CONF_FILE = "/etc/pkgcore/pkgcore.conf"
+SYSTEM_CACHE_PATH = "/var/cache/pkgcore"
 
-REPO_PATH = _GET_CONST('REPO_PATH', _reporoot)
-DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data/share/pkgcore')
-LIBDIR_PATH = _GET_CONST('LIBDIR_PATH', '%(REPO_PATH)s/data/lib/pkgcore')
-EBD_PATH = _GET_CONST('EBD_PATH', '%(LIBDIR_PATH)s/ebd')
-CONFIG_PATH = _GET_CONST('CONFIG_PATH', '%(DATA_PATH)s/config')
-PATH_FORCED_PREPEND = _GET_CONST('INJECTED_BIN_PATH', ('%(REPO_PATH)s/bin',))
-CP_BINARY = process.find_binary('cp', fallback='/bin/cp')
+REPO_PATH = _GET_CONST("REPO_PATH", _reporoot)
+DATA_PATH = _GET_CONST("DATA_PATH", "%(REPO_PATH)s/data/share/pkgcore")
+LIBDIR_PATH = _GET_CONST("LIBDIR_PATH", "%(REPO_PATH)s/data/lib/pkgcore")
+EBD_PATH = _GET_CONST("EBD_PATH", "%(LIBDIR_PATH)s/ebd")
+CONFIG_PATH = _GET_CONST("CONFIG_PATH", "%(DATA_PATH)s/config")
+PATH_FORCED_PREPEND = _GET_CONST("INJECTED_BIN_PATH", ("%(REPO_PATH)s/bin",))
+CP_BINARY = process.find_binary("cp", fallback="/bin/cp")

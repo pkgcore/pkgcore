@@ -1,4 +1,7 @@
-__all__ = ("rsync_syncer", "rsync_timestamp_syncer",)
+__all__ = (
+    "rsync_syncer",
+    "rsync_timestamp_syncer",
+)
 
 import os
 import socket
@@ -13,23 +16,23 @@ from . import base
 
 class rsync_syncer(base.ExternalSyncer):
 
-    default_excludes = ['/distfiles', '/local', '/packages']
+    default_excludes = ["/distfiles", "/local", "/packages"]
     default_includes = []
     default_conn_timeout = 15
     default_opts = [
-        '--recursive',
-        '--delete',
-        '--delete-delay',
-        '--perms',
-        '--times',
-        '--compress',
-        '--force',
-        '--links',
-        '--safe-links',
-        '--stats',
-        '--human-readable',
-        '--timeout=180',
-        '--whole-file', # this one probably shouldn't be a default
+        "--recursive",
+        "--delete",
+        "--delete-delay",
+        "--perms",
+        "--times",
+        "--compress",
+        "--force",
+        "--links",
+        "--safe-links",
+        "--stats",
+        "--human-readable",
+        "--timeout=180",
+        "--whole-file",  # this one probably shouldn't be a default
     ]
 
     default_retries = 5
@@ -37,8 +40,7 @@ class rsync_syncer(base.ExternalSyncer):
 
     @classmethod
     def _parse_uri(cls, raw_uri):
-        if not raw_uri.startswith("rsync://") and \
-                not raw_uri.startswith("rsync+"):
+        if not raw_uri.startswith("rsync://") and not raw_uri.startswith("rsync+"):
             raise base.UriError(raw_uri, "doesn't start with rsync:// nor rsync+")
 
         if raw_uri.startswith("rsync://"):
@@ -49,16 +51,37 @@ class rsync_syncer(base.ExternalSyncer):
         cls.require_binary(proto[0])
         return proto[0], f"rsync:{proto[1]}"
 
-    pkgcore_config_type = ConfigHint({
-        'basedir': 'str', 'uri': 'str', 'conn_timeout': 'str', 'usersync': 'bool',
-        'compress': 'bool', 'excludes': 'list', 'includes': 'list',
-        'retries': 'str', 'opts': 'list', 'extra_opts': 'list', 'proxy': 'str'},
-        typename='syncer')
+    pkgcore_config_type = ConfigHint(
+        {
+            "basedir": "str",
+            "uri": "str",
+            "conn_timeout": "str",
+            "usersync": "bool",
+            "compress": "bool",
+            "excludes": "list",
+            "includes": "list",
+            "retries": "str",
+            "opts": "list",
+            "extra_opts": "list",
+            "proxy": "str",
+        },
+        typename="syncer",
+    )
 
-    def __init__(self, basedir, uri, conn_timeout=default_conn_timeout,
-                 usersync=False, compress=False, excludes=(), includes=(),
-                 retries=default_retries, proxy=None,
-                 opts=(), extra_opts=()):
+    def __init__(
+        self,
+        basedir,
+        uri,
+        conn_timeout=default_conn_timeout,
+        usersync=False,
+        compress=False,
+        excludes=(),
+        includes=(),
+        retries=default_retries,
+        proxy=None,
+        opts=(),
+        extra_opts=(),
+    ):
         uri = uri.rstrip(os.path.sep) + os.path.sep
         self.rsh, uri = self._parse_uri(uri)
         super().__init__(basedir, uri, default_verbosity=1, usersync=usersync)
@@ -75,13 +98,13 @@ class rsync_syncer(base.ExternalSyncer):
         self.retries = int(retries)
         self.use_proxy = proxy is not None
         if self.use_proxy:
-            self.env['RSYNC_PROXY'] = proxy
+            self.env["RSYNC_PROXY"] = proxy
         self.is_ipv6 = "--ipv6" in self.opts or "-6" in self.opts
         self.is_ipv6 = self.is_ipv6 and socket.has_ipv6
 
     @staticmethod
     def parse_hostname(uri):
-        return uri[len("rsync://"):].split("@", 1)[-1].split("/", 1)[0]
+        return uri[len("rsync://") :].split("@", 1)[-1].split("/", 1)[0]
 
     def _get_ips(self):
         if self.use_proxy:
@@ -94,14 +117,16 @@ class rsync_syncer(base.ExternalSyncer):
             af_fam = socket.AF_INET6
         try:
             for ipaddr in socket.getaddrinfo(
-                    self.hostname, None, af_fam, socket.SOCK_STREAM):
+                self.hostname, None, af_fam, socket.SOCK_STREAM
+            ):
                 if ipaddr[0] == socket.AF_INET6:
                     yield f"[{ipaddr[4][0]}]"
                 else:
                     yield ipaddr[4][0]
         except OSError as e:
             raise base.SyncError(
-                f"DNS resolution failed for {self.hostname!r}: {e.strerror}")
+                f"DNS resolution failed for {self.hostname!r}: {e.strerror}"
+            )
 
     def _sync(self, verbosity, output_fd):
         fd_pipes = {1: output_fd, 2: output_fd}
@@ -114,14 +139,16 @@ class rsync_syncer(base.ExternalSyncer):
         if verbosity < 0:
             opts.append("--quiet")
         elif verbosity > 0:
-            opts.extend('-v' for x in range(verbosity))
+            opts.extend("-v" for x in range(verbosity))
 
         # zip limits to the shortest iterable
         ret = None
         for count, ip in zip(range(self.retries), self._get_ips()):
-            cmd = [self.binary_path,
-                 self.uri.replace(self.hostname, ip, 1),
-                 self.basedir] + opts
+            cmd = [
+                self.binary_path,
+                self.uri.replace(self.hostname, ip, 1),
+                self.basedir,
+            ] + opts
 
             ret = self._spawn(cmd, fd_pipes)
             if ret == 0:
@@ -130,9 +157,9 @@ class rsync_syncer(base.ExternalSyncer):
                 raise base.SyncError("rsync command syntax error: {' '.join(cmd)}")
             elif ret == 11:
                 raise base.SyncError("rsync ran out of disk space")
-           # need to do something here instead of just restarting...
-           # else:
-           #     print(ret)
+        # need to do something here instead of just restarting...
+        # else:
+        #     print(ret)
         raise base.SyncError("all attempts failed")
 
 
@@ -149,8 +176,8 @@ class _RsyncFileSyncer(rsync_syncer):
 class rsync_timestamp_syncer(rsync_syncer):
 
     forcable = True
-    forward_sync_delay = 25 * 60 # 25 minutes
-    negative_sync_delay = 60 * 60 # 60 minutes
+    forward_sync_delay = 25 * 60  # 25 minutes
+    negative_sync_delay = 60 * 60  # 60 minutes
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -165,7 +192,7 @@ class rsync_timestamp_syncer(rsync_syncer):
             path = pjoin(self.basedir, "metadata", "timestamp.chk")
         try:
             with open(path) as f:
-                date, offset = f.read().strip().rsplit('+', 1)
+                date, offset = f.read().strip().rsplit("+", 1)
             date = time.mktime(time.strptime(date, "%a, %d %b %Y %H:%M:%S "))
             # add the hour/minute offset
             date += int(offset[:2] * 60) + int(offset[2:])
@@ -190,7 +217,9 @@ class rsync_timestamp_syncer(rsync_syncer):
                     if not ret:
                         doit = True
                     else:
-                        delta = self.current_timestamp(timestamp_path) - self.last_timestamp
+                        delta = (
+                            self.current_timestamp(timestamp_path) - self.last_timestamp
+                        )
                         if delta >= 0:
                             doit = delta > self.forward_sync_delay
                         else:
@@ -210,8 +239,12 @@ class rsync_timestamp_syncer(rsync_syncer):
                     os.remove(timestamp_path)
                 else:
                     with open(timestamp_path, "w") as f:
-                        f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000",
-                                time.gmtime(self.last_timestamp)))
+                        f.write(
+                            time.strftime(
+                                "%a, %d %b %Y %H:%M:%S +0000",
+                                time.gmtime(self.last_timestamp),
+                            )
+                        )
             except EnvironmentError:
                 # don't care...
                 pass

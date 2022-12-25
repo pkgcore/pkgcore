@@ -1,7 +1,14 @@
 __all__ = (
-    "plan_state", "base_op_state", "add_op", "add_hardref_op",
-    "add_backref_op", "remove_op", "replace_op", "blocker_base_op",
-    "incref_forward_block_op", "decref_forward_block_op",
+    "plan_state",
+    "base_op_state",
+    "add_op",
+    "add_hardref_op",
+    "add_backref_op",
+    "remove_op",
+    "replace_op",
+    "blocker_base_op",
+    "incref_forward_block_op",
+    "decref_forward_block_op",
 )
 
 from snakeoil.containers import RefCountingSet
@@ -10,7 +17,6 @@ from .pigeonholes import PigeonHoledSlots
 
 
 class plan_state:
-
     def __init__(self):
         self.state = PigeonHoledSlots()
         self.plan = []
@@ -64,8 +70,7 @@ class plan_state:
         iterable = (x for x in self.plan if not x.internal)
         if return_livefs:
             return iterable
-        return (y for y in iterable
-            if not y.pkg.repo.livefs or y.desc == 'remove')
+        return (y for y in iterable if not y.pkg.repo.livefs or y.desc == "remove")
 
     def ops(self, livefs=False, only_real=False):
         i = self.iter_ops(livefs)
@@ -82,7 +87,6 @@ class plan_state:
 
 
 class ops_sequence:
-
     def __init__(self, sequence, is_livefs=True):
         self._ops = tuple(sequence)
         self.is_livefs = is_livefs
@@ -111,21 +115,25 @@ class base_op_state:
         self.force = force
 
     def __str__(self):
-        s = ''
+        s = ""
         if self.force:
-            s = ' forced'
+            s = " forced"
         return "%s: %s%s" % (self.desc, self.pkg, s)
 
     def __repr__(self):
-        return '<%s choices=%r pkg=%r force=%s @#%x>' % (
-            self.__class__.__name__, self.choices, self.pkg, self.force,
-            id(self))
+        return "<%s choices=%r pkg=%r force=%s @#%x>" % (
+            self.__class__.__name__,
+            self.choices,
+            self.pkg,
+            self.force,
+            id(self),
+        )
 
     def apply(self, plan):
-        raise NotImplemented(self, 'apply')
+        raise NotImplemented(self, "apply")
 
     def revert(self, plan):
-        raise NotImplemented(self, 'revert')
+        raise NotImplemented(self, "revert")
 
 
 class add_op(base_op_state):
@@ -147,7 +155,7 @@ class add_op(base_op_state):
 
 class add_hardref_op(base_op_state):
 
-    __slots__ = ('restriction',)
+    __slots__ = ("restriction",)
     desc = "hardref"
     internal = True
     force = True
@@ -244,21 +252,32 @@ class replace_op(base_op_state):
         if bool(l) != self.force_old:
             raise AssertionError(
                 "Internal error detected, unable to revert %s; got %s, "
-                "force_old=%s " % (self, l, self.force_old))
+                "force_old=%s " % (self, l, self.force_old)
+            )
         del plan.pkg_choices[self.pkg]
         plan.pkg_choices[self.old_pkg] = self.old_choices
         plan.vdb_filter.remove(self.old_pkg)
 
     def __str__(self):
-        s = ''
+        s = ""
         if self.force:
-            s = ' forced'
+            s = " forced"
         return "replace: %s with %s%s" % (self.old_pkg, self.pkg, s)
 
     def __repr__(self):
-        return '<%s old choices=%r new choices=%r old_pkg=%r new_pkg=%r ' \
-            'force=%s @#%x>' % (self.__class__.__name__, self.old_choices,
-            self.choices, self.old_pkg, self.pkg, self.force, id(self))
+        return (
+            "<%s old choices=%r new choices=%r old_pkg=%r new_pkg=%r "
+            "force=%s @#%x>"
+            % (
+                self.__class__.__name__,
+                self.old_choices,
+                self.choices,
+                self.old_pkg,
+                self.pkg,
+                self.force,
+                id(self),
+            )
+        )
 
 
 class blocker_base_op:
@@ -276,19 +295,27 @@ class blocker_base_op:
         self.blocker = blocker
 
     def __str__(self):
-        return "%s: key %s, %s from %s" % (self.__class__.__name__, self.key,
-            self.blocker, self.choices)
+        return "%s: key %s, %s from %s" % (
+            self.__class__.__name__,
+            self.key,
+            self.blocker,
+            self.choices,
+        )
 
     def __repr__(self):
-        return '<%s choices=%r blocker=%r key=%r @#%x>' % (
-            self.__class__.__name__, self.choices, self.blocker, self.key,
-            id(self))
+        return "<%s choices=%r blocker=%r key=%r @#%x>" % (
+            self.__class__.__name__,
+            self.choices,
+            self.blocker,
+            self.key,
+            id(self),
+        )
 
     def apply(self, plan):
-        raise NotImplementedError(self, 'apply')
+        raise NotImplementedError(self, "apply")
 
     def revert(self, plan):
-        raise NotImplementedError(self, 'revert')
+        raise NotImplementedError(self, "revert")
 
 
 class incref_forward_block_op(blocker_base_op):
@@ -301,8 +328,7 @@ class incref_forward_block_op(blocker_base_op):
             l = plan.state.add_limiter(self.blocker, self.key)
         else:
             l = []
-        plan.rev_blockers.setdefault(self.choices, []).append(
-             (self.blocker, self.key))
+        plan.rev_blockers.setdefault(self.choices, []).append((self.blocker, self.key))
         plan.blockers_refcnt.add(self.blocker)
         return l
 
@@ -330,8 +356,7 @@ class decref_forward_block_op(blocker_base_op):
             del plan.rev_blockers[self.choices]
 
     def revert(self, plan):
-        plan.rev_blockers.setdefault(self.choices, []).append(
-            (self.blocker, self.key))
+        plan.rev_blockers.setdefault(self.choices, []).append((self.blocker, self.key))
         if self.blocker not in plan.blockers_refcnt:
             plan.state.add_limiter(self.blocker, self.key)
         plan.blockers_refcnt.add(self.blocker)

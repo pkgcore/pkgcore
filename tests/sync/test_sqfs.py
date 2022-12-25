@@ -6,9 +6,10 @@ from pkgcore.sync.sqfs import sqfs_syncer
 
 
 class TestSqfsSyncer:
-
     def test_uri_parse(self):
-        assert sqfs_syncer.parse_uri("sqfs+http://repo.lzo.sqfs") == "http://repo.lzo.sqfs"
+        assert (
+            sqfs_syncer.parse_uri("sqfs+http://repo.lzo.sqfs") == "http://repo.lzo.sqfs"
+        )
 
         # missing actual URI protocol
         with pytest.raises(base.UriError):
@@ -24,12 +25,12 @@ class TestSqfsSyncer:
 
 @pytest.mark_network
 class TestSqfsSyncerReal:
-
     def test_sync(self, tmp_path):
-        path = tmp_path / 'repo'
+        path = tmp_path / "repo"
         syncer = sqfs_syncer(
-                str(path),
-                "sqfs+http://distfiles.gentoo.org/snapshots/squashfs/gentoo-current.lzo.sqfs")
+            str(path),
+            "sqfs+http://distfiles.gentoo.org/snapshots/squashfs/gentoo-current.lzo.sqfs",
+        )
         assert syncer.sync()
         sqfs = os.path.join(syncer.basedir, syncer.basename)
         assert os.path.exists(sqfs)

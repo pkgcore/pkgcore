@@ -19,15 +19,15 @@ class database(fs_template.FsBased):
 
     # TODO: different way of passing in default auxdbkeys and location
     pkgcore_config_type = ConfigHint(
-        {'readonly': 'bool', 'location': 'str', 'label': 'str',
-         'auxdbkeys': 'list'},
-        required=['location'],
-        positional=['location'],
-        typename='cache')
+        {"readonly": "bool", "location": "str", "label": "str", "auxdbkeys": "list"},
+        required=["location"],
+        positional=["location"],
+        typename="cache",
+    )
 
     autocommits = True
     mtime_in_entry = True
-    eclass_chf_types = ('eclassdir', 'mtime')
+    eclass_chf_types = ("eclassdir", "mtime")
 
     def _getitem(self, cpv):
         path = pjoin(self.location, cpv)
@@ -59,14 +59,15 @@ class database(fs_template.FsBased):
     def _setitem(self, cpv, values):
         # might seem weird, but we rely on the trailing +1; this
         # makes it behave properly for any cache depth (including no depth)
-        s = cpv.rfind('/') + 1
-        fp = pjoin(self.location, cpv[:s], f'.update.{os.getpid()}.{cpv[s:]}')
+        s = cpv.rfind("/") + 1
+        fp = pjoin(self.location, cpv[:s], f".update.{os.getpid()}.{cpv[s:]}")
         try:
             myf = open(fp, "w", 32768)
         except FileNotFoundError:
             if not self._ensure_dirs(cpv):
                 raise errors.CacheCorruption(
-                    cpv, f'error creating directory for {fp!r}')
+                    cpv, f"error creating directory for {fp!r}"
+                )
             try:
                 myf = open(fp, "w", 32768)
             except EnvironmentError as e:
@@ -76,9 +77,9 @@ class database(fs_template.FsBased):
 
         if self._mtime_used:
             if not self.mtime_in_entry:
-                mtime = values['_mtime_']
+                mtime = values["_mtime_"]
         for k, v in sorted(values.items()):
-            myf.writelines(f'{k}={v}\n')
+            myf.writelines(f"{k}={v}\n")
 
         myf.close()
         if self._mtime_used and not self.mtime_in_entry:
@@ -132,15 +133,15 @@ class database(fs_template.FsBased):
                 if stat.S_ISDIR(st.st_mode):
                     dirs.append(p)
                     continue
-                yield p[len_base+1:]
+                yield p[len_base + 1 :]
 
 
 class md5_cache(database):
 
-    chf_type = 'md5'
-    eclass_chf_types = ('md5',)
+    chf_type = "md5"
+    eclass_chf_types = ("md5",)
     chf_base = 16
 
     def __init__(self, location, **config):
-        location = pjoin(location, 'metadata', 'md5-cache')
+        location = pjoin(location, "metadata", "md5-cache")
         super().__init__(location, **config)

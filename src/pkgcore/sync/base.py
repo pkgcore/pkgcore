@@ -1,7 +1,14 @@
 __all__ = (
-    "SyncError", "UriError", "MissingLocalUser", "MissingBinary",
-    "Syncer", "ExternalSyncer", "VcsSyncer",
-    "GenericSyncer", "DisabledSyncer", "AutodetectSyncer",
+    "SyncError",
+    "UriError",
+    "MissingLocalUser",
+    "MissingBinary",
+    "Syncer",
+    "ExternalSyncer",
+    "VcsSyncer",
+    "GenericSyncer",
+    "DisabledSyncer",
+    "AutodetectSyncer",
 )
 
 import os
@@ -21,7 +28,6 @@ class SyncError(PkgcoreUserException):
 
 
 class UriError(SyncError):
-
     def __init__(self, uri, msg):
         self.uri = uri
         self.msg = msg
@@ -29,7 +35,6 @@ class UriError(SyncError):
 
 
 class PathError(SyncError):
-
     def __init__(self, path, msg):
         self.path = path.rstrip(os.path.sep)
         self.msg = msg
@@ -37,7 +42,6 @@ class PathError(SyncError):
 
 
 class MissingLocalUser(SyncError):
-
     def __init__(self, uri, msg):
         self.uri = uri
         self.msg = msg
@@ -45,7 +49,6 @@ class MissingLocalUser(SyncError):
 
 
 class MissingBinary(SyncError):
-
     def __init__(self, binary, msg):
         self.binary = binary
         self.msg = msg
@@ -64,10 +67,11 @@ class Syncer:
     disabled = False
 
     pkgcore_config_type = ConfigHint(
-        {'path': 'str', 'uri': 'str', 'opts': 'str', 'usersync': 'bool'},
-        typename='syncer')
+        {"path": "str", "uri": "str", "opts": "str", "usersync": "bool"},
+        typename="syncer",
+    )
 
-    def __init__(self, path, uri, default_verbosity=0, usersync=False, opts=''):
+    def __init__(self, path, uri, default_verbosity=0, usersync=False, opts=""):
         self.verbosity = default_verbosity
         self.usersync = usersync
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
@@ -109,7 +113,7 @@ class Syncer:
         try:
             if uri[1].startswith("@"):
                 uri[1] = uri[1][1:]
-            if '/' in uri[0] or ':' in uri[0]:
+            if "/" in uri[0] or ":" in uri[0]:
                 proto = uri[0].split("/", 1)
                 proto[1] = proto[1].lstrip("/")
                 uri[0] = proto[1]
@@ -153,15 +157,13 @@ class ExternalSyncer(Syncer):
     binary = None
 
     # external env settings passed through to syncing commands
-    env_whitelist = (
-        'SSH_AUTH_SOCK',
-    )
+    env_whitelist = ("SSH_AUTH_SOCK",)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.env = {v: os.environ[v] for v in self.env_whitelist if v in os.environ}
 
-        if not hasattr(self, 'binary_path'):
+        if not hasattr(self, "binary_path"):
             self.binary_path = self.require_binary(self.binary)
 
     @staticmethod
@@ -175,22 +177,24 @@ class ExternalSyncer(Syncer):
 
     @classmethod
     def _plugin_disabled_check(cls):
-        disabled = getattr(cls, '_disabled', None)
+        disabled = getattr(cls, "_disabled", None)
         if disabled is None:
-            path = getattr(cls, 'binary_path', None)
+            path = getattr(cls, "binary_path", None)
             if path is None:
                 if cls.binary is None:
                     disabled = cls._disabled = True
                 else:
                     disabled = cls._disabled = (
-                        cls.require_binary(cls.binary, fatal=False) is None)
+                        cls.require_binary(cls.binary, fatal=False) is None
+                    )
             else:
                 disabled = cls._disabled = os.path.exists(path)
         return disabled
 
     def _spawn(self, command, pipes, **kwargs):
         return process.spawn.spawn(
-            command, fd_pipes=pipes, uid=self.uid, gid=self.gid, env=self.env, **kwargs)
+            command, fd_pipes=pipes, uid=self.uid, gid=self.gid, env=self.env, **kwargs
+        )
 
     @staticmethod
     def _rewrite_uri_from_stat(path, uri):
@@ -205,7 +209,6 @@ class ExternalSyncer(Syncer):
 
 
 class VcsSyncer(ExternalSyncer):
-
     def _sync(self, verbosity, output_fd):
         try:
             st = os.stat(self.basedir)
@@ -222,12 +225,11 @@ class VcsSyncer(ExternalSyncer):
 
         # we assume syncers support -v and -q for verbose and quiet output
         if verbosity < 0:
-            command.append('-q')
+            command.append("-q")
         elif verbosity > 0:
-            command.append('-' + 'v' * verbosity)
+            command.append("-" + "v" * verbosity)
 
-        ret = self._spawn(command, pipes={1: output_fd, 2: output_fd, 0: 0},
-                          cwd=chdir)
+        ret = self._spawn(command, pipes={1: output_fd, 2: output_fd, 0: 0}, cwd=chdir)
         return ret == 0
 
     def _initial_pull(self):
@@ -238,27 +240,30 @@ class VcsSyncer(ExternalSyncer):
 
 
 def _load_syncers():
-    syncers = ('bzr', 'cvs', 'darcs', 'git', 'git_svn', 'hg', 'sqfs', 'svn', 'tar')
+    syncers = ("bzr", "cvs", "darcs", "git", "git_svn", "hg", "sqfs", "svn", "tar")
     for syncer in syncers:
         try:
-            syncer_cls: type[Syncer] = getattr(import_module(f'pkgcore.sync.{syncer}'), f'{syncer}_syncer')
+            syncer_cls: type[Syncer] = getattr(
+                import_module(f"pkgcore.sync.{syncer}"), f"{syncer}_syncer"
+            )
         except (ImportError, AttributeError):
             continue
         if syncer_cls.disabled:
             continue
-        if (f := getattr(syncer_cls, '_plugin_disabled_check', None)) is not None and f():
+        if (
+            f := getattr(syncer_cls, "_plugin_disabled_check", None)
+        ) is not None and f():
             continue
         yield syncer_cls
 
 
 @configurable(
-    {'basedir': 'str', 'uri': 'str', 'usersync': 'bool', 'opts': 'str'},
-    typename='syncer')
+    {"basedir": "str", "uri": "str", "usersync": "bool", "opts": "str"},
+    typename="syncer",
+)
 def GenericSyncer(basedir, uri, **kwargs):
     """Syncer using the plugin system to find a syncer based on uri."""
-    plugins = [
-        (plug.supports_uri(uri), plug)
-        for plug in _load_syncers()]
+    plugins = [(plug.supports_uri(uri), plug) for plug in _load_syncers()]
     plugins.sort(key=lambda x: x[0])
     if not plugins or plugins[-1][0] <= 0:
         raise UriError(uri, "no known syncer support")
@@ -271,15 +276,15 @@ class DisabledSyncer(Syncer):
     disabled = True
 
     def __init__(self, path, *args, **kwargs):
-        super().__init__(path, uri='')
+        super().__init__(path, uri="")
 
 
-@configurable({'basedir': 'str', 'usersync': 'bool'}, typename='syncer')
+@configurable({"basedir": "str", "usersync": "bool"}, typename="syncer")
 def DisabledSync(basedir, *args, **kwargs):
     return DisabledSyncer(basedir)
 
 
-@configurable({'basedir': 'str', 'usersync': 'bool'}, typename='syncer')
+@configurable({"basedir": "str", "usersync": "bool"}, typename="syncer")
 def AutodetectSyncer(basedir, **kwargs):
     for syncer_cls in _load_syncers():
         if args := syncer_cls.is_usable_on_filepath(basedir):

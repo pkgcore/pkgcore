@@ -9,8 +9,7 @@ from ..package import base
 from . import atom
 from .errors import InvalidCPV
 
-demand_compile_regexp(
-    'suffix_regexp', '^(alpha|beta|rc|pre|p)(\\d*)$')
+demand_compile_regexp("suffix_regexp", "^(alpha|beta|rc|pre|p)(\\d*)$")
 
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
@@ -18,19 +17,20 @@ suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 # to prevent version chunks from showing up in the package
 
 demand_compile_regexp(
-    'isvalid_version_re',
-    r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$")
+    "isvalid_version_re",
+    r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$",
+)
 
 demand_compile_regexp(
-    'isvalid_cat_re', r"^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
+    "isvalid_cat_re", r"^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$"
+)
 
 # empty string is fine, means a -- was encounter.
-demand_compile_regexp(
-    '_pkg_re', r"^[a-zA-Z0-9+_]+$")
+demand_compile_regexp("_pkg_re", r"^[a-zA-Z0-9+_]+$")
 
 
 def isvalid_pkg_name(chunks):
-    if not chunks[0] or chunks[0][0] == '+':
+    if not chunks[0] or chunks[0][0] == "+":
         # this means a leading -; additionally, '+asdf' is disallowed
         return False
     # all remaining chunks can either be empty (meaning multiple
@@ -46,7 +46,7 @@ def isvalid_pkg_name(chunks):
 
 
 def isvalid_rev(s):
-    return s and s[0] == 'r' and s[1:].isdigit()
+    return s and s[0] == "r" and s[1:].isdigit()
 
 
 class Revision(UserString):
@@ -62,13 +62,13 @@ class Revision(UserString):
             try:
                 self._revint = int(self.data)
             except ValueError:
-                raise InvalidCPV(self.data, 'invalid revision')
+                raise InvalidCPV(self.data, "invalid revision")
         else:
             self._revint = 0
 
     def __str__(self):
         if not self.data:
-            return '0'
+            return "0"
         else:
             return self.data
 
@@ -204,13 +204,13 @@ def ver_cmp(ver1, rev1, ver2, rev2):
             val = suffix_value[match.group(1)]
             if val:
                 return cmp(0, val)
-            return cmp(0, int("0"+match.group(2)))
+            return cmp(0, int("0" + match.group(2)))
         if x == parts2_len:
             match = suffix_regexp.match(parts1[x])
             val = suffix_value[match.group(1)]
             if val:
                 return cmp(val, 0)
-            return cmp(int("0"+match.group(2)), 0)
+            return cmp(int("0" + match.group(2)), 0)
 
         # If the string values are equal, no need to parse them.
         # Continue on to the next.
@@ -229,7 +229,7 @@ def ver_cmp(ver1, rev1, ver2, rev2):
             return c
 
         # Otherwise use the digit as the basis for comparison.
-        c = cmp(int("0"+match1.group(2)), int("0"+match2.group(2)))
+        c = cmp(int("0" + match1.group(2)), int("0" + match2.group(2)))
         if c:
             return c
 
@@ -250,7 +250,15 @@ class CPV(base.base):
     :ivar unversioned_atom: atom matching all versions of this package
     """
 
-    __slots__ = ("cpvstr", "key", "category", "package", "version", "revision", "fullver")
+    __slots__ = (
+        "cpvstr",
+        "key",
+        "category",
+        "package",
+        "version",
+        "revision",
+        "fullver",
+    )
 
     def __init__(self, *args, versioned=None):
         """
@@ -271,7 +279,8 @@ class CPV(base.base):
             cpvstr = args[0]
             if versioned is None:
                 raise TypeError(
-                    f"single argument invocation requires versioned kwarg; {cpvstr!r}")
+                    f"single argument invocation requires versioned kwarg; {cpvstr!r}"
+                )
         elif l == 2:
             cpvstr = f"{args[0]}/{args[1]}"
             versioned = False
@@ -280,76 +289,84 @@ class CPV(base.base):
             versioned = True
         else:
             raise TypeError(
-                f"CPV takes 1 arg (cpvstr), 2 (cat, pkg), or 3 (cat, pkg, ver): got {args!r}")
+                f"CPV takes 1 arg (cpvstr), 2 (cat, pkg), or 3 (cat, pkg, ver): got {args!r}"
+            )
 
         try:
             category, pkgver = cpvstr.rsplit("/", 1)
         except ValueError:
             # occurs if the rsplit yields only one item
-            raise InvalidCPV(cpvstr, 'no package or version components')
+            raise InvalidCPV(cpvstr, "no package or version components")
         if not isvalid_cat_re.match(category):
-            raise InvalidCPV(cpvstr, 'invalid category name')
+            raise InvalidCPV(cpvstr, "invalid category name")
         sf = object.__setattr__
-        sf(self, 'category', category)
-        sf(self, 'cpvstr', cpvstr)
+        sf(self, "category", category)
+        sf(self, "cpvstr", cpvstr)
         pkg_chunks = pkgver.split("-")
         lpkg_chunks = len(pkg_chunks)
         if versioned:
             if lpkg_chunks == 1:
-                raise InvalidCPV(cpvstr, 'missing package version')
+                raise InvalidCPV(cpvstr, "missing package version")
             if isvalid_rev(pkg_chunks[-1]):
                 if lpkg_chunks < 3:
                     # needs at least ('pkg', 'ver', 'rev')
                     raise InvalidCPV(
-                        cpvstr, 'missing package name, version, and/or revision')
+                        cpvstr, "missing package name, version, and/or revision"
+                    )
                 rev = Revision(pkg_chunks.pop(-1)[1:])
                 if rev == 0:
                     # reset stored cpvstr to drop -r0+
-                    sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}")
-                elif rev[0] == '0':
+                    sf(self, "cpvstr", f"{category}/{'-'.join(pkg_chunks)}")
+                elif rev[0] == "0":
                     # reset stored cpvstr to drop leading zeroes from revision
-                    sf(self, 'cpvstr', f"{category}/{'-'.join(pkg_chunks)}-r{int(rev)}")
-                sf(self, 'revision', rev)
+                    sf(self, "cpvstr", f"{category}/{'-'.join(pkg_chunks)}-r{int(rev)}")
+                sf(self, "revision", rev)
             else:
-                sf(self, 'revision', Revision(''))
+                sf(self, "revision", Revision(""))
 
             if not isvalid_version_re.match(pkg_chunks[-1]):
                 raise InvalidCPV(cpvstr, f"invalid version '{pkg_chunks[-1]}'")
-            sf(self, 'version', pkg_chunks.pop(-1))
+            sf(self, "version", pkg_chunks.pop(-1))
             if self.revision:
-                sf(self, 'fullver', f"{self.version}-r{self.revision}")
+                sf(self, "fullver", f"{self.version}-r{self.revision}")
             else:
-                sf(self, 'fullver', self.version)
+                sf(self, "fullver", self.version)
 
             if not isvalid_pkg_name(pkg_chunks):
-                raise InvalidCPV(cpvstr, 'invalid package name')
-            sf(self, 'package', '-'.join(pkg_chunks))
-            sf(self, 'key', f"{category}/{self.package}")
+                raise InvalidCPV(cpvstr, "invalid package name")
+            sf(self, "package", "-".join(pkg_chunks))
+            sf(self, "key", f"{category}/{self.package}")
         else:
             if not isvalid_pkg_name(pkg_chunks):
-                raise InvalidCPV(cpvstr, 'invalid package name')
-            sf(self, 'revision', None)
-            sf(self, 'fullver', None)
-            sf(self, 'version', None)
-            sf(self, 'key', cpvstr)
-            sf(self, 'package', '-'.join(pkg_chunks))
+                raise InvalidCPV(cpvstr, "invalid package name")
+            sf(self, "revision", None)
+            sf(self, "fullver", None)
+            sf(self, "version", None)
+            sf(self, "key", cpvstr)
+            sf(self, "package", "-".join(pkg_chunks))
 
     def __hash__(self):
         return hash(self.cpvstr)
 
     def __repr__(self):
-        return '<%s cpvstr=%s @%#8x>' % (
-             self.__class__.__name__, getattr(self, 'cpvstr', None), id(self))
+        return "<%s cpvstr=%s @%#8x>" % (
+            self.__class__.__name__,
+            getattr(self, "cpvstr", None),
+            id(self),
+        )
 
     def __str__(self):
-        return getattr(self, 'cpvstr', 'None')
+        return getattr(self, "cpvstr", "None")
 
     def __eq__(self, other):
         try:
             if self.cpvstr == other.cpvstr:
                 return True
             if self.category == other.category and self.package == other.package:
-                return ver_cmp(self.version, self.revision, other.version, other.revision) == 0
+                return (
+                    ver_cmp(self.version, self.revision, other.version, other.revision)
+                    == 0
+                )
         except AttributeError:
             pass
         return False
@@ -361,7 +378,12 @@ class CPV(base.base):
         try:
             if self.category == other.category:
                 if self.package == other.package:
-                    return ver_cmp(self.version, self.revision, other.version, other.revision) < 0
+                    return (
+                        ver_cmp(
+                            self.version, self.revision, other.version, other.revision
+                        )
+                        < 0
+                    )
                 return self.package < other.package
             return self.category < other.category
         except AttributeError:
@@ -374,7 +396,12 @@ class CPV(base.base):
         try:
             if self.category == other.category:
                 if self.package == other.package:
-                    return ver_cmp(self.version, self.revision, other.version, other.revision) <= 0
+                    return (
+                        ver_cmp(
+                            self.version, self.revision, other.version, other.revision
+                        )
+                        <= 0
+                    )
                 return self.package < other.package
             return self.category < other.category
         except AttributeError:
@@ -387,7 +414,12 @@ class CPV(base.base):
         try:
             if self.category == other.category:
                 if self.package == other.package:
-                    return ver_cmp(self.version, self.revision, other.version, other.revision) > 0
+                    return (
+                        ver_cmp(
+                            self.version, self.revision, other.version, other.revision
+                        )
+                        > 0
+                    )
                 return self.package > other.package
             return self.category > other.category
         except AttributeError:
@@ -400,7 +432,12 @@ class CPV(base.base):
         try:
             if self.category == other.category:
                 if self.package == other.package:
-                    return ver_cmp(self.version, self.revision, other.version, other.revision) >= 0
+                    return (
+                        ver_cmp(
+                            self.version, self.revision, other.version, other.revision
+                        )
+                        >= 0
+                    )
                 return self.package > other.package
             return self.category > other.category
         except AttributeError:

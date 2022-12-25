@@ -8,15 +8,18 @@ from ...config.hint import ConfigHint
 
 
 class fake_domain:
-    pkgcore_config_type = ConfigHint(typename='domain')
+    pkgcore_config_type = ConfigHint(typename="domain")
 
     def __init__(self):
         pass
 
-default_domain = basics.HardCodedConfigSection({
-    'class': fake_domain,
-    'default': True,
-    })
+
+default_domain = basics.HardCodedConfigSection(
+    {
+        "class": fake_domain,
+        "default": True,
+    }
+)
 
 
 class ArgParseMixin(argparse_helpers.ArgParseMixin):
@@ -41,8 +44,8 @@ class ArgParseMixin(argparse_helpers.ArgParseMixin):
 
         args are passed to parse_args, keyword args are used as config keys.
         """
-        ns_kwargs = kwargs.pop('ns_kwargs', {})
-        namespace = kwargs.get('namespace', arghparse.Namespace(**ns_kwargs))
+        ns_kwargs = kwargs.pop("ns_kwargs", {})
+        namespace = kwargs.get("namespace", arghparse.Namespace(**ns_kwargs))
         if self.has_config:
             if kwargs.pop("suppress_domain", self.suppress_domain):
                 kwargs["default_domain"] = default_domain

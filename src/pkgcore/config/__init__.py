@@ -1,6 +1,6 @@
 """configuration subsystem"""
 
-__all__ = ('load_config',)
+__all__ = ("load_config",)
 
 # keep these imports as minimal as possible; access to
 # pkgcore.config isn't uncommon, thus don't trigger till
@@ -12,11 +12,16 @@ from .. import const
 from . import central, cparser
 
 
-def load_config(user_conf_file=const.USER_CONF_FILE,
-                system_conf_file=const.SYSTEM_CONF_FILE,
-                debug=False, prepend_sources=(),
-                skip_config_files=False, profile_override=None,
-                location=None, **kwargs):
+def load_config(
+    user_conf_file=const.USER_CONF_FILE,
+    system_conf_file=const.SYSTEM_CONF_FILE,
+    debug=False,
+    prepend_sources=(),
+    skip_config_files=False,
+    profile_override=None,
+    location=None,
+    **kwargs
+):
     """The main entry point for any code looking to use pkgcore.
 
     Args:
@@ -41,6 +46,10 @@ def load_config(user_conf_file=const.USER_CONF_FILE,
         else:
             # delay importing to avoid circular imports
             from pkgcore.ebuild.portage_conf import PortageConfig
-            configs.append(PortageConfig(
-                location=location, profile_override=profile_override, **kwargs))
+
+            configs.append(
+                PortageConfig(
+                    location=location, profile_override=profile_override, **kwargs
+                )
+            )
     return central.CompatConfigManager(central.ConfigManager(configs, debug=debug))

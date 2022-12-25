@@ -8,8 +8,9 @@ from . import boolean, packages, restriction
 
 
 def _is_package_instance(inst):
-    return (getattr(inst, "type", None) == restriction.package_type and not
-            isinstance(inst, boolean.base))
+    return getattr(inst, "type", None) == restriction.package_type and not isinstance(
+        inst, boolean.base
+    )
 
 
 def collect_package_restrictions(restrict, attrs=None, invert=False):
@@ -24,14 +25,11 @@ def collect_package_restrictions(restrict, attrs=None, invert=False):
     for r in restrict:
         if not isinstance(r, restriction.base):
             raise TypeError(
-                'restrict must be of a restriction.base, '
-                f'not {r.__class__.__class__}: {r!r}'
+                "restrict must be of a restriction.base, "
+                f"not {r.__class__.__class__}: {r!r}"
             )
     i = iflatten_func(restrict, _is_package_instance)
     if attrs is None:
         return i
     attrs = frozenset(attrs)
-    return (
-        r for r in i
-        if invert == attrs.isdisjoint(getattr(r, 'attrs', ()))
-    )
+    return (r for r in i if invert == attrs.isdisjoint(getattr(r, "attrs", ())))

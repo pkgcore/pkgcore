@@ -11,7 +11,7 @@ from snakeoil import chksum, compression
 from snakeoil.data_source import data_source, local_source
 from snakeoil.klass import alias_attr, jit_attr, jit_attr_named
 from snakeoil.mappings import DictMixin, StackedDict
-from snakeoil.osutils import access, listdir_dirs, listdir_files, pjoin
+from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
 
 from ..config.hint import ConfigHint
 from ..ebuild import ebd, ebuild_built
@@ -220,7 +220,7 @@ class tree(prototype.tree):
         self._versions_tmp_cache = {}
 
         # XXX rewrite this when snakeoil.osutils grows an access equivalent.
-        if not access(self.base, os.X_OK | os.R_OK):
+        if not os.access(self.base, os.X_OK | os.R_OK):
             # either it doesn't exist, or we don't have perms.
             if not os.path.exists(self.base):
                 raise errors.InitializationError(f"base {self.base!r} doesn't exist")

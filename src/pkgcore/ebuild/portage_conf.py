@@ -16,7 +16,7 @@ from collections import OrderedDict
 from snakeoil.bash import read_bash_dict
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.mappings import DictMixin, ImmutableDict
-from snakeoil.osutils import access, listdir_files, pjoin
+from snakeoil.osutils import listdir_files, pjoin
 
 from .. import const
 from .. import exceptions as base_errors
@@ -560,7 +560,7 @@ class PortageConfig(DictMixin):
 
         while not os.path.exists(cache_parent_dir):
             cache_parent_dir = os.path.dirname(cache_parent_dir)
-        readonly = (not access(cache_parent_dir, os.W_OK | os.X_OK))
+        readonly = (not os.access(cache_parent_dir, os.W_OK | os.X_OK))
 
         return basics.AutoConfigSection({
             'class': kls,

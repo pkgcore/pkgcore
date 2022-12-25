@@ -188,25 +188,25 @@ def load_property(
 class domain(config_domain):
 
     # XXX ouch, verify this crap and add defaults and stuff
-    _types = {
-        "profile": "ref:profile",
-        "repos": "lazy_refs:repo",
-        "vdb": "lazy_refs:repo",
-    }
-    for _thing in (
-        "root",
-        "config_dir",
-        "CHOST",
-        "CBUILD",
-        "CTARGET",
-        "CFLAGS",
-        "PATH",
-        "PORTAGE_TMPDIR",
-        "DISTCC_PATH",
-        "DISTCC_DIR",
-        "CCACHE_DIR",
-    ):
-        _types[_thing] = "str"
+    _types = dict.fromkeys(
+        (
+            "root",
+            "config_dir",
+            "CHOST",
+            "CBUILD",
+            "CTARGET",
+            "CFLAGS",
+            "PATH",
+            "PORTAGE_TMPDIR",
+            "DISTCC_PATH",
+            "DISTCC_DIR",
+            "CCACHE_DIR",
+        ),
+        "str",
+    )
+    _types["profile"] = "ref:profile"
+    _types["repos"] = "lazy_refs:repo"
+    _types["vdb"] = "lazy_refs:repo"
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
@@ -216,7 +216,7 @@ class domain(config_domain):
         allow_unknowns=True,
     )
 
-    del _types, _thing
+    del _types
 
     def __init__(
         self,

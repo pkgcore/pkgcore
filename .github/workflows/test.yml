@@ -72,3 +72,10 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         files: ./coverage.xml
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - uses: psf/black@stable

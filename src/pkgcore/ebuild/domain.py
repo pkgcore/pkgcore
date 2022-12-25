@@ -66,13 +66,45 @@ def package_masks(iterable):
             logger.warning(f"{path!r}, line {lineno}: parsing error: {e}")
 
 
-def package_keywords_splitter(iterable):
+def restriction_payload_splitter(iterable, post_process=lambda x: x):
     for line, lineno, path in iterable:
         v = line.split()
         try:
-            yield parse_match(v[0]), tuple(v[1:]), line, lineno, path
+            # TODO: expand this invocation to allow threading token level validation down.
+            # things like "is this a valid use flag?"
+            yield parse_match(v[0]), tuple(post_process(v[1:])), line, lineno, path
         except ParseError as e:
             logger.warning(f"{path!r}, line {lineno}: parsing error: {e}")
+
+
+def package_use_splitter(iterable):
+    """Parse package.use user configuration files
+
+    Basic syntax is <query> (?:-?use_f )* (?:USE_EXPAND: (?:flags)*)
+    IE, a restriction to match, use flags to turn on.  If a 'flag' ends in ':'
+    then it's considered a USE_EXPAND directive, and all that follow are values of that
+    USE_EXPAND target and should be expanded into their normalized/long form.
+    """
+
+    def f(tokens: list[str]):
+        i = iter(tokens)
+        for idx, x in enumerate(i):
+            if x.endswith(":"):
+                # we encountered `USE_EXPAND:` , thus all following tokens
+                # are values of that.
+                x = x.lower()[:-1]
+                l = tokens[0:idx]
+                for flag in i:
+                    if flag.startswith("-"):
+                        flag = f"-{x}_{flag[1:]}"
+                    else:
+                        flag = f"{x}_{flag}"
+                    l.append(flag)
+                return l
+        # if we made it here, there's no USE_EXPAND; thus just return the original sequence
+        return tokens
+
+    return restriction_payload_splitter(iterable, post_process=f)
 
 
 def package_env_splitter(basedir, iterable):
@@ -396,25 +428,25 @@ class domain(config_domain):
         return tuple(x[0] for x in data)
 
     # TODO: deprecated, remove in 0.11
-    @load_property("package.keywords", parse_func=package_keywords_splitter)
+    @load_property("package.keywords", parse_func=restriction_payload_splitter)
     def pkg_keywords(self, data, debug=False):
         if debug:
             return tuple(data)
         return tuple((x[0], stable_unique(x[1])) for x in data)
 
-    @load_property("package.accept_keywords", parse_func=package_keywords_splitter)
+    @load_property("package.accept_keywords", parse_func=restriction_payload_splitter)
     def pkg_accept_keywords(self, data, debug=False):
         if debug:
             return tuple(data)
         return tuple((x[0], stable_unique(x[1])) for x in data)
 
-    @load_property("package.license", parse_func=package_keywords_splitter)
+    @load_property("package.license", parse_func=restriction_payload_splitter)
     def pkg_licenses(self, data, debug=False):
         if debug:
             return tuple(data)
         return tuple((x[0], stable_unique(x[1])) for x in data)
 
-    @load_property("package.use", parse_func=package_keywords_splitter)
+    @load_property("package.use", parse_func=package_use_splitter)
     def pkg_use(self, data, debug=False):
         if debug:
             return tuple(data)

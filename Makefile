@@ -13,3 +13,7 @@ sdist wheel:
 clean:
 	$(RM) -r build/sphinx doc/api doc/generated dist
 	$(MAKE) -C data/lib/pkgcore/ebd clean
+
+.PHONY: format
+format:
+	$(PYTHON) -m black .

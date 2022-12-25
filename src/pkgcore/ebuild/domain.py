@@ -132,7 +132,8 @@ def generate_filter(masks, unmasks, *extra):
 def _read_config_file(path):
     """Read all the data files under a given path."""
     try:
-        for fs_obj in iter_scan(path, follow_symlinks=True):
+        # sort based on location by default; this is to ensure 00 is before 01, and before a
+        for fs_obj in sorted(iter_scan(path, follow_symlinks=True)):
             if not fs_obj.is_reg or "/." in fs_obj.location:
                 continue
             for lineno, line in iter_read_bash(

@@ -739,8 +739,10 @@ class EbuildProcessor:
         for key, val in sorted(env_dict.items()):
             if key in self._readonly_vars:
                 continue
-            if not key[0].isalpha():
-                raise KeyError(f"{key}: bash doesn't allow digits as the first char")
+            if not key[0].isalpha() and not key.startswith("_"):
+                raise KeyError(
+                    f"{key}: bash doesn't allow digits or _ as the first char"
+                )
             if not isinstance(val, (str, list, tuple)):
                 raise ValueError(
                     f"_generate_env_str was fed a bad value; key={key}, val={val}"

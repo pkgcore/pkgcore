@@ -153,7 +153,7 @@ class PortageConfig(DictMixin):
 
         self.root = kwargs.pop("root", make_conf.get("ROOT", "/"))
         gentoo_mirrors = [
-            x.rstrip("/") + "/distfiles"
+            f"{x.rstrip('/')}/distfiles"
             for x in make_conf.pop("GENTOO_MIRRORS", "").split()
         ]
 

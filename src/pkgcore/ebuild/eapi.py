@@ -12,10 +12,19 @@ from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
 
+LATEST_PMS_EAPI_VER = "8"
+
+
+def get_latest_PMS_eapi():
+    """return the latest PMS EAPI object known to this version of pkgcore"""
+    return get_eapi(LATEST_PMS_EAPI_VER)
+
+
 from ..log import logger
 from . import atom, const
 
 demand_compile_regexp("_valid_EAPI_regex", r"^[A-Za-z0-9_][A-Za-z0-9+_.-]*$")
+demand_compile_regexp("_valid_use_flag", r"^[A-Za-z0-9][A-Za-z0-9+_@-]*$")
 
 eapi_optionals = ImmutableDict(
     {
@@ -460,6 +469,10 @@ class EAPI(metaclass=klass.immutable_instance):
         d["PKGCORE_EAPI_INHERITS"] = " ".join(x._magic for x in self.inherits)
         d["EAPI"] = self._magic
         return ImmutableDict(d)
+
+    def is_valid_use_flag(self, s: str) -> bool:
+        """returns True if the flag is parsable under this EAPI"""
+        return _valid_use_flag.match(s) is not None
 
 
 def get_eapi(magic, suppress_unsupported=True):

@@ -52,6 +52,10 @@ eapi_optionals = ImmutableDict(
         "has_portdir": True,
         # Controls whether DESTTREE and INSDESTTREE are exported during src_install; see PMS.
         "has_desttree": True,
+        # Controls whether atoms support USE dependencies.
+        "has_use_deps": False,
+        # Controls wheter atoms support slot dependencies",
+        "has_slot_deps": False,
         # Controls whether ROOT, EROOT, D, and ED end with a trailing slash; see PMS.
         "trailing_slash": os.sep,
         # Controls whether SYSROOT, ESYSROOT, and BROOT are defined; see PMS.
@@ -105,6 +109,8 @@ eapi_optionals = ImmutableDict(
         "src_uri_renames": False,
         # Controls whether SRC_URI supports fetch+ and mirror+ prefixes.
         "src_uri_unrestrict": False,
+        # Controls whether strong blockers- hard deps of "things are broken after this merge" are supported for atom syntax.
+        "strong_blockers": False,
         # Controls whether or not use dependency atoms are able to control their enforced
         # value relative to another; standard use deps just enforce either on or off; EAPIs
         # supporting this allow syntax that can enforce (for example) X to be on if Y is on.
@@ -646,6 +652,7 @@ eapi1 = EAPI.register(
         eapi0.options,
         dict(
             iuse_defaults=True,
+            has_slot_deps=True,
         ),
     ),
     ebd_env_options=eapi0._ebd_env_options,
@@ -669,6 +676,8 @@ eapi2 = EAPI.register(
     optionals=_combine_dicts(
         eapi1.options,
         dict(
+            has_use_deps=True,
+            strong_blockers=True,
             doman_language_detect=True,
             transitive_use_atoms=True,
             src_uri_renames=True,

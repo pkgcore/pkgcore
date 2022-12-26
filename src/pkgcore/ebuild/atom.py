@@ -136,7 +136,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                         if not eapi_obj.options.has_use_dep_defaults:
                             raise errors.MalformedAtom(
                                 orig_atom,
-                                f"use dep defaults are not allowed in EAPI {eapi_obj}",
+                                f"use dep defaults are not allowed in EAPI {eapi}",
                             )
 
                         # use defaults.
@@ -202,9 +202,9 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                             slot_operator = "="
                             slot = slot[:-1]
                         slots = slot.split("/", 1)
-                elif eapi == "0":
+                elif not eapi_obj.options.has_slot_deps:
                     raise errors.MalformedAtom(
-                        orig_atom, "slot dependencies aren't allowed in EAPI 0"
+                        orig_atom, f"slot dependencies aren't allowed in EAPI {eapi}"
                     )
 
                 for chunk in slots:
@@ -245,7 +245,11 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             atom = atom[1:]
             # hackish/slow, but lstrip doesn't take a 'prune this many' arg
             # open to alternatives
-            if eapi not in ("0", "1") and atom.startswith("!"):
+            if atom.startswith("!"):
+                if not eapi_obj.options.strong_blockers:
+                    raise MalformedAtom(
+                        f"strong blockers are not supported in EAPI {eapi}"
+                    )
                 atom = atom[1:]
                 sf(self, "blocks_strongly", True)
             else:
@@ -274,17 +278,17 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             sf(self, "op", "")
         sf(self, "cpvstr", atom)
 
-        if eapi == "0":
-            for x in ("use", "slot"):
-                if getattr(self, x) is not None:
-                    raise errors.MalformedAtom(
-                        orig_atom, f"{x} atoms aren't supported for EAPI 0"
-                    )
-        elif eapi == "1":
-            if self.use is not None:
-                raise errors.MalformedAtom(
-                    orig_atom, "use atoms aren't supported for EAPI < 2"
-                )
+        if self.slot is not None and not eapi_obj.options.has_slot_deps:
+            raise errors.MalformedAtom(
+                orig_atom, f"{x} SLOT dep atoms aren't supported in EAPI {eapi}"
+            )
+
+        elif self.use is not None and not eapi_obj.options.has_use_deps:
+            raise errors.MalformedAtom(
+                orig_atom, "use atoms aren't supported for EAPI < 2"
+            )
+
+        # note that we're checking eapi, not eapi_obj.  eapi_obj defaults to latest PMS
         if eapi != "-1":
             if self.repo_id is not None:
                 raise errors.MalformedAtom(

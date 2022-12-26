@@ -132,7 +132,13 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                     elif x[0] == "-":
                         x = x[1:]
 
-                    if x[-1] == ")" and eapi not in ("0", "1", "2", "3"):
+                    if x[-1] == ")":
+                        if not eapi_obj.options.has_use_dep_defaults:
+                            raise errors.MalformedAtom(
+                                orig_atom,
+                                f"use dep defaults are not allowed in EAPI {eapi_obj}",
+                            )
+
                         # use defaults.
                         if x[-3:] in ("(+)", "(-)"):
                             x = x[:-3]
@@ -182,7 +188,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 slot = None
             else:
                 slots = (slot,)
-                if eapi not in ("0", "1", "2", "3", "4"):
+                if eapi_obj.options.sub_slotting:
                     if slot[0:1] in ("*", "="):
                         if len(slot) > 1:
                             raise errors.MalformedAtom(

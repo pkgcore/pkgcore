@@ -357,8 +357,10 @@ class PortageConfig(DictMixin):
             hidden=False,
             backup=False,
         ):
+            had_repo_conf = False
             try:
                 with open(fp) as f:
+                    had_repo_conf = True
                     defaults, repo_confs = parser.parse_file(f)
             except PermissionError as e:
                 raise base_errors.PermissionDenied(fp, write=False) from e
@@ -375,8 +377,10 @@ class PortageConfig(DictMixin):
                 )
             main_defaults.update(defaults)
 
-            if not repo_confs:
-                logger.warning(f"repos.conf: parsing {fp!r}: file is empty")
+            if not had_repo_conf and not repo_confs:
+                logger.warning(
+                    "repos.conf: not found, but should exist for modern support"
+                )
 
             for name, repo_conf in repo_confs.items():
                 if name in repos:

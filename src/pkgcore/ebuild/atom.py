@@ -11,13 +11,14 @@ import string
 
 from snakeoil import klass
 from snakeoil.compatibility import cmp
-from snakeoil.demandload import demand_compile_regexp
 
 from ..restrictions import boolean, packages, restriction, values
 from ..restrictions.packages import AndRestriction as PkgAndRestriction
 from ..restrictions.packages import Conditional
 from ..restrictions.values import ContainmentMatch
-from . import cpv, errors, restricts
+from . import cpv
+from . import eapi as eapi_mod
+from . import errors, restricts
 
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
@@ -33,8 +34,6 @@ alphanum = frozenset(alphanum)
 valid_repo_chars = frozenset(valid_repo_chars)
 valid_slot_chars = frozenset(valid_slot_chars)
 valid_ops = frozenset(["<", "<=", "=", "~", ">=", ">"])
-
-demand_compile_regexp("valid_use_flag", r"^[A-Za-z0-9][A-Za-z0-9+_@-]*$")
 
 
 class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
@@ -102,6 +101,9 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         override_kls = False
         use_start = atom.find("[")
         slot_start = atom.find(":")
+        eapi_obj = eapi_mod.get_eapi(
+            eapi if eapi != "-1" else eapi_mod.LATEST_PMS_EAPI_VER
+        )
 
         if use_start != -1:
             # use dep
@@ -137,7 +139,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
                     if not x:
                         raise errors.MalformedAtom(orig_atom, "empty use dep detected")
-                    if not valid_use_flag.match(x):
+                    if not eapi_obj.is_valid_use_flag(x):
                         raise errors.MalformedAtom(
                             orig_atom, f"invalid USE flag: {x!r}"
                         )

@@ -5,12 +5,12 @@ import stat
 import textwrap
 
 import pytest
+from snakeoil.osutils import pjoin
 
 from pkgcore import const
 from pkgcore import exceptions as base_errors
 from pkgcore.config import errors as config_errors
 from pkgcore.ebuild.portage_conf import PortageConfig
-from snakeoil.osutils import pjoin
 
 load_make_conf = PortageConfig.load_make_conf
 load_repos_conf = PortageConfig.load_repos_conf
@@ -77,11 +77,6 @@ class TestReposConf:
         path.chmod(stat.S_IWUSR)
         with pytest.raises(base_errors.PermissionDenied):
             load_repos_conf(path)
-
-    def test_blank_file(self, tmp_path, caplog):
-        (path := tmp_path / "file").touch()
-        load_repos_conf(path)
-        assert "file is empty" in caplog.text
 
     def test_garbage_file(self, tmp_path):
         (path := tmp_path / "file").write_bytes(binascii.b2a_hex(os.urandom(10)))

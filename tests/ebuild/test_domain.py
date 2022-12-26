@@ -20,6 +20,8 @@ class TestDomain:
         self.profile_base = tmp_path_factory.mktemp("profiles")
         self.profile1 = self.profile_base / "profile1"
         self.pmixin.mk_profile(self.profile_base, str(self.profile1))
+        self.pusedir = self.confdir / "package.use"
+        self.pusedir.mkdir()
 
     def mk_domain(self):
         return domain_mod.domain(
@@ -32,14 +34,11 @@ class TestDomain:
 
     def test_sorting(self):
         """assert that configuration files are read in alphanum ordering"""
-        cdir = self.confdir / "package.use"
-        cdir.mkdir()
-
         # assert the base state; no files, no content.
         assert () == self.mk_domain().pkg_use
 
-        open(cdir / "00", "w").write("*/* X")
-        open(cdir / "01", "w").write("*/* -X Y")
+        open(self.pusedir / "00", "w").write("*/* X")
+        open(self.pusedir / "01", "w").write("*/* -X Y")
 
         # Force the returned ordering to be reversed; this is to assert that
         # the domain forces a sort.
@@ -57,9 +56,7 @@ class TestDomain:
             ) == self.mk_domain().pkg_use
 
     def test_use_expand_syntax(self):
-        puse = self.confdir / "package.use"
-        puse.mkdir()
-        open(puse / "a", "w").write(
+        open(self.pusedir / "a", "w").write(
             textwrap.dedent(
                 """
                 */* x_y1
@@ -82,3 +79,9 @@ class TestDomain:
                 ),
             ),
         ) == self.mk_domain().pkg_use
+
+    def test_use_flag_parsing_enforcement(self):
+        open(self.pusedir / "a", "w").write("*/* X:")
+        # TODO: need to catch the warning here, but I'm not sure how.
+        # Meanwhile, ensure that the failed token is ignored.
+        assert ((packages.AlwaysTrue, ((), ())),) == self.mk_domain().pkg_use

@@ -3,6 +3,57 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.18 (2022-12-27)
+----------------------------
+
+- _const: fallback to sys.base_prefix when installed in venv (Arthur Zamarin)
+  https://bugs.gentoo.org/880693
+
+- pquery: fix crash with verbose single uris attr (Arthur Zamarin)
+
+- docs: use snakeoil.dist sphinx extension (Arthur Zamarin)
+
+- pkgcore: atom: fix typo in error message (Sam James, #378)
+
+- eclass: fix exported bash functions leak (Arthur Zamarin)
+  https://bugs.gentoo.org/836210
+
+- remove plugins support from pkgcore, simplifying installation and stopping
+  the need for users to update cache after upgrade (Arthur Zamarin, #379)
+
+- add REQUIRED_USE satisfaction solver (Arthur Zamarin, #380)
+
+- pmerge: add ``--pdb-intercept`` as a way to ``pdb.set_trace()`` into the
+  resolver (Brian Harring)
+
+- pmerge: sort target processing to stabilize the graph (Brian Harring)
+
+- restricts: fix use default dep matching when working against IUSE defaults
+  (Brian Harring)
+
+- ebd: make EAPI=8 ``--disable-static`` logic libtool-specific, matching
+  portage (David Seifert, #386)
+
+- force stable sorting of ``/etc/portage/*`` files loading (Brian Harring)
+  https://github.com/pkgcore/pkgcore/issues/385
+
+- add USE_EXPAND expansion awareness for ``/etc/portage/package.use/*`` files
+  (Brian Harring)
+  https://github.com/pkgcore/pkgcore/issues/384
+
+- add use flag validation for ``/etc/portage/package.use/*`` content (Brian
+  Harring)
+
+- throw an exception for any EBD var starting with ``_`` (Brian Harring)
+
+- ignore both empty and non-existent ``repos.conf`` files (Brian Harring)
+  https://github.com/pkgcore/pkgcore/issues/365
+
+- format code with ``black`` (Brian Harring, #382)
+
+- various code cleanups, refactoring and modernization (Brian Harring)
+
+----------------------------
 pkgcore 0.12.17 (2022-11-10)
 ----------------------------
 

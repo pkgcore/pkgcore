@@ -36,7 +36,7 @@ class FileList:
                 elif x.startswith("@"):
                     if self.error_on_subsets:
                         raise ValueError(
-                            "set %s isn't a valid atom in pkgset %r" % (x, self.path)
+                            f"set {x} isn't a valid atom in pkgset {self.path!r}"
                         )
                     logger.warning(
                         "set item %r found in pkgset %r: it will be "
@@ -47,8 +47,8 @@ class FileList:
                     )
                     continue
                 s.add(atom(x))
-        except InvalidDependency as e:
-            raise errors.ParsingError("parsing %r" % self.path, exception=e) from e
+        except InvalidDependency as exc:
+            raise errors.ParsingError(f"parsing {self.path!r}", exception=exc) from exc
 
         return s
 

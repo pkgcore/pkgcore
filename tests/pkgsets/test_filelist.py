@@ -47,17 +47,12 @@ class TestFileList:
 
         assert {
             atom(line) for line in (tmp_path / "file").read_text().splitlines()
-        } == set(
-            map(
-                atom,
-                (
-                    "dev-util/diffball",
-                    "=dev-util/bsdiff-0.4",
-                    "dev-util/foon",
-                    "=dev-util/lib-1",
-                ),
-            )
-        )
+        } == {
+            atom("dev-util/diffball"),
+            atom("=dev-util/bsdiff-0.4"),
+            atom("dev-util/foon"),
+            atom("=dev-util/lib-1"),
+        }
 
     def test_remove(self, tmp_path):
         s = self.gen_pkgset(tmp_path, "=dev-util/diffball-0.4\ndev-util/bsdiff")

@@ -48,7 +48,7 @@ class TestMetadataXml:
             ls = f"<longdescription>{longdescription}</longdescription>\n"
         sa = "<stabilize-allarches/>" if stabilize_allarches else ""
         s = f"""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 {cs}{ms}{us}{ls}{sa}</pkgmetadata>"""
         return repo_objs.MetadataXml(data_source(s.encode("utf-8")))
@@ -155,11 +155,9 @@ Blake-light tragedy among the scholars of war.
 
     def test_stabilize_allarches(self):
         # missing
-        assert False == self.get_metadata_xml().stabilize_allarches
+        assert not self.get_metadata_xml().stabilize_allarches
         # present
-        assert (
-            True == self.get_metadata_xml(stabilize_allarches=True).stabilize_allarches
-        )
+        assert self.get_metadata_xml(stabilize_allarches=True).stabilize_allarches
 
 
 class TestProjectsXml:

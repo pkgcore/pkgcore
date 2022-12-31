@@ -37,8 +37,8 @@ class TestDomain:
         # assert the base state; no files, no content.
         assert () == self.mk_domain().pkg_use
 
-        open(self.pusedir / "00", "w").write("*/* X")
-        open(self.pusedir / "01", "w").write("*/* -X Y")
+        (self.pusedir / "00").write_text("*/* X")
+        (self.pusedir / "01").write_text("*/* -X Y")
 
         # Force the returned ordering to be reversed; this is to assert that
         # the domain forces a sort.
@@ -56,7 +56,7 @@ class TestDomain:
             ) == self.mk_domain().pkg_use
 
     def test_use_expand_syntax(self):
-        open(self.pusedir / "a", "w").write(
+        (self.pusedir / "a").write_text(
             textwrap.dedent(
                 """
                 */* x_y1
@@ -81,7 +81,7 @@ class TestDomain:
         ) == self.mk_domain().pkg_use
 
     def test_use_flag_parsing_enforcement(self):
-        open(self.pusedir / "a", "w").write("*/* X:")
+        (self.pusedir / "a").write_text("*/* X:")
         # TODO: need to catch the warning here, but I'm not sure how.
         # Meanwhile, ensure that the failed token is ignored.
         assert ((packages.AlwaysTrue, ((), ())),) == self.mk_domain().pkg_use

@@ -106,7 +106,8 @@ class Test_fsFile(base):
         o = self.make_obj(__file__)
         with open(__file__) as f:
             raw_data = f.read()
-        assert o.data.text_fileobj().read() == raw_data
+        with o.data.text_fileobj() as f:
+            assert f.read() == raw_data
 
         o = self.make_obj(
             "/bin/this-file-should-not-exist-nor-be-read", data=data_source(raw_data)

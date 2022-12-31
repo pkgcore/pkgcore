@@ -29,7 +29,8 @@ class TestFsObjs:
         assert o.location, "/tmp/etc/passwd"
         assert o.data.path, "/etc/passwd"
         with open("/etc/passwd", "rb") as f:
-            assert o.data.bytes_fileobj().read(), f.read()
+            with o.data.bytes_fileobj() as fileobj:
+                assert fileobj.read() == f.read()
 
     def test_gen_obj_reg(self, tmp_path):
         (path := tmp_path / "reg_obj").touch()

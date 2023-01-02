@@ -62,6 +62,8 @@ class TestDomain:
                 */* x_y1
                 # unrelated is there to verify that it's unaffected by the USE_EXPAND
                 */* unrelated X: -y1 y2
+                # multiple USE_EXPANDs
+                */* unrelated X: -y1 y2 Z: -z3 z4
                 """
             )
         )
@@ -78,10 +80,31 @@ class TestDomain:
                     ),
                 ),
             ),
+            (
+                packages.AlwaysTrue,
+                (
+                    ("x_y1", "z_z3"),
+                    (
+                        "unrelated",
+                        "x_y2",
+                        "z_z4",
+                    ),
+                ),
+            ),
         ) == self.mk_domain().pkg_use
 
-    def test_use_flag_parsing_enforcement(self):
+    def test_use_flag_parsing_enforcement(self, caplog):
         (self.pusedir / "a").write_text("*/* X:")
-        # TODO: need to catch the warning here, but I'm not sure how.
-        # Meanwhile, ensure that the failed token is ignored.
         assert ((packages.AlwaysTrue, ((), ())),) == self.mk_domain().pkg_use
+        assert caplog.text == ""  # no problems with nothing after USE_EXPAND:
+        caplog.clear()
+
+        (self.pusedir / "a").write_text("*/* y $x")
+        assert () == self.mk_domain().pkg_use
+        assert "token $x is not a valid use flag" in caplog.text
+        caplog.clear()
+
+        (self.pusedir / "a").write_text("*/* y X: $z")
+        assert () == self.mk_domain().pkg_use
+        assert "token x_$z is not a valid use flag" in caplog.text
+        caplog.clear()

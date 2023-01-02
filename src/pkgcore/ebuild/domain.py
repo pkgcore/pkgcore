@@ -92,13 +92,16 @@ def package_use_splitter(iterable):
     def f(tokens: list[str]):
 
         i = iter(tokens)
-        for idx, x in enumerate(i):
-            if x.endswith(":"):
+        for idx, flag in enumerate(i):
+            if flag.endswith(":"):
                 # we encountered `USE_EXPAND:` , thus all following tokens
                 # are values of that.
-                x = x.lower()[:-1]
+                x = flag.lower()[:-1]
                 l = tokens[0:idx]
                 for flag in i:
+                    if flag.endswith(":"):
+                        x = flag.lower()[:-1]
+                        continue
                     if flag.startswith("-"):
                         flag = f"-{x}_{flag[1:]}"
                     else:
@@ -107,7 +110,7 @@ def package_use_splitter(iterable):
                         raise ParseError(f"token {flag} is not a valid use flag")
                     l.append(flag)
                 return l
-            elif not eapi_obj.is_valid_use_flag(x.lstrip("-")):
+            elif not eapi_obj.is_valid_use_flag(flag.lstrip("-")):
                 raise ParseError(f"token {flag} is not a valid use flag")
         # if we made it here, there's no USE_EXPAND; thus just return the original sequence
         return tokens

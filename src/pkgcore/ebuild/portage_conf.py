@@ -542,13 +542,11 @@ class PortageConfig(DictMixin):
         except FileNotFoundError:
             pass
 
-    def _find_profile_path(self, profile_override):
+    def _find_profile_path(self, profile_override) -> tuple[str, bool]:
         if profile_override is None:
             make_profile = pjoin(self.dir, "make.profile")
             if not os.path.islink(make_profile):
-                raise config_errors.UserConfigError(
-                    f"invalid symlink: {make_profile!r}"
-                )
+                return make_profile, True
             path = os.path.realpath(make_profile)
         else:
             path = os.path.realpath(profile_override)
@@ -560,15 +558,17 @@ class PortageConfig(DictMixin):
                 raise config_errors.UserConfigError(
                     f"nonexistent profile: {profile_override!r}"
                 )
-        return path
+        return path, False
 
     def _add_profile(self, profile_override=None):
-        profile = self._find_profile_path(profile_override)
-        paths = profiles.OnDiskProfile.split_abspath(profile)
+        profile, was_symlink = self._find_profile_path(profile_override)
+        if was_symlink:
+            paths = profile.rsplit(os.path.sep, 1)
+        else:
+            paths = profiles.OnDiskProfile.split_abspath(profile)
         if paths is None:
             raise config_errors.UserConfigError(
-                "%r expands to %r, but no profile detected"
-                % (pjoin(self.dir, "make.profile"), profile)
+                f"{pjoin(self.dir, 'make.profile')!r} expands to {profile!r}, but no profile detected"
             )
 
         user_profile_path = pjoin(self.dir, "profile")
@@ -579,6 +579,7 @@ class PortageConfig(DictMixin):
                     "parent_path": paths[0],
                     "parent_profile": paths[1],
                     "user_path": user_profile_path,
+                    "load_profile_base": not was_symlink,
                 }
             )
         else:
@@ -587,6 +588,7 @@ class PortageConfig(DictMixin):
                     "class": "pkgcore.ebuild.profiles.OnDiskProfile",
                     "basepath": paths[0],
                     "profile": paths[1],
+                    "load_profile_base": not was_symlink,
                 }
             )
 

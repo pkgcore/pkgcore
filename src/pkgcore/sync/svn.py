@@ -50,19 +50,17 @@ class svn_syncer(base.ExternalSyncer):
             raise base.UriError(raw_uri, "protocol unknown")
         return raw_uri
 
-    def _sync(self, verbosity, output_fd):
+    def _sync(self, verbosity):
         uri = self.uri
         if uri.startswith("svn+http://"):
             uri = uri.replace("svn+http://", "http://")
         elif uri.startswith("svn+https://"):
             uri = uri.replace("svn+https://", "https://")
         if not os.path.exists(self.basedir):
-            return 0 == self._spawn(
-                [self.binary_path, "co", uri, self.basedir],
-                {1: output_fd, 2: output_fd, 0: 0},
+            return 0 == self._spawn_interactive(
+                [self.binary_path, "co", uri, self.basedir]
             )
-        return 0 == self._spawn(
+        return 0 == self._spawn_interactive(
             [self.binary_path, "update"],
-            {1: output_fd, 2: output_fd, 0: 0},
             cwd=self.basedir,
         )

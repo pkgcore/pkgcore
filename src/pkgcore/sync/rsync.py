@@ -128,8 +128,7 @@ class rsync_syncer(base.ExternalSyncer):
                 f"DNS resolution failed for {self.hostname!r}: {e.strerror}"
             )
 
-    def _sync(self, verbosity, output_fd):
-        fd_pipes = {1: output_fd, 2: output_fd}
+    def _sync(self, verbosity):
         opts = list(self.opts)
         if self.rsh:
             opts.append("-e")
@@ -150,7 +149,7 @@ class rsync_syncer(base.ExternalSyncer):
                 self.basedir,
             ] + opts
 
-            ret = self._spawn(cmd, fd_pipes)
+            ret = self._spawn(cmd)
             if ret == 0:
                 return True
             elif ret == 1:
@@ -203,7 +202,7 @@ class rsync_timestamp_syncer(rsync_syncer):
             # malformed timestamp
             return None
 
-    def _sync(self, verbosity, output_fd, force=False):
+    def _sync(self, verbosity, force=False):
         doit = force or self.last_timestamp is None
         ret = None
         try:
@@ -213,7 +212,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                     timestamp_uri = pjoin(self.uri, "metadata", "timestamp.chk")
                     timestamp_path = new_timestamp.name
                     timestamp_syncer = _RsyncFileSyncer(timestamp_path, timestamp_uri)
-                    ret = timestamp_syncer._sync(verbosity, output_fd)
+                    ret = timestamp_syncer._sync(verbosity)
                     if not ret:
                         doit = True
                     else:
@@ -226,7 +225,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                             doit = delta > self.negative_sync_delay
             if not doit:
                 return True
-            ret = super()._sync(verbosity, output_fd)
+            ret = super()._sync(verbosity)
             # force a reset of the timestamp
             self.last_timestamp = self.current_timestamp()
         finally:

@@ -14,6 +14,7 @@ __all__ = (
 import os
 import pwd
 import stat
+import typing
 from importlib import import_module
 
 from snakeoil import process
@@ -123,7 +124,7 @@ class Syncer:
         except KeyError as exc:
             raise MissingLocalUser(raw_uri, str(exc))
 
-    def sync(self, verbosity=None, force=False):
+    def sync(self, verbosity: typing.Optional[int] = None, force=False):
         if self.disabled:
             return False
         kwds = {}
@@ -131,10 +132,9 @@ class Syncer:
             kwds["force"] = True
         if verbosity is None:
             verbosity = self.verbosity
-        # output_fd is harded coded as stdout atm.
-        return self._sync(verbosity, 1, **kwds)
+        return self._sync(verbosity, **kwds)
 
-    def _sync(self, verbosity, output_fd, **kwds):
+    def _sync(self, verbosity: int, **kwds):
         raise NotImplementedError(self, "_sync")
 
     def __str__(self):
@@ -191,10 +191,18 @@ class ExternalSyncer(Syncer):
                 disabled = cls._disabled = os.path.exists(path)
         return disabled
 
-    def _spawn(self, command, pipes, **kwargs):
+    def _spawn(self, command, **kwargs):
+        # Note: stderr is explicitly forced to stdout since that's how it was originally done.
+        # This can be changed w/ a discussion.
+        kwargs.setdefault("fd_pipes", {1: 1, 2: 1})
         return process.spawn.spawn(
-            command, fd_pipes=pipes, uid=self.uid, gid=self.gid, env=self.env, **kwargs
+            command, uid=self.uid, gid=self.gid, env=self.env, **kwargs
         )
+
+    def _spawn_interactive(self, command, **kwargs):
+        # Note: stderr is explicitly forced to stdout since that's how it was originally done.
+        # This can be changed w/ a discussion.
+        return self._spawn(command, fd_pipes={0: 0, 1: 1, 2: 1}, **kwargs)
 
     @staticmethod
     def _rewrite_uri_from_stat(path, uri):
@@ -209,7 +217,7 @@ class ExternalSyncer(Syncer):
 
 
 class VcsSyncer(ExternalSyncer):
-    def _sync(self, verbosity, output_fd):
+    def _sync(self, verbosity):
         try:
             st = os.stat(self.basedir)
         except FileNotFoundError:
@@ -229,7 +237,7 @@ class VcsSyncer(ExternalSyncer):
         elif verbosity > 0:
             command.append("-" + "v" * verbosity)
 
-        ret = self._spawn(command, pipes={1: output_fd, 2: output_fd, 0: 0}, cwd=chdir)
+        ret = self._spawn_interactive(command, cwd=chdir)
         return ret == 0
 
     def _initial_pull(self):

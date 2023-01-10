@@ -22,7 +22,7 @@ class http_syncer(base.Syncer):
         self.basename = os.path.basename(uri)
         super().__init__(basedir, uri, **kwargs)
 
-    def _sync(self, verbosity, output_fd, force=False, **kwargs):
+    def _sync(self, verbosity, force=False, **kwargs):
         dest = self._pre_download()
 
         if self.uri.lower().startswith("https://"):

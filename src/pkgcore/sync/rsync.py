@@ -7,6 +7,7 @@ import os
 import socket
 import tempfile
 import time
+from itertools import islice
 
 from snakeoil.osutils import pjoin
 
@@ -142,7 +143,7 @@ class rsync_syncer(base.ExternalSyncer):
 
         # zip limits to the shortest iterable
         ret = None
-        for count, ip in zip(range(self.retries), self._get_ips()):
+        for ip in islice(self._get_ips(), self.retries):
             cmd = [
                 self.binary_path,
                 self.uri.replace(self.hostname, ip, 1),

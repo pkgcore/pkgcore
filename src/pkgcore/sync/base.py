@@ -14,6 +14,7 @@ __all__ = (
 import os
 import pwd
 import stat
+import sys
 import typing
 from importlib import import_module
 
@@ -22,6 +23,7 @@ from snakeoil import process
 from .. import os_data
 from ..config.hint import ConfigHint, configurable
 from ..exceptions import PkgcoreUserException
+from ..log import logger
 
 
 class SyncError(PkgcoreUserException):
@@ -195,6 +197,12 @@ class ExternalSyncer(Syncer):
         # Note: stderr is explicitly forced to stdout since that's how it was originally done.
         # This can be changed w/ a discussion.
         kwargs.setdefault("fd_pipes", {1: 1, 2: 1})
+        logger.debug("sync invoking command %r, kwargs %r", command, kwargs)
+        # since we're intermixing two processes writing to stdout/stderr- us, and what we're invoking-
+        # force a flush to keep output from being interlaced.  This is not hugely optimal, but
+        # the CLI/observability integration needs refactoring anyways.
+        sys.stdout.flush()
+        sys.stderr.flush()
         return process.spawn.spawn(
             command, uid=self.uid, gid=self.gid, env=self.env, **kwargs
         )

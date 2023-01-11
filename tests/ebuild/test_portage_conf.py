@@ -13,7 +13,7 @@ from pkgcore.config import errors as config_errors
 from pkgcore.ebuild.portage_conf import PortageConfig
 
 load_make_conf = PortageConfig.load_make_conf
-load_repos_conf = PortageConfig.load_repos_conf
+load_repos_conf = PortageConfig.parse_repos_conf_path
 
 
 class TestMakeConf:

@@ -172,24 +172,7 @@ class PortageConfig(DictMixin):
             }
         )
 
-        try:
-            repos_conf_defaults, repos_conf = self.load_repos_conf(
-                pjoin(self.dir, "repos.conf")
-            )
-        except config_errors.ParsingError as e:
-            if not getattr(getattr(e, "exc", None), "errno", None) == errno.ENOENT:
-                raise
-            try:
-                # fallback to defaults provided by pkgcore
-                repos_conf_defaults, repos_conf = self.load_repos_conf(
-                    pjoin(const.CONFIG_PATH, "repos.conf")
-                )
-            except IGNORED_EXCEPTIONS:
-                raise
-            except Exception as e:
-                raise config_errors.ParsingError(
-                    "failed to find a usable repos.conf"
-                ) from e
+        repos_conf_defaults, repos_conf = self.load_repos_conf()
 
         self["ebuild-repo-common"] = basics.AutoConfigSection(
             {
@@ -332,9 +315,31 @@ class PortageConfig(DictMixin):
             # quirk of read_bash_dict; it returns only what was mutated.
             vars_dict.update(new_vars)
 
+    def load_repos_conf(self) -> tuple[dict, dict]:
+        """parse and return repos.conf content, tracing the default and the fallback location"""
+        try:
+            repos_conf_defaults, repos_conf = self.parse_repos_conf_path(
+                pjoin(self.dir, "repos.conf")
+            )
+        except config_errors.ParsingError as e:
+            if not getattr(getattr(e, "exc", None), "errno", None) == errno.ENOENT:
+                raise
+            try:
+                # fallback to defaults provided by pkgcore
+                repos_conf_defaults, repos_conf = self.parse_repos_conf_path(
+                    pjoin(const.CONFIG_PATH, "repos.conf")
+                )
+            except IGNORED_EXCEPTIONS:
+                raise
+            except Exception as e:
+                raise config_errors.ParsingError(
+                    "failed to find a usable repos.conf"
+                ) from e
+        return repos_conf_defaults, repos_conf
+
     @classmethod
-    def load_repos_conf(cls, path):
-        """parse repos.conf files
+    def parse_repos_conf_path(cls, path: str):
+        """parse repos.conf files from a given entrypoint
 
         Args:
             path (str): path to the repos.conf which can be a regular file or
@@ -372,9 +377,7 @@ class PortageConfig(DictMixin):
                 ) from e
 
             if defaults and main_defaults:
-                logger.warning(
-                    f"repos.conf: parsing {fp!r}: overriding DEFAULT section"
-                )
+                logger.warning("repos.conf: parsing %r: overriding DEFAULT section", fp)
             main_defaults.update(defaults)
 
             if not had_repo_conf and not repo_confs:
@@ -385,15 +388,16 @@ class PortageConfig(DictMixin):
             for name, repo_conf in repo_confs.items():
                 if name in repos:
                     logger.warning(
-                        f"repos.conf: parsing {fp!r}: overriding {name!r} repo"
+                        "repos.conf: parsing %r: overriding %r repo", fp, name
                     )
 
                 # ignore repo if location is unset
                 location = repo_conf.get("location", None)
                 if location is None:
                     logger.warning(
-                        f"repos.conf: parsing {fp!r}: "
-                        f"{name!r} repo missing location setting, ignoring repo"
+                        "repos.conf: parsing %r: %r repo missing location setting, ignoring repo",
+                        fp,
+                        name,
                     )
                     continue
                 location = os.path.expanduser(location)

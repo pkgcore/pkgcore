@@ -8,6 +8,7 @@ __all__ = (
     "ConfigManager",
 )
 
+import typing
 import weakref
 from collections import defaultdict, deque, namedtuple
 from itertools import chain
@@ -75,7 +76,7 @@ class _ConfigStack(defaultdict):
             return val
         return None
 
-    def render_prepends(self, manager, key, type_name, flatten=True):
+    def render_prepends(self, manager, key: str, type_name: str) -> list[typing.Any]:
         results = []
         # keep in mind that the sequence we get is a top -> bottom walk of the config
         # as such for this operation we have to reverse it when building the content-
@@ -94,7 +95,7 @@ class _ConfigStack(defaultdict):
             if append:
                 results += [append]
 
-        if flatten:
+        if type_name != "str":
             results = chain.from_iterable(results)
         return list(results)
 
@@ -544,9 +545,7 @@ class ConfigManager:
                 typename = typename[5:]
 
             if typename.startswith("refs:") or typename in ("list", "str"):
-                result = config_stack.render_prepends(
-                    self, key, typename, flatten=(typename != "str")
-                )
+                result = config_stack.render_prepends(self, key, typename)
                 if typename == "str":
                     result = " ".join(result)
             else:

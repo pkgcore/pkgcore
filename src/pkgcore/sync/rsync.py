@@ -53,7 +53,7 @@ class rsync_syncer(base.ExternalSyncer):
         return proto[0], f"rsync:{proto[1]}"
 
     pkgcore_config_type = ConfigHint(
-        {
+        types={
             "basedir": "str",
             "uri": "str",
             "conn_timeout": "str",

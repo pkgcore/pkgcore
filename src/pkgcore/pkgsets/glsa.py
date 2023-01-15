@@ -27,7 +27,7 @@ class GlsaDirSet(metaclass=generic_equality):
     (rsync tree is the usual source.)
     """
 
-    pkgcore_config_type = ConfigHint({"src": "ref:repo"}, typename="pkgset")
+    pkgcore_config_type = ConfigHint(types={"src": "ref:repo"}, typename="pkgset")
     op_translate = {"ge": ">=", "gt": ">", "lt": "<", "le": "<=", "eq": "="}
     __attr_comparison__ = ("paths",)
 
@@ -237,7 +237,7 @@ class SecurityUpgrades(metaclass=generic_equality):
     """Set of packages for available security upgrades."""
 
     pkgcore_config_type = ConfigHint(
-        {"ebuild_repo": "ref:repo", "vdb": "ref:vdb"}, typename="pkgset"
+        types={"ebuild_repo": "ref:repo", "vdb": "ref:vdb"}, typename="pkgset"
     )
     __attr_comparison__ = ("arch", "glsa_src", "vdb")
 

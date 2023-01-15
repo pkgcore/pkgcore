@@ -586,14 +586,14 @@ def section_alias(target, typename):
     identical to our target's.
     """
 
-    @configurable({"target": "ref:" + typename}, typename=typename)
+    @configurable(types={"target": "ref:" + typename}, typename=typename)
     def section_alias(target):
         return target
 
     return AutoConfigSection({"class": section_alias, "target": target})
 
 
-@configurable({"path": "str", "parser": "callable"}, typename="configsection")
+@configurable(types={"path": "str", "parser": "callable"}, typename="configsection")
 def parse_config_file(path, parser):
     try:
         f = open(path, "r")

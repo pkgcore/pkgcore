@@ -205,7 +205,7 @@ class tree(prototype.tree):
     cache_name = "Packages"
 
     pkgcore_config_type = ConfigHint(
-        {"location": "str", "repo_id": "str"}, typename="repo"
+        types={"location": "str", "repo_id": "str"}, typename="repo"
     )
 
     def __init__(self, location, repo_id=None, cache_version="0"):

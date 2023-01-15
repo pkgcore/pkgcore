@@ -1,11 +1,12 @@
 import pytest
+
 from pkgcore.config import basics, errors
 from pkgcore.config.hint import configurable
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
-@configurable({"reff": "ref:spork"})
+@configurable(types={"reff": "ref:spork"})
 def spork(reff):
     """Test thing."""
 

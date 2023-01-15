@@ -10,7 +10,9 @@ from ..config.hint import ConfigHint
 class SystemSet:
     """Set of packages defined by the selected profile."""
 
-    pkgcore_config_type = ConfigHint({"profile": "ref:profile"}, typename="pkgset")
+    pkgcore_config_type = ConfigHint(
+        types={"profile": "ref:profile"}, typename="pkgset"
+    )
 
     def __init__(self, profile):
         self.system = frozenset(profile.system)

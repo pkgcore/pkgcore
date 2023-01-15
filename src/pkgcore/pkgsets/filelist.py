@@ -17,7 +17,7 @@ from ..package.errors import InvalidDependency
 
 
 class FileList:
-    pkgcore_config_type = ConfigHint({"location": "str"}, typename="pkgset")
+    pkgcore_config_type = ConfigHint(types={"location": "str"}, typename="pkgset")
     error_on_subsets = True
 
     def __init__(self, location, gid=os_data.portage_gid, mode=0o644):

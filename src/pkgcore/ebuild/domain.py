@@ -264,7 +264,7 @@ class domain(config_domain):
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
-        _types,
+        types=_types,
         typename="domain",
         required=["repos", "profile", "vdb"],
         allow_unknowns=True,

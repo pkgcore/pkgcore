@@ -26,7 +26,7 @@ class MalformedCommand(errors.FetchError):
 class fetcher(base.fetcher):
 
     pkgcore_config_type = ConfigHint(
-        {
+        types={
             "userpriv": "bool",
             "required_chksums": "list",
             "distdir": "str",

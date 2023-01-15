@@ -63,9 +63,9 @@ class ConfigHint:
         return self.__class__(**new_kwds)
 
 
-def configurable(*args, **kwargs):
+def configurable(**kwargs):
     """Decorator version of ConfigHint."""
-    hint = ConfigHint(*args, **kwargs)
+    hint = ConfigHint(**kwargs)
 
     def decorator(original):
         original.pkgcore_config_type = hint

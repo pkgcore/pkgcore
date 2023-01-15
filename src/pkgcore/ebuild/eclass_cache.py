@@ -86,7 +86,7 @@ class base:
 class cache(base):
 
     pkgcore_config_type = ConfigHint(
-        {"path": "str", "location": "str"}, typename="eclass_cache"
+        types={"path": "str", "location": "str"}, typename="eclass_cache"
     )
 
     def __init__(self, path, location=None):
@@ -122,7 +122,7 @@ class StackedCaches(base):
     """
 
     pkgcore_config_type = ConfigHint(
-        {"caches": "refs:eclass_cache", "location": "str", "eclassdir": "str"},
+        types={"caches": "refs:eclass_cache", "location": "str", "eclassdir": "str"},
         typename="eclass_cache",
     )
 

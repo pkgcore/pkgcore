@@ -3,9 +3,20 @@
 
 __all__ = ("ConfigHint", "configurable")
 
+import typing
+
 
 class ConfigHint:
     """Hint for introspection supplying overrides."""
+
+    types: dict[str, str]
+    positional: tuple[str, ...]
+    required: tuple[str, ...]
+    typename: typing.Optional[str]
+    allow_unknowns: bool
+    authorative: bool
+    requires_config: bool
+    raw_class: bool
 
     # be aware this is used in clone
     __slots__ = (
@@ -22,19 +33,19 @@ class ConfigHint:
 
     def __init__(
         self,
-        types=None,
-        positional=None,
-        required=None,
-        doc=None,
-        typename=None,
-        allow_unknowns=False,
-        authorative=False,
-        requires_config=False,
-        raw_class=False,
-    ):
+        types: typing.Optional[dict[str, str]] = None,
+        positional: typing.Optional[typing.Sequence[str]] = None,
+        required: typing.Optional[typing.Sequence[str]] = None,
+        doc: typing.Optional[str] = None,
+        typename: typing.Optional[str] = None,
+        allow_unknowns: bool = False,
+        authorative: bool = False,
+        requires_config: bool = False,
+        raw_class: bool = False,
+    ) -> None:
         self.types = types or {}
-        self.positional = positional or []
-        self.required = required or []
+        self.positional = tuple(positional or [])
+        self.required = tuple(required or [])
         self.typename = typename
         self.allow_unknowns = allow_unknowns
         self.doc = doc
@@ -42,12 +53,13 @@ class ConfigHint:
         self.requires_config = requires_config
         self.raw_class = raw_class
 
-    def clone(self, **kwds):
+    def clone(self, **kwds: typing.Any) -> "ConfigHint":
+        """return a copy of this ConfigHint with the given kwds overrides"""
         new_kwds = {}
         for attr in self.__slots__:
             new_kwds[attr] = kwds.pop(attr, getattr(self, attr))
         if kwds:
-            raise TypeError("unknown type overrides: %r" % kwds)
+            raise TypeError(f"unknown type overrides: {kwds!r}")
         return self.__class__(**new_kwds)
 
 

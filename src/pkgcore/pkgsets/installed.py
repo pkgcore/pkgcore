@@ -24,12 +24,12 @@ class _Base:
 class Installed(_Base):
     """Set of packages holding slotted atoms of all installed packages."""
 
-    pkgcore_config_type = ConfigHint({"vdb": "refs:repo"}, typename="pkgset")
+    pkgcore_config_type = ConfigHint(types={"vdb": "refs:repo"}, typename="pkgset")
     getter = operator.attrgetter("slotted_atom")
 
 
 class VersionedInstalled(_Base):
     """Set of packages holding versioned atoms of all installed packages."""
 
-    pkgcore_config_type = ConfigHint({"vdb": "refs:repo"}, typename="pkgset")
+    pkgcore_config_type = ConfigHint(types={"vdb": "refs:repo"}, typename="pkgset")
     getter = operator.attrgetter("versioned_atom")

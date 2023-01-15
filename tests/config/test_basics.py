@@ -11,7 +11,7 @@ def passthrough(*args, **kwargs):
 def test_invalid_config_types():
     for var in ("class", "inherit"):
 
-        @configurable({var: "str"})
+        @configurable(types={var: "str"})
         def testtype():
             pass
 

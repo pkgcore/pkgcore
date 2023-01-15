@@ -25,7 +25,8 @@ from snakeoil.strings import pluralism
 from .. import fetch
 from ..config.hint import ConfigHint, configurable
 from ..log import logger
-from ..operations import OperationError, repo as _repo_ops
+from ..operations import OperationError
+from ..operations import repo as _repo_ops
 from ..package import errors as pkg_errors
 from ..repository import configured, errors, prototype, util
 from ..repository.virtual import RestrictionRepo
@@ -276,7 +277,7 @@ class UnconfiguredTree(prototype.tree):
     operations_kls = repo_operations
 
     pkgcore_config_type = ConfigHint(
-        {
+        types={
             "location": "str",
             "eclass_cache": "ref:eclass_cache",
             "masters": "refs:repo",

@@ -31,7 +31,7 @@ class tree(prototype.tree):
     operations_kls = repo_ops.operations
 
     pkgcore_config_type = ConfigHint(
-        {
+        types={
             "location": "str",
             "cache_location": "str",
             "repo_id": "str",

@@ -67,7 +67,7 @@ class Syncer:
     disabled = False
 
     pkgcore_config_type = ConfigHint(
-        {"path": "str", "uri": "str", "opts": "str", "usersync": "bool"},
+        types={"path": "str", "uri": "str", "opts": "str", "usersync": "bool"},
         typename="syncer",
     )
 
@@ -258,7 +258,7 @@ def _load_syncers():
 
 
 @configurable(
-    {"basedir": "str", "uri": "str", "usersync": "bool", "opts": "str"},
+    types={"basedir": "str", "uri": "str", "usersync": "bool", "opts": "str"},
     typename="syncer",
 )
 def GenericSyncer(basedir, uri, **kwargs):
@@ -279,12 +279,12 @@ class DisabledSyncer(Syncer):
         super().__init__(path, uri="")
 
 
-@configurable({"basedir": "str", "usersync": "bool"}, typename="syncer")
+@configurable(types={"basedir": "str", "usersync": "bool"}, typename="syncer")
 def DisabledSync(basedir, *args, **kwargs):
     return DisabledSyncer(basedir)
 
 
-@configurable({"basedir": "str", "usersync": "bool"}, typename="syncer")
+@configurable(types={"basedir": "str", "usersync": "bool"}, typename="syncer")
 def AutodetectSyncer(basedir, **kwargs):
     for syncer_cls in _load_syncers():
         if args := syncer_cls.is_usable_on_filepath(basedir):

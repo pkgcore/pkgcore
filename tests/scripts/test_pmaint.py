@@ -55,7 +55,7 @@ def make_repo_config(repo_data, livefs=False, frozen=False, repo_id=None):
 class FakeDomain:
 
     pkgcore_config_type = ConfigHint(
-        {"repos": "refs:repo", "binpkg": "refs:repo", "vdb": "refs:repo"},
+        types={"repos": "refs:repo", "binpkg": "refs:repo", "vdb": "refs:repo"},
         typename="domain",
     )
 

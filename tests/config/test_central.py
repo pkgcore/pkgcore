@@ -1,8 +1,8 @@
 import pytest
+from snakeoil.errors import walk_exception_chain
 
 from pkgcore.config import basics, central, errors
 from pkgcore.config.hint import configurable
-from snakeoil.errors import walk_exception_chain
 
 
 # A bunch of functions used from various tests below.
@@ -10,7 +10,7 @@ def repo(cache):
     return cache
 
 
-@configurable({"content": "ref:drawer", "contents": "refs:drawer"})
+@configurable(types={"content": "ref:drawer", "contents": "refs:drawer"})
 def drawer(content=None, contents=None):
     return content, contents
 
@@ -391,7 +391,7 @@ def test_reinstantiate_after_raise():
     # reprocess already processed section_ref args.
     spork = object()
 
-    @configurable({"thing": "ref:spork"})
+    @configurable(types={"thing": "ref:spork"})
     def myrepo(thing):
         assert thing is spork
         raise errors.ComplexInstantiationError("I suck")
@@ -585,11 +585,11 @@ def test_alias():
 
 
 def test_typecheck():
-    @configurable({"myrepo": "ref:repo"}, typename="repo")
+    @configurable(types={"myrepo": "ref:repo"}, typename="repo")
     def reporef(myrepo=None):
         return myrepo
 
-    @configurable({"myrepo": "refs:repo"}, typename="repo")
+    @configurable(types={"myrepo": "refs:repo"}, typename="repo")
     def reporefs(myrepo=None):
         return myrepo
 
@@ -804,11 +804,15 @@ def test_autoload_wrong_type():
 
 
 def test_lazy_refs():
-    @configurable({"myrepo": "lazy_ref:repo", "thing": "lazy_ref"}, typename="repo")
+    @configurable(
+        types={"myrepo": "lazy_ref:repo", "thing": "lazy_ref"}, typename="repo"
+    )
     def reporef(myrepo=None, thing=None):
         return myrepo, thing
 
-    @configurable({"myrepo": "lazy_refs:repo", "thing": "lazy_refs"}, typename="repo")
+    @configurable(
+        types={"myrepo": "lazy_refs:repo", "thing": "lazy_refs"}, typename="repo"
+    )
     def reporefs(myrepo=None, thing=None):
         return myrepo, thing
 
@@ -981,7 +985,7 @@ def test_prepend_inherit():
 
 
 def test_list_prepend():
-    @configurable({"seq": "list"})
+    @configurable(types={"seq": "list"})
     def seq(seq):
         return seq
 
@@ -1018,7 +1022,7 @@ def test_list_prepend():
 
 
 def test_str_prepend():
-    @configurable({"string": "str"})
+    @configurable(types={"string": "str"})
     def sect(string):
         return string
 

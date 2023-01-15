@@ -42,7 +42,7 @@ def my_convert_hybrid(manager, val, arg_type):
 
 
 @configurable(
-    {"ebuild_repo": "ref:repo", "vdb": "ref:repo", "profile": "ref:profile"},
+    types={"ebuild_repo": "ref:repo", "vdb": "ref:repo", "profile": "ref:profile"},
     typename="pkgset",
 )
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):

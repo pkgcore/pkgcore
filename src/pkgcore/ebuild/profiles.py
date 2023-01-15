@@ -862,7 +862,7 @@ class ProfileStack:
 class OnDiskProfile(ProfileStack):
 
     pkgcore_config_type = ConfigHint(
-        {"basepath": "str", "profile": "str"},
+        types={"basepath": "str", "profile": "str"},
         required=("basepath", "profile"),
         typename="profile",
     )
@@ -935,7 +935,7 @@ class UserProfileNode(ProfileNode):
 class UserProfile(OnDiskProfile):
 
     pkgcore_config_type = ConfigHint(
-        {"user_path": "str", "parent_path": "str", "parent_profile": "str"},
+        types={"user_path": "str", "parent_path": "str", "parent_profile": "str"},
         required=("user_path", "parent_path", "parent_profile"),
         typename="profile",
     )

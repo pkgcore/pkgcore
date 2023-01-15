@@ -9,7 +9,7 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 class FakeDomain:
 
     pkgcore_config_type = ConfigHint(
-        {"repos": "refs:repo", "vdb": "refs:repo"}, typename="domain"
+        types={"repos": "refs:repo", "vdb": "refs:repo"}, typename="domain"
     )
 
     def __init__(self, repos, vdb):

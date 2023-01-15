@@ -19,7 +19,12 @@ class database(fs_template.FsBased):
 
     # TODO: different way of passing in default auxdbkeys and location
     pkgcore_config_type = ConfigHint(
-        {"readonly": "bool", "location": "str", "label": "str", "auxdbkeys": "list"},
+        types={
+            "readonly": "bool",
+            "location": "str",
+            "label": "str",
+            "auxdbkeys": "list",
+        },
         required=["location"],
         positional=["location"],
         typename="cache",

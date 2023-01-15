@@ -196,6 +196,7 @@ class TestConfigHint:
     def test_clone(self):
         c = ConfigHint(
             types={"foo": "list", "one": "str"},
+            # use lists to ensure it forces immutability.
             positional=["one"],
             required=["one"],
             typename="barn",
@@ -205,8 +206,8 @@ class TestConfigHint:
             types={"foo": "list", "one": "str", "two": "str"}, required=["one", "two"]
         )
         assert c2.types == {"foo": "list", "one": "str", "two": "str"}
-        assert c2.positional == c.positional
-        assert c2.required == ["one", "two"]
+        assert c2.positional == tuple(c.positional)
+        assert c2.required == ("one", "two")
         assert c2.typename == c.typename
         assert c2.allow_unknowns == c.allow_unknowns
         assert c2.doc == c.doc

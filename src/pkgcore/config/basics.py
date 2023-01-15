@@ -86,13 +86,12 @@ class ConfigType:
         if not getattr(hint_overrides, "authorative", None):
             try:
                 code = getattr(func_obj, "__code__")
-            except AttributeError:
+            except AttributeError as e:
                 if func_obj != object.__init__:
                     raise TypeError(
-                        "func %s has no %r attribute; likely a "
+                        f"func {original_func_obj!r} isn't usable; likely a "
                         "builtin object which can't be introspected without hints"
-                        % (original_func_obj, "__code__")
-                    )
+                    ) from e
             else:
                 if code.co_argcount and code.co_varnames[0] == "self":
                     args = code.co_varnames[1 : code.co_argcount]

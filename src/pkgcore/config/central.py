@@ -33,18 +33,20 @@ class _ConfigMapping(mappings.DictMixin):
     any of them are remote!
     """
 
-    def __init__(self, manager, typename):
+    typename: str
+
+    def __init__(self, manager, typename: str) -> None:
         super().__init__()
         self.manager = manager
         self.typename = typename
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> typing.Any:
         conf = self.manager.collapse_named_section(key, raise_on_missing=False)
         if conf is None or conf.type.name != self.typename:
             raise KeyError(key)
         return conf.instantiate()
 
-    def keys(self):
+    def keys(self) -> typing.Iterator[str]:
         for name in self.manager.sections():
             try:
                 collapsed = self.manager.collapse_named_section(name)
@@ -57,26 +59,31 @@ class _ConfigMapping(mappings.DictMixin):
                 if collapsed.type.name == self.typename:
                     yield name
 
-    def __contains__(self, key):
+    def __contains__(self, key: str) -> bool:
         conf = self.manager.collapse_named_section(key, raise_on_missing=False)
         return conf is not None and conf.type.name == self.typename
 
 
-class _ConfigStack(defaultdict):
-    def __init__(self):
+class _ConfigStack(defaultdict[str, list[typing.Any]]):
+    def __init__(self) -> None:
         super().__init__(list)
 
-    def render_vals(self, manager, key, type_name):
+    def render_vals(
+        self, manager, key: str, type_name: str
+    ) -> typing.Iterator[typing.Any]:
         for data in self.get(key, ()):
             if key in data.section:
                 yield data.section.render_value(manager, key, type_name)
 
-    def render_val(self, manager, key, type_name):
+    def render_val(
+        self, manager, key: str, type_name: str
+    ) -> typing.Optional[typing.Any]:
         for val in self.render_vals(manager, key, type_name):
             return val
         return None
 
     def render_prepends(self, manager, key: str, type_name: str) -> list[typing.Any]:
+
         results = []
         # keep in mind that the sequence we get is a top -> bottom walk of the config
         # as such for this operation we have to reverse it when building the content-
@@ -96,8 +103,8 @@ class _ConfigStack(defaultdict):
                 results += [append]
 
         if type_name != "str":
-            results = chain.from_iterable(results)
-        return list(results)
+            results = list(chain.from_iterable(results))
+        return results
 
 
 class CollapsedConfig:
@@ -114,7 +121,19 @@ class CollapsedConfig:
     :ivar name: our section name or C{None} for an anonymous section.
     """
 
-    def __init__(self, type_obj, config, manager, debug=False, default=False):
+    type_obj: basics.ConfigType
+    config: dict[str, typing.Any]
+    debug: bool
+    default: bool
+
+    def __init__(
+        self,
+        type_obj: basics.ConfigType,
+        config: dict[str, typing.Any],
+        manager,
+        debug: bool = False,
+        default: bool = False,
+    ) -> None:
         """Initialize instance vars."""
         # Check if we got all values required to instantiate.
         missing = set(type_obj.required) - set(config)
@@ -137,7 +156,7 @@ class CollapsedConfig:
             manager = weakref.ref(manager)
         self.manager = manager
 
-    def instantiate(self):
+    def instantiate(self) -> typing.Any:
         if self._instance is None:
             try:
                 self._instance = self._instantiate()
@@ -147,7 +166,7 @@ class CollapsedConfig:
                 raise errors.InstantiationError(self.name) from e
         return self._instance
 
-    def _instantiate(self):
+    def _instantiate(self) -> typing.Any:
         """Call our type's callable, cache and return the result.
 
         Calling instantiate more than once will return the cached value.
@@ -232,13 +251,13 @@ class CollapsedConfig:
 
         return self._instance
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, typing.Any]:
         d = self.__dict__.copy()
         # pull actual value from weakref
         d["manager"] = d["manager"]()
         return d
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, typing.Any]) -> None:
         self.__dict__ = state.copy()
         # reset weakref
         self.__dict__["manager"] = weakref.ref(self.__dict__["manager"])
@@ -248,29 +267,29 @@ class _ConfigObjMap:
     def __init__(self, manager):
         self._manager = manager
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> typing.Any:
         return _ConfigMapping(self._manager, attr)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> typing.Any:
         val = getattr(self._manager.objects, key, klass.sentinel)
         if val is None:
             raise KeyError(key)
         return val
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, typing.Any]:
         # Explicitly defined to force pickling to work as expected without
         # trying to pull __getstate__ from _ConfigMapping due to __getattr__.
         return self.__dict__.copy()
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, typing.Any]) -> None:
         self.__dict__.update(state)
 
 
 class CompatConfigManager:
-    def __init__(self, manager):
+    def __init__(self, manager) -> None:
         self._manager = manager
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> typing.Any:
         if attr == "_manager":
             return object.__getattribute__(self, "_manager")
         obj = getattr(self._manager, attr, klass.sentinel)
@@ -296,7 +315,7 @@ class ConfigManager:
     section with a name starting with "autoload".
     """
 
-    def __init__(self, configs=(), debug=False):
+    def __init__(self, configs=(), debug: bool = False):
         """Initialize.
 
         :type configs: sequence of mappings of string to ConfigSection.
@@ -319,7 +338,7 @@ class ConfigManager:
             return config
         return basics.GeneratedConfigSource(config, "unknown")
 
-    def reload(self):
+    def reload(self) -> None:
         """Reinitialize from the config sources originally passed in.
 
         This throws away all cached instances and re-executes autoloads.
@@ -336,15 +355,15 @@ class ConfigManager:
         for config in self.original_config_sources:
             self.add_config_source(config)
 
-    def update(self, config):
+    def update(self, config) -> None:
         """Reinitialize using an additional supplied config."""
         self.original_config_sources += (config,)
         self.reload()
 
-    def add_config_source(self, config):
-        return self._add_config_source(self._compat_mangle_config(config))
+    def add_config_source(self, config) -> None:
+        self._add_config_source(self._compat_mangle_config(config))
 
-    def _add_config_source(self, config):
+    def _add_config_source(self, config) -> None:
         """Pull extra type and config sections from configs and use them.
 
         Things loaded this way are added after already loaded things
@@ -398,11 +417,11 @@ class ConfigManager:
             if collapsed.type.name == "configsection":
                 self.add_config_source(instance)
 
-    def sections(self):
+    def sections(self) -> typing.Iterator[str]:
         """Return an iterator of all section names."""
         return iter(self.sections_lookup.keys())
 
-    def collapse_named_section(self, name, raise_on_missing=True):
+    def collapse_named_section(self, name: str, raise_on_missing: bool = True):
         """Collapse a config by name, possibly returning a cached instance.
 
         @returns: :obj:`CollapsedConfig`.
@@ -436,7 +455,7 @@ class ConfigManager:
         finally:
             self._refs.remove(name)
 
-    def _get_inherited_sections(self, name, sections):
+    def _get_inherited_sections(self, name: str, sections):
         # List of (name, ConfigSection, index) tuples, most specific first.
         slist = [(name, sections)]
 
@@ -479,13 +498,13 @@ class ConfigManager:
                     slist.append((inherit, target))
         return [_section_data(name, stack[0]) for (name, stack) in slist]
 
-    def _section_is_inherit_only(self, section):
+    def _section_is_inherit_only(self, section) -> bool:
         if "inherit-only" in section:
             if section.render_value(self, "inherit-only", "bool"):
                 return True
         return False
 
-    def collapse_section(self, sections, _name=None):
+    def collapse_section(self, sections, _name: typing.Optional[str] = None):
         """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
 
         if self._section_is_inherit_only(sections[0]):
@@ -518,7 +537,7 @@ class ConfigManager:
         return collapsed
 
     @klass.jit_attr
-    def types(self):
+    def types(self) -> dict[str, dict[str, typing.Any]]:
         type_map = defaultdict(dict)
         for name, sections in self.sections_lookup.items():
             if self._section_is_inherit_only(sections[0]):
@@ -529,7 +548,7 @@ class ConfigManager:
             (k, mappings.ImmutableDict(v)) for k, v in type_map.items()
         )
 
-    def _render_config_stack(self, type_obj, config_stack):
+    def _render_config_stack(self, type_obj, config_stack) -> dict[str, typing.Any]:
         conf = {}
         for key in config_stack:
             typename = type_obj.types.get(key)
@@ -547,6 +566,8 @@ class ConfigManager:
             if typename.startswith("refs:") or typename in ("list", "str"):
                 result = config_stack.render_prepends(self, key, typename)
                 if typename == "str":
+                    # TODO: figure out why this is needed and likely remove it.
+                    # it's likely just doing ' '.join([item])
                     result = " ".join(result)
             else:
                 result = config_stack.render_val(self, key, typename)
@@ -581,7 +602,7 @@ class ConfigManager:
 
         return mappings.ImmutableDict(conf)
 
-    def get_default(self, type_name):
+    def get_default(self, type_name: str) -> typing.Optional[typing.Any]:
         """Finds the configuration specified default obj of type_name.
 
         Returns C{None} if no defaults.

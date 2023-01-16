@@ -22,6 +22,7 @@ __all__ = (
     "parse_config_file",
 )
 
+import typing
 from functools import partial
 
 from snakeoil import modules
@@ -50,7 +51,13 @@ class ConfigType:
     :ivar allow_unknowns: controls whether unknown settings should error.
     """
 
-    def __init__(self, func_obj):
+    callable: typing.Callable
+    types: dict[str, str]
+    positional: tuple[str]
+    required: tuple[str]
+    allow_unknowns: bool
+
+    def __init__(self, func_obj: typing.Callable) -> None:
         """Create from a callable (function, member function, class).
 
         It uses the defaults to determine type:
@@ -77,6 +84,8 @@ class ConfigType:
         # need without it. Most of the code in its getargs function
         # deals with tuples inside argument definitions, which we do
         # not support anyway.
+        #
+        # TODO: use the inspect module, speed is less of an issue in 2023.
         self.types = {}
 
         varargs, args, defaults, varkw = (), (), (), ()
@@ -165,7 +174,9 @@ class ConfigType:
 class LazySectionRef:
     """Abstract base class for lazy-loaded section references."""
 
-    def __init__(self, central, typename):
+    typename: str
+
+    def __init__(self, central, typename: str) -> None:
         self.central = central
         self.typename = typename.split(":", 1)[1]
         self.cached_config = None
@@ -185,13 +196,15 @@ class LazySectionRef:
                 )
         return self.cached_config
 
-    def instantiate(self):
+    def instantiate(self) -> typing.Any:
         """Convenience method returning the instantiated section."""
         return self.collapse().instantiate()
 
 
 class LazyNamedSectionRef(LazySectionRef):
-    def __init__(self, central, typename, name):
+    name: str
+
+    def __init__(self, central, typename: str, name: str) -> None:
         super().__init__(central, typename)
         self.name = name
 
@@ -200,7 +213,7 @@ class LazyNamedSectionRef(LazySectionRef):
 
 
 class LazyUnnamedSectionRef(LazySectionRef):
-    def __init__(self, central, typename, section):
+    def __init__(self, central, typename: str, section) -> None:
         super().__init__(central, typename)
         self.section = section
 
@@ -215,15 +228,15 @@ class ConfigSection:
     be an Interface.
     """
 
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         """Check if a key is in this section."""
         raise NotImplementedError(self.__contains__)
 
-    def keys(self):
+    def keys(self) -> list[str]:
         """Return a list of keys."""
         raise NotImplementedError(self.keys)
 
-    def render_value(self, central, name, arg_type):
+    def render_value(self, central, name: str, arg_type):
         """Return a setting, converted to the requested type."""
         raise NotImplementedError(self, "render_value")
 
@@ -231,7 +244,10 @@ class ConfigSection:
 class DictConfigSection(ConfigSection):
     """Turns a dict and a conversion function into a ConfigSection."""
 
-    def __init__(self, conversion_func, source_dict):
+    func: typing.Callable
+    dict: dict[str, typing.Any]
+
+    def __init__(self, conversion_func, source_dict: dict[str, typing.Any]) -> None:
         """Initialize.
 
         :type conversion_func: callable.
@@ -243,13 +259,13 @@ class DictConfigSection(ConfigSection):
         self.func = conversion_func
         self.dict = source_dict
 
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         return name in self.dict
 
-    def keys(self):
+    def keys(self) -> list[str]:
         return list(self.dict.keys())
 
-    def render_value(self, central, name, arg_type):
+    def render_value(self, central, name: str, arg_type: str):
         try:
             return self.func(central, self.dict[name], arg_type)
         except IGNORED_EXCEPTIONS:
@@ -263,7 +279,12 @@ class DictConfigSection(ConfigSection):
 class FakeIncrementalDictConfigSection(ConfigSection):
     """Turns a dict and a conversion function into a ConfigSection."""
 
-    def __init__(self, conversion_func, source_dict):
+    func: typing.Callable
+    dict: dict[str, typing.Any]
+
+    def __init__(
+        self, conversion_func: typing.Callable, source_dict: dict[str, typing.Any]
+    ) -> None:
         """Initialize.
 
         A request for a section of a list type will look for
@@ -281,14 +302,14 @@ class FakeIncrementalDictConfigSection(ConfigSection):
         self.func = conversion_func
         self.dict = source_dict
 
-    def __contains__(self, name):
+    def __contains__(self, name: str) -> bool:
         return (
             name in self.dict
             or name + ".append" in self.dict
             or name + ".prepend" in self.dict
         )
 
-    def keys(self):
+    def keys(self) -> list[str]:
         keys = set()
         for key in self.dict:
             if key.endswith(".append"):
@@ -298,7 +319,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
             keys.add(key)
         return list(keys)
 
-    def render_value(self, central, name, arg_type):
+    def render_value(self, central, name: str, arg_type: str):
         # Check if we need our special incremental magic.
         if arg_type in ("list", "str", "repr") or arg_type.startswith("refs:"):
             result = []
@@ -418,8 +439,9 @@ class FakeIncrementalDictConfigSection(ConfigSection):
             ) from e
 
 
-def str_to_list(string):
+def str_to_list(string: str) -> list[str]:
     """Split on whitespace honoring quoting for new tokens."""
+    # TODO: replace this with shlex or equivalent parsing.
     l = []
     i = 0
     e = len(string)
@@ -455,15 +477,16 @@ def str_to_list(string):
     return l
 
 
-def str_to_str(string):
+def str_to_str(string: str) -> str:
     """Yank leading/trailing whitespace and quotation, along with newlines."""
+    # TODO: replace these with shlex
     s = string.strip()
     if len(s) > 1 and s[0] in "\"'" and s[0] == s[-1]:
         s = s[1:-1]
     return s.replace("\n", " ").replace("\t", " ")
 
 
-def str_to_bool(string):
+def str_to_bool(string: str) -> bool:
     """Convert a string to a boolean."""
     s = str_to_str(string).lower()
     if s in ("no", "false", "0"):
@@ -473,7 +496,7 @@ def str_to_bool(string):
     raise errors.ConfigurationError(f"{s!r} is not a boolean")
 
 
-def str_to_int(string):
+def str_to_int(string: str) -> int:
     """Convert a string to a integer."""
     string = str_to_str(string)
     try:
@@ -490,7 +513,7 @@ _str_converters = {
 }
 
 
-def convert_string(central, value, arg_type):
+def convert_string(central, value, arg_type: str):
     """Conversion func for a string-based DictConfigSection."""
     if not isinstance(value, str):
         raise ValueError(
@@ -519,7 +542,7 @@ def convert_string(central, value, arg_type):
     return func(value)
 
 
-def convert_asis(central, value, arg_type):
+def convert_asis(central, value, arg_type: str):
     """ "Conversion" func assuming the types are already correct."""
     if arg_type == "callable":
         if not callable(value):
@@ -558,7 +581,7 @@ def convert_asis(central, value, arg_type):
     return value
 
 
-def convert_hybrid(central, value, arg_type):
+def convert_hybrid(central, value, arg_type: str):
     """Automagically switch between :obj:`convert_string` and :obj:`convert_asis`.
 
     :obj:`convert_asis` is used for arg_type str and if value is not a string.
@@ -579,7 +602,7 @@ ConfigSectionFromStringDict = partial(FakeIncrementalDictConfigSection, convert_
 AutoConfigSection = partial(FakeIncrementalDictConfigSection, convert_hybrid)
 
 
-def section_alias(target, typename):
+def section_alias(target, typename: str) -> AutoConfigSection:
     """Build a ConfigSection that instantiates a named reference.
 
     Because of central's caching our instantiated value will be
@@ -594,11 +617,11 @@ def section_alias(target, typename):
 
 
 @configurable(types={"path": "str", "parser": "callable"}, typename="configsection")
-def parse_config_file(path, parser):
+def parse_config_file(path: str, parser):
     try:
         f = open(path, "r")
-    except (IOError, OSError):
-        raise errors.InstantiationError(f"failed opening {path!r}")
+    except (IOError, OSError) as e:
+        raise errors.InstantiationError(f"failed opening {path!r}") from e
     try:
         return parser(f)
     finally:
@@ -614,7 +637,7 @@ class ConfigSource:
 
 
 class GeneratedConfigSource(ConfigSource):
-    def __init__(self, section_data, description):
+    def __init__(self, section_data, description: str) -> None:
         self.description = description
         self.section_data = section_data
 

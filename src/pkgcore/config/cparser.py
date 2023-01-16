@@ -5,6 +5,7 @@ ini based configuration format
 __all__ = ("config_from_file",)
 
 import configparser
+import typing
 
 from snakeoil import mappings
 
@@ -12,11 +13,14 @@ from . import basics, errors
 
 
 class CaseSensitiveConfigParser(configparser.ConfigParser):
-    def optionxform(self, val):
-        return val
+    """Parse to enforce case sensitivity for configparser"""
+
+    def optionxform(self, optionstr: str) -> str:
+        """preserve case sensitivity"""
+        return optionstr
 
 
-def config_from_file(file_obj):
+def config_from_file(file_obj: typing.Iterable[str]) -> mappings.LazyValDict:
     """
     generate a config dict
 

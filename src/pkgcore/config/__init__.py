@@ -7,21 +7,22 @@ __all__ = ("load_config",)
 # actually needed
 
 import os
+import typing
 
 from .. import const
 from . import central, cparser
 
 
 def load_config(
-    user_conf_file=const.USER_CONF_FILE,
-    system_conf_file=const.SYSTEM_CONF_FILE,
-    debug=False,
+    user_conf_file: typing.Optional[str] = const.USER_CONF_FILE,
+    system_conf_file: typing.Optional[str] = const.SYSTEM_CONF_FILE,
+    debug: bool = False,
     prepend_sources=(),
-    skip_config_files=False,
-    profile_override=None,
-    location=None,
+    skip_config_files: bool = False,
+    profile_override: typing.Optional[str] = None,
+    location: typing.Optional[str] = None,
     **kwargs
-):
+) -> central.CompatConfigManager:
     """The main entry point for any code looking to use pkgcore.
 
     Args:
@@ -29,7 +30,7 @@ def load_config(
         system_conf_file (optional[str]): system pkgcore config file path
         profile_override (optional[str]): targeted profile instead of system setting
         location (optional[str]): path to pkgcore config file or portage config directory
-        skip_config_files (optional[str]): don't attempt to load any config files
+        skip_config_files (bool): don't attempt to load any config files
 
     Returns:
         :obj:`pkgcore.config.central.ConfigManager` instance: system config

@@ -15,6 +15,7 @@ requires-python = "~=3.9"
 authors = [
 	{name = "Tim Harder", email = "radhermit@gmail.com"},
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
+	{name = "Brian Harring", email = "ferringb@gmail.com"},
 ]
 maintainers = [
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},

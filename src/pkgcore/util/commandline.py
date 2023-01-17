@@ -197,7 +197,7 @@ class StoreConfigObject(argparse._StoreAction):
         )
 
     def _get_sections(self, config, namespace):
-        return getattr(config, self.config_type)
+        return getattr(config.objects, self.config_type)
 
     def _real_call(self, parser, namespace, values, option_string=None):
         config = getattr(namespace, "config", None)
@@ -226,7 +226,7 @@ class StoreConfigObject(argparse._StoreAction):
             )
         obj = config.get_default(config_type)
         if obj is None:
-            known_objs = sorted(getattr(config, config_type).keys())
+            known_objs = sorted(getattr(config.objects, config_type).keys())
             msg = f"config error: no default object of type {config_type!r} found.  "
             if not option_string:
                 msg += "Please fix your configuration."

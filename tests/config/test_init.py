@@ -26,13 +26,13 @@ class TestConfigLoading:
 
     def test_load_config(self, user_config):
         manager = load_config(user_conf_file=user_config)
-        assert manager.foo["foo"] == ((), {})
+        assert manager.objects.foo["foo"] == ((), {})
 
     def test_user_config_override_system(self, user_config, system_config):
         manager = load_config(
             user_conf_file=user_config, system_conf_file=system_config
         )
-        assert manager.foo["foo"] == ((), {})
+        assert manager.objects.foo["foo"] == ((), {})
 
     def test_prepends(self, user_config):
         manager = load_config(
@@ -41,9 +41,9 @@ class TestConfigLoading:
                 {"myfoo": basics.HardCodedConfigSection({"inherit": ["foo"]})}
             ],
         )
-        assert manager.foo["myfoo"] == ((), {})
+        assert manager.objects.foo["myfoo"] == ((), {})
 
     def test_disabling_loading(self, user_config):
         manager = load_config(user_conf_file=user_config, skip_config_files=True)
         with pytest.raises(KeyError):
-            manager.foo["foo"]
+            manager.objects.foo["foo"]

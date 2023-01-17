@@ -134,7 +134,7 @@ class TestSync(ArgParseMixin):
             ],
             myrepo=success_section,
         )
-        assert config.repo_config["myrepo"]._syncer.synced
+        assert config.objects.repo_config["myrepo"]._syncer.synced
         self.assertOut(
             [
                 "*** syncing myrepo",

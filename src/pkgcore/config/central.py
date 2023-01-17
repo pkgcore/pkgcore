@@ -9,6 +9,7 @@ __all__ = (
 )
 
 import typing
+import warnings
 import weakref
 from collections import defaultdict, deque, namedtuple
 
@@ -255,6 +256,12 @@ class _ConfigObjMap:
 
 
 class CompatConfigManager:
+    """This is a compatibility hack to alias attribute access to the new location
+
+    See commit fa90aff05306fb4935604e64645f2d1d2049233e for when this was introduced.
+
+    This should be removed once consumers are converted in their access."""
+
     def __init__(self, manager) -> None:
         self._manager = manager
 
@@ -264,6 +271,10 @@ class CompatConfigManager:
         obj = getattr(self._manager, attr, klass.sentinel)
         if obj is klass.sentinel:
             obj = getattr(self._manager.objects, attr)
+            warnings.warn(
+                f"Access to central objects must be done via '.objects.{attr}' rather than '.{attr}'",
+                stacklevel=2,
+            )
         return obj
 
     __dir__ = klass.DirProxy("_manager")

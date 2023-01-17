@@ -213,7 +213,7 @@ class PortageConfig(DictMixin):
 
         self._make_repo_syncers(repos_conf, make_conf)
         if repos:
-            self["repo-stack"] = basics.FakeIncrementalDictConfigSection(
+            self["repo-stack"] = basics.DictConfigSection(
                 my_convert_hybrid,
                 {
                     "class": "pkgcore.repository.multiplex.tree",
@@ -248,9 +248,7 @@ class PortageConfig(DictMixin):
             }
         )
 
-        self["livefs"] = basics.FakeIncrementalDictConfigSection(
-            my_convert_hybrid, make_conf
-        )
+        self["livefs"] = basics.DictConfigSection(my_convert_hybrid, make_conf)
 
     def __setitem__(self, key, value):
         self._config[key] = value

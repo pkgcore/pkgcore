@@ -239,7 +239,7 @@ def dump_main(options, out, err):
     if options.typename is None:
         names = config.sections()
     else:
-        names = iter(getattr(config, options.typename).keys())
+        names = iter(getattr(config.objects, options.typename).keys())
     for i, name in enumerate(sorted(names)):
         if i > 0:
             out.write()

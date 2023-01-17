@@ -648,7 +648,7 @@ def _validate(parser, namespace):
         parser.error("-O/--nodeps cannot be used with -o/--onlydeps (it's a no-op)")
 
     if namespace.sets:
-        unknown_sets = set(namespace.sets).difference(namespace.config.pkgset)
+        unknown_sets = set(namespace.sets).difference(namespace.config.objects.pkgset)
         if unknown_sets:
             parser.error(
                 "unknown set%s: %s (available sets: %s)"
@@ -658,7 +658,9 @@ def _validate(parser, namespace):
                     ", ".join(sorted(namespace.config.pkgset)),
                 )
             )
-        namespace.sets = [(x, namespace.config.pkgset[x]) for x in namespace.sets]
+        namespace.sets = [
+            (x, namespace.config.objects.pkgset[x]) for x in namespace.sets
+        ]
     if namespace.upgrade or namespace.downgrade:
         namespace.replace = False
     if not namespace.targets and not namespace.sets:
@@ -738,7 +740,7 @@ def parse_target(restriction, repo, installed_repos, return_none=False):
 
 @argparser.bind_delayed_default(50, name="world")
 def load_world(namespace, attr):
-    value = namespace.config.pkgset["world"]
+    value = namespace.config.objects.pkgset["world"]
     setattr(namespace, attr, value)
 
 

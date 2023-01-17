@@ -43,11 +43,11 @@ class TestConfigFromIni:
         assert list(config.keys()) == ["test"]
         section = config["test"]
         for key, arg_type, value in (
-            ("string", "str", [None, "hi I am a string", None]),
+            ("string", "str", "hi I am a string"),
             (
                 "list",
                 "list",
-                [None, ["foo", "bar", "baz"], None],
+                ["foo", "bar", "baz"],
             ),
             ("true", "bool", True),
             ("false", "bool", False),

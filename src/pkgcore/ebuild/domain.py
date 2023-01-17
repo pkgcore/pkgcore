@@ -774,7 +774,7 @@ class domain(config_domain):
         }
         data[f"conf:{path}"] = basics.AutoConfigSection(repo_conf_data)
         data[path] = basics.AutoConfigSection(repo_data)
-        config.update(data)
+        config.add_config_source(data)
 
         # reset repo-related jit attrs
         for attr in (x for x in dir(self) if x.startswith("_jit_repo_")):

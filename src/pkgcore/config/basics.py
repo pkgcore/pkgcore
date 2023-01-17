@@ -10,7 +10,6 @@ __all__ = (
     "LazyNamedSectionRef",
     "ConfigSection",
     "DictConfigSection",
-    "FakeIncrementalDictConfigSection",
     "convert_string",
     "convert_asis",
     "convert_hybrid",
@@ -247,8 +246,13 @@ class DictConfigSection(ConfigSection):
     func: typing.Callable
     dict: dict[str, typing.Any]
 
-    def __init__(self, conversion_func, source_dict: dict[str, typing.Any]) -> None:
+    def __init__(
+        self, conversion_func: typing.Callable, source_dict: dict[str, typing.Any]
+    ) -> None:
         """Initialize.
+
+        The conversion func should return a single sequence for list types and in
+        repr for list types.
 
         :type conversion_func: callable.
         :param conversion_func: called with a ConfigManager, a value from
@@ -266,84 +270,25 @@ class DictConfigSection(ConfigSection):
         return list(self.dict.keys())
 
     def render_value(self, central, name: str, arg_type: str):
-        try:
-            return self.func(central, self.dict[name], arg_type)
-        except IGNORED_EXCEPTIONS:
-            raise
-        except Exception as e:
-            raise errors.ConfigurationError(
-                f"Failed converting argument {name!r} to {arg_type}"
-            ) from e
-
-
-class FakeIncrementalDictConfigSection(ConfigSection):
-    """Turns a dict and a conversion function into a ConfigSection."""
-
-    func: typing.Callable
-    dict: dict[str, typing.Any]
-
-    def __init__(
-        self, conversion_func: typing.Callable, source_dict: dict[str, typing.Any]
-    ) -> None:
-        """Initialize.
-
-        A request for a section of a list type will look for
-        name.prepend and name.append keys too, using those for values
-        prepended/appended to the inherited values. The conversion
-        func should return a single sequence for list types and in
-        repr for list types.
-
-        :type conversion_func: callable.
-        :param conversion_func: called with a ConfigManager, a value from
-            the dict and a type name.
-        :type source_dict: dict with string keys and arbitrary values.
-        """
-        super().__init__()
-        self.func = conversion_func
-        self.dict = source_dict
-
-    def __contains__(self, name: str) -> bool:
-        return (
-            name in self.dict
-            or name + ".append" in self.dict
-            or name + ".prepend" in self.dict
-        )
-
-    def keys(self) -> list[str]:
-        keys = set()
-        for key in self.dict:
-            if key.endswith(".append"):
-                key = key[:-7]
-            elif key.endswith(".prepend"):
-                key = key[:-8]
-            keys.add(key)
-        return list(keys)
-
-    def render_value(self, central, name: str, arg_type: str):
         # Check if we need our special incremental magic.
         if arg_type in ("list", "str", "repr") or arg_type.startswith("refs:"):
-            result = []
-            # Careful: None is a valid dict value, so use something else here.
-            missing = object()
-            for subname in (name + ".prepend", name, name + ".append"):
-                val = self.dict.get(subname, missing)
-                if val is missing:
-                    val = None
-                else:
-                    try:
-                        val = self.func(central, val, arg_type)
-                    except IGNORED_EXCEPTIONS:
-                        raise
-                    except Exception as e:
-                        raise errors.ConfigurationError(
-                            f"Failed converting argument {subname!r} to {arg_type}"
-                        ) from e
-                result.append(val)
-            if result[0] is result[1] is result[2] is None:
+            try:
+                val = self.func(central, self.dict[name], arg_type)
+            except IGNORED_EXCEPTIONS:
+                raise
+            except Exception as e:
+                raise errors.ConfigurationError(
+                    f"Failed converting argument {name!r} to {arg_type}"
+                ) from e
+            if val is None:
                 raise KeyError(name)
+            result = [None, val, None]
             if arg_type != "repr":
                 # Done.
                 return result
+            # what follows is basically a type annotation shoved into this pathway, resulting
+            # in a differing signature from norms.  repr arg_type needs to be removed for this reason.
+
             # If "kind" is of some incremental-ish kind or we have
             # .prepend or .append for this key then we need to
             # convert everything we have to the same kind and
@@ -428,7 +373,7 @@ class FakeIncrementalDictConfigSection(ConfigSection):
                     else:
                         converted.append([val])
             return target_kind, converted
-        # Not incremental.
+        # simple types.
         try:
             return self.func(central, self.dict[name], arg_type)
         except IGNORED_EXCEPTIONS:
@@ -597,9 +542,9 @@ def convert_hybrid(central, value, arg_type: str):
 
 # "Invalid name" (pylint thinks these are module-level constants)
 # pylint: disable-msg=C0103
-HardCodedConfigSection = partial(FakeIncrementalDictConfigSection, convert_asis)
-ConfigSectionFromStringDict = partial(FakeIncrementalDictConfigSection, convert_string)
-AutoConfigSection = partial(FakeIncrementalDictConfigSection, convert_hybrid)
+HardCodedConfigSection = partial(DictConfigSection, convert_asis)
+ConfigSectionFromStringDict = partial(DictConfigSection, convert_string)
+AutoConfigSection = partial(DictConfigSection, convert_hybrid)
 
 
 def section_alias(target, typename: str) -> AutoConfigSection:

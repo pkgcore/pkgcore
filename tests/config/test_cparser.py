@@ -2,6 +2,7 @@ import textwrap
 from io import StringIO
 
 import pytest
+
 from pkgcore.config import central, cparser, errors
 
 
@@ -33,8 +34,6 @@ class TestConfigFromIni:
             [test]
             string = 'hi I am a string'
             list = foo bar baz
-            list.prepend = pre bits
-            list.append = post bits
             true = yes
             false = no
         """
@@ -48,7 +47,7 @@ class TestConfigFromIni:
             (
                 "list",
                 "list",
-                [["pre", "bits"], ["foo", "bar", "baz"], ["post", "bits"]],
+                [None, ["foo", "bar", "baz"], None],
             ),
             ("true", "bool", True),
             ("false", "bool", False),

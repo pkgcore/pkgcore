@@ -8,6 +8,7 @@ __all__ = (
     "ConfigManager",
 )
 
+import functools
 import typing
 import weakref
 from collections import defaultdict, deque, namedtuple
@@ -338,9 +339,9 @@ class ConfigManager:
         return basics.GeneratedConfigSource(config, "unknown")
 
     def reload(self) -> None:
-        """Reinitialize from the config sources originally passed in.
+        """Reinitialize from the configured config sources.
 
-        This throws away all cached instances and re-executes autoloads.
+        This throws away all cached instances.
         """
         # "Attribute defined outside __init__"
         # pylint: disable-msg=W0201
@@ -352,23 +353,21 @@ class ConfigManager:
         # force regeneration.
         self._types = klass._uncached_singleton
         for config in self.original_config_sources:
-            self.add_config_source(config)
+            self._integrate_config_source(config)
 
-    def update(self, config) -> None:
-        """Reinitialize using an additional supplied config."""
+    def add_config_source(self, config) -> None:
+        """Add the given config source and reload the internal rendering"""
         self.original_config_sources += (config,)
         self.reload()
 
-    def add_config_source(self, config) -> None:
-        self._add_config_source(self._compat_mangle_config(config))
-
-    def _add_config_source(self, config) -> None:
+    def _integrate_config_source(self, config) -> None:
         """Pull extra type and config sections from configs and use them.
 
         Things loaded this way are added after already loaded things
         (meaning the config containing the autoload section overrides
         the config(s) added by that section).
         """
+        config = self._compat_mangle_config(config)
         config_data = config.sections()
 
         collision = set(self.rendered_sections)
@@ -414,7 +413,7 @@ class ConfigManager:
             except Exception as e:
                 raise errors.AutoloadInstantiationError(name) from e
             if collapsed.type.name == "configsection":
-                self.add_config_source(instance)
+                self._integrate_config_source(instance)
 
     def sections(self) -> typing.Iterator[str]:
         """Return an iterator of all section names."""

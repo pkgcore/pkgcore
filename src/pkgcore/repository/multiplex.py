@@ -14,7 +14,7 @@ from snakeoil.compatibility import sorted_cmp
 from snakeoil.currying import post_curry
 from snakeoil.iterables import iter_sort
 
-from ..config.hint import configurable
+from ..config.hint import ConfigHint
 from ..operations import repo as repo_interface
 from . import errors, prototype
 
@@ -62,11 +62,6 @@ class operations(repo_interface.operations_proxy):
         return ret
 
 
-@configurable(types={"repos": "refs:repo"}, typename="repo")
-def config_tree(repos):
-    return tree(*repos)
-
-
 class tree(prototype.tree):
     """Repository combining multiple repos together.
 
@@ -83,6 +78,8 @@ class tree(prototype.tree):
 
     frozen_settable = False
     operations_kls = operations
+
+    pkgcore_config_type = ConfigHint(types={"repos": "refs:repo"}, typename="repo")
 
     def __init__(self, *trees):
         super().__init__()

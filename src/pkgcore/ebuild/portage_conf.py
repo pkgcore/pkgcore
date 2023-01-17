@@ -216,7 +216,7 @@ class PortageConfig(DictMixin):
             self["repo-stack"] = basics.FakeIncrementalDictConfigSection(
                 my_convert_hybrid,
                 {
-                    "class": "pkgcore.repository.multiplex.config_tree",
+                    "class": "pkgcore.repository.multiplex.tree",
                     "repos": tuple(repos),
                 },
             )

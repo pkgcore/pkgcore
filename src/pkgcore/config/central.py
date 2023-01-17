@@ -8,11 +8,9 @@ __all__ = (
     "ConfigManager",
 )
 
-import functools
 import typing
 import weakref
 from collections import defaultdict, deque, namedtuple
-from itertools import chain
 
 from snakeoil import klass, mappings
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
@@ -69,42 +67,13 @@ class _ConfigStack(defaultdict[str, list[typing.Any]]):
     def __init__(self) -> None:
         super().__init__(list)
 
-    def render_vals(
-        self, manager, key: str, type_name: str
-    ) -> typing.Iterator[typing.Any]:
-        for data in self.get(key, ()):
-            if key in data.section:
-                yield data.section.render_value(manager, key, type_name)
-
-    def render_val(
+    def render_value(
         self, manager, key: str, type_name: str
     ) -> typing.Optional[typing.Any]:
-        for val in self.render_vals(manager, key, type_name):
-            return val
+        for data in self.get(key, ()):
+            if key in data.section:
+                return data.section.render_value(manager, key, type_name)
         return None
-
-    def render_prepends(self, manager, key: str, type_name: str) -> list[typing.Any]:
-        results = []
-        # keep in mind that the sequence we get is a top -> bottom walk of the config
-        # as such for this operation we have to reverse it when building the content-
-        # specifically, reverse the ordering, but not the content of each item.
-        data = []
-        for content in self.render_vals(manager, key, type_name):
-            data.append(content)
-            if content[1]:
-                break
-
-        for prepend, this_content, append in reversed(data):
-            if this_content:
-                results = [this_content]
-            if prepend:
-                results = [prepend] + results
-            if append:
-                results += [append]
-
-        if type_name != "str":
-            results = list(chain.from_iterable(results))
-        return results
 
 
 class CollapsedConfig:
@@ -463,13 +432,7 @@ class ConfigManager:
             current_conf = section_stack[0]
             if "inherit" not in current_conf:
                 continue
-            prepend, inherits, append = current_conf.render_value(
-                self, "inherit", "list"
-            )
-            if prepend is not None or append is not None:
-                raise errors.ConfigurationError(
-                    "Prepending or appending to the inherit list makes no sense"
-                )
+            inherits = current_conf.render_value(self, "inherit", "list")
             for inherit in inherits:
                 if inherit == current_section:
                     # self-inherit.  Mkae use of section_stack to handle this.
@@ -516,11 +479,11 @@ class ConfigManager:
             for key in data.section.keys():
                 config_stack[key].append(data)
 
-        kls = config_stack.render_val(self, "class", "callable")
+        kls = config_stack.render_value(self, "class", "callable")
         if kls is None:
             raise errors.ConfigurationError("no class specified")
         type_obj = basics.ConfigType(kls)
-        is_default = bool(config_stack.render_val(self, "default", "bool"))
+        is_default = bool(config_stack.render_value(self, "default", "bool"))
 
         for key in ("inherit", "inherit-only", "class", "default"):
             config_stack.pop(key, None)
@@ -561,14 +524,7 @@ class ConfigManager:
             if typename.startswith("lazy_"):
                 typename = typename[5:]
 
-            if typename.startswith("refs:") or typename in ("list", "str"):
-                result = config_stack.render_prepends(self, key, typename)
-                if typename == "str":
-                    # TODO: figure out why this is needed and likely remove it.
-                    # it's likely just doing ' '.join([item])
-                    result = " ".join(result)
-            else:
-                result = config_stack.render_val(self, key, typename)
+            result = config_stack.render_value(self, key, typename)
 
             if is_ref:
                 result = [result]

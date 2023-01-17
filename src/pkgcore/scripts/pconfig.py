@@ -319,29 +319,24 @@ def _dump_uncollapsed_section(config, out, err, section):
         kind, value = section.render_value(config, key, "repr")
         out.write(f"# type: {kind}")
         if kind == "list":
-            for name, val in zip((key + ".prepend", key, key + ".append"), value):
-                if val:
-                    out.write(repr(name), " = ", " ".join(repr(v) for v in val))
+            out.write(repr(key), " = ", " ".join(repr(v) for v in value))
             continue
         if kind in ("refs", "str"):
-            for name, val in zip((key + ".prepend", key, key + ".append"), value):
-                if not val:
-                    continue
-                out.write(repr(name), " = ", autoline=False)
-                if kind == "str":
-                    out.write(repr(val))
-                else:
-                    out.write()
-                    out.first_prefix.append("    ")
-                    try:
-                        for subnr, subsection in enumerate(val):
-                            subname = f"nested section {subnr + 1}"
-                            out.write(subname)
-                            out.write("=" * len(subname))
-                            _dump_uncollapsed_section(config, out, err, subsection)
-                            out.write()
-                    finally:
-                        out.first_prefix.pop()
+            out.write(repr(key), " = ", autoline=False)
+            if kind == "str":
+                out.write(repr(value))
+            else:
+                out.write()
+                out.first_prefix.append("    ")
+                try:
+                    for subnr, subsection in enumerate(value):
+                        subname = f"nested section {subnr + 1}"
+                        out.write(subname)
+                        out.write("=" * len(subname))
+                        _dump_uncollapsed_section(config, out, err, subsection)
+                        out.write()
+                finally:
+                    out.first_prefix.pop()
             continue
         out.write(f"{key!r} = ", autoline=False)
         if kind == "callable":

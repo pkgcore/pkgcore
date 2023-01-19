@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.19 (2023-01-19)
+----------------------------
+
+- re-add Brian Harring as author for pkgcore
+
+- properly close open file handlers during tests (Arthur Zamarin)
+
+- various code cleanups, refactoring and modernization (Brian Harring)
+
+- domain: fix parsing of multiple USE_EXAPNDs
+  (Arthur Zamarin, #391, https://bugs.gentoo.org/891409)
+
+- portage_conf: add support for make.profile as its own directory, behaving as
+  specialized user profile (Arthur Zamarin, #390)
+
+----------------------------
 pkgcore 0.12.18 (2022-12-27)
 ----------------------------
 

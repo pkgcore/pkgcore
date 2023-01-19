@@ -99,7 +99,7 @@ class StrRegex(base, metaclass=hashed_base):
         try:
             compiled_re = re.compile(regex, flags)
         except re.error as e:
-            raise ValueError("invalid regex: %r, %s" % (regex, e))
+            raise ValueError(f"invalid regex: {regex!r}, {e}")
         if match:
             sf(self, "_matchfunc", compiled_re.match)
         else:
@@ -123,7 +123,7 @@ class StrRegex(base, metaclass=hashed_base):
             result.append("match")
         else:
             result.append("search")
-        result.append("@%#8x" % (id(self),))
+        result.append(f"@{id(self):#8x}")
         result = " ".join(result)
         return f"<{result}>"
 
@@ -277,12 +277,7 @@ class EqualityMatch(base, metaclass=generic_equality):
         return (self.data == actual_val) != self.negate
 
     def __repr__(self):
-        return "<%s %r negate=%r @%#8x>" % (
-            self.__class__.__name__,
-            self.data,
-            self.negate,
-            id(self),
-        )
+        return f"<{self.__class__.__name__} {self.data!r} negate={self.negate!r} @{id(self):#8x}>"
 
     def __str__(self):
         if self.negate:

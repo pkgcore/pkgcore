@@ -45,7 +45,7 @@ def isvalid_pkg_name(chunks):
     return True
 
 
-def isvalid_rev(s):
+def isvalid_rev(s: str):
     return s and s[0] == "r" and s[1:].isdigit()
 
 
@@ -118,7 +118,7 @@ class Revision(UserString):
         return self.data >= other
 
 
-def ver_cmp(ver1, rev1, ver2, rev2):
+def ver_cmp(ver1: str, rev1: str, ver2: str, rev2: str) -> int:
     # If the versions are the same, comparing revisions will suffice.
     if ver1 == ver2:
         # revisions are equal if 0 or None (versionless cpv)

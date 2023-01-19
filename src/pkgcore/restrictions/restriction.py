@@ -122,7 +122,7 @@ class FakeType(base):
         return self._restrict.match(*a, **kw)
 
     def __str__(self):
-        return "Faked type(%s): %s" % (self.type, self._restrict)
+        return f"Faked type({self.type}): {self._restrict}"
 
 
 class AnyMatch(base):
@@ -150,14 +150,10 @@ class AnyMatch(base):
         return self.negate
 
     def __str__(self):
-        return "any: %s match" % (self.restriction,)
+        return f"any: {self.restriction} match"
 
     def __repr__(self):
-        return "<%s restriction=%r @%#8x>" % (
-            self.__class__.__name__,
-            self.restriction,
-            id(self),
-        )
+        return f"<{self.__class__.__name__} restriction={self.restriction!r} @{id(self):#8x}>"
 
 
 def curry_node_type(cls, node_type, extradoc=None):
@@ -174,7 +170,7 @@ def curry_node_type(cls, node_type, extradoc=None):
     :return: a wrapped callable.
     """
     if extradoc is None:
-        extradoc = "Automatically set to %s type." % (node_type,)
+        extradoc = f"Automatically set to {node_type} type."
     doc = cls.__doc__
     result = partial(cls, node_type=node_type)
     if doc is None:

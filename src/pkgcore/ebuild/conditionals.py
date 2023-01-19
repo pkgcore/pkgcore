@@ -6,6 +6,8 @@ appropriate conditionals.
 
 __all__ = ("DepSet", "stringify_boolean")
 
+import typing
+
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.iterables import expandable_chain
 from snakeoil.sequences import iflatten_instance
@@ -289,7 +291,11 @@ class DepSet(boolean.AndRestriction):
         return self.restrictions[key]
 
 
-def stringify_boolean(node, func=str, domain=None):
+def stringify_boolean(
+    node: restriction.base,
+    func: typing.Callable[[restriction.base], str] = str,
+    domain=None,
+):
     """func is used to stringify the actual content. Useful for fetchables."""
     l = []
     if isinstance(node, DepSet):
@@ -300,7 +306,12 @@ def stringify_boolean(node, func=str, domain=None):
     return " ".join(l)
 
 
-def _internal_stringify_boolean(node, domain, func, visit):
+def _internal_stringify_boolean(
+    node: restriction.base,
+    domain,
+    func: typing.Callable[[restriction.base], str],
+    visit: typing.Callable[[str], None],
+):
     """func is used to stringify the actual content. Useful for fetchables."""
 
     if isinstance(node, boolean.OrRestriction):
@@ -314,7 +325,7 @@ def _internal_stringify_boolean(node, domain, func, visit):
         iterable = node.payload
         visit(
             "%s%s? ("
-            % (node.restriction.negate and "!" or "", list(node.restriction.vals)[0])
+            % ("!" if node.restriction.negate else "", list(node.restriction.vals)[0])
         )
     else:
         if domain is not None and (

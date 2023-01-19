@@ -771,7 +771,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         object.__setattr__(self, "config_name", config_name)
         object.__setattr__(self, "external", (config_name is None))
         object.__setattr__(self, "location", location)
-        object.__setattr__(self, "profiles_base", pjoin(self.location, profiles_base))
+        object.__setattr__(self, "profiles_base", pjoin(location, profiles_base))
 
         try:
             self._parse_config()

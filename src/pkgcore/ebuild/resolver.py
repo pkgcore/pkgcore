@@ -22,7 +22,6 @@ def upgrade_resolver(
     resolver_cls=plan.merge_plan,
     **kwds,
 ):
-
     """
     generate and configure a resolver for upgrading all processed nodes.
 

@@ -45,7 +45,7 @@ def parse_manifest(source, ignore_gpg=True):
     # manifest v1 format is
     # CHF sum filename size
     # note that we do _not_ support manifest1
-    chf_types = set(["size"])
+    chf_types = {"size"}
     f = None
     try:
         if isinstance(source, str):
@@ -67,7 +67,7 @@ def parse_manifest(source, ignore_gpg=True):
                 raise errors.ParseChksumError(
                     source,
                     "manifest 2 entry doesn't have right "
-                    "number of tokens, %i: %r" % (len(line), line),
+                    f"number of tokens, {len(line)}: {line!r}",
                 )
             chf_types.update(line[3::2])
             # this is a trick to do pairwise collapsing;

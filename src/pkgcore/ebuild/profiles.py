@@ -639,15 +639,14 @@ class ProfileStack:
             for path, line, lineno in node.parent_paths:
                 try:
                     x = self._node_kls._autodetect_and_create(path)
-                except ProfileError as e:
+                except ProfileError as exc:
                     repo_id = node.repoconfig.repo_id
                     logger.error(
                         f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
-                        f"bad profile parent {line!r}: {e.error}"
+                        f"bad profile parent {line!r}: {exc.error}"
                     )
                     continue
-                for y in f(x):
-                    yield y
+                yield from f(x)
             yield node
 
         return tuple(f(self.node))

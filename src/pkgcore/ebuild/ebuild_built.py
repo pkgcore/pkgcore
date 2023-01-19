@@ -173,7 +173,7 @@ class package(ebuild_src.base):
         return self._parent._get_metadata(self)
 
     def __str__(self):
-        return "built ebuild: %s" % (self.cpvstr)
+        return f"built ebuild: {self.cpvstr}"
 
     def build(self, **kwargs):
         return self.repo._generate_buildop(self)

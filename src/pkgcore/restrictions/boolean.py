@@ -54,13 +54,11 @@ class base(restriction.base, metaclass=generic_equality):
                 for r in restrictions:
                     if r.type is not None and r.type != node_type:
                         raise TypeError(
-                            "instance '%s' is restriction type '%s', "
-                            "must be '%s'" % (r, r.type, node_type)
+                            f"instance '{r}' is restriction type '{r.type}', must be '{node_type}'"
                         )
             except AttributeError:
                 raise TypeError(
-                    "type '%s' instance '%s' has no restriction type, "
-                    "'%s' required" % (r.__class__, r, node_type)
+                    f"type '{r.__class__}' instance '{r}' has no restriction type, '{node_type}' required"
                 )
 
         if kwds.pop("finalize", True):
@@ -74,7 +72,7 @@ class base(restriction.base, metaclass=generic_equality):
         if kwds:
             kwds.pop("disable_inst_caching", None)
             if kwds:
-                raise TypeError("unknown keywords to %s: %s" % (self.__class__, kwds))
+                raise TypeError(f"unknown keywords to {self.__class__}: {kwds}")
 
     def change_restrictions(self, *restrictions, **kwds):
         """return a new instance of self.__class__, using supplied restrictions"""

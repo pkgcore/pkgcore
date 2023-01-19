@@ -291,8 +291,7 @@ class StoreRepoObject(StoreConfigObject):
     def __init__(self, *args, **kwargs):
         if "config_type" in kwargs:
             raise ValueError(
-                "StoreRepoObject: config_type keyword is redundant: got %s"
-                % (kwargs["config_type"],)
+                f"StoreRepoObject: config_type keyword is redundant: got {kwargs['config_type']}"
             )
 
         self.repo_type = kwargs.pop("repo_type", "all")
@@ -304,12 +303,9 @@ class StoreRepoObject(StoreConfigObject):
         if self.allow_aliases:
             unknown_aliases = self.allow_aliases.difference(self.valid_repo_types)
             if unknown_aliases:
+                es = pluralism(unknown_aliases, plural="es")
                 raise argparse.ArgumentTypeError(
-                    "unknown repo alias%s: %s"
-                    % (
-                        pluralism(unknown_aliases, plural="es"),
-                        ", ".join(unknown_aliases),
-                    )
+                    f"unknown repo alias{es}: {', '.join(unknown_aliases)}"
                 )
 
         if self.repo_type == "config":
@@ -381,17 +377,16 @@ class StoreRepoObject(StoreConfigObject):
 
 class DomainFromPath(StoreConfigObject):
     def __init__(self, *args, **kwargs):
-        kwargs["config_type"] = "domain"
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, config_type="domain", **kwargs)
 
     def _load_obj(self, sections, requested_path):
         targets = list(find_domains_from_path(sections, requested_path))
         if not targets:
             raise ValueError(f"couldn't find domain at path {requested_path!r}")
         elif len(targets) != 1:
+            domains = ", ".join(repr(x[0]) for x in targets)
             raise ValueError(
-                "multiple domains claim root %r: domains %s"
-                % (requested_path, ", ".join(repr(x[0]) for x in targets))
+                f"multiple domains claim root {requested_path!r}: domains {domains}"
             )
         return targets[0][1]
 
@@ -554,7 +549,7 @@ class _ConfigArg(argparse._StoreAction):
     """Store given config path location or use the stub config when disabled."""
 
     def __call__(self, parser, namespace, value, option_string=None):
-        if value.lower() in {"false", "no", "n"}:
+        if value.lower() in ("false", "no", "n"):
             path = pjoin(const.DATA_PATH, "stubconfig")
         else:
             path = arghparse.existent_path(value)

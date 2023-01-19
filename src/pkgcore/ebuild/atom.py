@@ -54,7 +54,6 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         "slot",
         "subslot",
         "repo_id",
-        "_hash",
         "_cpv",
         "_restrictions",
     )

@@ -66,8 +66,14 @@ def optimize_incrementals(sequence):
                 finalized.add(item)
 
 
-def incremental_chunked(orig, iterables):
+def incremental_chunked(orig: set[str], iterables):
     for cinst in iterables:
+        if "*" in cinst.neg:  # remove all previous set flags
+            orig.clear()
+        for flag in cinst.neg:
+            if flag.endswith("_*"):  # remove previous USE_EXPAND
+                drop = [f for f in orig if f.startswith(flag[:-2])]
+                orig.difference_update(drop)
         orig.difference_update(cinst.neg)
         orig.update(cinst.pos)
 

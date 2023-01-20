@@ -57,15 +57,17 @@ class TestDomain:
 
     def test_use_expand_syntax(self):
         (self.pusedir / "a").write_text(
-            textwrap.dedent(
-                """
-                */* x_y1
-                # unrelated is there to verify that it's unaffected by the USE_EXPAND
-                */* unrelated X: -y1 y2
-                # multiple USE_EXPANDs
-                */* unrelated X: -y1 y2 Z: -z3 z4
-                """
-            )
+            """
+            */* x_y1
+            # unrelated is there to verify that it's unaffected by the USE_EXPAND
+            */* unrelated X: -y1 y2
+            # multiple USE_EXPANDs
+            */* unrelated X: -y1 y2 Z: -z3 z4
+            # cleanup previous
+            */* x y -* z
+            # cleanup previous USE_EXPAND
+            */* unrelated Y: y1 -* y2 Z: z1 -* -z2
+            """
         )
 
         assert (
@@ -88,6 +90,27 @@ class TestDomain:
                         "unrelated",
                         "x_y2",
                         "z_z4",
+                    ),
+                ),
+            ),
+            (
+                packages.AlwaysTrue,
+                (
+                    ("*",),
+                    ("z",),
+                ),
+            ),
+            (
+                packages.AlwaysTrue,
+                (
+                    (
+                        "y_*",
+                        "z_*",
+                        "z_z2",
+                    ),
+                    (
+                        "unrelated",
+                        "y_y2",
                     ),
                 ),
             ),

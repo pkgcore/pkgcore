@@ -5,6 +5,7 @@ import pytest
 
 from pkgcore.ebuild import domain as domain_mod
 from pkgcore.ebuild import profiles
+from pkgcore.ebuild.atom import atom
 from pkgcore.fs.livefs import iter_scan
 from pkgcore.restrictions import packages
 
@@ -22,6 +23,8 @@ class TestDomain:
         self.pmixin.mk_profile(self.profile_base, str(self.profile1))
         self.pusedir = self.confdir / "package.use"
         self.pusedir.mkdir()
+        self.pkeywordsdir = self.confdir / "package.accept_keywords"
+        self.pkeywordsdir.mkdir()
 
     def mk_domain(self):
         return domain_mod.domain(
@@ -132,3 +135,32 @@ class TestDomain:
         assert () == self.mk_domain().pkg_use
         assert "token x_$z is not a valid use flag" in caplog.text
         caplog.clear()
+
+    @pytest.mark.xfail(
+        reason="pruning of tokens isn't yet implemented for package.keywords"
+    )
+    def test_package_keywords(self):
+        (self.pkeywordsdir / "a").write_text(
+            """
+            # control case.
+            dev-util/normal x86 ~amd64
+
+            # all stable means x86 is redundant
+            dev-util/stable x86 *
+
+            # all unstable (~*) implicitly includes stable, so drop the x64
+            dev-util/unstable ~* x64
+
+            # ** matches everything, including no keywords.  the x is redundant
+            dev-util/always amd64 ** x
+            """
+        )
+        keys = self.mk_domain().pkg_accept_keywords
+        assert keys == (
+            (atom("dev-util/normal"), ("x86", "~amd64")),
+            (atom("dev-util/test-stable"), ("*",)),
+            (atom("dev-util/test-unstable"), ("~*")),
+            # The '**' needs validation pkgcore internally translates this
+            # into the correct restriction (AlwaysTrue)
+            (atom("dev-util/test-unstable"), ("**")),
+        )

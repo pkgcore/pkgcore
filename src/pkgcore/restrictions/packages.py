@@ -146,7 +146,6 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
 
 
 class PackageRestrictionMulti(PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
     attr = None
@@ -280,7 +279,6 @@ AlwaysBool = restriction.curry_node_type(
 
 
 class KeyedAndRestriction(boolean.AndRestriction):
-
     __inst_caching__ = True
 
     type = restriction.package_type

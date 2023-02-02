@@ -60,7 +60,6 @@ def _render_atom(value, namespace, attr):
 
 
 class BaseCommand(arghparse.ArgparseCommand):
-
     required_arg_count = 0
     has_optional_args = False
     arg_spec = ()

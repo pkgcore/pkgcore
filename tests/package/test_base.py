@@ -29,7 +29,6 @@ class mixin:
 
 
 class TestBasePkg(mixin):
-
     mk_inst = kls = staticmethod(base.base)
 
     def test_properties(self):
@@ -57,7 +56,6 @@ class TestBasePkg(mixin):
 
 
 class TestWrapper(mixin):
-
     kls = base.wrapper
 
     def mk_inst(self, overrides=None, **kwds):

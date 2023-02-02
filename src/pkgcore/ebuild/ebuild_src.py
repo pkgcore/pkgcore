@@ -430,7 +430,6 @@ class base(metadata.package):
 
 
 class package(base):
-
     __slots__ = ("_shared_pkg_data",)
 
     def __init__(self, shared_pkg_data, *args, **kwargs):
@@ -461,7 +460,6 @@ class package(base):
 
 
 class package_factory(metadata.factory):
-
     child_class = package
 
     # For the plugin system.

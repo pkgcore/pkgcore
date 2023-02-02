@@ -56,7 +56,6 @@ class TestGetAttr(TestRestriction):
 
 
 class TestStrRegex(TestRestriction):
-
     kls = values.StrRegex
 
     @pytest.mark.parametrize("negated", (True, False))
@@ -109,7 +108,6 @@ class TestStrRegex(TestRestriction):
 
 
 class TestStrExactMatch(TestRestriction):
-
     if values.StrExactMatch is values.StrExactMatch:
         kls = values.StrExactMatch
     else:
@@ -183,7 +181,6 @@ class TestStrExactMatch(TestRestriction):
 
 
 class TestStrGlobMatch(TestRestriction):
-
     kls = values.StrGlobMatch
 
     @pytest.mark.parametrize("negated", (True, False))
@@ -269,7 +266,6 @@ class TestStrGlobMatch(TestRestriction):
 
 
 class TestEqualityMatch(TestRestriction):
-
     kls = staticmethod(values.EqualityMatch)
 
     @pytest.mark.parametrize("negated", (True, False))
@@ -311,7 +307,6 @@ class TestEqualityMatch(TestRestriction):
 
 
 class TestContainmentMatch(TestRestriction):
-
     kls = partial(values.ContainmentMatch, disable_inst_caching=True)
 
     def test_match(self):
@@ -321,7 +316,6 @@ class TestContainmentMatch(TestRestriction):
             (list(range(10)), set(range(10)), True),
             (set(range(10)), list(range(10)), True),
         ):
-
             for negated in (False, True):
                 self.assertMatches(
                     self.kls(x, negate=negated, disable_inst_caching=True),
@@ -401,7 +395,6 @@ class TestFunctionRestriction:
 
 
 class TestAnyMatch:
-
     # Most of AnyMatch is tested through test_restriction.
 
     def test_force(self):

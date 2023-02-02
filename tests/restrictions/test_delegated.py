@@ -5,7 +5,6 @@ from .utils import TestRestriction
 
 
 class Test_delegate(TestRestriction):
-
     kls = delegate
 
     def test_it(self):

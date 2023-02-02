@@ -7,7 +7,6 @@ AlwaysFalse = packages.AlwaysFalse
 
 
 class Test_collapsed_restrict_to_data:
-
     kls = misc.collapsed_restrict_to_data
 
     def assert_state(self, obj, defaults=(), freeform=(), atoms=()):

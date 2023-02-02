@@ -59,7 +59,6 @@ class MissingBinary(SyncError):
 
 
 class Syncer:
-
     forcable = False
 
     supported_uris = ()
@@ -288,7 +287,6 @@ def GenericSyncer(basedir, uri, **kwargs):
 
 
 class DisabledSyncer(Syncer):
-
     disabled = True
 
     def __init__(self, path, *args, **kwargs):

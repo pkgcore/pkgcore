@@ -194,7 +194,6 @@ class package(ebuild_src.base):
 
 
 class fresh_built_package(package):
-
     __slots__ = ()
     _is_from_source = True
 

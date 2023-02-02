@@ -41,7 +41,6 @@ class Failure(PkgcoreException):
 
 
 class base(metaclass=ForcedDepends):
-
     stage_depends = {}
 
     def __init__(self, repo, observer):
@@ -70,7 +69,6 @@ class base(metaclass=ForcedDepends):
 
 
 class install(base):
-
     stage_depends = {
         "finish": "_notify_repo_add",
         "_notify_repo_add": "finalize_data",
@@ -96,7 +94,6 @@ class install(base):
 
 
 class uninstall(base):
-
     stage_depends = {
         "finish": "_notify_repo_remove",
         "_notify_repo_remove": "finalize_data",
@@ -119,7 +116,6 @@ class uninstall(base):
 
 
 class replace(install, uninstall):
-
     stage_depends = {
         "finish": "_notify_repo_add",
         "_notify_repo_add": "finalize_data",
@@ -290,7 +286,6 @@ class operations(sync_operations):
 
 
 class operations_proxy(operations):
-
     # cache this; this is to prevent the target operations mutating resulting
     # in our proxy setup not matching the target.
     @klass.cached_property

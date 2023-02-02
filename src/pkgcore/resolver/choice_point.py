@@ -5,7 +5,6 @@ from snakeoil.sequences import iter_stable_unique
 
 
 class choice_point:
-
     __slots__ = (
         "__weakref__",
         "atom",

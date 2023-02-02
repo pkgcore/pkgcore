@@ -3,7 +3,6 @@ from pkgcore.repository.util import SimpleTree
 
 
 class FakePkg:
-
     package_is_real = True
     is_supported = True
 

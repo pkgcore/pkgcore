@@ -636,7 +636,6 @@ class Dolib_a(Dolib):
 
 
 class _Symlink(_InstallWrapper):
-
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument("source")
     arg_parser.add_argument("target")
@@ -839,7 +838,6 @@ class Dohtml(_InstallWrapper):
 
 
 class _AlterFiles(IpcCommand):
-
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument("-x", dest="excludes", action="store_true")
     arg_parser.add_argument("targets", nargs="+")
@@ -879,7 +877,6 @@ class Dostrip(_AlterFiles):
 
 
 class _QueryCmd(IpcCommand):
-
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument("atom", type=atom_mod.atom)
 
@@ -1064,7 +1061,6 @@ class Eapply_User(IpcCommand):
 
 
 class Unpack(IpcCommand):
-
     arg_parser = IpcArgumentParser()
     arg_parser.add_argument("targets", nargs="+")
 
@@ -1156,7 +1152,6 @@ class Unpack(IpcCommand):
 
 
 class FilterEnv(IpcCommand):
-
     arg_parser = IpcArgumentParser()
     filtering = arg_parser.add_argument_group("Environment filtering options")
     filtering.add_argument(

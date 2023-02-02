@@ -102,7 +102,6 @@ def print_simple_histogram(
 
 
 class histo_data(arghparse.ArgparseCommand):
-
     per_repo_summary = None
     allow_no_detail = False
 
@@ -236,7 +235,6 @@ class histo_data(arghparse.ArgparseCommand):
 
 
 class eapi_usage_kls(histo_data):
-
     per_repo_format = "eapi: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "eapi: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -257,7 +255,6 @@ eapi_usage.bind_class(eapi_usage_kls())
 
 
 class license_usage_kls(histo_data):
-
     per_repo_format = "license: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "license: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -279,7 +276,6 @@ license_usage.bind_class(license_usage_kls())
 
 
 class eclass_usage_kls(histo_data):
-
     per_repo_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "eclass: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -299,7 +295,6 @@ eclass_usage.bind_class(eclass_usage_kls())
 
 
 class mirror_usage_kls(histo_data):
-
     per_repo_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of the repo"
 
     summary_format = "mirror: %(key)r %(val)s pkgs found, %(percent)s of all repos"
@@ -325,7 +320,6 @@ mirror_usage.bind_class(mirror_usage_kls())
 
 
 class distfiles_usage_kls(histo_data):
-
     per_repo_format = (
         "package: %(key)r %(val)s bytes, referencing %(percent)s of the unique total"
     )

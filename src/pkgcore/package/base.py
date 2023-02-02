@@ -15,7 +15,6 @@ from . import errors
 
 
 class base(klass.SlotsPicklingMixin, metaclass=klass.immutable_instance):
-
     built = False
     configurable = False
     _operations = format.operations
@@ -40,7 +39,6 @@ class base(klass.SlotsPicklingMixin, metaclass=klass.immutable_instance):
 
 
 class wrapper(base):
-
     __slots__ = ("_raw_pkg", "_domain")
 
     def operations(self, domain, **kwds):

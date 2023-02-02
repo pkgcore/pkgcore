@@ -52,7 +52,6 @@ class DictCache(base):
 
 
 class DictCacheBulk(bulk):
-
     cleanse_keys = True
     __has_working_commit__ = True
 
@@ -82,7 +81,6 @@ class DictCacheBulk(bulk):
 
 
 class TestBase:
-
     cache_keys = ("foo", "_eclasses_")
 
     def get_db(self, readonly=False):

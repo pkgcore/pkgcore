@@ -12,7 +12,6 @@ def passthru(val, self):
 
 
 class FakePkg(base):
-
     # XXX why isn't this using existing classes?
     __slotting_intentionally_disabled__ = True
 

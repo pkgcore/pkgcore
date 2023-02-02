@@ -17,7 +17,6 @@ from ..restrictions.util import collect_package_restrictions
 
 
 class IterValLazyDict(LazyValDict):
-
     __slots__ = ()
 
     def __str__(self):
@@ -31,7 +30,6 @@ class IterValLazyDict(LazyValDict):
 
 
 class CategoryIterValLazyDict(IterValLazyDict):
-
     __slots__ = ()
 
     def force_add(self, key):
@@ -217,7 +215,6 @@ class tree:
             return False
 
     def has_match(self, atom, **kwds):
-
         kwds.pop("sorter", None)
         kwds.pop("yield_none", None)
 

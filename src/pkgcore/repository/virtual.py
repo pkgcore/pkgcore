@@ -16,7 +16,6 @@ from . import prototype
 
 
 class tree(prototype.tree):
-
     factory_kls = staticmethod(virtual.factory)
 
     def __init__(self, livefs=False, frozen=False):
@@ -59,7 +58,6 @@ class tree(prototype.tree):
 
 
 class InjectedPkg(pkg_base.wrapper):
-
     __slots__ = (
         "bdepend",
         "depend",

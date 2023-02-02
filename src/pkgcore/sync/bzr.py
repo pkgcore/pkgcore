@@ -8,7 +8,6 @@ from . import base
 
 
 class bzr_syncer(base.VcsSyncer):
-
     binary = "bzr"
 
     supported_uris = (("bzr+", 5),)

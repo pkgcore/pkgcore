@@ -6,7 +6,6 @@ from . import base
 
 
 class cvs_syncer(base.VcsSyncer):
-
     binary = "cvs"
 
     supported_uris = (

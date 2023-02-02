@@ -7,7 +7,6 @@ from snakeoil.osutils import normpath, pjoin
 
 
 class base:
-
     kls = None
 
     def make_obj(self, location="/tmp/foo", **kwds):
@@ -98,7 +97,6 @@ class base:
 
 
 class Test_fsFile(base):
-
     kls = fs.fsFile
 
     def test_init(self):

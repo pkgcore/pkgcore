@@ -9,7 +9,6 @@ from .installed import VersionedInstalled
 
 
 class EclassConsumerSet(VersionedInstalled):
-
     pkgcore_config_type = ConfigHint(
         typename="pkgset",
         types={"vdb": "refs:repo", "repos": "refs:repo", "eclasses": "list"},

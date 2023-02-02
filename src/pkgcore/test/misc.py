@@ -19,7 +19,6 @@ Options = AttrAccessible
 
 
 class FakePkgBase(package):
-
     __slots__ = ()
 
     def __init__(self, cpvstr, data=None, shared=None, repo=None):

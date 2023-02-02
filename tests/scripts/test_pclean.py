@@ -3,7 +3,6 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 class TestCommandline(ArgParseMixin):
-
     _argparser = pclean.argparser
 
     suppress_domain = True

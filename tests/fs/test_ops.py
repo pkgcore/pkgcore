@@ -117,7 +117,6 @@ class TestCopyFile:
 
 
 class ContentsMixin:
-
     entries_norm1 = {
         "file1": ["reg"],
         "dir": ["dir"],

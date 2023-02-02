@@ -105,7 +105,6 @@ class ops_sequence:
 
 
 class base_op_state:
-
     __slots__ = ("pkg", "force", "choices")
     internal = False
 
@@ -137,7 +136,6 @@ class base_op_state:
 
 
 class add_op(base_op_state):
-
     __slots__ = ()
     desc = "add"
 
@@ -154,7 +152,6 @@ class add_op(base_op_state):
 
 
 class add_hardref_op(base_op_state):
-
     __slots__ = ("restriction",)
     desc = "hardref"
     internal = True
@@ -174,7 +171,6 @@ class add_hardref_op(base_op_state):
 
 
 class add_backref_op(base_op_state):
-
     __slots__ = ()
     desc = "backref"
     internal = True
@@ -188,7 +184,6 @@ class add_backref_op(base_op_state):
 
 
 class remove_op(base_op_state):
-
     __slots__ = ()
     desc = "remove"
 
@@ -206,7 +201,6 @@ class remove_op(base_op_state):
 
 
 class replace_op(base_op_state):
-
     __slots__ = ("old_pkg", "old_choices", "force_old")
     desc = "replace"
 
@@ -281,7 +275,6 @@ class replace_op(base_op_state):
 
 
 class blocker_base_op:
-
     __slots__ = ("choices", "blocker", "key")
     desc = None
     internal = True
@@ -319,7 +312,6 @@ class blocker_base_op:
 
 
 class incref_forward_block_op(blocker_base_op):
-
     __slots__ = ()
 
     def apply(self, plan):
@@ -343,7 +335,6 @@ class incref_forward_block_op(blocker_base_op):
 
 
 class decref_forward_block_op(blocker_base_op):
-
     __slots__ = ()
 
     def apply(self, plan):

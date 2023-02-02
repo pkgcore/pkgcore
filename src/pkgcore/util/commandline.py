@@ -134,7 +134,6 @@ class NoDefaultConfigError(argparse.ArgumentError):
 
 
 class StoreConfigObject(argparse._StoreAction):
-
     default_priority = 20
 
     def __init__(self, *args, **kwargs):

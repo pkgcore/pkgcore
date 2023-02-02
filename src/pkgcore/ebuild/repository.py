@@ -215,7 +215,6 @@ class ProvidesRepo(util.SimpleTree):
             self.__dict__.update(kwds)
 
     class PkgProvided(ebuild_src.base):
-
         __slots__ = ("arches", "use")
 
         package_is_real = False

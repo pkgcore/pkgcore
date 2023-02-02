@@ -256,7 +256,6 @@ def dump_main(options, out, err):
 
 def all_configurables():
     class walker(PythonNamespaceWalker):
-
         ignore_all_import_failures = True
 
         def _default_module_blacklister(self, target):

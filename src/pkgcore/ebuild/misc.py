@@ -141,7 +141,6 @@ def incremental_expansion_license(
 
 
 class IncrementalsDict(mappings.DictMixin):
-
     disable_py3k_rewriting = True
 
     def __init__(self, incrementals, **kwds):
@@ -168,7 +167,6 @@ class IncrementalsDict(mappings.DictMixin):
 
 
 class collapsed_restrict_to_data(metaclass=generic_equality):
-
     __attr_comparison__ = ("defaults", "freeform", "atoms", "__class__")
     incremental = True
 
@@ -386,7 +384,6 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
 
 class ChunkedDataDict(metaclass=generic_equality):
-
     __attr_comparison__ = ("_global_settings", "_dict")
 
     def __init__(self):

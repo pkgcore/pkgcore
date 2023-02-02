@@ -6,7 +6,6 @@ from . import base
 
 
 class git_syncer(base.VcsSyncer):
-
     binary = "git"
 
     supported_uris = (

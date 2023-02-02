@@ -18,7 +18,6 @@ class fake_pkg:
 
 
 class TestMergeEngineCsets:
-
     simple_cset = list(fsFile(x) for x in ("/foon", "/usr/dar", "/blah"))
     simple_cset.extend(fsDir(x) for x in ("/usr", "/usr/lib"))
     simple_cset.append(fsSymlink("/usr/lib/blah", "../../blah"))

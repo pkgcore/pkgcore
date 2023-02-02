@@ -5,7 +5,6 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 class Cache:
-
     pkgcore_config_type = ConfigHint(typename="cache")
 
     def __init__(self, readonly=True):
@@ -13,7 +12,6 @@ class Cache:
 
 
 class TestCommandline(ArgParseMixin):
-
     _argparser = pclonecache.argparser
 
     def test_parser(self):

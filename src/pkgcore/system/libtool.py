@@ -124,7 +124,6 @@ def fix_fsobject(location):
 
 
 class FixLibtoolArchivesTrigger(triggers.base):
-
     required_csets = ("install",)
     _engine_types = triggers.INSTALLING_MODES
     _hooks = ("pre_merge",)

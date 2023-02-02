@@ -19,7 +19,6 @@ def generate_misc_sufs():
 
 
 class TestCPV:
-
     good_cats = (
         "dev-util",
         "dev+",

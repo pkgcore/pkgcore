@@ -142,7 +142,6 @@ class database(fs_template.FsBased):
 
 
 class md5_cache(database):
-
     chf_type = "md5"
     eclass_chf_types = ("md5",)
     chf_base = 16

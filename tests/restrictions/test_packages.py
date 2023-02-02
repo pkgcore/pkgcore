@@ -15,7 +15,6 @@ class AlwaysSelfIntersect(values.base):
 
 
 class TestPackageRestriction(TestRestriction):
-
     if packages.PackageRestriction is packages.PackageRestriction:
         kls = packages.PackageRestriction
     else:
@@ -101,7 +100,6 @@ class TestPackageRestriction(TestRestriction):
 
 
 class values_callback(values.base):
-
     __slots__ = ("callback",)
 
     def __init__(self, callback):
@@ -118,7 +116,6 @@ class values_callback(values.base):
 
 
 class TestPackageRestrictionMulti:
-
     if packages.PackageRestriction is packages.PackageRestriction:
         kls = packages.PackageRestrictionMulti
     else:

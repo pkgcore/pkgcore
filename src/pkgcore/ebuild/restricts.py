@@ -144,7 +144,6 @@ class _VersionMatch(restriction.base, metaclass=generic_equality):
 
 
 class VersionMatch(packages.PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
 
@@ -157,7 +156,6 @@ class VersionMatch(packages.PackageRestriction):
 
 
 class SlotDep(packages.PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
 
@@ -167,7 +165,6 @@ class SlotDep(packages.PackageRestriction):
 
 
 class SubSlotDep(packages.PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
 
@@ -177,7 +174,6 @@ class SubSlotDep(packages.PackageRestriction):
 
 
 class CategoryDep(packages.PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
 
@@ -186,7 +182,6 @@ class CategoryDep(packages.PackageRestriction):
 
 
 class PackageDep(packages.PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
 
@@ -195,7 +190,6 @@ class PackageDep(packages.PackageRestriction):
 
 
 class RepositoryDep(packages.PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
 
@@ -204,7 +198,6 @@ class RepositoryDep(packages.PackageRestriction):
 
 
 class StaticUseDep(packages.PackageRestriction):
-
     __slots__ = ()
     __inst_caching__ = True
 
@@ -227,7 +220,6 @@ class StaticUseDep(packages.PackageRestriction):
 
 
 class _UseDepDefaultContainment(values.ContainmentMatch):
-
     __slots__ = ("if_missing",)
 
     def __init__(self, if_missing, vals, negate=False):
@@ -288,7 +280,6 @@ class _UseDepDefaultContainment(values.ContainmentMatch):
 
 
 class UseDepDefault(packages.PackageRestrictionMulti):
-
     __slots__ = ()
     __inst_caching__ = True
 

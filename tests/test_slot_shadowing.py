@@ -2,7 +2,6 @@ from snakeoil.test.slot_shadowing import SlotShadowing
 
 
 class Test_slot_shadowing(SlotShadowing):
-
     target_namespace = "pkgcore"
     ignore_all_import_failures = True
 

@@ -277,7 +277,6 @@ def update_elf_hints(root):
 
 
 class ldconfig(base):
-
     required_csets = ()
     priority = 10
     _engine_types = None
@@ -334,7 +333,6 @@ class ldconfig(base):
 
 
 class InfoRegen(base):
-
     required_csets = ()
 
     # could implement this to look at csets, and do incremental removal and
@@ -423,7 +421,6 @@ class InfoRegen(base):
 
 
 class merge(base):
-
     required_csets = ("install",)
     _engine_types = INSTALLING_MODES
     _hooks = ("merge",)
@@ -435,7 +432,6 @@ class merge(base):
 
 
 class unmerge(base):
-
     required_csets = ("uninstall",)
     _engine_types = UNINSTALLING_MODES
     _hooks = ("unmerge",)
@@ -449,7 +445,6 @@ class unmerge(base):
 
 
 class BaseSystemUnmergeProtection(base):
-
     required_csets = ("uninstall",)
     priority = -100
     _engine_types = UNINSTALLING_MODES
@@ -486,7 +481,6 @@ class BaseSystemUnmergeProtection(base):
 
 
 class fix_uid_perms(base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
@@ -504,7 +498,6 @@ class fix_uid_perms(base):
 
 
 class fix_gid_perms(base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
@@ -522,7 +515,6 @@ class fix_gid_perms(base):
 
 
 class fix_set_bits(base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
@@ -548,7 +540,6 @@ class fix_set_bits(base):
 
 
 class detect_world_writable(base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
@@ -572,7 +563,6 @@ class detect_world_writable(base):
 
 
 class PruneFiles(base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
@@ -594,7 +584,6 @@ class PruneFiles(base):
 
 
 class CommonDirectoryModes(base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
@@ -619,7 +608,6 @@ class CommonDirectoryModes(base):
 
 
 class BlockFileType(base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
@@ -654,7 +642,6 @@ class BlockFileType(base):
 
 
 class SavePkg(base):
-
     required_csets = ("raw_new_cset",)
     priority = 90
     _hooks = ("sanity_check",)
@@ -722,7 +709,6 @@ class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
 
 
 class BinaryDebug(ThreadedTrigger):
-
     required_csets = ("install",)
     _engine_types = INSTALLING_MODES
 

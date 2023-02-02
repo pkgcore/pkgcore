@@ -50,7 +50,6 @@ for x in pure_manifest2.split("\n"):
 
 
 class TestManifest:
-
     convert_source = staticmethod(lambda x: x)
 
     def get_manifest(self, data):

@@ -5,7 +5,6 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 class TestFormat(ArgParseMixin):
-
     _argparser = patom.argparser
 
     def test_empty(self):

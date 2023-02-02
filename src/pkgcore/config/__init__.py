@@ -21,7 +21,7 @@ def load_config(
     skip_config_files: bool = False,
     profile_override: typing.Optional[str] = None,
     location: typing.Optional[str] = None,
-    **kwargs
+    **kwargs,
 ) -> central.CompatConfigManager:
     """The main entry point for any code looking to use pkgcore.
 

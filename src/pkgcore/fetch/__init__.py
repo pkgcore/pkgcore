@@ -100,12 +100,10 @@ class unknown_mirror(mirror):
 
 
 class default_mirror(mirror):
-
     __slots__ = ()
 
 
 class uri_list:
-
     __slots__ = ("_uri_source", "filename", "__weakref__")
 
     def __init__(self, filename):

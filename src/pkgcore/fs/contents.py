@@ -43,7 +43,6 @@ class contentsSet(metaclass=generic_equality):
     __dict_kls__ = dict
 
     def __init__(self, initial=None, mutable=True):
-
         """
         :param initial: initial fs objs for this set
         :type initial: sequence
@@ -66,7 +65,6 @@ class contentsSet(metaclass=generic_equality):
         return f"{name}([{contents}])"
 
     def add(self, obj):
-
         """
         add a new fs obj to the set
 
@@ -81,7 +79,6 @@ class contentsSet(metaclass=generic_equality):
         self._dict[obj.location] = obj
 
     def __delitem__(self, obj):
-
         """
         remove a fs obj to the set
 

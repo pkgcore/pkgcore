@@ -31,7 +31,7 @@ def gen_obj(
     chksum_handlers=None,
     real_location=None,
     stat_func=os.lstat,
-    **overrides
+    **overrides,
 ):
     """
     given a fs path, and an optional stat, create an appropriate fs obj.
@@ -226,7 +226,6 @@ def scan(*a, **kw):
 
 
 class _realpath_dir:
-
     _realpath_func = staticmethod(os.path.realpath)
 
     def __init__(self):

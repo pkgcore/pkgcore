@@ -282,7 +282,6 @@ class base:
 
 
 class bulk(base):
-
     default_sync_rate = 100
 
     def __init__(self, *args, **kwds):

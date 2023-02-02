@@ -409,7 +409,6 @@ class TestConvertString:
 
 
 class TestConvertAsIs:
-
     source = {
         "str": "tests",
         "bool": True,

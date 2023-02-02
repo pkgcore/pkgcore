@@ -629,7 +629,6 @@ def parse_config_file(path: str, parser):
 
 
 class ConfigSource:
-
     description = "No description available"
 
     def sections(self):

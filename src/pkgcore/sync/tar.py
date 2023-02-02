@@ -12,7 +12,6 @@ from .http import http_syncer
 
 
 class tar_syncer(http_syncer, base.ExternalSyncer):
-
     binary = "tar"
 
     supported_uris = (

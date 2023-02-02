@@ -9,7 +9,6 @@ rev_sorted = partial(sorted, reverse=True)
 
 
 class TestMultiplex:
-
     kls = staticmethod(tree)
     tree1_pkgs = (
         ("dev-util/diffball", ["1.0", "0.7"]),

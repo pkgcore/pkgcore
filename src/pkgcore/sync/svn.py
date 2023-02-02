@@ -8,7 +8,6 @@ from . import base
 
 
 class svn_syncer(base.ExternalSyncer):
-
     binary = "svn"
 
     supported_uris = (

@@ -134,12 +134,10 @@ eapi_optionals = ImmutableDict(
 
 
 class _optionals_cls(ImmutableDict):
-
     inject_getitem_as_getattr(locals())
 
 
 class EAPI(metaclass=klass.immutable_instance):
-
     known_eapis = WeakValueDictionary()
     unknown_eapis = WeakValueDictionary()
 

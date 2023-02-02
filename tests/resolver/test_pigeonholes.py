@@ -6,7 +6,6 @@ from .test_choice_point import fake_package
 
 
 class fake_blocker(restriction.base):
-
     __slots__ = ("key", "blocks")
 
     def __init__(self, key, blocks=()):

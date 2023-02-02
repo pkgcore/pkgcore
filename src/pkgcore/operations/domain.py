@@ -30,7 +30,6 @@ class Failure(PkgcoreException):
 
 
 class base(metaclass=ForcedDepends):
-
     stage_depends = {}
 
     stage_hooks = []

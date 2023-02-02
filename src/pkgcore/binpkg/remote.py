@@ -186,7 +186,6 @@ class PackagesCacheV0(cache.bulk):
         d = {}
         sequences = cls._pkg_attr_sequences
         for key in cls._stored_attrs:
-
             value = getattr(pkg, key)
             if key in sequences:
                 value = " ".join(sorted(value))

@@ -18,7 +18,6 @@ from .livefs import gen_obj
 
 
 def ensure_perms(d1, d2=None):
-
     """Enforce a fs objects attributes on the livefs.
 
     Attributes enforced are permissions, mtime, uid, gid.
@@ -36,7 +35,6 @@ def ensure_perms(d1, d2=None):
     if d2 is None:
         do_mode, do_chown, do_mtime = True, True, True
     else:
-
         do_mode = False
         try:
             if fs.isdir(d1) and fs.isdir(d2):
@@ -200,7 +198,6 @@ def do_link(src, trg):
 
 
 def merge_contents(cset, offset=None, callback=None):
-
     """
     merge a :class:`pkgcore.fs.contents.contentsSet` instance to the livefs
 
@@ -295,7 +292,6 @@ def merge_contents(cset, offset=None, callback=None):
 
 
 def unmerge_contents(cset, offset=None, callback=None):
-
     """
     unmerge a :obj:`pkgcore.fs.contents.contentsSet` instance to the livefs
 

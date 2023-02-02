@@ -231,7 +231,6 @@ class MetadataXml:
 
 
 class LocalMetadataXml(MetadataXml):
-
     __slots__ = ()
 
     def _parse_xml(self):
@@ -248,7 +247,6 @@ class LocalMetadataXml(MetadataXml):
 
 
 class SharedPkgData:
-
     __slots__ = ("__weakref__", "metadata_xml", "manifest")
 
     def __init__(self, metadata_xml, manifest):
@@ -465,7 +463,6 @@ class ProjectsXml:
 
 
 class LocalProjectsXml(ProjectsXml):
-
     __slots__ = ()
 
     def _parse_xml(self):
@@ -477,7 +474,6 @@ class LocalProjectsXml(ProjectsXml):
 
 
 class Licenses(metaclass=WeakInstMeta):
-
     __inst_caching__ = True
     __slots__ = (
         "_base",
@@ -600,7 +596,6 @@ class Licenses(metaclass=WeakInstMeta):
 
 
 class _immutable_attr_dict(mappings.ImmutableDict):
-
     __slots__ = ()
 
     mappings.inject_getitem_as_getattr(locals())
@@ -612,7 +607,6 @@ _KnownProfile = namedtuple(
 
 
 class Profiles(klass.ImmutableInstance):
-
     __slots__ = ("config", "profiles_base", "_profiles")
     __inst_caching__ = True
 
@@ -710,7 +704,6 @@ class Profiles(klass.ImmutableInstance):
 
 
 class OverlayedProfiles(Profiles):
-
     __inst_caching__ = True
     __slots__ = ("_profiles_instances", "_profiles_sources")
 
@@ -959,6 +952,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
     @klass.jit_attr
     def use_desc(self):
         """Global USE flags for the repo."""
+
         # todo: convert this to using a common exception base, with
         # conversion of ValueErrors...
         def converter(key):

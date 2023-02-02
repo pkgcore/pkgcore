@@ -20,7 +20,6 @@ def make_pkg_kls(attrs=(), callbacks={}):
         __setattr__ = object.__setattr__
 
     class metadata_pkg(metadata.DeriveMetadataKls(simple_pkg)):
-
         __slots__ = ()
 
         def _fetch_metadata(self):

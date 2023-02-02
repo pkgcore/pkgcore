@@ -7,7 +7,6 @@ false = restriction.AlwaysBool(node_type="foo", negate=False)
 
 
 class AlwaysForcableBool(boolean.base):
-
     __slots__ = ()
 
     def force_True(self, action, *args):
@@ -17,7 +16,6 @@ class AlwaysForcableBool(boolean.base):
 
 
 class base:
-
     kls = None
 
     def test_invalid_restrictions(self):
@@ -70,7 +68,6 @@ class base:
 
 
 class TestBase(base):
-
     kls = boolean.base
 
     def test_base(self):
@@ -89,7 +86,6 @@ class TestBase(base):
 
 # TODO these tests are way too limited
 class TestAndRestriction(base):
-
     kls = boolean.AndRestriction
 
     def test_match(self):
@@ -132,7 +128,6 @@ class TestAndRestriction(base):
 
 
 class TestOrRestriction(base):
-
     kls = boolean.OrRestriction
 
     def test_match(self):
@@ -188,7 +183,6 @@ class TestOrRestriction(base):
 
 
 class TestJustOneRestriction(base):
-
     kls = boolean.JustOneRestriction
 
     def test_match(self):

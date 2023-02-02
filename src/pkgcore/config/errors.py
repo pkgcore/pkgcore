@@ -81,7 +81,6 @@ class CollapseInheritOnly(ConfigurationError):
 
 
 class InstantiationError(ConfigurationError):
-
     _txt = "Failed instantiating section %r%s"
 
     def __init__(self, section_name, message=None):
@@ -98,7 +97,6 @@ class InstantiationError(ConfigurationError):
 
 
 class AutoloadInstantiationError(InstantiationError):
-
     _txt = "Failed loading autoload section %r%s"
 
 

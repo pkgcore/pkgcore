@@ -162,7 +162,6 @@ _Packages = namedtuple("_Packages", ("system", "profile"))
 
 
 class ProfileNode(metaclass=caching.WeakInstMeta):
-
     __inst_caching__ = True
     _repo_map = None
 
@@ -603,7 +602,6 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
 
 
 class EmptyRootNode(ProfileNode):
-
     __inst_caching__ = True
 
     parents = ()
@@ -618,7 +616,6 @@ class EmptyRootNode(ProfileNode):
 
 
 class ProfileStack:
-
     _node_kls = ProfileNode
 
     def __init__(self, profile):
@@ -859,7 +856,6 @@ class ProfileStack:
 
 
 class OnDiskProfile(ProfileStack):
-
     pkgcore_config_type = ConfigHint(
         types={"basepath": "str", "profile": "str"},
         required=("basepath", "profile"),
@@ -915,7 +911,6 @@ class OnDiskProfile(ProfileStack):
 
 
 class UserProfileNode(ProfileNode):
-
     parent_node_kls = ProfileNode
 
     def __init__(self, path, parent_path):
@@ -932,7 +927,6 @@ class UserProfileNode(ProfileNode):
 
 
 class UserProfile(OnDiskProfile):
-
     pkgcore_config_type = ConfigHint(
         types={"user_path": "str", "parent_path": "str", "parent_profile": "str"},
         required=("user_path", "parent_path", "parent_profile"),

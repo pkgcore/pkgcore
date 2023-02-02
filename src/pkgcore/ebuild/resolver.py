@@ -135,7 +135,6 @@ _vdb_restrict = packages.OrRestriction(
 
 
 class empty_tree_merge_plan(plan.merge_plan):
-
     _vdb_restriction = _vdb_restrict
 
     def __init__(self, dbs, *args, **kwds):

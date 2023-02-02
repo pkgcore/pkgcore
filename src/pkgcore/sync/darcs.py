@@ -4,7 +4,6 @@ from . import base
 
 
 class darcs_syncer(base.VcsSyncer):
-
     binary = "darcs"
 
     supported_uris = (("darcs+", 5),)

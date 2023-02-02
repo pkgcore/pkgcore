@@ -28,7 +28,6 @@ def make_fake_reporter(**kwargs):
 
 
 class TestBase:
-
     kls = fake_trigger
 
     def mk_trigger(self, kls=None, **kwargs):
@@ -128,7 +127,6 @@ def test_module_constants():
 
 
 class Test_mtime_watcher:
-
     kls = triggers.mtime_watcher
 
     def test_identification(self, tmp_path):
@@ -212,7 +210,6 @@ class Test_mtime_watcher:
 
 def castrate_trigger(base_kls, **kwargs):
     class castrated_trigger(base_kls):
-
         enable_regen = False
 
         def __init__(self, *args2, **kwargs2):
@@ -245,7 +242,6 @@ class trigger_mixin:
     not sys.platform.startswith("linux"), reason="supported on Linux only"
 )
 class Test_ldconfig(trigger_mixin):
-
     # use the kls indirection for when *bsd version of ldconfig trigger
     # is derived; will be pretty much the same, sans the trigger call.
 
@@ -316,7 +312,6 @@ class Test_ldconfig(trigger_mixin):
 
 
 class TestInfoRegen(trigger_mixin):
-
     raw_kls = triggers.InfoRegen
 
     @property
@@ -385,7 +380,6 @@ class TestInfoRegen(trigger_mixin):
         reason="can't verify regen behavior due to install-info not being available",
     )
     def test_trigger(self, tmp_path):
-
         with os_environ("PATH"):
             self.engine.phase = "post_merge"
             assert self.trigger(self.engine, {}) is None
@@ -438,7 +432,6 @@ class TestInfoRegen(trigger_mixin):
 
 
 class single_attr_change_base:
-
     kls = triggers.fix_uid_perms
     attr = None
 
@@ -498,19 +491,16 @@ class single_attr_change_base:
 
 
 class Test_fix_uid_perms(single_attr_change_base):
-
     kls = triggers.fix_uid_perms
     attr = "uid"
 
 
 class Test_fix_gid_perms(single_attr_change_base):
-
     kls = triggers.fix_gid_perms
     attr = "gid"
 
 
 class Test_fix_set_bits(single_attr_change_base):
-
     kls = triggers.fix_set_bits
     trigger = property(lambda self: self.kls())
     attr = "mode"
@@ -523,7 +513,6 @@ class Test_fix_set_bits(single_attr_change_base):
 
 
 class Test_detect_world_writable(single_attr_change_base):
-
     kls = triggers.detect_world_writable
     _trigger_override = None
 
@@ -585,7 +574,6 @@ class Test_detect_world_writable(single_attr_change_base):
 
 
 class TestPruneFiles:
-
     kls = triggers.PruneFiles
 
     def test_metadata(self):

@@ -7,7 +7,6 @@ from pkgcore.pkgsets import filelist
 
 
 class TestFileList:
-
     kls = staticmethod(filelist.FileList)
 
     @property
@@ -73,7 +72,6 @@ class TestFileList:
 
 
 class TestWorldFile(TestFileList):
-
     kls = staticmethod(filelist.WorldFile)
 
     def test_add(self, tmp_path):

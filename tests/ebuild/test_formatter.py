@@ -72,7 +72,6 @@ class BaseFormatterTest:
         return kls(**kwargs)
 
     def assertOut(self, *args, **kwargs):
-
         strings = []
         objects = []
 
@@ -121,7 +120,6 @@ class BaseFormatterTest:
 
 
 class TestBasicFormatter(BaseFormatterTest):
-
     formatterClass = BasicFormatter
 
     def test_install(self):
@@ -140,7 +138,6 @@ class TestBasicFormatter(BaseFormatterTest):
 
 
 class TestPkgcoreFormatter(BaseFormatterTest):
-
     formatterClass = PkgcoreFormatter
 
     def test_install(self):
@@ -187,7 +184,6 @@ class TestPkgcoreFormatter(BaseFormatterTest):
 
 
 class CountingFormatterTest(BaseFormatterTest):
-
     endprefix = ""
     endsuffix = "\n"
 
@@ -350,7 +346,6 @@ class CountingFormatterTest(BaseFormatterTest):
 
 
 class TestPortageFormatter(BaseFormatterTest):
-
     formatterClass = PortageFormatter
 
     def setup_method(self):

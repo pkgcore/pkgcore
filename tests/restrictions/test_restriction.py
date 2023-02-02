@@ -20,7 +20,6 @@ class SillyBool(restriction.base):
 
 
 class TestBase(TestRestriction):
-
     bool_kls = SillyBool
 
     def test_base(self):
@@ -48,7 +47,6 @@ class TestBase(TestRestriction):
 
 
 class TestAlwaysBool(TestRestriction):
-
     bool_kls = partial(restriction.AlwaysBool, "foo")
 
     def test_true(self):

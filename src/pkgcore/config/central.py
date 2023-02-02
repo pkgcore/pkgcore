@@ -83,7 +83,6 @@ class _ConfigStack(defaultdict[str, list[typing.Any]]):
         return None
 
     def render_prepends(self, manager, key: str, type_name: str) -> list[typing.Any]:
-
         results = []
         # keep in mind that the sequence we get is a top -> bottom walk of the config
         # as such for this operation we have to reverse it when building the content-

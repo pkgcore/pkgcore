@@ -92,7 +92,6 @@ empty = ((), ())
 
 
 class TestPmsProfileNode(profile_mixin):
-
     klass = staticmethod(ProfileNode)
     profile = "default"
 
@@ -770,7 +769,6 @@ class TestPmsProfileNode(profile_mixin):
 
 
 class TestPortage1ProfileNode(TestPmsProfileNode):
-
     can_be_dirs = frozenset(
         [
             "package.accept_keywords",
@@ -818,7 +816,6 @@ class TestPortage1ProfileNode(TestPmsProfileNode):
 
 
 class TestPortage2ProfileNode(TestPortage1ProfileNode):
-
     profile = os.path.join("profiles", "default")
 
     def setup_repo(self, tmp_path):
@@ -832,7 +829,6 @@ class TestPortage2ProfileNode(TestPortage1ProfileNode):
 
 
 class TestProfileBashrcProfileNode(TestPmsProfileNode):
-
     profile = os.path.join("profiles", "default")
 
     def assert_pkg_bashrc(self, actual, expected):
@@ -895,7 +891,6 @@ class TestProfileBashrcProfileNode(TestPmsProfileNode):
 
 
 class TestProfileSetProfileNode(TestPmsProfileNode):
-
     profile = os.path.join("profiles", "default")
 
     def setup_repo(self, tmp_path):
@@ -914,7 +909,6 @@ class TestProfileSetProfileNode(TestPmsProfileNode):
 
 
 class TestOnDiskProfile(profile_mixin):
-
     # use a derivative, using the inst caching disabled ProfileNode kls
     # from above
     class kls(profiles.OnDiskProfile):

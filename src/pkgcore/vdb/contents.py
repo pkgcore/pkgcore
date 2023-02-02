@@ -13,7 +13,6 @@ from ..fs.contents import contentsSet
 
 
 class LookupFsDev(fs.fsDev):
-
     __slots__ = ()
 
     def __init__(self, path, **kwds):
@@ -38,7 +37,6 @@ class ContentsFile(contentsSet):
     """class wrapping a contents file"""
 
     def __init__(self, source, mutable=False, create=False):
-
         if not isinstance(source, (data_source.base, str)):
             raise TypeError("source must be either data_source, or a filepath")
         super().__init__(mutable=True)
@@ -130,7 +128,6 @@ class ContentsFile(contentsSet):
             outfile = self._get_fd(True)
 
             for obj in sorted(self):
-
                 if obj.is_reg:
                     s = " ".join(
                         (

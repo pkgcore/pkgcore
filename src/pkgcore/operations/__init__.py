@@ -31,7 +31,6 @@ class OperationError(PkgcoreException):
 
 
 class base:
-
     __required__ = frozenset()
 
     UNSUPPORTED = object()

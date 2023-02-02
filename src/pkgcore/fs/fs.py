@@ -69,7 +69,6 @@ class fsBase:
     klass.inject_immutable_instance(locals())
 
     def __init__(self, location, strict=True, **d):
-
         d["location"] = normpath(location)
 
         s = object.__setattr__

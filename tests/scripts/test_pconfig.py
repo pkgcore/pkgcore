@@ -50,7 +50,6 @@ def increment(inc=()):
 
 
 class DescribeClassTest(ArgParseMixin):
-
     _argparser = pconfig.describe_class
 
     def test_parser(self, capsys):
@@ -95,7 +94,6 @@ class DescribeClassTest(ArgParseMixin):
 
 
 class TestClasses(ArgParseMixin):
-
     _argparser = pconfig.classes
 
     def test_classes(self):
@@ -147,7 +145,6 @@ class TestClasses(ArgParseMixin):
 
 
 class TestDump(ArgParseMixin):
-
     _argparser = pconfig.dump
 
     def test_dump(self):
@@ -261,7 +258,6 @@ class TestDump(ArgParseMixin):
 
 
 class TestUncollapsable(ArgParseMixin):
-
     _argparser = pconfig.uncollapsable
 
     def test_uncollapsable(self):
@@ -282,7 +278,6 @@ class TestUncollapsable(ArgParseMixin):
 
 
 class TestConfigurables(ArgParseMixin):
-
     _argparser = pconfig.configurables
 
     def test_configurables(self):
@@ -309,7 +304,6 @@ class WeirdSection(basics.ConfigSection):
 
 
 class TestDumpUncollapsed(ArgParseMixin):
-
     _argparser = pconfig.dump_uncollapsed
 
     def test_dump_uncollapsed(self):

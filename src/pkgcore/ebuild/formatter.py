@@ -434,7 +434,6 @@ class PortageFormatter(CountingFormatter):
 
         # updating or rebuilding pkg
         if old_pkg_iuse is not None and old_pkg_use is not None:
-
             old_enabled = set(old_pkg_iuse) & set(old_pkg_use)
             old_disabled = set(old_pkg_iuse) - set(old_pkg_use)
             removed = set(old_pkg_iuse) - set(pkg_iuse)

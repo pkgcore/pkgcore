@@ -14,7 +14,6 @@ from . import prototype
 
 
 class tree(prototype.tree):
-
     configured = True
     operations_kls = operations_proxy
 

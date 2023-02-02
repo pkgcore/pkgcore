@@ -16,7 +16,6 @@ from . import base
 
 
 class rsync_syncer(base.ExternalSyncer):
-
     default_excludes = ["/distfiles", "/local", "/packages"]
     default_includes = []
     default_conn_timeout = 15
@@ -174,7 +173,6 @@ class _RsyncFileSyncer(rsync_syncer):
 
 
 class rsync_timestamp_syncer(rsync_syncer):
-
     forcable = True
     forward_sync_delay = 25 * 60  # 25 minutes
     negative_sync_delay = 60 * 60  # 60 minutes

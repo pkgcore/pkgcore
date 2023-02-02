@@ -479,7 +479,6 @@ class ebd:
 
 
 class setup_mixin:
-
     setup_is_for_src = True
 
     def setup(self, setup_phase_override=None):
@@ -992,7 +991,6 @@ class buildable(ebd, setup_mixin, format.build):
 
 
 class binpkg_localize(ebd, setup_mixin, format.build):
-
     stage_depends = {"finalize": "setup", "setup": "start"}
     setup_is_for_src = False
 
@@ -1010,7 +1008,6 @@ class binpkg_localize(ebd, setup_mixin, format.build):
 
 
 class ebuild_operations:
-
     _checks = []
 
     def _register_check(checks):

@@ -16,7 +16,6 @@ from .test_eclass_cache import FakeEclassCache
 
 
 class TestBase:
-
     kls = ebuild_src.base
 
     def get_pkg(
@@ -577,7 +576,6 @@ class TestBase:
 
 
 class TestPackage(TestBase):
-
     kls = ebuild_src.package
 
     def get_pkg(self, *args, **kwds):
@@ -619,7 +617,6 @@ class TestPackage(TestBase):
 
 
 class TestPackageFactory:
-
     kls = ebuild_src.package_factory
 
     def mkinst(

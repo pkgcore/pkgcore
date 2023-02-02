@@ -240,7 +240,6 @@ def load_property(
 # instantiation manglers, and then the ebuild specific chunk (which is
 # selected by config)
 class domain(config_domain):
-
     # XXX ouch, verify this crap and add defaults and stuff
     _types = dict.fromkeys(
         (

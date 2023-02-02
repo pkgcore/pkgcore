@@ -363,7 +363,6 @@ class TestContentsSet:
 
 
 class Test_offset_rewriting:
-
     change_offset = staticmethod(contents.change_offset_rewriter)
     offset_insert = staticmethod(contents.offset_rewriter)
 

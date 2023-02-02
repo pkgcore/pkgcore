@@ -343,7 +343,6 @@ class TestDepSetEvaluate(base):
                 "",
             ),
         ):
-
             result = vals[0]
             src = vals[1]
             use, tristate, kls = [], None, str

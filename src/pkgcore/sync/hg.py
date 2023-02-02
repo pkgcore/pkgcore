@@ -6,7 +6,6 @@ from . import base
 
 
 class hg_syncer(base.VcsSyncer):
-
     binary = "hg"
 
     supported_uris = (

@@ -4,7 +4,6 @@ from ..operations.repo import sync_operations
 
 
 class tree:
-
     operations_kls = sync_operations
 
     def __init__(self, sync=None):

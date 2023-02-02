@@ -111,7 +111,6 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
 
 
 class MutableContainmentRestriction(values.base):
-
     __slots__ = ("_blacklist", "match")
 
     def __init__(self, blacklist):
@@ -121,7 +120,6 @@ class MutableContainmentRestriction(values.base):
 
 
 class resolver_frame:
-
     __slots__ = (
         "parent",
         "atom",
@@ -207,7 +205,6 @@ class resolver_frame:
 
 
 class resolver_stack(deque):
-
     frame_klass = resolver_frame
     depth = property(len)
     current_frame = property(operator.itemgetter(-1))
@@ -291,7 +288,6 @@ class resolver_stack(deque):
 
 
 class merge_plan:
-
     vdb_restrict = packages.PackageRestriction(
         "repo.livefs", values.EqualityMatch(True)
     )
@@ -783,7 +779,10 @@ class merge_plan:
 
     def process_dependencies(self, stack, choices, mode, depset, atom):
         failure = []
-        additions, blocks, = (
+        (
+            additions,
+            blocks,
+        ) = (
             [],
             [],
         )

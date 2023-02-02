@@ -30,7 +30,6 @@ class TestFetchable:
 
 
 class TestMirror:
-
     kls = fetch.mirror
     default_mirrors = ["http://foon", "ftp://spoon"]
 
@@ -59,7 +58,6 @@ class TestMirror:
 
 
 class TestDefaultMirror(TestMirror):
-
     kls = fetch.default_mirror
 
 

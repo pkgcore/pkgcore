@@ -175,7 +175,6 @@ def perform_env_update(root, skip_ldso_update=False):
 
 
 class env_update(triggers.base):
-
     required_csets = ()
     priority = 5
     _hooks = ("post_unmerge", "post_merge")
@@ -242,7 +241,6 @@ def gen_collision_ignore_filter(offset, extra_ignores=()):
 
 
 class ConfigProtectInstall(triggers.base):
-
     required_csets = ("install_existing", "install")
     priority = 100
     _hooks = ("pre_merge",)
@@ -324,7 +322,6 @@ class ConfigProtectInstall(triggers.base):
 
 
 class ConfigProtectInstall_restore(triggers.base):
-
     required_csets = ("install",)
     priority = 10
     _hooks = ("post_merge",)
@@ -344,7 +341,6 @@ class ConfigProtectInstall_restore(triggers.base):
 
 
 class ConfigProtectUninstall(triggers.base):
-
     required_csets = ("uninstall_existing", "uninstall")
     _hooks = ("pre_unmerge",)
 
@@ -369,7 +365,6 @@ class ConfigProtectUninstall(triggers.base):
 
 
 class UninstallIgnore(triggers.base):
-
     required_csets = {
         const.REPLACE_MODE: ("uninstall_existing", "uninstall", "old_cset"),
         const.UNINSTALL_MODE: ("uninstall_existing", "uninstall"),
@@ -398,7 +393,6 @@ class UninstallIgnore(triggers.base):
 
 
 class preinst_contents_reset(triggers.base):
-
     required_csets = ("new_cset",)
     priority = 1
     _hooks = ("pre_merge",)
@@ -518,7 +512,6 @@ class ProtectOwned(FileCollision):
 
 
 class install_into_symdir_protect(triggers.base):
-
     required_csets = {
         const.INSTALL_MODE: ("install", "install_existing"),
         const.REPLACE_MODE: ("install", "install_existing", "old_cset"),
@@ -557,7 +550,6 @@ class install_into_symdir_protect(triggers.base):
 
 
 class InfoRegen(triggers.InfoRegen):
-
     _label = "ebuild info regen"
 
     def register(self, engine):
@@ -635,7 +627,6 @@ def register_multilib_strict_trigger(opts):
 
 
 class FixImageSymlinks(triggers.base):
-
     required_csets = ("new_cset",)
     _hooks = ("pre_merge",)
 

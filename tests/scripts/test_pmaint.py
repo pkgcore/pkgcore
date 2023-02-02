@@ -33,7 +33,6 @@ class fake_operations(operations):
 
 
 class FakeRepo(util.SimpleTree):
-
     operations_kls = fake_operations
 
     def __init__(self, data, frozen=False, livefs=False, repo_id=None):
@@ -54,7 +53,6 @@ def make_repo_config(repo_data, livefs=False, frozen=False, repo_id=None):
 
 
 class FakeDomain:
-
     pkgcore_config_type = ConfigHint(
         types={"repos": "refs:repo", "binpkg": "refs:repo", "vdb": "refs:repo"},
         typename="domain",
@@ -103,7 +101,6 @@ class FakeSyncer(base.Syncer):
 
 
 class SyncableRepo(syncable.tree, util.SimpleTree):
-
     pkgcore_config_type = ConfigHint(typename="repo_config")
 
     def __init__(self, succeed=True):
@@ -121,7 +118,6 @@ failure_section = basics.HardCodedConfigSection(
 
 
 class TestSync(ArgParseMixin):
-
     _argparser = pmaint.sync
 
     def test_parser(self):
@@ -188,7 +184,6 @@ def derive_op(name, op, *a, **kw):
 
 
 class TestCopy(ArgParseMixin):
-
     _argparser = pmaint.copy
 
     def execute_main(self, *a, **kw):
@@ -267,11 +262,9 @@ class TestCopy(ArgParseMixin):
 
 
 class TestRegen(ArgParseMixin):
-
     _argparser = pmaint.regen
 
     def test_parser(self):
-
         options = self.parse("fake", "--threads", "2", domain=make_domain())
         assert isinstance(options.repos[0], util.SimpleTree)
         assert options.threads == 2

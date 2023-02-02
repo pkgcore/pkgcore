@@ -691,7 +691,6 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
 
 
 class transitive_use_atom(atom):
-
     __slots__ = ()
     __inst_caching__ = True
     _nontransitive_use_atom = atom

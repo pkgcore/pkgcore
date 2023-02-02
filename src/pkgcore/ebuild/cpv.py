@@ -132,7 +132,6 @@ def ver_cmp(ver1: str, rev1: str, ver2: str, rev2: str) -> int:
 
     # If the dotted strings are equal, we can skip doing a detailed comparison.
     if parts1[0] != parts2[0]:
-
         # First split up the dotted strings into their components.
         ver_parts1 = parts1[0].split(".")
         ver_parts2 = parts2[0].split(".")
@@ -154,7 +153,6 @@ def ver_cmp(ver1: str, rev1: str, ver2: str, rev2: str) -> int:
 
         # Iterate through the components
         for v1, v2 in zip(ver_parts1, ver_parts2):
-
             # If the string components are equal, the numerical
             # components will be equal too.
             if v1 == v2:
@@ -196,7 +194,6 @@ def ver_cmp(ver1: str, rev1: str, ver2: str, rev2: str) -> int:
 
     # Iterate through the suffixes
     for x in range(max(parts1_len, parts2_len)):
-
         # If we're at the end of one of our lists, we need to use
         # the next suffix from the other list to decide who wins.
         if x == parts1_len:
@@ -466,7 +463,6 @@ class CPV(base.base):
 
 
 class VersionedCPV(CPV):
-
     __slots__ = ()
 
     def __init__(self, *args):
@@ -474,7 +470,6 @@ class VersionedCPV(CPV):
 
 
 class UnversionedCPV(CPV):
-
     __slots__ = ()
 
     def __init__(self, *args):

@@ -83,7 +83,6 @@ class fetch_base:
 
 
 class operations(_operations_mod.base):
-
     _fetch_kls = fetch_base
 
     def __init__(
@@ -158,7 +157,6 @@ class operations(_operations_mod.base):
 
 
 class build_operations(operations):
-
     __required__ = frozenset(["build"])
 
     def _cmd_api_build(self, observer=None, failed=False, clean=True, **kwargs):
@@ -174,7 +172,6 @@ class build_operations(operations):
 
 
 class build_base(metaclass=ForcedDepends):
-
     stage_depends = {"finish": "start"}
 
     def __init__(self, domain, observer):
@@ -189,7 +186,6 @@ class build_base(metaclass=ForcedDepends):
 
 
 class build(build_base):
-
     stage_depends = {
         "setup": "start",
         "unpack": "setup",
@@ -251,7 +247,6 @@ class build(build_base):
 
 
 class install(build_base):
-
     stage_depends = {
         "preinst": "start",
         "postinst": "preinst",
@@ -279,7 +274,6 @@ class install(build_base):
 
 
 class uninstall(build_base):
-
     stage_depends = {
         "prerm": "start",
         "postrm": "prerm",
@@ -311,7 +305,6 @@ class uninstall(build_base):
 
 
 class replace(install, uninstall):
-
     stage_depends = {
         "finalize": "postinst",
         "postinst": "postrm",
@@ -327,7 +320,6 @@ class replace(install, uninstall):
 
 
 class empty_build_op(build_base):
-
     stage_depends = {}
 
     def __init__(self, pkg, observer=None, clean=False):

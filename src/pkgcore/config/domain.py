@@ -31,7 +31,6 @@ class Failure(PkgcoreException):
 # yes this is basically empty. will fill it out as the base is better
 # identified.
 class domain:
-
     fetcher = None
     tmpdir = None
     _triggers = ()

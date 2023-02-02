@@ -84,7 +84,6 @@ class base:
 
 
 class cache(base):
-
     pkgcore_config_type = ConfigHint(
         types={"path": "str", "location": "str"}, typename="eclass_cache"
     )

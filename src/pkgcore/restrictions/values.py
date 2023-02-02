@@ -256,7 +256,6 @@ class StrGlobMatch(base, metaclass=hashed_base):
 
 
 class EqualityMatch(base, metaclass=generic_equality):
-
     __slots__ = ("negate", "data")
     __attr_comparison__ = __slots__
 
@@ -342,7 +341,6 @@ class ContainmentMatch(base, metaclass=hashed_base):
                     return not self.negate
 
     def force_False(self, pkg, attr, val, _values_override=None):
-
         # "More than one statement on a single line"
         # pylint: disable-msg=C0321
 
@@ -414,7 +412,6 @@ class ContainmentMatch(base, metaclass=hashed_base):
         return False
 
     def force_True(self, pkg, attr, val, _values_override=None):
-
         # "More than one statement on a single line"
         # pylint: disable-msg=C0321
 
@@ -601,7 +598,6 @@ class UnicodeConversion(StrConversion):
 
 
 class AnyMatch(restriction.AnyMatch):
-
     __slots__ = ()
 
     __hash__ = object.__hash__

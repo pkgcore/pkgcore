@@ -28,7 +28,6 @@ from .xpak import Xpak
 
 
 class force_unpacking(triggers.base):
-
     required_csets = ("new_cset",)
     priority = 5
     _hooks = ("sanity_check",)
@@ -186,7 +185,6 @@ class StackedXpakDict(DictMixin):
 
 
 class StackedCache(StackedDict):
-
     __externally_mutable__ = True
 
     def __delitem__(self, key):
@@ -194,7 +192,6 @@ class StackedCache(StackedDict):
 
 
 class tree(prototype.tree):
-
     # yes, the period is required. no, do not try and remove it
     # (harring says it stays)
     extension = ".tbz2"

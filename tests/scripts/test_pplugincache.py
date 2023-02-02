@@ -4,7 +4,6 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 class TestCommandline(ArgParseMixin):
-
     _argparser = pplugincache.argparser
 
     has_config = False

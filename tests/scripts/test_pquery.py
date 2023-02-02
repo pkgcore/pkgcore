@@ -7,7 +7,6 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
 class FakeDomain:
-
     pkgcore_config_type = ConfigHint(
         types={"repos": "refs:repo", "vdb": "refs:repo"}, typename="domain"
     )
@@ -39,7 +38,6 @@ domain_config = basics.HardCodedConfigSection(
 
 
 class TestCommandline(ArgParseMixin):
-
     _argparser = pquery.argparser
 
     def test_parser(self):

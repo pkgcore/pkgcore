@@ -48,10 +48,13 @@ class TestEAPI:
             test_eapi = EAPI.register(magic="test1", optionals={"bash_compat": "4.1"})
             assert test_eapi._magic == "test1"
 
-    def test_is_supported(self, caplog):
+    def test_is_supported(self, tmp_path, caplog):
         assert eapi6.is_supported
 
-        with mock.patch.dict(eapi.EAPI.known_eapis):
+        mock_ebd_temp = str(shutil.copytree(EBD_PATH, tmp_path / "ebd"))
+        with mock.patch.dict(eapi.EAPI.known_eapis), mock.patch(
+            "pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp
+        ):
             # partially supported EAPI is flagged as such
             test_eapi = EAPI.register("test", optionals={"is_supported": False})
             assert test_eapi.is_supported

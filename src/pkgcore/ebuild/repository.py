@@ -399,8 +399,10 @@ class UnconfiguredTree(prototype.tree):
             path_chunks = path.split(os.path.sep)
         else:
             path = os.path.realpath(os.path.abspath(path))
-            relpath = path[len(os.path.realpath(self.location)) :].strip("/")
-            path_chunks = relpath.split(os.path.sep)
+            if relpath := path[len(os.path.realpath(self.location)) :].strip("/"):
+                path_chunks = relpath.split(os.path.sep)
+            else:
+                path_chunks = ()
 
         if os.path.isfile(path):
             if not path.endswith(".ebuild"):

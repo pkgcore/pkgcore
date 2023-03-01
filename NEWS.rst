@@ -3,6 +3,24 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.20 (2023-03-01)
+----------------------------
+
+- domain: add support for ``-*`` and ``USE_EXPAND: -*`` syntax for packages.use
+  like files (Arthur Zamarin, #393, #397)
+
+- ebuild/test_eapi: fix tests artifacts in EBD_PATH
+  (Arthur Zamarin, https://bugs.gentoo.org/888685)
+
+- ebuild.repository: fix traversal from root of overlays (Arthur Zamarin,
+  https://github.com/pkgcore/pkgcheck/issues/418)
+
+- metadata.xsd: import ``kde-invent`` remote-ids (Sam James, #399)
+
+- various code cleanups, refactoring and modernization (Arthur Zamarin, Brian
+  Harring)
+
+----------------------------
 pkgcore 0.12.19 (2023-01-19)
 ----------------------------
 

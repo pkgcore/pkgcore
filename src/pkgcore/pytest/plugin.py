@@ -260,7 +260,7 @@ class EbuildRepo:
                 """
                     )
                 )
-            f.write(f'EAPI="{eapi}"\n')
+            f.write(f"EAPI={eapi}\n\n")
             f.write(f'DESCRIPTION="{desc}"\n')
             f.write(f'HOMEPAGE="{homepage}"\n')
             f.write(f'SLOT="{slot}"\n')

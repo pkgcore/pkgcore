@@ -9,6 +9,11 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment: release
+
+    permissions:
+      id-token: write # Used to authenticate to PyPI via OIDC
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -49,19 +54,9 @@ jobs:
         name: results
         path: dist/*
 
-    - name: Install twine and check files
-      run: |
-        pip install twine wheel-inspect
-        twine check dist/*
-        wheel2json dist/*.whl
-
-    - name: Upload to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+    - name: publish
+      uses: pypa/gh-action-pypi-publish@release/v1
       if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        twine upload dist/*
 
     - name: Create GitHub release
       uses: softprops/action-gh-release@v1

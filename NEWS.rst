@@ -3,6 +3,15 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.21 (2023-04-21)
+----------------------------
+
+- ebd: econf matches ``configure --help`` output better (Ulrich Müller, #403)
+
+- pytest.plugin.create_ebuild: insert blank line after ``EAPI=`` declare
+  (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.20 (2023-03-01)
 ----------------------------
 

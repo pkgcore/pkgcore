@@ -14,6 +14,8 @@ jobs:
     permissions:
       id-token: write # Used to authenticate to PyPI via OIDC
 
+      contents: write # Used to authenticate github release publish
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -64,3 +66,4 @@ jobs:
       with:
         files: dist/*.tar.gz
         fail_on_unmatched_files: true
+        draft: true

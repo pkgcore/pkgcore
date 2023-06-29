@@ -161,6 +161,23 @@ class repo_operations(_repo_ops.operations):
                 observer.info(f"generating manifest: {key}::{self.repo.repo_id}")
                 manifest.update(sorted(all_fetchables.values()), chfs=write_chksums)
 
+        # edge case: If all ebuilds for a package were masked bad,
+        # then it was filtered out of the iterator for the above loop,
+        # so we handle unreported bad packages here.
+        missed_bad_set = set()
+        for pkg in self.repo._bad_masked:
+            if pkg.key not in ret:
+                # Display a warning only once per package, since the edge case
+                # might be noteworthy. Errors for one or more dependencies are
+                # reported below that.
+                if pkg.key not in missed_bad_set:
+                    observer.error(f"Warning: It is possible that all dependencies for {pkg.key} are bad.")
+                exc = pkg.data
+                error_str = f"{pkg.cpvstr}: {exc.msg(verbosity=observer.verbosity)}"
+                observer.error(error_str)
+                missed_bad_set.add(pkg.key)
+        ret.update(missed_bad_set)
+
         return ret
 
 

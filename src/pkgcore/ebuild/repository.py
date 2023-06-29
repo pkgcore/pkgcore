@@ -161,6 +161,18 @@ class repo_operations(_repo_ops.operations):
                 observer.info(f"generating manifest: {key}::{self.repo.repo_id}")
                 manifest.update(sorted(all_fetchables.values()), chfs=write_chksums)
 
+        # edge case: If all ebuilds for a package were masked bad,
+        # then it was filtered out of the iterator for the above loop,
+        # so we handle unreported bad packages here.
+        missed_bad_set = set()
+        for pkg in self.repo._bad_masked:
+            if pkg.key not in ret:
+                observer.error(
+                    f"{pkg.cpvstr}: {pkg.data.msg(verbosity=observer.verbosity)}"
+                )
+                missed_bad_set.add(pkg.key)
+        ret.update(missed_bad_set)
+
         return ret
 
 

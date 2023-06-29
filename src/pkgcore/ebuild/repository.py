@@ -171,7 +171,9 @@ class repo_operations(_repo_ops.operations):
                 # might be noteworthy. Errors for one or more dependencies are
                 # reported below that.
                 if pkg.key not in missed_bad_set:
-                    observer.error(f"Warning: It is possible that all dependencies for {pkg.key} are bad.")
+                    observer.error(
+                        f"Warning: It is possible that all dependencies for {pkg.key} are bad."
+                    )
                 exc = pkg.data
                 error_str = f"{pkg.cpvstr}: {exc.msg(verbosity=observer.verbosity)}"
                 observer.error(error_str)

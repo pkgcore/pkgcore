@@ -38,7 +38,7 @@ class TestMultiplex:
         )
         self.tree1 = SimpleTree(self.d1)
         self.tree2 = SimpleTree(self.d2)
-        self.ctree = self.kls(self.tree1, self.tree2)
+        self.ctree = self.kls((self.tree1, self.tree2))
 
     def test_iter(self):
         assert sorted(x.cpvstr for x in self.ctree) == sorted(

@@ -335,11 +335,9 @@ class merge_plan:
         self.state = state.plan_state()
         vdb_state_filter_restrict = MutableContainmentRestriction(self.state.vdb_filter)
         self.livefs_dbs = multiplex.tree(
-            *[
-                filtered.tree(x, vdb_state_filter_restrict)
-                for x in self.all_raw_dbs
-                if x.livefs
-            ]
+            filtered.tree(x, vdb_state_filter_restrict)
+            for x in self.all_raw_dbs
+            if x.livefs
         )
 
         self.insoluble = set()
@@ -1066,6 +1064,12 @@ class merge_plan:
     @classmethod
     def prefer_reuse_strategy(cls, dbs):
         return multiplex.tree(
-            misc.multiplex_sorting_repo(highest_iter_sort, cls.just_livefs_dbs(dbs)),
-            misc.multiplex_sorting_repo(highest_iter_sort, cls.just_nonlivefs_dbs(dbs)),
+            (
+                misc.multiplex_sorting_repo(
+                    highest_iter_sort, cls.just_livefs_dbs(dbs)
+                ),
+                misc.multiplex_sorting_repo(
+                    highest_iter_sort, cls.just_nonlivefs_dbs(dbs)
+                ),
+            )
         )

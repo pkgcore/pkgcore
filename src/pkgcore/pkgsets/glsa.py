@@ -31,6 +31,10 @@ class GlsaDirSet(metaclass=generic_equality):
     op_translate = {"ge": ">=", "gt": ">", "lt": "<", "le": "<=", "eq": "="}
     __attr_comparison__ = ("paths",)
 
+    METADATA_FILES = frozenset(
+        {"Manifest", "Manifest.files.gz", "timestamp.chk", "timestamp.commit"}
+    )
+
     def __init__(self, src):
         """
         :param src: where to get the glsa from
@@ -39,24 +43,18 @@ class GlsaDirSet(metaclass=generic_equality):
         """
 
         if not isinstance(src, str):
-            src = tuple(
-                sorted(
-                    filter(
-                        os.path.isdir,
-                        (
-                            pjoin(repo.base, "metadata", "glsa")
-                            for repo in get_virtual_repos(src, False)
-                            if hasattr(repo, "base")
-                        ),
-                    )
-                )
+            src = sorted(
+                path
+                for repo in get_virtual_repos(src, False)
+                if hasattr(repo, "base")
+                if os.path.isdir(path := pjoin(repo.base, "metadata", "glsa"))
             )
         else:
-            src = [src]
-        self.paths = src
+            src = (src,)
+        self.paths = tuple(src)
 
     def __iter__(self):
-        for glsa, catpkg, pkgatom, vuln in self.iter_vulnerabilities():
+        for _glsa, catpkg, pkgatom, vuln in self.iter_vulnerabilities():
             yield packages.KeyedAndRestriction(
                 pkgatom, vuln, key=catpkg, tag="GLSA vulnerable:"
             )
@@ -71,7 +69,7 @@ class GlsaDirSet(metaclass=generic_equality):
             sorter = iter
         pkgs = {}
         pkgatoms = {}
-        for glsa, pkg, pkgatom, vuln in self.iter_vulnerabilities():
+        for _glsa, pkg, pkgatom, vuln in self.iter_vulnerabilities():
             pkgatoms[pkg] = pkgatom
             pkgs.setdefault(pkg, []).append(vuln)
 
@@ -86,39 +84,40 @@ class GlsaDirSet(metaclass=generic_equality):
             for fn in listdir_files(path):
                 # glsa-1234-12.xml
                 if not (fn.startswith("glsa-") and fn.endswith(".xml")):
-                    logger.warning(f"invalid glsa file name: {fn!r}")
+                    if fn not in self.METADATA_FILES:
+                        logger.warning("invalid glsa file name: %r", fn)
                     continue
                 # This verifies the filename is of the correct syntax.
                 try:
                     [int(x) for x in fn[5:-4].split("-")]
                 except ValueError:
-                    logger.warning(f"invalid glsa file name: {fn!r}")
+                    logger.warning("invalid glsa file name: %r", fn)
                     continue
                 root = etree.parse(pjoin(path, fn))
                 glsa_node = root.getroot()
                 if glsa_node.tag != "glsa":
-                    logger.warning(f"glsa file without glsa root node: {fn!r}")
+                    logger.warning("glsa file without glsa root node: %r", fn)
                     continue
                 for affected in root.findall("affected"):
                     for pkg in affected.findall("package"):
                         try:
                             pkgname = str(pkg.get("name")).strip()
                             pkg_vuln_restrict = self.generate_intersects_from_pkg_node(
-                                pkg, tag="glsa(%s)" % fn[5:-4]
+                                pkg, tag=f"glsa({fn[5:-4]})"
                             )
                             if pkg_vuln_restrict is None:
                                 continue
                             pkgatom = atom.atom(pkgname)
                             yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
-                        except (TypeError, ValueError) as e:
+                        except (TypeError, ValueError) as exc:
                             # thrown from cpv.
                             logger.warning(
-                                f"invalid glsa file {fn!r}, package {pkgname}: {e}"
+                                "invalid glsa file %r, package %s: %s", fn, pkgname, exc
                             )
                         except IGNORED_EXCEPTIONS:
                             raise
-                        except Exception as e:
-                            logger.warning(f"invalid glsa file {fn!r}: {e}")
+                        except Exception as exc:
+                            logger.warning("invalid glsa file %r: %s", fn, exc)
 
     def generate_intersects_from_pkg_node(self, pkg_node, tag=None):
         arch = pkg_node.get("arch")
@@ -147,9 +146,9 @@ class GlsaDirSet(metaclass=generic_equality):
         if not invuln:
             # wrap it.
             return packages.KeyedAndRestriction(vuln, tag=tag)
-        invuln_list = [
+        invuln_list = (
             self.generate_restrict_from_range(x, negate=True) for x in invuln
-        ]
+        )
         invuln = [x for x in invuln_list if x not in vuln_list]
         if not invuln:
             if tag is None:
@@ -186,8 +185,7 @@ class GlsaDirSet(metaclass=generic_equality):
                 if op == "rlt":  # rlt -r0 can never match
                     # this is a non-range.
                     raise ValueError(
-                        "range %s version %s is a guaranteed empty set"
-                        % (op, str(node.text.strip()))
+                        f"range {op} version {node.text.strip()} is a guaranteed empty set"
                     )
                 elif op == "rle":  # rle -r0 -> = -r0
                     return atom_restricts.VersionMatch("=", base.version, negate=negate)
@@ -213,10 +211,7 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
     :param arch: arch to scan for, x86 for example
     """
 
-    if grouped:
-        i = glsa_src.pkg_grouped_iter()
-    else:
-        i = iter(glsa_src)
+    i = glsa_src.pkg_grouped_iter() if grouped else iter(glsa_src)
     if arch is None:
         wrapper = lambda p: p
     else:
@@ -247,7 +242,7 @@ class SecurityUpgrades(metaclass=generic_equality):
         self.arch = arch
 
     def __iter__(self):
-        for glsa, matches in find_vulnerable_repo_pkgs(
+        for glsa, _matches in find_vulnerable_repo_pkgs(
             self.glsa_src, self.vdb, grouped=True, arch=self.arch
         ):
             yield packages.KeyedAndRestriction(glsa[0], restriction.Negate(glsa[1]))

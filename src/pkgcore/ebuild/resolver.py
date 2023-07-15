@@ -147,7 +147,7 @@ class empty_tree_merge_plan(plan.merge_plan):
         super().__init__(dbs, *args, **kwds)
         # XXX *cough*, hack.
         self.default_dbs = multiplex.tree(
-            x for x in self.all_raw_dbs if not x.livefs
+            *[x for x in self.all_raw_dbs if not x.livefs]
         )
 
 

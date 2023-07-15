@@ -76,7 +76,7 @@ class RepositoryGroup(DictMixin):
     def __init__(self, repos=(), combined=None):
         self.repos = tuple(repos)
         if combined is None:
-            combined = multiplex.tree(self.repos)
+            combined = multiplex.tree(*self.repos)
         self.combined = combined
 
     itermatch = klass.alias_attr("combined.itermatch")
@@ -137,7 +137,8 @@ class RepositoryGroup(DictMixin):
         elif isinstance(other, (list, tuple)):
             return RepositoryGroup(tuple(other) + self.repos)
         raise TypeError(
-            f"cannot add {other.__class__.__name__!r} and {self.__class__.__name__!r} objects"
+            "cannot add '%s' and '%s' objects"
+            % (other.__class__.__name__, self.__class__.__name__)
         )
 
     @classmethod

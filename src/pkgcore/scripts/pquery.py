@@ -697,7 +697,7 @@ def bind_add_query(*args, **kwds):
     help="extended atom matching of pkgs",
 )
 def matches_finalize(targets, namespace):
-    repos = multiplex.tree(namespace.repos)
+    repos = multiplex.tree(*namespace.repos)
 
     # If current working dir is in a repo, build a path restriction; otherwise
     # match everything.

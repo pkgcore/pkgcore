@@ -81,15 +81,14 @@ class tree(prototype.tree):
 
     pkgcore_config_type = ConfigHint(types={"repos": "refs:repo"}, typename="repo")
 
-    def __init__(self, repos):
+    def __init__(self, *trees):
         super().__init__()
-        repos = tuple(repos)
-        for x in repos:
+        for x in trees:
             if not hasattr(x, "itermatch"):
                 raise errors.InitializationError(
                     f"{x} is not a repository tree derivative"
                 )
-        self.trees = repos
+        self.trees = trees
 
     def _get_categories(self, *optional_category):
         d = set()
@@ -228,9 +227,10 @@ class tree(prototype.tree):
                 self.trees += (other,)
             return self
         elif isinstance(other, tree):
-            return tree(self.trees + other.trees)
+            return tree(*(self.trees + other.trees))
         raise TypeError(
-            f"cannot add {other.__class__.__name__!r} and {self.__class__.__name__!r} objects"
+            "cannot add '%s' and '%s' objects"
+            % (self.__class__.__name__, other.__class__.__name__)
         )
 
     def __radd__(self, other):
@@ -239,13 +239,19 @@ class tree(prototype.tree):
                 self.trees = (other,) + self.trees
             return self
         elif isinstance(other, tree):
-            return tree(other.trees + self.trees)
+            return tree(*(other.trees + self.trees))
         raise TypeError(
-            f"cannot add {other.__class__.__name__!r} and {self.__class__.__name__!r} objects"
+            "cannot add '%s' and '%s' objects"
+            % (other.__class__.__name__, self.__class__.__name__)
         )
 
     def __repr__(self):
-        return f"<{self.__class__.__module__}.{self.__class__.__name__} trees={getattr(self, 'trees', 'unset')!r} @{id(self):#8x}>"
+        return "<%s.%s trees=%r @%#8x>" % (
+            self.__class__.__module__,
+            self.__class__.__name__,
+            getattr(self, "trees", "unset"),
+            id(self),
+        )
 
     @property
     def pkg_masks(self):

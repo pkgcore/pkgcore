@@ -275,10 +275,11 @@ class _UnfilteredRepos(DictMixin):
         try:
             return self.unfiltered_repos[key]
         except KeyError:
-            unfiltered_repo = multiplex.tree(
-                self.domain.filter_repo(repo, key=())
-                for repo in self.domain.ebuild_repos_unfiltered
-            )
+            repos = []
+            kwargs = {key: ()}
+            for repo in self.domain.ebuild_repos_unfiltered:
+                repos.append(self.domain.filter_repo(repo, **kwargs))
+            unfiltered_repo = multiplex.tree(*repos)
             self.unfiltered_repos[key] = unfiltered_repo
             return unfiltered_repo
 
@@ -415,7 +416,7 @@ def _dist_validate_args(parser, namespace):
     distdir = namespace.domain.distdir
     repo = namespace.repo
     if repo is None:
-        repo = multiplex.tree(get_virtual_repos(namespace.domain.source_repos, False))
+        repo = multiplex.tree(*get_virtual_repos(namespace.domain.source_repos, False))
 
     all_dist_files = set(os.path.basename(f) for f in listdir_files(distdir))
     target_files = set()

@@ -25,7 +25,7 @@ class EclassConsumerSet(VersionedInstalled):
             if not pkgs:
                 # pkg is installed but no longer in any repo, just ignore it.
                 continue
-            assert len(pkgs) == 1, "I do not know what I am doing: %r" % (pkgs,)
+            assert len(pkgs) == 1, f"I do not know what I am doing: {pkgs}"
             pkg = pkgs[0]
             if self.eclasses.isdisjoint(pkg.data.get("_eclasses_", ())):
                 yield atom

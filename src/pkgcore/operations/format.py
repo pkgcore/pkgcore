@@ -40,7 +40,11 @@ class fetch_base:
         resumecmd = domain.settings.get("RESUMECOMMAND", fetchcmd)
         attempts = int(domain.settings.get("FETCH_ATTEMPTS", 10))
         self.fetcher = fetch_custom.fetcher(
-            self.distdir, fetchcmd, resumecmd, attempts=attempts
+            self.distdir,
+            fetchcmd,
+            resumecmd,
+            attempts=attempts,
+            PATH=os.environ["PATH"],
         )
 
     def fetch_all(self, observer):

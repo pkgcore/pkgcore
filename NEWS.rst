@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.22 (2023-08-05)
+----------------------------
+
+- manifest: fix missing errors when all ebuilds for a package are masked as bad.
+  This fixes a long standing bug that ``pkgdev manifest`` wasn't working
+  without any helpful error messages when all ebuilds for a package fail to
+  source. (YiFei Zhu, Eric Huber, #406)
+
+- multiplex.tree: fix config name and type (Arthur Zamarin)
+
+- pkgsets.glsa: exclude metadata files from warning (Arthur Zamarin)
+
+- manifest: pass ``$PATH`` environment variable to calls of ``FETCHCOMMAND``
+  (Arthur Zamarin, https://github.com/pkgcore/pkgdev/issues/145)
+
+----------------------------
 pkgcore 0.12.21 (2023-04-21)
 ----------------------------
 

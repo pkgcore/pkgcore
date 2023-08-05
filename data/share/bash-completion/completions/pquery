@@ -111,12 +111,21 @@ _pquery() {
             COMPREPLY=()
             ;;
         --has-use | --license | --revdep | --revdep-pkgs | --restrict-revdep | --restrict-revdep-pkgs | \
-        -S | --description | --eapi | --owns | --owns-re | --environment | --pkgset | \
+        -S | --description | --eapi | --owns | --owns-re | --environment | \
         --maintainer | --maintainer-name | --maintainer-email)
             COMPREPLY=()
             ;;
         --virtuals)
             COMPREPLY=($(compgen -W "only disable" -- "${cur}"))
+            ;;
+        --pkgset)
+            COMPREPLY=($(compgen -W "world system installed versioned-installed vuln" -- "${cur}"))
+            if [[ -d /etc/portage/sets/ ]]; then
+                pushd /etc/portage/sets/ >& /dev/null
+                local SETS=( * )
+                COMPREPLY+=($(compgen -W "${SETS[*]}" -- "${cur}" ))
+                popd >& /dev/null
+            fi
             ;;
         -r | --repo)
             COMPREPLY=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))

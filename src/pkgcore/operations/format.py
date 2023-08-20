@@ -45,6 +45,8 @@ class fetch_base:
             resumecmd,
             attempts=attempts,
             PATH=os.environ["PATH"],
+            http_proxy=os.environ["http_proxy"],
+            https_proxy=os.environ["https_proxy"],
         )
 
     def fetch_all(self, observer):

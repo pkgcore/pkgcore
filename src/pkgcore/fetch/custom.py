@@ -37,20 +37,18 @@ class fetcher(base.fetcher):
 
     def __init__(
         self,
-        distdir,
-        command,
+        distdir: str,
+        command: str,
         resume_command=None,
         required_chksums=None,
-        userpriv=True,
-        attempts=10,
-        readonly=False,
-        **extra_env,
+        userpriv: bool = True,
+        attempts: int = 10,
+        readonly: bool = False,
+        **extra_env: str,
     ):
         """
         :param distdir: directory to download files to
-        :type distdir: string
         :param command: shell command to execute to fetch a file
-        :type command: string
         :param resume_command: if not None, command to use for resuming-
             if None, command is reused
         :param required_chksums: if None, all chksums must be verified,
@@ -71,7 +69,7 @@ class fetcher(base.fetcher):
         else:
             self.required_chksums = required_chksums
 
-        def rewrite_command(string):
+        def rewrite_command(string: str):
             new_command = string.replace("\\$", "$")
             new_command = new_command.replace("${DISTDIR}", self.distdir)
             new_command = new_command.replace("$DISTDIR", self.distdir)
@@ -98,10 +96,9 @@ class fetcher(base.fetcher):
         self.readonly = readonly
         self.extra_env = extra_env
 
-    def fetch(self, target):
+    def fetch(self, target: fetchable):
         """Fetch a file.
 
-        :type target: :obj:`pkgcore.fetch.fetchable` instance
         :return: None if fetching failed,
             else on disk location of the copied file
         """

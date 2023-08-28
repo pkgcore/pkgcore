@@ -199,6 +199,31 @@ class TestUnconfiguredTree:
             atom("<just/newer-than-42"),
         }
 
+    def test_stabilization_groups(self, tmp_path, caplog):
+        base = tmp_path / "metadata/stabilization-groups"
+        (base / "pkgcore").mkdir(parents=True)
+        (base / "gentoo").write_text(
+            textwrap.dedent(
+                """\
+                    # some text here
+                        dev-python/pkgcore
+                    dev-python/pytest # comment
+                    @bad_atom@
+                """
+            )
+        )
+        (base / "pkgcore" / "snakeoil").write_text("""dev-python/snakeoil # comment""")
+        mirrors = self.mk_tree(tmp_path).stabilization_groups
+        assert set(mirrors.keys()) == {"gentoo", "pkgcore/snakeoil"}
+        assert set(mirrors["gentoo"]) == {
+            atom("dev-python/pkgcore"),
+            atom("dev-python/pytest"),
+        }
+        assert set(mirrors["pkgcore/snakeoil"]) == {
+            atom("dev-python/snakeoil"),
+        }
+        assert "line 4: parsing error:" in caplog.text
+
 
 class TestSlavedTree(TestUnconfiguredTree):
     def mk_tree(self, path, *args, **kwds):

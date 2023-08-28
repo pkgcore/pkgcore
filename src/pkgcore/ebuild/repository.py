@@ -16,6 +16,7 @@ from snakeoil import chksum, klass
 from snakeoil.bash import read_dict
 from snakeoil.containers import InvertedContains
 from snakeoil.data_source import local_source
+from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
@@ -34,7 +35,9 @@ from ..restrictions import packages
 from ..util import packages as pkgutils
 from . import cpv, digest, ebd, ebuild_src
 from . import eclass_cache as eclass_cache_mod
+from . import errors as ebuild_errors
 from . import processor, repo_objs, restricts
+from .atom import atom
 from .eapi import get_eapi
 
 
@@ -669,6 +672,27 @@ class UnconfiguredTree(prototype.tree):
         for repo in self.trees:
             pkg_deprecated.update(repo.config.pkg_deprecated)
         return packages.OrRestriction(*pkg_deprecated)
+
+    @klass.jit_attr
+    def stabilization_groups(self):
+        """Return a mapping of stabilization groups to packages."""
+        stabilization_groups = {}
+        base_dir = pjoin(self.location, "metadata", "stabilization-groups")
+        for dirname, _dirs, files in os.walk(base_dir):
+            dirbase = dirname.removeprefix(base_dir)
+            for file in files:
+                pkgs = set()
+                for lineno, line in enumerate(readlines_utf8(pjoin(dirname, file)), 1):
+                    try:
+                        if line := line.split("#", maxsplit=1)[0].strip():
+                            pkgs.add(atom(line))
+                    except ebuild_errors.MalformedAtom as exc:
+                        logger.error(
+                            f"{dirname.removeprefix(self.location)}/{file}, line {lineno}: parsing error: {exc}"
+                        )
+                group = f"{dirbase}/{file}".removeprefix("/")
+                stabilization_groups[group] = frozenset(pkgs)
+        return ImmutableDict(stabilization_groups)
 
     def _regen_operation_helper(self, **kwds):
         return _RegenOpHelper(

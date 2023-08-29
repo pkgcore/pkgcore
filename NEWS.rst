@@ -3,6 +3,17 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.23 (2023-08-29)
+----------------------------
+
+- enable python 3.12 for pkgcore (Sam James, #402)
+
+- manifest: support proxy configuration (Arthur Zamarin,
+  https://github.com/pkgcore/pkgdev/issues/103)
+
+- ebuild.repository: add support for stabilization groups (Arthur Zamarin, #411)
+
+----------------------------
 pkgcore 0.12.22 (2023-08-05)
 ----------------------------
 

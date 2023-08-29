@@ -676,22 +676,27 @@ class UnconfiguredTree(prototype.tree):
     @klass.jit_attr
     def stabilization_groups(self):
         """Return a mapping of stabilization groups to packages."""
-        stabilization_groups = {}
         base_dir = pjoin(self.location, "metadata", "stabilization-groups")
-        for dirname, _dirs, files in os.walk(base_dir):
-            dirbase = dirname.removeprefix(base_dir)
-            for file in files:
-                pkgs = set()
-                for lineno, line in enumerate(readlines_utf8(pjoin(dirname, file)), 1):
-                    try:
-                        if line := line.split("#", maxsplit=1)[0].strip():
-                            pkgs.add(atom(line))
-                    except ebuild_errors.MalformedAtom as exc:
-                        logger.error(
-                            f"{dirname.removeprefix(self.location)}/{file}, line {lineno}: parsing error: {exc}"
-                        )
-                group = f"{dirbase}/{file}".removeprefix("/")
-                stabilization_groups[group] = frozenset(pkgs)
+        group_files = {
+            pjoin(dirname, file)
+            .removeprefix(base_dir + "/")
+            .removesuffix(".group"): pjoin(dirname, file)
+            for dirname, _dirs, files in os.walk(base_dir)
+            for file in files
+            if file.endswith(".group")
+        }
+        stabilization_groups = {}
+        for group_name, group_file in group_files.items():
+            pkgs = set()
+            for lineno, line in enumerate(readlines_utf8(group_file), 1):
+                try:
+                    if line := line.split("#", maxsplit=1)[0].strip():
+                        pkgs.add(atom(line))
+                except ebuild_errors.MalformedAtom as exc:
+                    logger.error(
+                        f"{group_file.removeprefix(self.location)}, line {lineno}: parsing error: {exc}"
+                    )
+            stabilization_groups[group_name] = frozenset(pkgs)
         return ImmutableDict(stabilization_groups)
 
     def _regen_operation_helper(self, **kwds):

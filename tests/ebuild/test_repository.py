@@ -202,17 +202,18 @@ class TestUnconfiguredTree:
     def test_stabilization_groups(self, tmp_path, caplog):
         base = tmp_path / "metadata/stabilization-groups"
         (base / "pkgcore").mkdir(parents=True)
-        (base / "gentoo").write_text(
-            textwrap.dedent(
-                """\
-                    # some text here
-                        dev-python/pkgcore
-                    dev-python/pytest # comment
-                    @bad_atom@
-                """
-            )
+        (base / "gentoo.group").write_text(
+            """\
+                # some text here
+                    dev-python/pkgcore
+                dev-python/pytest # comment
+                @bad_atom@
+            """
         )
-        (base / "pkgcore" / "snakeoil").write_text("""dev-python/snakeoil # comment""")
+        (base / "pkgcore" / "snakeoil.group").write_text(
+            """dev-python/snakeoil # comment"""
+        )
+        (base / "pkgcore" / "pkgdev").write_text("""dev-python/pkgdev # comment""")
         mirrors = self.mk_tree(tmp_path).stabilization_groups
         assert set(mirrors.keys()) == {"gentoo", "pkgcore/snakeoil"}
         assert set(mirrors["gentoo"]) == {

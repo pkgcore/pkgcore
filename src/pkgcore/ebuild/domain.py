@@ -315,7 +315,7 @@ class domain(config_domain):
 
         # if unset, MAKEOPTS defaults to CPU thread count
         if "MAKEOPTS" not in settings:
-            settings["MAKEOPTS"] = "-j%i" % cpu_count()
+            settings["MAKEOPTS"] = f"-j{cpu_count()}"
 
         # reformat env.d and make.conf incrementals
         system_profile_settings = {}
@@ -356,7 +356,7 @@ class domain(config_domain):
 
         if "ACCEPT_KEYWORDS" not in settings:
             raise Failure(
-                "No ACCEPT_KEYWORDS setting detected from profile, " "or user config"
+                "No ACCEPT_KEYWORDS setting detected from profile, or user config"
             )
         settings["ACCEPT_KEYWORDS"] = incremental_expansion(
             settings["ACCEPT_KEYWORDS"], msg_prefix="while expanding ACCEPT_KEYWORDS"
@@ -366,6 +366,11 @@ class domain(config_domain):
         self._triggers = GenerateTriggers(self, settings)
 
         return ImmutableDict(settings)
+
+    def get_settings_envvar(self, key: str, default=None):
+        if (val := self.settings.get(key)) is not None:
+            return val
+        return os.environ.get(key, default)
 
     @property
     def arch(self):

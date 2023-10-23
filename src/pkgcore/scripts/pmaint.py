@@ -501,7 +501,7 @@ eclass_opts.add_argument(
     "--format",
     help="output format",
     default="man",
-    choices=("rst", "man", "html"),
+    choices=("rst", "man", "html", "devbook"),
 )
 eclass_opts.add_argument(
     "-r",

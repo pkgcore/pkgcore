@@ -720,3 +720,9 @@ class EclassDoc(AttrDict):
         from docutils.writers import html5_polyglot
 
         return self._to_docutils(html5_polyglot.Writer())
+
+    def to_devbook(self):
+        """Convert eclassdoc object to an HTML 5 document."""
+        from pkgcore.util.rst2devbook import DevBookWriter
+
+        return self._to_docutils(DevBookWriter(self.name))

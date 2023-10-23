@@ -547,6 +547,9 @@ def _eclass_main(options, out, err):
                 obj = EclassDoc(path, sourced=True)
                 convert_func = getattr(obj, f"to_{options.format}")
                 f.write(convert_func())
+        except NotImplementedError as e:
+            err.write(f"{eclass.prog}: failed {path!r}: {e}")
+            raise
         except ValueError as e:
             # skip eclasses lacking eclassdoc support
             err.write(f"{eclass.prog}: skipping {path!r}: {e}")

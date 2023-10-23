@@ -123,16 +123,16 @@ class TestEclassDoc:
             "Random Person <maintainer@random.email>",
         )
         assert doc.description == (
-            "::\n\n"
-            "  Yadda yadda yadda.\n"
-            "  Lots to say here.\n\n"
-            "  Really, very interesting eclass.\n\n"
+            "\n\n"
+            "Yadda yadda yadda.\n"
+            "Lots to say here.\n\n"
+            "Really, very interesting eclass.\n\n"
             "How to use it\n"
-            "~~~~~~~~~~~~~\n"
-            "::\n\n"
-            "  Somehow."
+            "~~~~~~~~~~~~~\n\n\n"
+            "Somehow."
         )
         assert doc.example == (
+            "\n\n"
             "::\n\n"
             "  inherit foo\n\n"
             "  src_prepare() {\n"
@@ -166,7 +166,7 @@ class TestEclassDoc:
             "deprecated": False,
             "internal": True,
             "maintainers": ("Some Person <someone@random.email>",),
-            "description": "::\n\n  Internal stub function.",
+            "description": "\n\nInternal stub function.",
             "usage": "<bar> [<baz>]",
         }
 
@@ -176,7 +176,7 @@ class TestEclassDoc:
             "deprecated": "bar_public_func",
             "internal": False,
             "maintainers": None,
-            "description": "::\n\n  Public stub function.",
+            "description": "\n\nPublic stub function.",
             "usage": None,
         }
 
@@ -187,7 +187,7 @@ class TestEclassDoc:
             "default_unset": True,
             "internal": True,
             "required": False,
-            "description": "::\n\n  Internal variable for foo_public_func.",
+            "description": "\n\nInternal variable for foo_public_func.",
         }
         assert doc.function_variables[1] == {
             "name": "FOO_PUBLIC_VAR",
@@ -195,7 +195,7 @@ class TestEclassDoc:
             "default_unset": False,
             "internal": False,
             "required": True,
-            "description": "::\n\n  Public variable for foo_public_func.",
+            "description": "\n\nPublic variable for foo_public_func.",
         }
 
         assert len(doc.variables) == 3
@@ -208,7 +208,7 @@ class TestEclassDoc:
             "pre_inherit": False,
             "user_variable": False,
             "output_variable": False,
-            "description": "::\n\n  Internal variable.",
+            "description": "\n\nInternal variable.",
         }
         assert doc.variables[1] == {
             "name": "FOO_PUBLIC_ECLASS_VAR",
@@ -219,7 +219,7 @@ class TestEclassDoc:
             "pre_inherit": True,
             "user_variable": False,
             "output_variable": False,
-            "description": "::\n\n  Public variable.",
+            "description": "\n\nPublic variable.",
         }
         assert doc.variables[2] == {
             "name": "FOO_ANOTHER_ECLASS_VAR",
@@ -230,7 +230,7 @@ class TestEclassDoc:
             "pre_inherit": False,
             "user_variable": False,
             "output_variable": False,
-            "description": "::\n\n  Yet another variable.",
+            "description": "\n\nYet another variable.",
         }
 
     def test_recursive_provides(self, tmp_path):

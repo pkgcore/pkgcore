@@ -218,7 +218,6 @@ class EclassBlock(ParseEclassDoc):
             "@PROVIDES:": ("raw_provides", False, self._tag_inline_list, ()),
             "@MAINTAINER:": ("maintainers", True, self._tag_multiline_args, None),
             "@AUTHOR:": ("authors", False, self._tag_multiline_args, None),
-            "@BUGREPORTS:": ("bugreports", False, self._tag_multiline_str, None),
             "@DESCRIPTION:": ("description", False, self._tag_multiline_str, None),
             "@EXAMPLE:": ("example", False, self._tag_multiline_str, None),
             "@SUPPORTED_EAPIS:": ("supported_eapis", False, self._supported_eapis, ()),
@@ -642,10 +641,10 @@ class EclassDoc(AttrDict):
             rst.extend(_rst_header("-", "Maintainers"))
             rst.append("\n".join(f"| {x}" for x in self.maintainers))
             rst.append("")
-        if self.bugreports:
-            rst.extend(_rst_header("-", "Bug Reports"))
-            rst.append(self.bugreports)
-            rst.append("")
+
+        rst.extend(_rst_header("-", "Reporting Bugs"))
+        rst.append("Please report bugs via https://bugs.gentoo.org/")
+        rst.append("")
 
         return "\n".join(rst)
 

@@ -38,8 +38,6 @@ FOO_ECLASS = """
 # @AUTHOR:
 # Another Person <another@random.email>
 # Random Person <maintainer@random.email>
-# @BUGREPORTS:
-# Report bugs somewhere.
 # @VCSURL: https://example.com/foo.eclass
 # @SUPPORTED_EAPIS: 0 1 2 3 4 5 6 7
 # @PROVIDES: bar
@@ -124,7 +122,6 @@ class TestEclassDoc:
             "Another Person <another@random.email>",
             "Random Person <maintainer@random.email>",
         )
-        assert doc.bugreports == "::\n\n  Report bugs somewhere."
         assert doc.description == (
             "::\n\n"
             "  Yadda yadda yadda.\n"

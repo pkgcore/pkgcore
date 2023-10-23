@@ -590,6 +590,17 @@ class EclassDoc(AttrDict):
             rst.append(self.example)
             rst.append("")
 
+        raw_eclass_name = self.name[: -len(".eclass")]
+        latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
+        if exported_phases := [
+            x
+            for x in latest_eapi.phases.values()
+            if f"{raw_eclass_name}_{x}" in self.exported_function_names
+        ]:
+            rst.extend(_rst_header("-", "Exported Phases"))
+            rst.extend(f"- ``{phase}``" for phase in exported_phases)
+            rst.append("")
+
         if external_funcs := [x for x in self.functions if not x.internal]:
             rst.extend(_header_only("-", "Functions"))
             for func in external_funcs:

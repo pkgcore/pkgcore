@@ -544,7 +544,7 @@ def _eclass_main(options, out, err):
             with open(
                 pjoin(options.output_dir, f"{os.path.basename(path)}.{ext}"), "wt"
             ) as f:
-                obj = EclassDoc(path)
+                obj = EclassDoc(path, sourced=True)
                 convert_func = getattr(obj, f"to_{options.format}")
                 f.write(convert_func())
         except ValueError as e:

@@ -497,6 +497,19 @@ eclass_opts.add_argument(
     "--dir", dest="output_dir", type=arghparse.create_dir, help="output directory"
 )
 eclass_opts.add_argument(
+    "-o",
+    "--output",
+    dest="output_format",
+    default="{eclass}.eclass.{format}",
+    help="output file name format",
+    docs="""
+        Output file name format. Defaults to ``{eclass}.eclass.{format}``. You
+        can use ``{eclass}`` and ``{format}`` placeholders to customize the
+        output file name. The filename can have path separator, for example:
+        ``{eclass}/{eclass}.eclass.{format}``.
+    """,
+)
+eclass_opts.add_argument(
     "-f",
     "--format",
     help="output format",
@@ -541,9 +554,16 @@ def _eclass_main(options, out, err):
 
     for path in options.eclasses:
         try:
-            with open(
-                pjoin(options.output_dir, f"{os.path.basename(path)}.{ext}"), "wt"
-            ) as f:
+            filename = pjoin(
+                options.output_dir,
+                options.output_format.format(
+                    eclass=os.path.basename(path).removesuffix(".eclass"),
+                    format=ext,
+                ),
+            )
+            out.write("Compiling: ", path)
+            os.makedirs(os.path.dirname(filename), exist_ok=True)
+            with open(filename, "wt") as f:
                 obj = EclassDoc(path, sourced=True)
                 convert_func = getattr(obj, f"to_{options.format}")
                 f.write(convert_func())

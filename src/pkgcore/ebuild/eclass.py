@@ -173,7 +173,7 @@ class ParseEclassDoc:
         """Return default field mapping for the block."""
         return {name: default for name, _required, _func, default in self.tags.values()}
 
-    def parse(self, lines, line_ind):
+    def parse(self, lines, line_ind, _next_line):
         """Parse an eclass block."""
         blocks = []
         data = self.defaults
@@ -259,6 +259,15 @@ class EclassVarBlock(ParseEclassDoc):
             "@DESCRIPTION:": ("description", True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
+
+    def parse(self, lines, line_ind, next_line):
+        data = dict(super().parse(lines, line_ind, next_line))
+        var_name = data["name"]
+        if mo := re.search(rf"{var_name}=(?P<value>.*)", next_line):
+            data["initial_value"] = mo.group("value")
+        if mo := re.search(rf": \${{{var_name}:?=(?P<value>.*)}}", next_line):
+            data["default_value"] = mo.group("value")
+        return AttrDict(data)
 
 
 # For backwards compatibility, can be removed after 2022-12-31
@@ -492,13 +501,13 @@ class EclassDoc(AttrDict):
                     block = []
                     block_start = line_ind + 1
                     while line_ind < len(lines):
-                        line = lines[line_ind]
+                        next_line = line = lines[line_ind]
                         if not line.startswith(prefix):
                             break
                         line = line[len(prefix) + 1 :]
                         block.append(line)
                         line_ind += 1
-                    blocks.append((tag, block, block_start))
+                    blocks.append((tag, block, block_start, next_line))
                 line_ind += 1
 
         # set default fields
@@ -526,9 +535,9 @@ class EclassDoc(AttrDict):
         duplicates = {k: set() for k in ParseEclassDoc.blocks}
 
         # parse identified blocks
-        for tag, block, block_start in blocks:
+        for tag, block, block_start, next_line in blocks:
             block_obj = ParseEclassDoc.blocks[tag]
-            block_data = block_obj.parse(block, block_start)
+            block_data = block_obj.parse(block, block_start, next_line)
             # check if duplicate blocks exist and merge data
             if block_obj.key is None:
                 # main @ECLASS block
@@ -619,6 +628,10 @@ class EclassDoc(AttrDict):
             rst.extend(_header_only("-", "Variables"))
             for var in external_vars:
                 vartype = ""
+                if default_value := getattr(var, "default_value", None):
+                    vartype += f" ?= *{default_value}*"
+                elif initial_value := getattr(var, "initial_value", None):
+                    vartype += f" = *{initial_value}*"
                 if var.required:
                     vartype += " (REQUIRED)"
                 if var.pre_inherit:

@@ -871,7 +871,7 @@ def parse_ownsre(value):
 @bind_add_query("--maintainer", action="append", help="regex to search for maintainers")
 def parse_maintainer(value):
     """
-    Case insensitive Regex match on the combined 'name <email>' bit of
+    Case-insensitive Regex match on the combined 'name <email>' bit of
     metadata.xml's maintainer data.
     """
     if value and value != "maintainer-needed":
@@ -895,7 +895,7 @@ def parse_maintainer(value):
 )
 def parse_maintainer_name(value):
     """
-    Case insensitive Regex match on the name bit of metadata.xml's
+    Case-insensitive Regex match on the name bit of metadata.xml's
     maintainer data.
     """
     return packages.PackageRestriction(
@@ -915,7 +915,7 @@ def parse_maintainer_name(value):
 )
 def parse_maintainer_email(value):
     """
-    Case insensitive Regex match on the email bit of metadata.xml's
+    Case-insensitive Regex match on the email bit of metadata.xml's
     maintainer data.
     """
     return packages.PackageRestriction(

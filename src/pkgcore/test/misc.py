@@ -109,6 +109,10 @@ class FakeEbuildRepo(FakeRepo):
 
 
 class FakePkg(FakePkgBase):
+    """
+    Object used to mock an ebuild instance for test usage.
+    """
+
     def __init__(
         self,
         cpv,
@@ -139,6 +143,11 @@ class FakePkg(FakePkgBase):
         object.__setattr__(self, "eapi", get_eapi(eapi, False))
         if iuse is not None:
             object.__setattr__(self, "iuse", set(iuse))
+
+    @classmethod
+    def for_tree_usage(cls, cat: str, pkg: str, version: str, **kwargs):
+        """Helper function that can be used by repository classes"""
+        return cls(f"{cat}/{pkg}-{version}", **kwargs)
 
 
 # misc setup code for generating glsas for testing

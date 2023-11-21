@@ -40,7 +40,9 @@ class FakeRepo(util.SimpleTree):
         self.installed = []
         self.replaced = []
         self.uninstalled = []
-        super().__init__(data, pkg_klass=partial(FakePkg.for_tree_usage, repo=self), repo_id=repo_id)
+        super().__init__(
+            data, pkg_klass=partial(FakePkg.for_tree_usage, repo=self), repo_id=repo_id
+        )
         self.livefs = livefs
         self.frozen = frozen
 
@@ -250,7 +252,9 @@ class TestCopy(ArgParseMixin):
             ),
         )
         assert ret == 0, "expected non zero exit code"
-        assert [pkg.cpvstr for pkg in config.target_repo.installed] == ["sys-apps/portage-2.3"]
+        assert [pkg.cpvstr for pkg in config.target_repo.installed] == [
+            "sys-apps/portage-2.3"
+        ]
         assert (
             config.target_repo.uninstalled == config.target_repo.replaced
         ), "uninstalled should be the same as replaced; empty"

@@ -55,11 +55,11 @@ Installing from a tarball::
 Tests
 =====
 
-A standalone test runner is integrated in setup.py; to run, just execute::
+Standard python test runners can be used, for example:
 
-    python setup.py test
+    pytest -v
 
-In addition, a tox config is provided so the testsuite can be run in a
+A tox config is provided so the testsuite can be run in a
 virtualenv setup against all supported python versions. To run tests for all
 environments just execute **tox** in the root directory of a repo or unpacked
 tarball. Otherwise, for a specific python version execute something similar to

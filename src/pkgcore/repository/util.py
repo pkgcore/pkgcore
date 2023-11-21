@@ -13,19 +13,19 @@ from . import multiplex, prototype, virtual
 
 
 class SimpleTree(prototype.tree):
-    """Fake, in-memory repository.
-
-    Args:
-        cpv_dict (dict): CPVs to populate the repo with
-        pkg_klass: class of packages in repo
-        livefs (bool): regular repo if False, vdb if True
-        frozen (bool): repo is modifiable if False, otherwise readonly
-        repo_id (str): repo ID
-    """
+    """in-memory repository used for testing or simple shims."""
 
     def __init__(
         self, cpv_dict, pkg_klass=None, livefs=False, frozen=True, repo_id=None
     ):
+        """
+        Args:
+            cpv_dict (dict): CPVs to populate the repo with
+            pkg_klass: class of packages in repo
+            livefs (bool): regular repo if False, vdb if True
+            frozen (bool): repo is modifiable if False, otherwise readonly
+            repo_id (str): repo ID
+        """
         self.cpv_dict = cpv_dict
         if pkg_klass is None:
             pkg_klass = VersionedCPV

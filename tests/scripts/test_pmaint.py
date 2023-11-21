@@ -11,6 +11,7 @@ from pkgcore.operations.repo import install, operations, replace, uninstall
 from pkgcore.repository import syncable, util
 from pkgcore.scripts import pmaint
 from pkgcore.sync import base
+from pkgcore.test.misc import FakePkg
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
 Options = AttrAccessible
@@ -39,7 +40,7 @@ class FakeRepo(util.SimpleTree):
         self.installed = []
         self.replaced = []
         self.uninstalled = []
-        super().__init__(data, pkg_klass=partial(fake_pkg, self), repo_id=repo_id)
+        super().__init__(data, pkg_klass=partial(FakePkg.for_tree_usage, repo=self), repo_id=repo_id)
         self.livefs = livefs
         self.frozen = frozen
 
@@ -161,12 +162,6 @@ class TestSync(ArgParseMixin):
         )
 
 
-class fake_pkg(CPV):
-    def __init__(self, repo, *a, **kw):
-        CPV.__init__(self, *a, **kw)
-        object.__setattr__(self, "repo", repo)
-
-
 def derive_op(name, op, *a, **kw):
     if isinstance(name, str):
         name = [name]
@@ -201,7 +196,7 @@ class TestCopy(ArgParseMixin):
             domain=make_domain(vdb={"sys-apps": {"portage": ["2.1", "2.3"]}}),
         )
         assert ret == 0, "expected non zero exit code"
-        assert list(map(str, config.target_repo.installed)) == [
+        assert [pkg.cpvstr for pkg in config.target_repo.installed] == [
             "sys-apps/portage-2.1",
             "sys-apps/portage-2.3",
         ]
@@ -218,7 +213,7 @@ class TestCopy(ArgParseMixin):
             domain=make_domain(binpkg=d, vdb=d),
         )
         assert ret == 0, "expected non zero exit code"
-        assert [list(map(str, x)) for x in config.target_repo.replaced] == [
+        assert [[x.cpvstr for x in pkg] for pkg in config.target_repo.replaced] == [
             ["sys-apps/portage-2.1", "sys-apps/portage-2.1"]
         ]
         assert (
@@ -235,7 +230,7 @@ class TestCopy(ArgParseMixin):
             domain=make_domain(vdb={"sys-apps": {"portage": ["2.1", "2.3"]}}),
         )
         assert ret == 0, "expected non zero exit code"
-        assert list(map(str, config.target_repo.installed)) == [
+        assert [pkg.cpvstr for pkg in config.target_repo.installed] == [
             "sys-apps/portage-2.1",
             "sys-apps/portage-2.3",
         ]
@@ -255,7 +250,7 @@ class TestCopy(ArgParseMixin):
             ),
         )
         assert ret == 0, "expected non zero exit code"
-        assert list(map(str, config.target_repo.installed)) == ["sys-apps/portage-2.3"]
+        assert [pkg.cpvstr for pkg in config.target_repo.installed] == ["sys-apps/portage-2.3"]
         assert (
             config.target_repo.uninstalled == config.target_repo.replaced
         ), "uninstalled should be the same as replaced; empty"

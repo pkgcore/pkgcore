@@ -239,10 +239,7 @@ class tree(prototype.tree):
     def __str__(self):
         return self.repo_id
 
-    def _get_categories(self, *optional_category):
-        # return if optional_category is passed... cause it's not yet supported
-        if optional_category:
-            return {}
+    def _get_categories(self):
         try:
             return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
         except EnvironmentError as e:

@@ -2,9 +2,10 @@
 base repository template
 """
 
-__all__ = ("CategoryIterValLazyDict", "PackageMapping", "VersionMapping", "tree")
+__all__ = ("CategoryLazyFrozenSet", "PackageMapping", "VersionMapping", "tree")
 
 from pathlib import Path
+import typing
 
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import DictMixin, LazyValDict
@@ -16,38 +17,28 @@ from ..restrictions import boolean, packages, restriction, values
 from ..restrictions.util import collect_package_restrictions
 
 
-class IterValLazyDict(LazyValDict):
-    __slots__ = ()
+class CategoryLazyFrozenSet:
+    """Lazy frozenset for holding categories"""
 
-    def __str__(self):
-        return str(list(self))
+    __slots__ = ("_get_values", "_values")
 
-    def force_regen(self, key):
-        if key in self._vals:
-            del self._vals[key]
-        else:
-            self._keys = tuple(x for x in self._keys if x != key)
+    def __init__(self, get_values: typing.Callable[[], typing.Iterable[str]]):
+        self._get_values = get_values
+        self._values = None  # type: typing.Union[None, frozenset]
 
+    def __iter__(self):
+        if self._values is None:
+            self._values = frozenset(self._get_values())
+        return iter(self._values)
 
-class CategoryIterValLazyDict(IterValLazyDict):
-    __slots__ = ()
+    def __contains__(self, cat: str):
+        if self._values is None:
+            self._values = frozenset(self._get_values())
+        return cat in self._values
 
-    def force_add(self, key):
-        if key not in self:
-            s = set(self._keys)
-            s.add(key)
-            self._keys = tuple(s)
-
-    def force_remove(self, key):
-        if key in self:
-            self._keys = tuple(x for x in self._keys if x != key)
-
-    __iter__ = IterValLazyDict.keys
-
-    def __contains__(self, key):
-        if self._keys_func is not None:
-            return key in list(self.keys())
-        return key in self._keys
+    def force_regen(self):
+        """wipe cached values to trigger a refresh"""
+        self._values = None
 
 
 class PackageMapping(DictMixin):
@@ -66,16 +57,13 @@ class PackageMapping(DictMixin):
         return vals
 
     def keys(self):
-        return self._parent.keys()
+        return iter(self._parent)
 
     def __contains__(self, key):
         return key in self._cache or key in self._parent
 
     def force_regen(self, cat):
-        try:
-            del self._cache[cat]
-        except KeyError:
-            pass
+        self._cache.pop(cat, None)
 
 
 class VersionMapping(DictMixin):
@@ -139,9 +127,7 @@ class tree:
     pkg_masks = frozenset()
 
     def __init__(self, frozen=False):
-        self.categories = CategoryIterValLazyDict(
-            self._get_categories, self._get_categories
-        )
+        self.categories = CategoryLazyFrozenSet(self._get_categories)
         self.packages = PackageMapping(self.categories, self._get_packages)
         self.versions = VersionMapping(self.packages, self._get_versions)
 
@@ -153,7 +139,7 @@ class tree:
         """Return a configured form of the repository."""
         raise NotImplementedError(self, "configure")
 
-    def _get_categories(self, *args):
+    def _get_categories(self):
         """this must return a list, or sequence"""
         raise NotImplementedError(self, "_get_categories")
 
@@ -477,7 +463,7 @@ class tree:
             wipe = list(self.packages[pkg.category]) == [pkg.package]
             self.packages.force_regen(pkg.category)
             if wipe:
-                self.categories.force_regen(pkg.category)
+                self.categories.force_regen()
         self.versions.force_regen(ver_key, tuple(l))
 
     def notify_add_package(self, pkg):
@@ -488,8 +474,7 @@ class tree:
         ver_key = (pkg.category, pkg.package)
         s = set(self.versions.get(ver_key, ()))
         s.add(pkg.fullver)
-        if pkg.category not in self.categories:
-            self.categories.force_add(pkg.category)
+        self.categories.force_regen()
         self.packages.force_regen(pkg.category)
         self.versions.force_regen(ver_key, tuple(s))
 

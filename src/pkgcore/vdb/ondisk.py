@@ -72,10 +72,7 @@ class tree(prototype.tree):
     def configure(self, *args):
         return ConfiguredTree(self, *args)
 
-    def _get_categories(self, *optional_category):
-        # return if optional_category is passed... cause it's not yet supported
-        if optional_category:
-            return {}
+    def _get_categories(self):
         try:
             try:
                 return tuple(

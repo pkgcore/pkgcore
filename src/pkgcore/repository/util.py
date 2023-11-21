@@ -16,7 +16,7 @@ class SimpleTree(prototype.tree):
     """in-memory repository used for testing or simple shims."""
 
     def __init__(
-        self, cpv_dict, pkg_klass=None, livefs=False, frozen=True, repo_id=None
+        self, cpv_dict, pkg_klass=VersionedCPV, livefs=False, frozen=True, repo_id=None
     ):
         """
         Args:
@@ -27,8 +27,6 @@ class SimpleTree(prototype.tree):
             repo_id (str): repo ID
         """
         self.cpv_dict = cpv_dict
-        if pkg_klass is None:
-            pkg_klass = VersionedCPV
         self.livefs = livefs
         self.repo_id = repo_id
         self.package_class = pkg_klass

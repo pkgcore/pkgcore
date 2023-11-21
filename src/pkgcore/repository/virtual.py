@@ -41,10 +41,7 @@ class tree(prototype.tree):
             ):
                 yield pkg
 
-    def _get_categories(self, *optional_category):
-        # return if optional_category is passed... cause it's not yet supported
-        if optional_category:
-            return ()
+    def _get_categories(self):
         return ("virtual",)
 
     def _load_data(self):
@@ -157,7 +154,7 @@ class RestrictionRepo(tree):
     def restriction(self):
         return OrRestriction(*self._restrictions.keys())
 
-    def _get_categories(self, *args):
+    def _get_categories(self):
         return tuple(x.category for x in self._injected_pkgs)
 
     def _get_packages(self, category):

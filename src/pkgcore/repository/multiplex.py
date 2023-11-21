@@ -91,50 +91,37 @@ class tree(prototype.tree):
                 )
         self.trees = trees
 
-    def _get_categories(self, *optional_category):
+    def _get_categories(self):
         d = set()
-        failures = 0
-        if optional_category:
-            optional_category = optional_category[0]
-            for x in self.trees:
-                try:
-                    d.update(x.categories[optional_category])
-                except KeyError:
-                    failures += 1
-        else:
-            for x in self.trees:
-                try:
-                    list(map(d.add, x.categories))
-                except (errors.RepoError, KeyError):
-                    failures += 1
-        if failures == len(self.trees):
-            if optional_category:
-                raise KeyError("category base '%s' not found" % str(optional_category))
+        for x in self.trees:
+            try:
+                d.update(x.categories)
+            except (errors.RepoError, KeyError):
+                pass
+        if not d:
             raise KeyError("failed getting categories")
         return tuple(d)
 
     def _get_packages(self, category):
         d = set()
-        failures = 0
         for x in self.trees:
             try:
                 d.update(x.packages[category])
             except (errors.RepoError, KeyError):
-                failures += 1
-        if failures == len(self.trees):
+                pass
+        if not d:
             raise KeyError(f"category {category!r} not found")
         return tuple(d)
 
     def _get_versions(self, package):
         d = set()
-        failures = 0
         for x in self.trees:
             try:
                 d.update(x.versions[package])
             except (errors.RepoError, KeyError):
-                failures += 1
+                pass
 
-        if failures == len(self.trees):
+        if not d:
             raise KeyError(f"category {package!r} not found")
         return tuple(d)
 

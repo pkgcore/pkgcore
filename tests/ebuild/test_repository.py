@@ -179,7 +179,7 @@ class TestUnconfiguredTree:
         (tmp_path / "empty" / "empty").mkdir(parents=True)
         (tmp_path / "cat" / "pkg" / "pkg-3.ebuild").touch()
         repo = self.mk_tree(tmp_path)
-        assert {"cat": (), "empty": ()} == dict(repo.categories)
+        assert frozenset(["cat", "empty"]) == frozenset(repo.categories)
         assert {"cat": ("pkg",), "empty": ("empty",)} == dict(repo.packages)
         assert {("cat", "pkg"): ("3",), ("empty", "empty"): ()} == dict(repo.versions)
 

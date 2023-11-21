@@ -32,9 +32,7 @@ class SimpleTree(prototype.tree):
         self.package_class = pkg_klass
         super().__init__(frozen=frozen)
 
-    def _get_categories(self, *arg):
-        if arg:
-            return ()
+    def _get_categories(self):
         return tuple(self.cpv_dict.keys())
 
     def _get_packages(self, category):

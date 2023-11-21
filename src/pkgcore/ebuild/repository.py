@@ -518,12 +518,7 @@ class UnconfiguredTree(prototype.tree):
             logger.error(f"failed listing categories: {e}")
         return ()
 
-    def _get_categories(self, *optional_category):
-        # why the auto return? current porttrees don't allow/support
-        # categories deeper then one dir.
-        if optional_category:
-            # raise KeyError
-            return ()
+    def _get_categories(self):
         categories = frozenset(
             chain.from_iterable(repo.config.categories for repo in self.trees)
         )

@@ -1,8 +1,9 @@
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint, configurable
-from pkgcore.ebuild import atom
+from pkgcore.ebuild import atom, cpv
 from pkgcore.repository import util
 from pkgcore.scripts import pquery
+from pkgcore.test.misc import FakePkg
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
 
@@ -19,7 +20,9 @@ class FakeDomain:
 
 @configurable(typename="repo")
 def fake_repo():
-    return util.SimpleTree({"spork": {"foon": ("1", "2")}})
+    return util.SimpleTree(
+        {"spork": {"foon": ("1", "2")}}, pkg_klass=FakePkg.for_tree_usage
+    )
 
 
 @configurable(typename="repo")
@@ -53,10 +56,30 @@ class TestCommandline(ArgParseMixin):
             "--all",
         )
 
-    def test_no_description(self):
+    def test_missing_metadata(self):
+        simple_repo_config = basics.HardCodedConfigSection(
+            {
+                "class": FakeDomain,
+                "repos": [
+                    basics.HardCodedConfigSection(
+                        # note we're using a raw CPV; this is to remove all metadata attributes and force pquery
+                        # to display its behaviour for missing.
+                        {
+                            "class": configurable(typename="repo")(
+                                lambda: util.SimpleTree(
+                                    {"abc": {"def": ["2"]}}, pkg_klass=cpv.VersionedCPV
+                                )
+                            )
+                        }
+                    )
+                ],
+                "vdb": [basics.HardCodedConfigSection({"class": fake_vdb})],
+                "default": True,
+            }
+        )
         self.assertOut(
             [
-                " * spork/foon-2",
+                " * abc/def-2",
                 "     repo: MISSING",
                 "     description: MISSING",
                 "     homepage: MISSING",
@@ -66,7 +89,7 @@ class TestCommandline(ArgParseMixin):
             "-v",
             "--max",
             "--all",
-            test_domain=domain_config,
+            test_domain=simple_repo_config,
         )
 
     def test_atom(self):

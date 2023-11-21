@@ -16,6 +16,7 @@ running them on source repos makes no sense.
 import errno
 import os
 from functools import partial
+import typing
 
 from snakeoil.cli import arghparse
 from snakeoil.formatters import decorate_forced_wrapping
@@ -35,9 +36,17 @@ from ..util import parserestrict
 class DataSourceRestriction(values.base):
     """Turn a data_source into a line iterator and apply a restriction."""
 
-    def __init__(self, childrestriction, **kwargs):
+    __slots__ = ("negate", "restriction")
+
+    def __init__(
+        self,
+        childrestriction: typing.Union[values.base, values.AnyMatch],
+        negate=False,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
-        self.restriction = childrestriction
+        object.__setattr__(self, "restriction", childrestriction)
+        object.__setattr__(self, "negate", negate)
 
     def __str__(self):
         return f"DataSourceRestriction: {self.restriction} negate={self.negate}"
@@ -929,9 +938,11 @@ def parse_maintainer_email(value):
 
 
 @bind_add_query(
-    "--environment", action="append", help="regexp search in environment.bz2"
+    "--environment-re",
+    action="append",
+    help="regexp search of lines in environment.bz2",
 )
-def parse_envmatch(value):
+def parse_environment_re(value):
     """Apply a regexp to the environment."""
     return packages.PackageRestriction(
         "environment", DataSourceRestriction(values.AnyMatch(values.StrRegex(value)))

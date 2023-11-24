@@ -44,6 +44,7 @@ jobs:
         path: build/sphinx/html
 
   deploy:
+    if: github.repository == 'pkgcore/pkgcore'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

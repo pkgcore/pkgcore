@@ -11,7 +11,7 @@ name = "pkgcore"
 description = "package managing framework"
 readme = "README.rst"
 license = {file = "LICENSE"}
-requires-python = "~=3.9"
+requires-python = "~=3.10"
 authors = [
 	{name = "Tim Harder", email = "radhermit@gmail.com"},
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
@@ -22,9 +22,9 @@ maintainers = [
 ]
 classifiers = [
 	"License :: OSI Approved :: BSD License",
-	"Programming Language :: Python :: 3.9",
 	"Programming Language :: Python :: 3.10",
 	"Programming Language :: Python :: 3.11",
+	"Programming Language :: Python :: 3.12",
 ]
 dynamic = ["version"]
 

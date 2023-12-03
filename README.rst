@@ -34,7 +34,7 @@ Tools
 Requirements
 ============
 
-At least python version 3.8, and snakeoil_ — a utility library split out of
+At least python version 3.10, and snakeoil_ — a utility library split out of
 pkgcore for others to use.
 
 Installing

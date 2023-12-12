@@ -299,7 +299,7 @@ class domain(config_domain):
         self._settings = ProtectedDict(settings)
 
     @load_property("/etc/profile.env", read_func=read_bash_dict)
-    def system_profile(self, data):
+    def system_shell_profile(self, data):
         # prepend system profile $PATH if it exists
         if "PATH" in data:
             path = stable_unique(
@@ -321,7 +321,7 @@ class domain(config_domain):
         # reformat env.d and make.conf incrementals
         system_profile_settings = {}
         for x in INCREMENTALS:
-            system_profile_val = self.system_profile.get(x, ())
+            system_profile_val = self.system_shell_profile.get(x, ())
             make_conf_val = settings.get(x, ())
             if isinstance(system_profile_val, str):
                 system_profile_val = tuple(system_profile_val.split())

@@ -511,7 +511,6 @@ class domain(config_domain):
             self._make_keywords_filter(
                 default_keywords,
                 accept_keywords,
-                incremental="package.keywords" in const.incrementals,
             )
         ]
 
@@ -555,7 +554,7 @@ class domain(config_domain):
                 return True
         return False
 
-    def _make_keywords_filter(self, default_keys, accept_keywords, incremental=False):
+    def _make_keywords_filter(self, default_keys, accept_keywords):
         """Generates a restrict that matches iff the keywords are allowed."""
         if not accept_keywords and not self.profile.keywords:
             return packages.PackageRestriction(
@@ -573,24 +572,9 @@ class domain(config_domain):
                 ((packages.AlwaysTrue, default_keys),), (f(*i) for i in accept_keywords)
             )
         else:
-            if incremental:
-                f = collapsed_restrict_to_data
-            else:
-                f = non_incremental_collapsed_restrict_to_data
-            data = f(((packages.AlwaysTrue, default_keys),), accept_keywords)
+            data = non_incremental_collapsed_restrict_to_data(((packages.AlwaysTrue, default_keys),), accept_keywords)
 
-        if incremental:
-            raise NotImplementedError(self._incremental_apply_keywords_filter)
-        else:
-            f = self._apply_keywords_filter
-        return delegate(partial(f, data))
-
-    @staticmethod
-    def _incremental_apply_keywords_filter(data, pkg, mode):
-        # note we ignore mode; keywords aren't influenced by conditionals.
-        # note also, we're not using a restriction here.  this is faster.
-        allowed = data.pull_data(pkg)
-        return any(True for x in pkg.keywords if x in allowed)
+        return delegate(partial(self._apply_keywords_filter, data))
 
     def _apply_keywords_filter(self, data, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.

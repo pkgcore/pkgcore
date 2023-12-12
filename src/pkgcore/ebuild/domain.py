@@ -42,6 +42,7 @@ from ..restrictions import packages, values
 from ..restrictions.delegated import delegate
 from ..util.parserestrict import ParseError, parse_match
 from . import const
+from .profiles import INCREMENTALS
 from . import repository as ebuild_repo
 from .atom import atom as _atom
 from .eapi import get_latest_PMS_eapi
@@ -319,7 +320,7 @@ class domain(config_domain):
 
         # reformat env.d and make.conf incrementals
         system_profile_settings = {}
-        for x in const.incrementals:
+        for x in INCREMENTALS:
             system_profile_val = self.system_profile.get(x, ())
             make_conf_val = settings.get(x, ())
             if isinstance(system_profile_val, str):
@@ -336,11 +337,11 @@ class domain(config_domain):
             if k not in settings:
                 settings[k] = v
                 continue
-            if k in const.incrementals:
+            if k in INCREMENTALS:
                 settings[k] = system_profile_settings[k] + v + settings[k]
 
         # next we finalize incrementals.
-        for incremental in const.incrementals:
+        for incremental in INCREMENTALS:
             # Skip USE/ACCEPT_LICENSE for the time being; hack; we need the
             # negations currently so that pkg iuse induced enablings can be
             # disabled by negations. For example, think of the profile doing

@@ -29,6 +29,21 @@ from . import misc, repo_objs
 from .atom import atom
 from .eapi import EAPI, get_eapi
 
+INCREMENTALS = (
+    "ACCEPT_KEYWORDS",
+    "ACCEPT_LICENSE",
+    "CONFIG_PROTECT",
+    "CONFIG_PROTECT_MASK",
+    "FEATURES",
+    "IUSE_IMPLICIT",
+    "PROFILE_ONLY_VARIABLES",
+    "USE",
+    "USE_EXPAND",
+    "USE_EXPAND_HIDDEN",
+    "USE_EXPAND_IMPLICIT",
+    "USE_EXPAND_UNPREFIXED",
+    "ENV_UNSET",
+)
 
 class ProfileError(errors.ParsingError):
     def __init__(self, path, filename, error):
@@ -157,7 +172,7 @@ def _load_and_invoke(
         ) from e
 
 
-_make_incrementals_dict = partial(misc.IncrementalsDict, const.incrementals)
+_make_incrementals_dict = partial(misc.IncrementalsDict, INCREMENTALS)
 _Packages = namedtuple("_Packages", ("system", "profile"))
 
 
@@ -703,7 +718,7 @@ class ProfileStack:
     @klass.jit_attr
     def default_env(self):
         d = dict(self.node.default_env.items())
-        for incremental in const.incrementals:
+        for incremental in INCREMENTALS:
             v = d.pop(incremental, "").split()
             if v:
                 if incremental in const.incrementals_unfinalized:
@@ -718,14 +733,14 @@ class ProfileStack:
 
     @property
     def profile_only_variables(self):
-        if "PROFILE_ONLY_VARIABLES" in const.incrementals:
+        if "PROFILE_ONLY_VARIABLES" in INCREMENTALS:
             return frozenset(self.default_env.get("PROFILE_ONLY_VARIABLES", ()))
         return frozenset(self.default_env.get("PROFILE_ONLY_VARIABLES", "").split())
 
     @klass.jit_attr
     def use_expand(self):
         """USE_EXPAND variables defined by the profile."""
-        if "USE_EXPAND" in const.incrementals:
+        if "USE_EXPAND" in INCREMENTALS:
             return frozenset(self.default_env.get("USE_EXPAND", ()))
         return frozenset(self.default_env.get("USE_EXPAND", "").split())
 
@@ -750,25 +765,25 @@ class ProfileStack:
 
     @property
     def use_expand_hidden(self):
-        if "USE_EXPAND_HIDDEN" in const.incrementals:
+        if "USE_EXPAND_HIDDEN" in INCREMENTALS:
             return frozenset(self.default_env.get("USE_EXPAND_HIDDEN", ()))
         return frozenset(self.default_env.get("USE_EXPAND_HIDDEN", "").split())
 
     @property
     def iuse_implicit(self):
-        if "IUSE_IMPLICIT" in const.incrementals:
+        if "IUSE_IMPLICIT" in INCREMENTALS:
             return frozenset(self.default_env.get("IUSE_IMPLICIT", ()))
         return frozenset(self.default_env.get("IUSE_IMPLICIT", "").split())
 
     @property
     def use_expand_implicit(self):
-        if "USE_EXPAND_IMPLICIT" in const.incrementals:
+        if "USE_EXPAND_IMPLICIT" in INCREMENTALS:
             return frozenset(self.default_env.get("USE_EXPAND_IMPLICIT", ()))
         return frozenset(self.default_env.get("USE_EXPAND_IMPLICIT", "").split())
 
     @property
     def use_expand_unprefixed(self):
-        if "USE_EXPAND_UNPREFIXED" in const.incrementals:
+        if "USE_EXPAND_UNPREFIXED" in INCREMENTALS:
             return frozenset(self.default_env.get("USE_EXPAND_UNPREFIXED", ()))
         return frozenset(self.default_env.get("USE_EXPAND_UNPREFIXED", "").split())
 

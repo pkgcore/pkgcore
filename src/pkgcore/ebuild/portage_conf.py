@@ -308,7 +308,7 @@ class PortageConfig(DictMixin):
                 return
 
             if incrementals:
-                for key in econst.incrementals:
+                for key in profiles.INCREMENTALS:
                     if key in vars_dict and key in new_vars:
                         new_vars[key] = f"{vars_dict[key]} {new_vars[key]}"
             # quirk of read_bash_dict; it returns only what was mutated.

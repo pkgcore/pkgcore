@@ -730,7 +730,7 @@ class TestPmsProfileNode(profile_mixin):
         assert self.klass(child).default_env == {"y": "narf", "x": "narf twice"}
 
     def test_default_env_incrementals(self, tmp_path):
-        assert "USE" in const.incrementals
+        assert "USE" in profiles.INCREMENTALS
         profile1 = tmp_path / self.profile
         (profile2 := profile1 / "sub").mkdir()
         (profile3 := profile2 / "sub").mkdir()
@@ -1645,8 +1645,8 @@ class TestOnDiskProfile(profile_mixin):
 
     def test_default_env(self, tmp_path):
         assert "USE" in const.incrementals_unfinalized
-        assert "USE" in const.incrementals
-        assert "USE_EXPAND" in const.incrementals
+        assert "USE" in profiles.INCREMENTALS
+        assert "USE_EXPAND" in profiles.INCREMENTALS
 
         # first, verify it behaves correctly for unfinalized incrementals.
         self.mk_profiles(tmp_path, {})

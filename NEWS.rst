@@ -3,6 +3,28 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.24 (2023-12-22)
+----------------------------
+
+- operations.format.fetch_base: try to use proxy values from domain (i.e.
+  ``/etc/portage/make.conf``) as first priority (Arthur Zamarin)
+
+- metadata.xsd: add codeberg remote-id (Thomas Bracht Laumann Jespersen, #414)
+
+- examples/verify_at_done: add new helper tool to collect done AT bugs
+  (Arthur Zamarin)
+
+- eclassdoc: many changes to the way pkgcore generates docs from eclasses:
+  removal of ``@Bugreports`` tag, display default or initial values, display
+  exported phases, various improvements to the RST output (Arthur Zamarin, #346)
+
+- eclassdoc: add devbook output format (Arthur Zamarin, #346)
+
+- various code refactoring and modernization (Brian Harring, #415, #417)
+
+- drop support for Python 3.9 (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.23 (2023-08-29)
 ----------------------------
 

@@ -38,11 +38,11 @@ def isvalid_pkg_name(chunks):
     if not all(not s or _pkg_re.match(s) for s in chunks):
         return False
     # the package name must not end with a hyphen followed by anything that
-    # looks like a version -- need to ensure that we've gotten more than one
+    # looks like a version or revision -- need to ensure that we've gotten more than one
     # chunk, i.e. at least one hyphen
-    if len(chunks) > 1 and isvalid_version_re.match(chunks[-1]):
-        return False
-    return True
+    if len(chunks) == 1:
+        return True
+    return not (isvalid_version_re.match(chunks[-1]) or isvalid_rev(chunks[-1]))
 
 
 def isvalid_rev(s: str):

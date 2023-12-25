@@ -123,6 +123,7 @@ class TestAtom(TestRestriction):
         self.assertMatch(a, CPV.unversioned("kde-base/kde"))
         self.assertNotMatch(a, CPV.unversioned("kde-base/kde2"))
         self.assertMatch(a, CPV.versioned("kde-base/kde-3"))
+        pytest.raises(errors.MalformedAtom, self.kls, "foo/bar-11-r3")
 
     def make_atom(self, s, ops, ver):
         l = []

@@ -99,7 +99,8 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         orig_atom = atom
         override_kls = False
         use_start = atom.find("[")
-        slot_start = atom.find(":")
+        # ensure slot or repo anchoring is left of use flags.
+        slot_start = atom.find(":", 0, use_start)
         eapi_obj = eapi_mod.get_eapi(
             eapi if eapi != "-1" else eapi_mod.LATEST_PMS_EAPI_VER
         )

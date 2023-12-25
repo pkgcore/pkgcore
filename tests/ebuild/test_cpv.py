@@ -52,6 +52,7 @@ class TestCPV:
         "+dfa",
         "timidity--9f",
         "ormaybe---13_beta",
+        "bar-11-r3",
     )
 
     good_cp = (

@@ -64,6 +64,7 @@ class TestCPV:
         "bah/f-100dpi",
         "dev-util/diffball-blah-monkeys",
         "virtual/7z",
+        "x11-drivers/xf86-video-r128",
     )
 
     good_vers = ("1", "2.3.4", "2.3.4a", "02.3", "2.03", "3d", "3D")

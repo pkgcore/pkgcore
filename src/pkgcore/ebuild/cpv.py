@@ -42,7 +42,12 @@ def isvalid_pkg_name(chunks):
     # chunk, i.e. at least one hyphen
     if len(chunks) == 1:
         return True
-    return not (isvalid_version_re.match(chunks[-1]) or isvalid_rev(chunks[-1]))
+    if isvalid_version_re.match(chunks[-1]):
+        return False
+    if len(chunks) >= 3 and isvalid_rev(chunks[-1]):
+        # if the last chunk is a revision, the proceeding *must not* be version like.
+        return not isvalid_version_re.match(chunks[-2])
+    return True
 
 
 def isvalid_rev(s: str):

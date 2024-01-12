@@ -526,11 +526,13 @@ class Licenses(metaclass=WeakInstMeta):
             d = read_dict(self.license_groups_path, splitter=" ")
             for k, v in d.items():
                 d[k] = set(v.split())
-        except EnvironmentError:
-            return mappings.ImmutableDict()
+        except EnvironmentError as e:
+            if e.errno != errno.ENOENT:
+                logger.error(f"failed reading parsing license_groups: {e}")
+            d = {}
         except BashParseError as pe:
             logger.error(f"failed parsing license_groups: {pe}")
-            return mappings.ImmutableDict()
+            d = {}
         for li in self._license_instances:
             for k, v in li.groups.items():
                 if k in d:

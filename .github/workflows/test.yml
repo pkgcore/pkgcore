@@ -75,9 +75,7 @@ jobs:
 
   pkgcheck-test:
     runs-on: ubuntu-latest
-
     steps:
-
     - name: Checkout pkgcore
       uses: actions/checkout@v3
       with:
@@ -112,15 +110,13 @@ jobs:
 
   pkgdev-test:
     runs-on: ubuntu-latest
-
     steps:
-
     - name: Checkout pkgcore
       uses: actions/checkout@v3
       with:
         path: pkgcore
 
-    - name: Checkout pkgcheck
+    - name: Checkout pkgdev
       uses: actions/checkout@v3
       with:
         repository: pkgcore/pkgdev
@@ -153,3 +149,31 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v3
     - uses: psf/black@stable
+
+  gentoo-regen:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout pkgcore
+      uses: actions/checkout@v3
+      with:
+        path: pkgcore
+
+    - name: Checkout gentoo
+      uses: actions/checkout@v3
+      with:
+        repository: gentoo/gentoo
+        path: gentoo
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install pip dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e "./pkgcore"
+
+    - name: Run pmaint regen
+      working-directory: ./gentoo
+      run: pmaint regen --use-local-desc --pkg-desc-index --rsync --force .

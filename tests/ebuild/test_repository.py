@@ -296,7 +296,7 @@ class TestSlavedTree(TestUnconfiguredTree):
         repo = self.mk_tree(slave_repo)
         assert set(repo.licenses) == set(master_licenses + slave_licenses)
 
-    def test_license_groups(self, master_repo, slave_repo):
+    def test_license_groups(self, master_repo, slave_repo, caplog):
         master_licenses = ("GPL-2", "BSD")
         slave_licenses = ("BSD-2", "MIT")
 
@@ -323,6 +323,26 @@ class TestSlavedTree(TestUnconfiguredTree):
             "OSI-APPROVED",
         }
         assert "BSD" in repo.licenses.groups["MISC-FREE"]
+
+        # verify it warns when parsing fails
+        (slave_repo / "profiles" / "license_groups").write_text('X"')
+        caplog.clear()
+        repo = self.mk_tree(slave_repo)
+        assert set(repo.licenses.groups) == {"FREE", "OSI-APPROVED"}
+        assert caplog.text
+
+        # verify it warns when the file exists but it can't read it.
+        (slave_repo / "profiles" / "license_groups").write_text("")
+        (slave_repo / "profiles" / "license_groups").chmod(000)
+        caplog.clear()
+        repo = self.mk_tree(slave_repo)
+        assert set(repo.licenses.groups) == {"FREE", "OSI-APPROVED"}
+        assert caplog.text
+
+        # verify it handles a missing license group.
+        (slave_repo / "profiles" / "license_groups").unlink()
+        repo = self.mk_tree(slave_repo)
+        assert set(repo.licenses.groups) == {"FREE", "OSI-APPROVED"}
 
     def test_package_deprecated(self, slave_repo, master_repo):
         (master_repo / "profiles" / "package.deprecated").write_text(

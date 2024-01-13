@@ -263,13 +263,13 @@ class EbuildRepo:
             f.write(f"EAPI={eapi}\n\n")
             f.write(f'DESCRIPTION="{desc}"\n')
             f.write(f'HOMEPAGE="{homepage}"\n')
-            f.write(f'SLOT="{slot}"\n')
-
             if license:
                 f.write(f'LICENSE="{license}"\n')
                 # create a fake license
                 os.makedirs(pjoin(self.path, "licenses"), exist_ok=True)
                 touch(pjoin(self.path, "licenses", license))
+
+            f.write(f'SLOT="{slot}"\n')
 
             for k, v in kwargs.items():
                 # handle sequences such as KEYWORDS and IUSE

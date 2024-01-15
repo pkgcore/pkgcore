@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.25 (2024-01-15)
+----------------------------
+
+- fix: parsing bug that allows a revision to be part of a package (Brian
+  Harring, #419, #420)
+
+- fix: child repository not inheriting license groups when it defines none
+  (Brian Harring, #424)
+
+- pytest plugin: ``create_ebuild`` writes ``LICENSE`` before ``SLOT`` to match
+  variables order of ``skel.ebuild`` (Anthony Ryan, #425)
+
+- ci: add workflows to verify ``pmaint regen`` against gentoo repository
+  (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.24 (2023-12-22)
 ----------------------------
 

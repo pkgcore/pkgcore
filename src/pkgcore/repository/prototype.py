@@ -54,7 +54,7 @@ class PackageMapping(DictMixin):
             return o
         if key not in self._parent:
             raise KeyError(key)
-        self._cache[key] = vals = self._pull_vals(key)
+        self._cache[key] = vals = tuple(self._pull_vals(key))
         return vals
 
     def keys(self):
@@ -79,7 +79,7 @@ class VersionMapping(DictMixin):
             return o
         if not key[1] in self._parent.get(key[0], ()):
             raise KeyError(key)
-        val = self._pull_vals(key)
+        val = tuple(self._pull_vals(key))
         self._cache[key] = val
         return val
 
@@ -141,18 +141,20 @@ class tree(abc.ABC):
         raise NotImplementedError(self, "configure")
 
     @abc.abstractmethod
-    def _get_categories(self):
-        """this must return a list, or sequence"""
+    def _get_categories(self) -> frozenset[str] | typing.Iterable[str]:
+        """this must return an iterable or tuple of this repo's categories"""
         raise NotImplementedError(self, "_get_categories")
 
     @abc.abstractmethod
-    def _get_packages(self, category):
-        """this must return a list, or sequence"""
+    def _get_packages(self, category: str) -> tuple[str] | typing.Iterable[str]:
+        """Receives category and must return the packages of that cat.  Converted to tuple"""
         raise NotImplementedError(self, "_get_packages")
 
     @abc.abstractmethod
-    def _get_versions(self, package):
-        """this must return a list, or sequence"""
+    def _get_versions(
+        self, package: tuple[str, str]
+    ) -> tuple[str] | typing.Iterable[str]:
+        """Receives (cat/pkg) and must return the cp versions.  Converted to tuple"""
         raise NotImplementedError(self, "_get_versions")
 
     def __getitem__(self, cpv):

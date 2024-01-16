@@ -15,6 +15,7 @@ from ..ebuild.atom import atom
 from ..operations import repo
 from ..restrictions import boolean, packages, restriction, values
 from ..restrictions.util import collect_package_restrictions
+import abc
 
 
 class CategoryLazyFrozenSet:
@@ -94,8 +95,8 @@ class VersionMapping(DictMixin):
             self._cache.pop(key, None)
 
 
-class tree:
-    """Template for all repository variants.
+class tree(abc.ABC):
+    """ABC for all repository variants.
 
     Args:
         frozen (bool): controls whether the repository is mutable or immutable
@@ -139,14 +140,17 @@ class tree:
         """Return a configured form of the repository."""
         raise NotImplementedError(self, "configure")
 
+    @abc.abstractmethod
     def _get_categories(self):
         """this must return a list, or sequence"""
         raise NotImplementedError(self, "_get_categories")
 
+    @abc.abstractmethod
     def _get_packages(self, category):
         """this must return a list, or sequence"""
         raise NotImplementedError(self, "_get_packages")
 
+    @abc.abstractmethod
     def _get_versions(self, package):
         """this must return a list, or sequence"""
         raise NotImplementedError(self, "_get_versions")

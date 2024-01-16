@@ -1,4 +1,5 @@
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.restricts import CategoryDep
 from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcore.repository import filtered
 from pkgcore.repository.util import SimpleTree
@@ -57,3 +58,24 @@ class TestVisibility:
             )
         )
         assert sorted(vrepo) == sorted(repo.itermatch(atom("dev-util/bsdiff")))
+
+    def test_categories_api(self):
+        # filter to just dev-util/diffball; this confirms that empty categories are filter,
+        # and that filtering of a package (leaving one in a category still) doesn't filter the category.
+        _, vrepo = self.setup_repos(
+            packages.OrRestriction(CategoryDep("dev-lib"), atom("dev-util/bsdiff"))
+        )
+        assert sorted(vrepo.categories) == sorted(
+            [
+                "dev-lib",
+                "dev-util",
+            ]
+        ), "category filtering must not filter dev-lib even if there are no packages left post filtering"
+
+    def test_packages_api(self):
+        _, vrepo = self.setup_repos(atom("dev-util/diffball"))
+        assert sorted(vrepo.packages["dev-util"]) == ["bsdiff"]
+
+    def test_versions_api(self):
+        _, vrepo = self.setup_repos(atom("=dev-util/diffball-1.0"))
+        assert sorted(vrepo.versions[("dev-util", "diffball")]) == ["0.7"]

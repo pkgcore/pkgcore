@@ -6,6 +6,7 @@ __all__ = ("tree",)
 
 from functools import partial
 
+import snakeoil.klass
 from snakeoil.klass import DirProxy, GetAttrProxy
 
 from ..operations.repo import operations_proxy
@@ -47,6 +48,11 @@ class tree(prototype.tree):
     def pkg_masks(self):
         # required to override empty pkg_masks inherited from prototype.tree
         return self.raw_repo.pkg_masks
+
+    # add explicit alises to 'show' ABCMeta that the methods are addressed.
+    _get_categories = snakeoil.klass.alias_method("raw_repo._get_categories")
+    _get_packages = snakeoil.klass.alias_method("raw_repo._get_packages")
+    _get_versions = snakeoil.klass.alias_method("raw_repo._get_versions")
 
     __getattr__ = GetAttrProxy("raw_repo")
     __dir__ = DirProxy("raw_repo")

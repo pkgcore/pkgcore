@@ -50,7 +50,7 @@ Installing from git::
 
 Installing from a tarball::
 
-    python setup.py install
+    pip install .
 
 Tests
 =====
@@ -65,7 +65,7 @@ environments just execute **tox** in the root directory of a repo or unpacked
 tarball. Otherwise, for a specific python version execute something similar to
 the following::
 
-    tox -e py39
+    tox -e py311
 
 Docs
 ====

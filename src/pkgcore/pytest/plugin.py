@@ -41,6 +41,8 @@ class GitRepo:
                 self.add(pjoin(self.path, ".init"), create=True)
 
     def run(self, cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, **kwargs):
+        env = os.environ.copy()
+        env["HOME"] = self.path
         return subprocess.run(
             cmd,
             cwd=self.path,
@@ -48,6 +50,7 @@ class GitRepo:
             check=True,
             stdout=stdout,
             stderr=stderr,
+            env=env,
             **kwargs,
         )
 

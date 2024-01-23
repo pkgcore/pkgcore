@@ -208,6 +208,15 @@ class TestMergeContents(ContentsMixin):
         with pytest.raises(ops.CannotOverwrite):
             ops.merge_contents(cset)
 
+    def test_dir_over_sym(self, tmp_path):
+        # dirs can be merged over symlinks to dirs
+        (dir_path := tmp_path / "dir").mkdir()
+        (path := tmp_path / "sym").symlink_to(dir_path)
+        d = fs.fsDir(str(path), mode=0o755, mtime=0, uid=os.getuid(), gid=os.getgid())
+        cset = contents.contentsSet([d])
+        assert ops.merge_contents(cset)
+        assert fs.issym(livefs.gen_obj(str(path)))
+
 
 class TestUnmergeContents(ContentsMixin):
     @pytest.fixture

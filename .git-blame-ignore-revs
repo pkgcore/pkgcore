@@ -1,4 +1,40 @@
-# Reformat the repository with black-22.12.0
-b17af120f9081aa30d6a368fd75a69c298cb70e0
 # Reformat the repository with black-23
 730ac96f74f39643ff6b9f584901516eddeddaa4
+# Reformat the repository with black-22.12.0
+b17af120f9081aa30d6a368fd75a69c298cb70e0
+# tree reorganization for data files, tests
+52a3d668722bedda48baaa054ed12e82335dcb42
+00684d51abf632310b58e5ed56b0ed61d9eeeb3d
+c86c94e1e77de38c84b722723b279ece33479876
+# eapi related renames
+99e6a301914e327bd2ccfe1adbab486e44d2289a
+# rename of .lib to .bash (2015 edition)
+8202e5fd1df8d052c181061dbc41df600955a54c
+# tree reorg moving tests out of src and to root
+4c2ba4079bbd542523baf37970e4c583e29537a8
+# class renames
+578cea8414ebfa51d737ba6b1003e65b1260a3a7
+# move code into src/
+8437c57d0acb82be771e4a3ebcecf279d460c6c6
+# rename EBD
+2d639cfea08e4fe93b638b759c4a08dff6fc9035
+# move EAPI bash around
+5067fa4c8c1067f99fdbddb02f66586febda6b07
+# moving documentation around
+d8c974db200bcc110431aa2baffd17ce8175e322
+e3c4e803b95f8d93f472619ac2c4a11ec256a07d
+# moving eapi internals around
+1019a51954a31d9db74d618044f097bac653a72b
+# rename of .bash to .lib (2011 edition)
+2a635d0c75cf05283b05120fdde86966656e6577
+# eapi-bash directories 2011 edition
+a412ce756317f31a1be99a0dc03b9fd37503970c
+7962425cb428efa4c49f02e2b079f9fabd63d38a
+f7dbfc38d88e8851d578e21a05a7dbb8800a6ae1
+# EBD renames
+befeb940ef3391e705c138261d86a98b598b6f05
+# everything prior- savior/svn stuff- is ignored since it's
+# from <2005 and some history was lost due to CVS/SVN.
+# all history prior to this commit was explicitly lost due
+# to SVN/CVS idiocy.
+279976bc6811aa6d986403f1ca7745b6be559df4

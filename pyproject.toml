@@ -12,10 +12,12 @@ description = "package managing framework"
 readme = "README.rst"
 license = {file = "LICENSE"}
 requires-python = "~=3.10"
+# alphabetical order.
 authors = [
 	{name = "Tim Harder", email = "radhermit@gmail.com"},
-	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
 	{name = "Brian Harring", email = "ferringb@gmail.com"},
+	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
+	{name = "Marien Zwart"},
 ]
 maintainers = [
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},

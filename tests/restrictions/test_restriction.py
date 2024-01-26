@@ -71,7 +71,6 @@ class TestAlwaysBool(TestRestriction):
 
 
 class NoneMatch(restriction.base):
-
     """Only matches None."""
 
     __slots__ = ()

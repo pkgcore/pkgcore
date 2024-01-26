@@ -49,7 +49,6 @@ INSTALLING_MODES = (const.REPLACE_MODE, const.INSTALL_MODE)
 
 
 class base:
-
     """base trigger class
 
     :ivar required_csets: If None, all csets are passed in, else it must be a

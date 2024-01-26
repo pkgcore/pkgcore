@@ -68,9 +68,9 @@ class InjectedPkg(pkg_base.wrapper):
         "unversioned_atom",
         "data",
     )
-    default_bdepend = (
-        default_depend
-    ) = default_rdepend = default_pdepend = default_idepend = DepSet()
+    default_bdepend = default_depend = default_rdepend = default_pdepend = (
+        default_idepend
+    ) = DepSet()
     package_is_real = False
     is_supported = True
 

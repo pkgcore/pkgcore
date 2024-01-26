@@ -12,9 +12,9 @@ from ..restrictions import packages
 class nodeps_repo:
     """Repository wrapper that returns wrapped pkgs with deps wiped."""
 
-    default_bdepend = (
-        default_depend
-    ) = default_rdepend = default_pdepend = default_idepend = DepSet()
+    default_bdepend = default_depend = default_rdepend = default_pdepend = (
+        default_idepend
+    ) = DepSet()
 
     def __init__(self, repo):
         """

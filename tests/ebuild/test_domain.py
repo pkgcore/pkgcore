@@ -47,9 +47,10 @@ class TestDomain:
         def rev_iter_scan(*args, **kwargs):
             return iter(sorted(orig_func(*args, **kwargs), reverse=True))
 
-        with mock.patch(
-            "pkgcore.fs.livefs.iter_scan", side_effect=rev_iter_scan
-        ), mock.patch("pkgcore.ebuild.domain.iter_scan", side_effect=rev_iter_scan):
+        with (
+            mock.patch("pkgcore.fs.livefs.iter_scan", side_effect=rev_iter_scan),
+            mock.patch("pkgcore.ebuild.domain.iter_scan", side_effect=rev_iter_scan),
+        ):
             assert (
                 (packages.AlwaysTrue, ((), ("X",))),
                 (packages.AlwaysTrue, (("X",), ("Y",))),

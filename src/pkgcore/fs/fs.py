@@ -52,7 +52,6 @@ def gen_doc_additions(init, slots):
 
 
 class fsBase:
-
     """base class, all extensions must derive from this class"""
 
     __slots__ = ("location", "mtime", "mode", "uid", "gid")
@@ -146,7 +145,6 @@ class _LazyChksums(LazyFullValLoadDict):
 
 
 class fsFile(fsBase):
-
     """file class"""
 
     __slots__ = ("chksums", "data", "dev", "inode")
@@ -206,7 +204,6 @@ class fsFile(fsBase):
 
 
 class fsDir(fsBase):
-
     """dir class"""
 
     __slots__ = ()
@@ -217,7 +214,6 @@ class fsDir(fsBase):
 
 
 class fsLink(fsBase):
-
     """symlink class"""
 
     __slots__ = ("target",)
@@ -269,7 +265,6 @@ fsSymlink = fsLink
 
 
 class fsDev(fsBase):
-
     """dev class (char/block objects)"""
 
     __slots__ = ("major", "minor")
@@ -315,7 +310,6 @@ def get_major_minor(stat_inst):
 
 
 class fsFifo(fsBase):
-
     """fifo class (socket objects)"""
 
     __slots__ = ()

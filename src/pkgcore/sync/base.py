@@ -152,7 +152,6 @@ class Syncer:
 
 
 class ExternalSyncer(Syncer):
-
     """Base class for syncers that spawn a binary to do the the actual work."""
 
     binary = None

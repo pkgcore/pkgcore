@@ -26,10 +26,10 @@ class TestEAPI:
             EAPI.register(magic="0")
 
         mock_ebd_temp = str(shutil.copytree(EBD_PATH, tmp_path / "ebd"))
-        with mock.patch(
-            "pkgcore.ebuild.eapi.bash_version"
-        ) as bash_version, mock.patch.dict(eapi.EAPI.known_eapis), mock.patch(
-            "pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp
+        with (
+            mock.patch("pkgcore.ebuild.eapi.bash_version") as bash_version,
+            mock.patch.dict(eapi.EAPI.known_eapis),
+            mock.patch("pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp),
         ):
             # inadequate bash version
             bash_version.return_value = "3.1"
@@ -52,8 +52,9 @@ class TestEAPI:
         assert eapi6.is_supported
 
         mock_ebd_temp = str(shutil.copytree(EBD_PATH, tmp_path / "ebd"))
-        with mock.patch.dict(eapi.EAPI.known_eapis), mock.patch(
-            "pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp
+        with (
+            mock.patch.dict(eapi.EAPI.known_eapis),
+            mock.patch("pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp),
         ):
             # partially supported EAPI is flagged as such
             test_eapi = EAPI.register("test", optionals={"is_supported": False})

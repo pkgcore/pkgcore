@@ -27,7 +27,6 @@ def drawer(content=None, contents=None):
 
 
 class RemoteSource:
-
     """Use this one for tests that do need the names but nothing more."""
 
     def __iter__(self):

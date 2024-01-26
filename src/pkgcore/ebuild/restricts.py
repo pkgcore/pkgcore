@@ -25,7 +25,6 @@ from . import cpv, errors
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
 # ne ops, and convert this to it.
 class _VersionMatch(restriction.base, metaclass=generic_equality):
-
     """
     package restriction implementing gentoo ebuild version comparison rules
 

@@ -22,7 +22,6 @@ _section_data = namedtuple("_section_data", ["name", "section"])
 
 
 class _ConfigMapping(mappings.DictMixin):
-
     """Minimal dict-like wrapper returning config sections by type.
 
     Similar to :class:`mappings.LazyValDict` but __getitem__
@@ -78,7 +77,6 @@ class _ConfigStack(defaultdict[str, list[typing.Any]]):
 
 
 class CollapsedConfig:
-
     """A collapsed config section.
 
     :type type: :obj:`basics.ConfigType`
@@ -281,7 +279,6 @@ class CompatConfigManager:
 
 
 class ConfigManager:
-
     """Combine config type definitions and configuration sections.
 
     Creates instances of a requested type and name by pulling the

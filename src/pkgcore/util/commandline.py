@@ -529,9 +529,11 @@ def _mk_domain(parser, help=True):
         get_default=True,
         config_type="domain",
         action=StoreConfigObject,
-        help="custom pkgcore domain to use for this operation"
-        if help
-        else argparse.SUPPRESS,
+        help=(
+            "custom pkgcore domain to use for this operation"
+            if help
+            else argparse.SUPPRESS
+        ),
     )
 
 
@@ -575,9 +577,11 @@ class ArgumentParser(arghparse.ArgumentParser):
                     "--config",
                     action=_ConfigArg,
                     dest="config_path",
-                    help="use custom config or skip loading system config"
-                    if help
-                    else argparse.SUPPRESS,
+                    help=(
+                        "use custom config or skip loading system config"
+                        if help
+                        else argparse.SUPPRESS
+                    ),
                     docs="""
                         The path to a custom pkgcore config file or portage
                         config directory can be given to override loading the

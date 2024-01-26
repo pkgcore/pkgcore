@@ -606,9 +606,9 @@ class EmptyRootNode(ProfileNode):
 
     parents = ()
     deprecated = None
-    pkg_use = (
-        masked_use
-    ) = stable_masked_use = forced_use = stable_forced_use = misc.ChunkedDataDict()
+    pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = (
+        misc.ChunkedDataDict()
+    )
     forced_use.freeze()
     pkg_bashrc = ()
     pkg_use_force = pkg_use_mask = ImmutableDict()

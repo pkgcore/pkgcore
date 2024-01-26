@@ -1,6 +1,5 @@
 """Config introspection support."""
 
-
 __all__ = ("ConfigHint", "configurable")
 
 import typing

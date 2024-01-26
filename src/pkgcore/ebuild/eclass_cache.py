@@ -113,7 +113,6 @@ class cache(base):
 
 
 class StackedCaches(base):
-
     """
     collapse multiple eclass caches into one.
 

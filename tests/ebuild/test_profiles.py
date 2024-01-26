@@ -95,8 +95,7 @@ class TestPmsProfileNode(profile_mixin):
     klass = staticmethod(ProfileNode)
     profile = "default"
 
-    def setup_repo(self, tmp_path):
-        ...
+    def setup_repo(self, tmp_path): ...
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):

@@ -24,7 +24,6 @@ class TestBase(TestRestriction):
 
 
 class TestGetAttr(TestRestriction):
-
     """Test bits of GetAttrRestriction that differ from PackageRestriction."""
 
     def test_force(self):

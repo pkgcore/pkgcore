@@ -9,7 +9,6 @@ from . import metadata
 
 
 class package(metadata.package):
-
     """
     Virtual package.
 

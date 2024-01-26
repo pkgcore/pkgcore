@@ -17,3 +17,7 @@ clean:
 .PHONY: format
 format:
 	$(PYTHON) -m black .
+
+.PHONY: dev-environment
+dev-environment:
+	$(PYTHON) -m pip install -e .[test,doc,formatter]

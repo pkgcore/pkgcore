@@ -52,6 +52,14 @@ Installing from a tarball::
 
     pip install .
 
+Developing
+==========
+
+Installing the dependencies for testing, formatting, and documentation building
+into an editable environment::
+
+    make dev-environment
+
 Tests
 =====
 

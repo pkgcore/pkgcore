@@ -253,8 +253,8 @@ epub_copyright = copyright
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    "python": ("http://docs.python.org/", None),
-    "snakeoil": ("https://github.com/pkgcore/snakeoil", None),
+    "python": ("https://docs.python.org/3", None),
+    "snakeoil": ("https://pkgcore.github.io/snakeoil", None),
 }
 autodoc_default_flags = [
     "members",

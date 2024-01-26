@@ -14,7 +14,7 @@ license = {file = "LICENSE"}
 requires-python = "~=3.10"
 # alphabetical order.
 authors = [
-	{name = "Michał Górny"},
+	{name = "Michał Górny", email = "mgorny@gentoo.org"},
 	{name = "Tim Harder", email = "radhermit@gmail.com"},
 	{name = "Brian Harring", email = "ferringb@gmail.com"},
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},

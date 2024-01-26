@@ -33,14 +33,14 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Pin dependencies to minimal versions
       if: ${{ matrix.deps == 'minimal-deps' }}
       run: sed -e '/dependencies/,$s/~=/==/' -i pyproject.toml
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -77,18 +77,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: pkgcore
 
     - name: Checkout pkgcheck
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: pkgcore/pkgcheck
         path: pkgcheck
 
     - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'
@@ -112,18 +112,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: pkgcore
 
     - name: Checkout pkgdev
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: pkgcore/pkgdev
         path: pkgdev
 
     - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
         cache: 'pip'
@@ -147,25 +147,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - uses: psf/black@stable
 
   gentoo-regen:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         path: pkgcore
 
     - name: Checkout gentoo
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: gentoo/gentoo
         path: gentoo
 
     - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
 

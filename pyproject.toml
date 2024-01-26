@@ -45,6 +45,9 @@ doc = [
 	"sphinx",
 	"tomli; python_version < '3.11'"
 ]
+formatter = [
+	"black ~= 24.1"
+]
 
 [project.urls]
 Homepage = "https://github.com/pkgcore/pkgcore"

@@ -11,9 +11,10 @@ class git_syncer(base.VcsSyncer):
     supported_uris = (
         ("git://", 5),
         ("git+", 5),
+        ("git@", 5),
     )
 
-    supported_protocols = ("http://", "https://", "git://")
+    supported_protocols = ("http://", "https://", "git://", "git@")
     supported_exts = (".git",)
 
     @classmethod

@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.26 (2024-03-27)
+----------------------------
+
+- various fixes and refactors to code (Brian Harring, #428)
+
+- add missing authors to ``pyproject.toml`` file (Brian Harring, #429)
+
+- add support for ``git@`` urls for sync purposes (Vitaly Zdanevich, #434)
+
+----------------------------
 pkgcore 0.12.25 (2024-01-15)
 ----------------------------
 

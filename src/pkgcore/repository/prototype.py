@@ -15,7 +15,6 @@ from ..ebuild.atom import atom
 from ..operations import repo
 from ..restrictions import boolean, packages, restriction, values
 from ..restrictions.util import collect_package_restrictions
-import abc
 
 
 class CategoryLazyFrozenSet:
@@ -95,8 +94,8 @@ class VersionMapping(DictMixin):
             self._cache.pop(key, None)
 
 
-class tree(abc.ABC):
-    """ABC for all repository variants.
+class tree:
+    """Template for all repository variants.
 
     Args:
         frozen (bool): controls whether the repository is mutable or immutable
@@ -140,17 +139,14 @@ class tree(abc.ABC):
         """Return a configured form of the repository."""
         raise NotImplementedError(self, "configure")
 
-    @abc.abstractmethod
     def _get_categories(self) -> frozenset[str] | typing.Iterable[str]:
         """this must return an iterable or tuple of this repo's categories"""
         raise NotImplementedError(self, "_get_categories")
 
-    @abc.abstractmethod
     def _get_packages(self, category: str) -> tuple[str] | typing.Iterable[str]:
         """Receives category and must return the packages of that cat.  Converted to tuple"""
         raise NotImplementedError(self, "_get_packages")
 
-    @abc.abstractmethod
     def _get_versions(
         self, package: tuple[str, str]
     ) -> tuple[str] | typing.Iterable[str]:

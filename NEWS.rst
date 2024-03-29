@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.27 (2024-03-27)
+----------------------------
+
+Fix failure instantiating ``ConfiguredTree`` causing various tools based on
+pkgcore to fail.
+
+----------------------------
 pkgcore 0.12.26 (2024-03-27)
 ----------------------------
 

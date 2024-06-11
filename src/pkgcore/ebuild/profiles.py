@@ -254,6 +254,8 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                                     f"unknown repo {repo_id!r}"
                                 )
                                 continue
+                    else:
+                        location = repo_config.location
                     l.append(
                         (
                             abspath(pjoin(location, "profiles", profile_path)),

@@ -105,7 +105,7 @@ _pquery() {
             COMPREPLY=($(compgen -W "${boolean_options[*]}" -- "${cur}"))
             ;;
         --config)
-            COMPREPLY=($(compgen -f -- "${cur}"))
+            _filedir
             ;;
         --domain)
             COMPREPLY=()
@@ -128,8 +128,9 @@ _pquery() {
             fi
             ;;
         -r | --repo)
-            COMPREPLY=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))
-            COMPREPLY+=($(compgen -d -- "${cur}"))
+            _filedir -d
+            COMPREPLY+=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))
+            # COMPREPLY+=($(compgen -d -- "${cur}"))
             ;;
         --highlight-dep | --print-revdep)
             COMPREPLY=()

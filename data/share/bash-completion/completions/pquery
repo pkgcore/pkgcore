@@ -90,7 +90,7 @@ _pquery() {
     )
 
     # find repo location
-    local REPO="$(git rev-parse --show-toplevel)"
+    local REPO="$(git rev-parse --show-toplevel 2>/dev/null)"
     for ((i = 1; i < ${COMP_CWORD}; i++)); do
         case "${COMP_WORDS[i]}" in
             -r | --repo)
@@ -146,7 +146,7 @@ _pquery() {
                 COMPREPLY+=($(compgen -W "${base_options[*]}" -- "${cur}"))
             else
                 _list_repo_atoms() {
-                    eval cd "${REPO}" || return
+                    eval cd "${REPO}" 2>/dev/null || return
                     if [[ $cur == */* ]]; then
                         compgen -W "$(compgen -G "${cur}*" )" -- "${cur}"
                     else

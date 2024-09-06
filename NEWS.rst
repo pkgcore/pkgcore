@@ -3,6 +3,18 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.28 (2024-09-06)
+----------------------------
+
+- ebuild.profiles: fix case where a parent path omits the repository identifier
+  (James Le Cuirot, #435)
+
+- bash completion: improve path handling for pquery (Arthur Zamarin)
+
+- bash completion: suppress error message outside git repository (Koichi Murase
+  #436)
+
+----------------------------
 pkgcore 0.12.27 (2024-03-27)
 ----------------------------
 

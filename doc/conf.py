@@ -14,6 +14,10 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../src'))
 
+# make the argument parser emit docs
+import snakeoil.cli.arghparse
+snakeoil.cli.arghparse._generate_docs = True
+
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.

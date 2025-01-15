@@ -37,7 +37,7 @@ group.add_argument(
     docs="""
         Specify a custom  output  format.
 
-        Conversion specifiers start with a ``%`` symbol and are followed by
+        Conversion specifiers start with a ``%%`` symbol and are followed by
         either ``{`` or ``[``.  Next is the name of the field to expand,
         followed by a matching ``}`` or ``]``.
 

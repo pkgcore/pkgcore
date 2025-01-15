@@ -1,6 +1,7 @@
 """atom parsing utility"""
 
 import re
+import sys
 from functools import partial
 
 from ..ebuild.atom import atom as atom_cls
@@ -90,6 +91,14 @@ def _transform_format(atom: atom_cls, match: re.Match):
 def main(options, out, err):
     if options.format:
         fmt, *atoms = options.format
+
+        if "-" in atoms:
+            atoms = [atom for atom in atoms if atom != "-"]
+            if not sys.stdin.isatty():
+                atoms += [x.strip() for x in sys.stdin.readlines()]
+            else:
+                argparser.error("reading from stdin is only valid when piping data in")
+
         VAR_REGEX = re.compile(r"%\[.+?\]|%\{.+?\}")
         for value in atoms:
             try:

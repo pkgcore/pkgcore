@@ -15,8 +15,9 @@ running them on source repos makes no sense.
 
 import errno
 import os
-from functools import partial
+import sys
 import typing
+from functools import partial
 
 from snakeoil.cli import arghparse
 from snakeoil.formatters import decorate_forced_wrapping
@@ -705,8 +706,16 @@ def bind_add_query(*args, **kwds):
     type=None,
     help="extended atom matching of pkgs",
 )
-def matches_finalize(targets, namespace):
+def matches_finalize(targets: list[str], namespace):
     repos = multiplex.tree(*namespace.repos)
+
+    if "-" in targets:
+        if not sys.stdin.isatty():
+            idx = targets.index("-")
+            in_targets = [x.strip() for x in sys.stdin.readlines()]
+            targets = targets[:idx] + in_targets + targets[idx + 1 :]
+        else:
+            argparser.error("reading from stdin is only valid when piping data in")
 
     # If current working dir is in a repo, build a path restriction; otherwise
     # match everything.

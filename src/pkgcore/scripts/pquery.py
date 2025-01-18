@@ -1116,7 +1116,7 @@ output.add_argument(
         Print the given attribute's value. This option can be specified
         multiple times.
 
-        Valid attributes: {', '.join(printable_attrs)}
+        Valid attributes: {', '.join(f'``{x}``' for x in printable_attrs)}
     """,
 )
 output.add_argument(
@@ -1125,9 +1125,8 @@ output.add_argument(
     dest="attr",
     metavar="attribute",
     default=[],
-    help="like --attr but accepts any string as "
-    "attribute name instead of only explicitly "
-    "supported names",
+    help="""Like --attr but accepts any string as attribute name instead
+    of only explicitly supported names.""",
 )
 one_attr_mux = output.add_mutually_exclusive_group()
 one_attr_mux.add_argument(
@@ -1135,6 +1134,11 @@ one_attr_mux.add_argument(
     choices=printable_attrs,
     metavar="attribute",
     help="print one attribute, suppresses other output",
+    docs=f"""
+        Print the given attribute's value, while suppressing all other output.
+        This option can be specified multiple times. All attributes of ``--attr``
+        are accepted.
+    """,
 )
 one_attr_mux.add_argument(
     "--force-one-attr",

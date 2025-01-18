@@ -766,6 +766,23 @@ add_query(
     type=parserestrict.comma_separated_containment("license"),
     help="exact match on a license",
 )
+add_query(
+    "--live",
+    action="append_const",
+    const=packages.PackageRestriction("properties", values.ContainmentMatch("live")),
+    type=None,
+    help='match packages which are have PROPERTIES="live"',
+)
+add_query(
+    "--non-live",
+    action="append_const",
+    const=packages.PackageRestriction(
+        "properties", values.ContainmentMatch("live", negate=True)
+    ),
+    type=None,
+    help='match packages which are don\'t have PROPERTIES="live"',
+)
+
 
 query.add_argument(
     "--revdep",

@@ -32,6 +32,7 @@ _pquery() {
         --all
         --has-use
         --license
+        --live --non-live
         --revdep
         --revdep-pkgs
         --restrict-revdep

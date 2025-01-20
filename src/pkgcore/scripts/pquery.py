@@ -1136,8 +1136,7 @@ one_attr_mux.add_argument(
     help="print one attribute, suppresses other output",
     docs=f"""
         Print the given attribute's value, while suppressing all other output.
-        This option can be specified multiple times. All attributes of ``--attr``
-        are accepted.
+        All attributes of ``--attr`` are accepted.
     """,
 )
 one_attr_mux.add_argument(

@@ -91,6 +91,12 @@ class TestCommandline(ArgParseMixin):
             "--all",
             test_domain=simple_repo_config,
         )
+        self.assertOut(
+            ["abc/def-2 (MISSING)"],
+            "--format",
+            "{category}/{package}-{version} ({repo})",
+            test_domain=simple_repo_config,
+        )
 
     def test_atom(self):
         config = self.parse("--print-revdep", "a/spork", "--all", domain=domain_config)

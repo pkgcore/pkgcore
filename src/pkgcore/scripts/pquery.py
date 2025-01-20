@@ -67,7 +67,7 @@ class DataSourceRestriction(values.base):
 
 dep_attrs = ["bdepend", "depend", "rdepend", "pdepend", "idepend"]
 metadata_attrs = dep_attrs
-dep_attrs += list(f"raw_{x}" for x in dep_attrs)
+dep_attrs += [f"raw_{x}" for x in dep_attrs]
 dep_formatted_attrs = dep_attrs + ["restrict"]
 dep_formatted_attrs = frozenset(dep_attrs + ["restrict"])
 dep_attrs = tuple(sorted(dep_attrs))
@@ -118,7 +118,7 @@ printable_attrs += (
 printable_attrs = tuple(sorted(set(printable_attrs)))
 
 
-def stringify_attr(config, pkg, attr):
+def stringify_attr(config, pkg, attr: str):
     """Grab a package attr and convert it to a string."""
     # config is currently unused but may affect display in the future.
     if attr in ("files", "uris"):
@@ -168,6 +168,18 @@ def stringify_attr(config, pkg, attr):
         return str(get_pkg_attr(value, "repo_id", "no repo id"))
     # hackish.
     return str(value)
+
+
+class PrintAttrDict(dict):
+    def __init__(self, pkg, config):
+        super().__init__()
+        self.__pkg = pkg
+        self.__config = config
+
+    def __missing__(self, key):
+        if key not in printable_attrs:
+            argparser.error(f"unknown attribute: {key}")
+        return stringify_attr(self.__config, self.__pkg, key)
 
 
 def _default_formatter(out, node):
@@ -367,6 +379,17 @@ def print_package(options, out, err, pkg):
         out.write()
         out.later_prefix = []
         out.wrap = False
+    elif options.format:
+        if options.atom:
+            out.write("=", autoline=False)
+        if options.atom or options.cpv:
+            out.write(pkg.cpvstr, autoline=False)
+            if options.display_slot:
+                out.write(":", pkg.slot, autoline=False)
+            if options.display_repo:
+                out.write("::", pkg.repo.repo_id, autoline=False)
+            out.write("|", autoline=False)
+        out.write(options.format.format_map(PrintAttrDict(pkg, options)))
     elif options.one_attr:
         if options.atom:
             out.write("=", autoline=False)
@@ -1105,6 +1128,17 @@ output.add_argument(
     help="print what condition(s) trigger a dep",
 )
 
+output.add_argument(
+    "-F",
+    "--format",
+    metavar="format",
+    help="print this format filled with package attributes, suppresses other output",
+    docs=f"""
+        Use the given format string to print package attributes. The format
+        uses standard Python format string syntax (see :ref:`formatspec` for
+        details), with the all attributes of ``--attr``.
+    """,
+)
 output.add_argument(
     "--attr",
     action="append",

@@ -3,6 +3,24 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.29 (2025-01-24)
+----------------------------
+
+- patom: support STDIN input when "-" is passed as an argument (Arthur Zamarin,
+  #226)
+
+- pquery: support STDIN input when "-" is passed as an argument (Arthur Zamarin,
+  #226)
+
+- docs: ensure that Sphinx builds the current source code (Eli Schwartz)
+
+- docs: make the manpages contain the extended help text (Eli Schwartz)
+
+- pquery: add ``--live`` and ``--non-live`` filters (Arthur Zamarin)
+
+- pquery: add support for ``--format`` custom formatting (Arthur Zamarin, #168)
+
+----------------------------
 pkgcore 0.12.28 (2024-09-06)
 ----------------------------
 

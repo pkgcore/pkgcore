@@ -1,0 +1,1 @@
+PKGCORE_BANNED_FUNCS=( assert )

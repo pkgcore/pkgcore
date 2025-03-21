@@ -1,2 +1,2 @@
 __title__ = "pkgcore"
-__version__ = "0.12.29"
+__version__ = "0.12.30"

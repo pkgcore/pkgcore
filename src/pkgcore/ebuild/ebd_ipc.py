@@ -73,7 +73,7 @@ class IpcArgumentParser(arghparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, suppress=True, add_help=False, **kwargs)
 
-    def error(self, msg):
+    def error(self, msg: str):
         raise IpcCommandError(msg)
 
 
@@ -81,18 +81,18 @@ class IpcCommand:
     """Commands sent from the bash side of the ebuild daemon to run."""
 
     # argument parser for internal options
-    parser = None
+    parser: IpcArgumentParser
     # argument parser for command options/arguments
-    arg_parser = None
+    arg_parser: IpcArgumentParser
     # override IPC name for error messages
-    name = None
+    name: str
 
     def __init__(self, op):
         self.op = op
         self.pkg = op.pkg
         self.eapi = op.pkg.eapi
         self.observer = op.observer
-        if self.name is None:
+        if not hasattr(self, "name"):
             self.name = self.__class__.__name__.lower()
 
     def __call__(self, ebd):
@@ -140,12 +140,12 @@ class IpcCommand:
 
     def parse_args(self, options, args):
         """Parse internal args passed from the bash side."""
-        if self.parser is not None:
+        if hasattr(self, "parser"):
             _, unknown = self.parser.parse_known_args(options, namespace=self.opts)
             if unknown:
                 raise UnknownOptions(unknown)
 
-        if self.arg_parser is not None:
+        if hasattr(self, "arg_parser"):
             # pull user options off the start of the argument list
             _, args = self.arg_parser.parse_known_optionals(args, namespace=self.opts)
             # parse remaining command arguments
@@ -690,7 +690,7 @@ class Dosym(_Symlink):
 
 
 class Dohard(_Symlink):
-    """Python wrapper for dosym."""
+    """Python wrapper for dohard."""
 
     _link = os.link
 
@@ -842,8 +842,8 @@ class _AlterFiles(IpcCommand):
     arg_parser.add_argument("-x", dest="excludes", action="store_true")
     arg_parser.add_argument("targets", nargs="+")
 
-    default_includes = ()
-    default_excludes = ()
+    default_includes: tuple[str, ...] = ()
+    default_excludes: tuple[str, ...] = ()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

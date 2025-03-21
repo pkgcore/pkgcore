@@ -1,0 +1,6 @@
+[[ $# -eq 2 ]] || die "Usage: ver_replacing <op> <ver>"
+
+for v in ${REPLACING_VERSIONS}; do
+    ver_test "${v}" "$@" && exit 0
+done
+exit 1

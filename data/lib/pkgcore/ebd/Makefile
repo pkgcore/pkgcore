@@ -3,7 +3,7 @@ PYTHONPATH ?= ../../../../src
 PYTHON_CALL = PYTHONPATH="$(PYTHONPATH)" PYTHONDONTWRITEBYTECODE=1 $(PYTHON)
 
 TARGET = .generated
-KNOWN_EAPI = 0 1 2 3 4 5 6 7 8
+KNOWN_EAPI = 0 1 2 3 4 5 6 7 8 9
 
 all: funcs cmds libs
 

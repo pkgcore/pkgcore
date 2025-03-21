@@ -859,6 +859,6 @@ eapi9 = EAPI.register(
     eclass_keys=eapi8.eclass_keys,
     tracked_attributes=eapi8.tracked_attributes,
     archive_exts=eapi8.archive_exts,
-    optionals=eapi8.options,
+    optionals=_combine_dicts(eapi8.options, dict(bash_compat="5.2")),
     ebd_env_options=eapi8._ebd_env_options,
 )

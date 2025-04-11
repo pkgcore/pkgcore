@@ -61,11 +61,6 @@ def prepare_pkgcore(callback, consts: bool):
         with sys_path():
             write_verinfo(cleanup_files)
 
-            # Install configuration data so pkgcore knows where to find its content,
-            # rather than assuming it is running from a tarball/git repo.
-            if consts:
-                write_pkgcore_lookup_configs(cleanup_files)
-
             # generate function lists so they don't need to be created on install
             if subprocess.call(
                 [
@@ -76,6 +71,11 @@ def prepare_pkgcore(callback, consts: bool):
                 cwd=Path.cwd() / "data/lib/pkgcore/ebd",
             ):
                 raise Exception("Running makefile failed")
+
+            # Install configuration data so pkgcore knows where to find its content,
+            # rather than assuming it is running from a tarball/git repo.
+            if consts:
+                write_pkgcore_lookup_configs(cleanup_files)
 
             return callback()
     finally:

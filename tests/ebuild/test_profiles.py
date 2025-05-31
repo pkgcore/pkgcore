@@ -788,7 +788,7 @@ class TestPortage1ProfileNode(TestPmsProfileNode):
         ]
     )
 
-    klass = partial(TestPmsProfileNode.klass, pms_strict=False)
+    klass = staticmethod(partial(TestPmsProfileNode.klass, pms_strict=False))
 
     def write_file(self, tmp_path, filename, text, profile=None):
         if filename not in self.can_be_dirs:

@@ -47,7 +47,7 @@ class TestBase(TestRestriction):
 
 
 class TestAlwaysBool(TestRestriction):
-    bool_kls = partial(restriction.AlwaysBool, "foo")
+    bool_kls = staticmethod(partial(restriction.AlwaysBool, "foo"))
 
     def test_true(self):
         true_r = self.bool_kls(True)

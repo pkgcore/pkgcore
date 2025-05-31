@@ -306,7 +306,7 @@ class TestEqualityMatch(TestRestriction):
 
 
 class TestContainmentMatch(TestRestriction):
-    kls = partial(values.ContainmentMatch, disable_inst_caching=True)
+    kls = staticmethod(partial(values.ContainmentMatch, disable_inst_caching=True))
 
     def test_match(self):
         for x, y, ret in (

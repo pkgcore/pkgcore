@@ -8,6 +8,8 @@
 # function lists are generated at install time and used instead.
 
 load_eapi_libs() {
+	source "${PKGCORE_EBD_PATH}"/exit-handling.bash >&2 || { echo "ERROR: failed sourcing exit-handling.bash"; exit -1; }
+
 	local scope="global"
 	local -a skip_funcs=( $(compgen -A function) )
 	local skip_regex=$(IFS='|'; echo "^(${skip_funcs[*]})$")

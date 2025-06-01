@@ -12,7 +12,7 @@ from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as
 from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
 
-LATEST_PMS_EAPI_VER = "8"
+LATEST_PMS_EAPI_VER = "9"
 
 
 def get_latest_PMS_eapi():
@@ -859,6 +859,8 @@ eapi9 = EAPI.register(
     eclass_keys=eapi8.eclass_keys,
     tracked_attributes=eapi8.tracked_attributes,
     archive_exts=eapi8.archive_exts,
-    optionals=_combine_dicts(eapi8.options, dict(bash_compat="5.2")),
+    optionals=_combine_dicts(
+        eapi8.options, dict(bash_compat="5.2", is_supported=False)
+    ),
     ebd_env_options=eapi8._ebd_env_options,
 )

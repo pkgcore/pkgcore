@@ -1,4 +1,4 @@
-# (c) 2024-2025 Gentoo Authors
+# (c) 2022-2025 Gentoo Authors
 # SPDX-License-Identifier: GPL-2.0-or-later
 
 pipestatus() {
@@ -16,6 +16,22 @@ pipestatus() {
 	[[ ${verbose} ]] && echo "${status[@]}"
 
 	return "${ret}"
+}
+
+edo() {
+	# copied from edo.eclass
+	local a out regex='[] '\''"\|&;()<>!{}*[?^$`]|^[#~]|[=:]~'
+
+	[[ $# -ge 1 ]] || die "edo: at least one argument needed"
+
+	for a; do
+        [[ ${a} =~ ${regex} || ! ${a} =~ ^[[:print:]]+$ ]] && a=${a@Q}
+        out+=" ${a}"
+    done
+
+	einfon
+	printf '%s\n' "${out:1}" >&2
+	"$@" || die -n "Failed to run command: ${1}"
 }
 
 :

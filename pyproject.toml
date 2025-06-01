@@ -46,7 +46,7 @@ doc = [
 	"tomli; python_version < '3.11'"
 ]
 formatter = [
-	"black ~= 24.1"
+	"ruff"
 ]
 
 [project.urls]

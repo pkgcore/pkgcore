@@ -132,12 +132,7 @@ class TestEclassDoc:
             "Somehow."
         )
         assert doc.example == (
-            "\n\n"
-            "::\n\n"
-            "  inherit foo\n\n"
-            "  src_prepare() {\n"
-            "    foo_public_func\n"
-            "  }"
+            "\n\n::\n\n  inherit foo\n\n  src_prepare() {\n    foo_public_func\n  }"
         )
         assert doc.supported_eapis == frozenset(map(str, range(8)))
 

@@ -111,12 +111,12 @@ class TestBase:
             " for required_csets=None"
         )
 
-        assert get_csets([1, 2], {1: 1, 2: 2}) == [
-            [1, 2]
-        ], "basic mapping through failed"
-        assert get_csets([], {}) == [
-            []
-        ], "for no required csets, must have no args passed"
+        assert get_csets([1, 2], {1: 1, 2: 2}) == [[1, 2]], (
+            "basic mapping through failed"
+        )
+        assert get_csets([], {}) == [[]], (
+            "for no required csets, must have no args passed"
+        )
 
 
 def test_module_constants():

@@ -23,8 +23,7 @@ phase_opts.add_argument(
     "--no-auto",
     action="store_true",
     default=False,
-    help="run just the specified phases; "
-    "it's up to the invoker to get the order right",
+    help="run just the specified phases; it's up to the invoker to get the order right",
 )
 
 

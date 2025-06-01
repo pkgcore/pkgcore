@@ -197,7 +197,7 @@ class EbuildRepo:
                 f.write(
                     textwrap.dedent(
                         f"""\
-                    masters = {' '.join(masters)}
+                    masters = {" ".join(masters)}
                     cache-formats =
                     thin-manifests = true
                 """

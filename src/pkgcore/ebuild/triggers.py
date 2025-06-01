@@ -593,7 +593,7 @@ class SFPerms(triggers.base):
             if x.mode & 0o4000:
                 if x.mode & 0o044:
                     engine.observer.warn(
-                        "sfperms: dropping group/world read " f"due to SetGID: {x!r}"
+                        f"sfperms: dropping group/world read due to SetGID: {x!r}"
                     )
                     resets.append(x.change_attributes(mode=x.mode & ~0o44))
             if x.mode & 0o2000:

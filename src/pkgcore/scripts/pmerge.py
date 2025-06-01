@@ -792,7 +792,7 @@ def main(options, out, err):
         if not options.oneshot:
             if world_set is None:
                 argparser.error(
-                    "disable world updating via --oneshot, " "or fix your configuration"
+                    "disable world updating via --oneshot, or fix your configuration"
                 )
         try:
             unmerge(

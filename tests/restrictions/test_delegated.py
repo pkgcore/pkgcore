@@ -22,9 +22,9 @@ class Test_delegate(TestRestriction):
         for negated in (False, True):
 
             def assertIt(got, expected):
-                assert (
-                    got == expected
-                ), f"got={got!r}, expected={expected!r}, negate={negated!r}"
+                assert got == expected, (
+                    f"got={got!r}, expected={expected!r}, negate={negated!r}"
+                )
 
             y = True
             l[:] = []

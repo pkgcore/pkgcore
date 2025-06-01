@@ -1105,8 +1105,7 @@ class Unpack(IpcCommand):
                     )
                 else:
                     raise IpcCommandError(
-                        "relative paths must be prefixed with "
-                        f"'./' in EAPI {self.eapi}"
+                        f"relative paths must be prefixed with './' in EAPI {self.eapi}"
                     )
 
             path = pjoin(srcdir, archive)

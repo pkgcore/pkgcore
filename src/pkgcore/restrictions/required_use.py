@@ -108,9 +108,10 @@ def __to_multiple_constraint(
         assert isinstance(x := restrict.restriction, values.ContainmentMatch)
         for rule in restrict.payload:
             for func, variables in __to_multiple_constraint(rule):
-                yield __condition(x.negate, frozenset(x.vals), func), frozenset(
-                    x.vals
-                ).union(variables)
+                yield (
+                    __condition(x.negate, frozenset(x.vals), func),
+                    frozenset(x.vals).union(variables),
+                )
     elif isinstance(restrict, boolean.AndRestriction):
         assert not restrict.negate
         for rule in restrict.restrictions:

@@ -131,8 +131,7 @@ class StackedXpakDict(DictMixin):
                 data = data_source(self.xpak.get("environment"), mutable=True)
                 if data is None:
                     raise KeyError(
-                        "environment.bz2 not found in xpak segment, "
-                        "malformed binpkg?"
+                        "environment.bz2 not found in xpak segment, malformed binpkg?"
                     )
             else:
                 data = data_source(

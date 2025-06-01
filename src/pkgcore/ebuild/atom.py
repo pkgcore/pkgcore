@@ -341,7 +341,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
             attrs.append(f"subslot={self.subslot!r}")
         if self.repo_id is not None:
             attrs.append(f"repo_id={self.repo_id!r}")
-        return f'<{self.__class__.__name__} {" ".join(attrs)} @#{id(self):x}>'
+        return f"<{self.__class__.__name__} {' '.join(attrs)} @#{id(self):x}>"
 
     def __reduce__(self):
         return (atom, (str(self), self.negate_vers))
@@ -622,9 +622,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 other.op, other.version, other.revision
             ).match(ranged) and restricts.VersionMatch(
                 ranged.op, ranged.version, ranged.revision
-            ).match(
-                other
-            )
+            ).match(other)
 
         if other.op == "~":
             # Other definitely matches its own version. If ranged also

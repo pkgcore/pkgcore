@@ -815,7 +815,7 @@ class domain(config_domain):
                         args.append(getattr(self, x))
             except AttributeError as e:
                 raise Failure(
-                    f"failed configuring repo {repo!r}: " f"configurable missing: {e}"
+                    f"failed configuring repo {repo!r}: configurable missing: {e}"
                 ) from e
             repo = repo.configure(*args)
         return repo

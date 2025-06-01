@@ -173,7 +173,7 @@ def _write_cache_file(path, data, uid=-1, gid=-1):
             # Use error, not exception for this one: the traceback
             # is not necessary and too alarming.
             logger.error(
-                "Cannot write cache for %s: %s. " "Try running pplugincache.", path, e
+                "Cannot write cache for %s: %s. Try running pplugincache.", path, e
             )
     finally:
         if cachefile is not None:

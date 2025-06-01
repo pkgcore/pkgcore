@@ -417,8 +417,7 @@ class BooleanQuery(arghparse.DelayedValue):
 
         if converter is not None and not callable(converter):
             raise ValueError(
-                "converter either needs to be None, or a callable;"
-                f" got {converter!r}"
+                f"converter either needs to be None, or a callable; got {converter!r}"
             )
 
         self.converter = converter

@@ -34,18 +34,18 @@ class TestExtendedRestrictionGeneration:
 
         for token in ("*", ""):
             i = parserestrict.convert_glob(token)
-            assert (
-                i == None
-            ), f"verifying None is returned on pointless restrictions, failed token: {token}"
+            assert i == None, (
+                f"verifying None is returned on pointless restrictions, failed token: {token}"
+            )
 
         with pytest.raises(parserestrict.ParseError):
             parserestrict.convert_glob("**")
 
     def verify_restrict(self, restrict, attr, token):
         assert isinstance(restrict, packages.PackageRestriction), token
-        assert (
-            restrict.attr == attr
-        ), f"verifying package attr {restrict.attr}; required({attr}), token {token}"
+        assert restrict.attr == attr, (
+            f"verifying package attr {restrict.attr}; required({attr}), token {token}"
+        )
 
         if "*" in token:
             self.verify_text_glob(restrict.restriction, token)
@@ -67,9 +67,9 @@ class TestExtendedRestrictionGeneration:
         self.verify_restrict(i, attr, raw_token)
 
     def test_combined(self):
-        assert isinstance(
-            parserestrict.parse_match("dev-util/diffball"), atom
-        ), "dev-util/diffball"
+        assert isinstance(parserestrict.parse_match("dev-util/diffball"), atom), (
+            "dev-util/diffball"
+        )
         for token in ("dev-*/util", "dev-*/util*", "dev-a/util*"):
             i = parserestrict.parse_match(token)
             assert isinstance(i, boolean.AndRestriction), token
@@ -144,9 +144,9 @@ class TestExtendedRestrictionGeneration:
             self.verify_restrict(i[3], attr, token.split(":")[0].split("/")[n])
 
     def test_atom_globbed(self):
-        assert isinstance(
-            parserestrict.parse_match("=sys-devel/gcc-4*"), atom
-        ), "=sys-devel/gcc-4*"
+        assert isinstance(parserestrict.parse_match("=sys-devel/gcc-4*"), atom), (
+            "=sys-devel/gcc-4*"
+        )
 
     def test_use_atom(self):
         o = parserestrict.parse_match("net-misc/openssh[-X]")

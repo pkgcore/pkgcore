@@ -77,13 +77,14 @@ class profile_mixin:
             )
             assert isinstance(got, tuple), f"key {key!r}, non tuple: {got!r}"
             assert not isinstance(got, bare_kls), (
-                f"key {key!r}, bare {bare_kls.__name__}, " f"rather than tuple: {got!r}"
+                f"key {key!r}, bare {bare_kls.__name__}, rather than tuple: {got!r}"
             )
-            assert all(
-                isinstance(x, bare_kls) for x in got
-            ), f"non {bare_kls.__name__} instance: key {key!r}, got {got!r}; types {list(map(type, got))}"
-            got2, desired2 = tuple(map(reformat_f, got)), tuple(
-                map(reformat_f, desired)
+            assert all(isinstance(x, bare_kls) for x in got), (
+                f"non {bare_kls.__name__} instance: key {key!r}, got {got!r}; types {list(map(type, got))}"
+            )
+            got2, desired2 = (
+                tuple(map(reformat_f, got)),
+                tuple(map(reformat_f, desired)),
             )
             assert got2 == desired2
 

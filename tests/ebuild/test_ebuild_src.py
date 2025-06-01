@@ -381,7 +381,7 @@ class TestBase:
 
         f = self.get_pkg(
             {
-                "SRC_URI": "http://foo.com/monkey.tgz " "http://dar/boon.tgz",
+                "SRC_URI": "http://foo.com/monkey.tgz http://dar/boon.tgz",
                 "EAPI": "2",
             },
             repo=parent,
@@ -407,7 +407,7 @@ class TestBase:
 
         # verify it collapses multiple basenames down to the same.
         f = self.get_pkg(
-            {"SRC_URI": "http://foo.com/monkey.tgz " "http://foo.com2/monkey.tgz"},
+            {"SRC_URI": "http://foo.com/monkey.tgz http://foo.com2/monkey.tgz"},
             repo=parent,
         ).fetchables
         assert list(f[0].uri) == [
@@ -478,7 +478,7 @@ class TestBase:
         )
         f = self.get_pkg(
             {
-                "SRC_URI": "http://foo.com/monkey.tgz " "mirror://mirror1/boon.tgz",
+                "SRC_URI": "http://foo.com/monkey.tgz mirror://mirror1/boon.tgz",
                 "RESTRICT": "primaryuri",
             },
             repo=parent,
@@ -509,9 +509,9 @@ class TestBase:
             # Check all EAPIs for REQUIRED_USE parsing, EAPIs that don't support it
             # should return depsets that evaluate to False.
             pkg = self.get_pkg({"EAPI": eapi_str, "REQUIRED_USE": "test? ( foo )"})
-            assert (
-                bool(pkg.required_use) == eapi.options.has_required_use
-            ), f"failure parsing REQUIRED_USE for EAPI '{eapi}'"
+            assert bool(pkg.required_use) == eapi.options.has_required_use, (
+                f"failure parsing REQUIRED_USE for EAPI '{eapi}'"
+            )
 
             # Render various REQUIRED_USE deps with set USE flag states and
             # check for satisfiability.

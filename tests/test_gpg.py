@@ -18,9 +18,9 @@ class TestSkipSignatures:
             d2 = header + d
             parsed = list(gpg.skip_signatures(d2))
             required = [d[0], d[1], d[-1]]
-            assert (
-                parsed == required
-            ), f"{parsed!r} != {required!r} for header {header!r}"
+            assert parsed == required, (
+                f"{parsed!r} != {required!r} for header {header!r}"
+            )
 
     def test_signed_signed(self):
         d = [

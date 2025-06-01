@@ -108,7 +108,7 @@ class RequiredUseError(SanityCheckError):
                     f"""
                 Failed to match: {node}
                 from: {self.pkg.required_use}
-                for USE: {' '.join(sorted(self.pkg.use))}
+                for USE: {" ".join(sorted(self.pkg.use))}
                 """
                 )
             )

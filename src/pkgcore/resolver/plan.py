@@ -672,7 +672,7 @@ class merge_plan:
                         # and was intractable because it has a hard dep on an
                         # unsolvable atom.
                         ret = (
-                            (False, "pruning of insoluble deps " "left no choices"),
+                            (False, "pruning of insoluble deps left no choices"),
                             {},
                         )
                 else:
@@ -811,7 +811,7 @@ class merge_plan:
                     # XXX kill it; purpose seems... questionable.
                     if cur_frame.drop_cycles:
                         self._dprint(
-                            "%s level cycle: %s: " "dropping cycle for %s from %s",
+                            "%s level cycle: %s: dropping cycle for %s from %s",
                             (mode, cur_frame.atom, or_node, cur_frame.current_pkg),
                             "cycle",
                         )

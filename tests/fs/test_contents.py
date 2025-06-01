@@ -236,9 +236,9 @@ class TestContentsSet:
         cset2 = contents.contentsSet(data2)
         f = getattr(cset1, name)
         got = f(cset2)
-        assert (
-            got == required
-        ), f"{name}: expected {required}, got {got}\ncset1={cset1!r}\ncset2={cset2!r}"
+        assert got == required, (
+            f"{name}: expected {required}, got {got}\ncset1={cset1!r}\ncset2={cset2!r}"
+        )
 
     @pytest.mark.parametrize(
         ("required", "data1", "data2"),

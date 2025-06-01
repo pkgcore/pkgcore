@@ -400,7 +400,7 @@ class ebd:
                 )
             if not ebd.expect("next"):
                 chuck_UnhandledCommand(
-                    ebd, "bashrc transfer, didn't receive 'next' response.  " "failure?"
+                    ebd, "bashrc transfer, didn't receive 'next' response. failure?"
                 )
         ebd.write("end_request")
 

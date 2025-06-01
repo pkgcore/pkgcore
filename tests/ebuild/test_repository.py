@@ -304,14 +304,14 @@ class TestSlavedTree(TestUnconfiguredTree):
         for license in master_licenses:
             (master_repo / "licenses" / license).touch()
         (master_repo / "profiles" / "license_groups").write_text(
-            f'FREE {" ".join(master_licenses)}\nOSI-APPROVED @FREE\n'
+            f"FREE {' '.join(master_licenses)}\nOSI-APPROVED @FREE\n"
         )
 
         (slave_repo / "licenses").mkdir()
         for license in slave_licenses:
             (slave_repo / "licenses" / license).touch()
         (slave_repo / "profiles" / "license_groups").write_text(
-            f'MISC-FREE @FREE {" ".join(slave_licenses)}\nFSF-APPROVED MIT\nOSI-APPROVED @FSF-APPROVED\n'
+            f"MISC-FREE @FREE {' '.join(slave_licenses)}\nFSF-APPROVED MIT\nOSI-APPROVED @FSF-APPROVED\n"
         )
 
         repo = self.mk_tree(slave_repo)

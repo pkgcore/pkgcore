@@ -15,13 +15,13 @@ class TestConfigLoading:
     @pytest.fixture
     def user_config(self, tmp_path):
         user_config = tmp_path / "user.conf"
-        user_config.write_text("[foo]\n" "class = tests.config.test_init.passthrough\n")
+        user_config.write_text("[foo]\nclass = tests.config.test_init.passthrough\n")
         return str(user_config)
 
     @pytest.fixture
     def system_config(self, tmp_path):
         system_config = tmp_path / "system.conf"
-        system_config.write_text("[foo]\n" "class = also invalid\n")
+        system_config.write_text("[foo]\nclass = also invalid\n")
         return str(system_config)
 
     def test_load_config(self, user_config):

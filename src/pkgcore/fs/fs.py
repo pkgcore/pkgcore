@@ -41,9 +41,7 @@ def gen_doc_additions(init, slots):
 :param location: location (real or intended) for this entry
 :param strict: is this fully representative of the entry, or only partially
 :raise KeyError: if strict is enabled, and not all args are passed in
-""".split(
-            "\n"
-        )
+""".split("\n")
     else:
         d = init.__doc__.split("\n")
     init.__doc__ = "\n".join(k.lstrip() for k in d) + "\n".join(

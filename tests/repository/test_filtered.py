@@ -70,7 +70,9 @@ class TestVisibility:
                 "dev-lib",
                 "dev-util",
             ]
-        ), "category filtering must not filter dev-lib even if there are no packages left post filtering"
+        ), (
+            "category filtering must not filter dev-lib even if there are no packages left post filtering"
+        )
 
     def test_packages_api(self):
         _, vrepo = self.setup_repos(atom("dev-util/diffball"))

@@ -75,7 +75,7 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
                 logger.exception(
-                    "failed getting attribute %s from %s, " "exception %s",
+                    "failed getting attribute %s from %s, exception %s",
                     ".".join(attr_split),
                     str(pkg),
                     str(exc),
@@ -92,7 +92,7 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
                 # if it doesn't match, exception is thrown.
                 return False
         logger.exception(
-            "caught unexpected exception accessing %s from %s, " "exception %s",
+            "caught unexpected exception accessing %s from %s, exception %s",
             ".".join(attr_split),
             str(pkg),
             str(exc),

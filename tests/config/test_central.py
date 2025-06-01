@@ -46,9 +46,9 @@ def check_error(message, func, *args, **kwargs):
     try:
         func(*args, **kwargs)
     except klass as exc:
-        assert message == _str_exc(
-            exc
-        ), f"\nGot:\n{_str_exc(exc)!r}\nExpected:\n{message!r}\n"
+        assert message == _str_exc(exc), (
+            f"\nGot:\n{_str_exc(exc)!r}\nExpected:\n{message!r}\n"
+        )
     else:
         pytest.fail("no exception raised")
 
@@ -83,7 +83,7 @@ def test_contains():
 def test_no_class():
     manager = central.ConfigManager([{"foo": basics.HardCodedConfigSection({})}])
     check_error(
-        "Collapsing section named 'foo':\n" "no class specified",
+        "Collapsing section named 'foo':\nno class specified",
         manager.collapse_named_section,
         "foo",
     )
@@ -113,7 +113,7 @@ def test_unknown_type():
         [{"spork": basics.HardCodedConfigSection({"class": drawer, "foon": None})}]
     )
     check_error(
-        "Collapsing section named 'spork':\n" "Type of 'foon' unknown",
+        "Collapsing section named 'spork':\nType of 'foon' unknown",
         manager.collapse_named_section,
         "spork",
     )
@@ -134,8 +134,7 @@ def test_missing_inherit_target():
         [RemoteSource()],
     )
     check_error(
-        "Collapsing section named 'myrepo':\n"
-        "Inherit target 'baserepo' cannot be found",
+        "Collapsing section named 'myrepo':\nInherit target 'baserepo' cannot be found",
         get_config_obj,
         manager,
         "repo",
@@ -162,7 +161,7 @@ def test_inherit_unknown_type():
         ]
     )
     check_error(
-        "Collapsing section named 'actual repo':\n" "Type of 'cache' unknown",
+        "Collapsing section named 'actual repo':\nType of 'cache' unknown",
         get_config_obj,
         manager,
         "repo",
@@ -356,9 +355,9 @@ def test_reload():
     manager.reload()
     newspork = manager.collapse_named_section("spork")
     assert collapsedspork is not newspork
-    assert (
-        "modded" == newspork.instantiate()
-    ), "it did not throw away the cached instance"
+    assert "modded" == newspork.instantiate(), (
+        "it did not throw away the cached instance"
+    )
     assert types is not manager.types
 
 
@@ -559,7 +558,7 @@ def test_recursive_inherit():
         ]
     )
     check_error(
-        "Collapsing section named 'spork':\n" "Inherit 'spork' is recursive",
+        "Collapsing section named 'spork':\nInherit 'spork' is recursive",
         get_config_obj,
         manager,
         "drawer",
@@ -918,7 +917,7 @@ def test_inherit_only():
         [RemoteSource()],
     )
     check_error(
-        "Collapsing section named 'source':\n" "cannot collapse inherit-only section",
+        "Collapsing section named 'source':\ncannot collapse inherit-only section",
         manager.collapse_named_section,
         "source",
     )
@@ -938,7 +937,7 @@ def test_self_inherit():
         [RemoteSource()],
     )
     check_error(
-        "Collapsing section named 'self':\n" "Self-inherit 'self' cannot be found",
+        "Collapsing section named 'self':\nSelf-inherit 'self' cannot be found",
         get_config_obj,
         manager,
         "drawer",

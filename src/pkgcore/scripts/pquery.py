@@ -1150,7 +1150,7 @@ output.add_argument(
         Print the given attribute's value. This option can be specified
         multiple times.
 
-        Valid attributes: {', '.join(f'``{x}``' for x in printable_attrs)}
+        Valid attributes: {", ".join(f"``{x}``" for x in printable_attrs)}
     """,
 )
 output.add_argument(

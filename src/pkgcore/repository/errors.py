@@ -36,6 +36,5 @@ class UnsupportedRepo(RepoError, PkgcoreUserException):
 
     def __str__(self):
         return (
-            f"{self.repo.repo_id!r} repo: "
-            f"unsupported repo EAPI {str(self.repo.eapi)!r}"
+            f"{self.repo.repo_id!r} repo: unsupported repo EAPI {str(self.repo.eapi)!r}"
         )

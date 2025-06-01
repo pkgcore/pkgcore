@@ -5,19 +5,13 @@ class TestRestriction:
         else:
             msg = "; msg=" + msg
         if negated:
-            assert not getattr(obj, mode)(
-                *args
-            ), "%r must not match %r, mode=%s, negated=%r%s" % (
-                obj,
-                args,
-                mode,
-                negated,
-                msg,
+            assert not getattr(obj, mode)(*args), (
+                f"{obj!r} must not match {args!r}, mode={mode}, negated={negated!r}{msg}"
             )
         else:
-            assert getattr(obj, mode)(
-                *args
-            ), "%r must match %r, mode=%s, not negated%s" % (obj, args, mode, msg)
+            assert getattr(obj, mode)(*args), (
+                f"{obj!r} must match {args!r}, mode={mode}, not negated{msg}"
+            )
 
     def assertMatch(self, obj, target, mode="match", negated=False, msg=None):
         return self._assertMatch(obj, (target,), mode=mode, negated=negated, msg=msg)

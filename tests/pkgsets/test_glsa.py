@@ -49,15 +49,15 @@ class TestGlsaDirSet:
         restrict = restrict[0]
         for ver in ver_matches:
             pkg = cpv.VersionedCPV(f"dev-util/diffball-{ver}")
-            assert restrict.match(
-                pkg
-            ), f"pkg {pkg} must match for {vuln_range!r}: {restrict}"
+            assert restrict.match(pkg), (
+                f"pkg {pkg} must match for {vuln_range!r}: {restrict}"
+            )
 
         for ver in ver_nonmatches:
             pkg = cpv.VersionedCPV(f"dev-util/diffball-{ver}")
-            assert not restrict.match(
-                pkg
-            ), "pkg {pkg} must not match for {vuln_range!r}: {restrict}"
+            assert not restrict.match(pkg), (
+                "pkg {pkg} must not match for {vuln_range!r}: {restrict}"
+            )
 
     def test_iter(self, tmp_path):
         self.mk_glsa(tmp_path, pkgs_set)

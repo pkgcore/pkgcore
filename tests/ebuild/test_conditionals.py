@@ -360,8 +360,8 @@ class TestDepSetEvaluate(base):
                 kls = str
             orig = self.gen_depset(src, element_kls=kls, **kwds)
             collapsed = orig.evaluate_depset(use, tristate_filter=tristate)
-            assert (
-                str(collapsed) == result
-            ), f"expected {result!r} got {collapsed!r}\nraw depset: {src!r}\nuse: {use!r}, tristate: {tristate!r}"
+            assert str(collapsed) == result, (
+                f"expected {result!r} got {collapsed!r}\nraw depset: {src!r}\nuse: {use!r}, tristate: {tristate!r}"
+            )
             if not ("?" in src or kwds.get("transitive_use_atoms")):
                 assert orig is collapsed

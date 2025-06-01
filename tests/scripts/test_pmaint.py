@@ -202,9 +202,9 @@ class TestCopy(ArgParseMixin):
             "sys-apps/portage-2.1",
             "sys-apps/portage-2.3",
         ]
-        assert (
-            config.target_repo.uninstalled == config.target_repo.replaced
-        ), "uninstalled should be the same as replaced; empty"
+        assert config.target_repo.uninstalled == config.target_repo.replaced, (
+            "uninstalled should be the same as replaced; empty"
+        )
 
         d = {"sys-apps": {"portage": ["2.1", "2.2"]}}
         ret, config, out = self.execute_main(
@@ -218,9 +218,9 @@ class TestCopy(ArgParseMixin):
         assert [[x.cpvstr for x in pkg] for pkg in config.target_repo.replaced] == [
             ["sys-apps/portage-2.1", "sys-apps/portage-2.1"]
         ]
-        assert (
-            config.target_repo.uninstalled == config.target_repo.installed
-        ), "installed should be the same as uninstalled; empty"
+        assert config.target_repo.uninstalled == config.target_repo.installed, (
+            "installed should be the same as uninstalled; empty"
+        )
 
     def test_ignore_existing(self):
         ret, config, out = self.execute_main(
@@ -236,9 +236,9 @@ class TestCopy(ArgParseMixin):
             "sys-apps/portage-2.1",
             "sys-apps/portage-2.3",
         ]
-        assert (
-            config.target_repo.uninstalled == config.target_repo.replaced
-        ), "uninstalled should be the same as replaced; empty"
+        assert config.target_repo.uninstalled == config.target_repo.replaced, (
+            "uninstalled should be the same as replaced; empty"
+        )
 
         ret, config, out = self.execute_main(
             "fake_binpkg",
@@ -255,9 +255,9 @@ class TestCopy(ArgParseMixin):
         assert [pkg.cpvstr for pkg in config.target_repo.installed] == [
             "sys-apps/portage-2.3"
         ]
-        assert (
-            config.target_repo.uninstalled == config.target_repo.replaced
-        ), "uninstalled should be the same as replaced; empty"
+        assert config.target_repo.uninstalled == config.target_repo.replaced, (
+            "uninstalled should be the same as replaced; empty"
+        )
 
 
 class TestRegen(ArgParseMixin):

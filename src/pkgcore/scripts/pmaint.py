@@ -148,7 +148,7 @@ commandline.make_query(
     copy,
     nargs="+",
     dest="query",
-    help="packages matching any of these restrictions will be selected " "for copying",
+    help="packages matching any of these restrictions will be selected for copying",
 )
 copy_opts = copy.add_argument_group("subcommand options")
 copy_opts.add_argument(
@@ -201,8 +201,7 @@ def copy_main(options, out, err):
                     )
                 except OSError as oe:
                     err.write(
-                        f"failed accessing fs obj {fsobj!r}; {oe}\n"
-                        "aborting this copy"
+                        f"failed accessing fs obj {fsobj!r}; {oe}\naborting this copy"
                     )
                     failures = True
                     new_contents = None

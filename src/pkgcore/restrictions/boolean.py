@@ -410,7 +410,7 @@ class AndRestriction(base):
 
         if self.negate:
             raise NotImplementedError(
-                "negation for solutions on " "AndRestriction isn't implemented yet"
+                "negation for solutions on AndRestriction isn't implemented yet"
             )
         for x in self.restrictions:
             method = getattr(x, "iter_cnf_solutions", None)
@@ -429,7 +429,7 @@ class AndRestriction(base):
 
         if self.negate:
             raise NotImplementedError(
-                "negation for solutions on " "AndRestriction isn't implemented yet"
+                "negation for solutions on AndRestriction isn't implemented yet"
             )
         andreqs = []
         for x in self.restrictions:

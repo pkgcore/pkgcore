@@ -72,7 +72,7 @@ class ParseEclassDoc:
         self.tags = tags
         # regex matching all known tags for the eclass doc block
         self._block_tags_re = re.compile(
-            rf'^(?P<tag>{"|".join(self.tags)})(?P<value>.*)'
+            rf"^(?P<tag>{'|'.join(self.tags)})(?P<value>.*)"
         )
         # regex matching @CODE tags
         self._code_tag = re.compile(r"^\s*@CODE\s*$")
@@ -365,7 +365,7 @@ class EclassFuncVarBlock(ParseEclassDoc):
 
 
 _eclass_blocks_re = re.compile(
-    rf'^(?P<prefix>\s*#) (?P<tag>{"|".join(ParseEclassDoc.blocks)})(?P<value>.*)'
+    rf"^(?P<prefix>\s*#) (?P<tag>{'|'.join(ParseEclassDoc.blocks)})(?P<value>.*)"
 )
 
 
@@ -624,7 +624,7 @@ class EclassDoc(AttrDict):
                 header = [func.name]
                 if func.usage:
                     header.append(func.usage)
-                rst.append(f'**{" ".join(header)}**')
+                rst.append(f"**{' '.join(header)}**")
                 if func.description:
                     rst.append(
                         "  " + func.description.lstrip("\n").replace("\n", "\n  ")

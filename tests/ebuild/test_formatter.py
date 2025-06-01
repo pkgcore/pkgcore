@@ -50,13 +50,13 @@ class BaseFormatterTest:
                 try:
                     ret = self.formatterClass.format(internal_self, *args, **kwds)
                 except Exception as exc:
-                    assert (
-                        autoline == self.fakeout.autoline
-                    ), f"exception thrown {exc}, autoline was {autoline}, now is {self.fakeout.autoline}"
+                    assert autoline == self.fakeout.autoline, (
+                        f"exception thrown {exc}, autoline was {autoline}, now is {self.fakeout.autoline}"
+                    )
                     raise
-                assert (
-                    autoline == self.fakeout.autoline
-                ), f"autoline was {autoline}, now is {self.fakeout.autoline}"
+                assert autoline == self.fakeout.autoline, (
+                    f"autoline was {autoline}, now is {self.fakeout.autoline}"
+                )
                 return ret
 
         return state_verifying_class
@@ -164,7 +164,7 @@ class TestPkgcoreFormatter(BaseFormatterTest):
                 FakeMutatedPkg("dev-util/diffball-1.1"),
             )
         )
-        self.assertOut("replace dev-util/diffball-1.1, " "dev-util/diffball-1.2")
+        self.assertOut("replace dev-util/diffball-1.1, dev-util/diffball-1.2")
 
     def test_reinstall_repo(self):
         self.formatter.format(
@@ -178,9 +178,7 @@ class TestPkgcoreFormatter(BaseFormatterTest):
                 FakeMutatedPkg("dev-util/diffball-1.1"),
             )
         )
-        self.assertOut(
-            "replace dev-util/diffball-1.1, " "dev-util/diffball-1.2::gentoo"
-        )
+        self.assertOut("replace dev-util/diffball-1.1, dev-util/diffball-1.2::gentoo")
 
 
 class CountingFormatterTest(BaseFormatterTest):

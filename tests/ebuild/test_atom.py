@@ -540,12 +540,12 @@ class TestAtom(TestRestriction):
     def test_intersects(self, this, that, result):
         this_atom = self.kls(this)
         that_atom = self.kls(that)
-        assert result == this_atom.intersects(
-            that_atom
-        ), f"{this} intersecting {that} should be {result}"
-        assert result == that_atom.intersects(
-            this_atom
-        ), f"{that} intersecting {this} should be {result}"
+        assert result == this_atom.intersects(that_atom), (
+            f"{this} intersecting {that} should be {result}"
+        )
+        assert result == that_atom.intersects(this_atom), (
+            f"{that} intersecting {this} should be {result}"
+        )
 
     def test_comparison(self):
         assert_equal_bidirectional(self.kls("cat/pkg"), self.kls("cat/pkg"))
@@ -583,18 +583,18 @@ class TestAtom(TestRestriction):
         assert_not_equal_bidirectional(self.kls("cat/pkg:1"), self.kls("cat/pkg"))
         assert_equal_bidirectional(self.kls("cat/pkg:2"), self.kls("cat/pkg:2"))
         for lesser, greater in (("0.1", "1"), ("1", "1-r1"), ("1.1", "1.2")):
-            assert self.kls(f"=d/b-{lesser}") < self.kls(
-                f"=d/b-{greater}"
-            ), f"d/b-{lesser} < d/b-{greater}"
-            assert not (
-                self.kls(f"=d/b-{lesser}") > self.kls(f"=d/b-{greater}")
-            ), f"!: d/b-{lesser} < d/b-{greater}"
-            assert self.kls(f"=d/b-{greater}") > self.kls(
-                f"=d/b-{lesser}"
-            ), f"d/b-{greater} > d/b-{lesser}"
-            assert not (
-                self.kls(f"=d/b-{greater}") < self.kls(f"=d/b-{lesser}")
-            ), f"!: d/b-{greater} > d/b-{lesser}"
+            assert self.kls(f"=d/b-{lesser}") < self.kls(f"=d/b-{greater}"), (
+                f"d/b-{lesser} < d/b-{greater}"
+            )
+            assert not (self.kls(f"=d/b-{lesser}") > self.kls(f"=d/b-{greater}")), (
+                f"!: d/b-{lesser} < d/b-{greater}"
+            )
+            assert self.kls(f"=d/b-{greater}") > self.kls(f"=d/b-{lesser}"), (
+                f"d/b-{greater} > d/b-{lesser}"
+            )
+            assert not (self.kls(f"=d/b-{greater}") < self.kls(f"=d/b-{lesser}")), (
+                f"!: d/b-{greater} > d/b-{lesser}"
+            )
 
         assert self.kls("!!=d/b-1", eapi="2") > self.kls("!=d/b-1")
         assert self.kls("!=d/b-1") < self.kls("!!=d/b-1")

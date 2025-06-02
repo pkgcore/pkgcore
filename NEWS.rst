@@ -3,6 +3,14 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.30 (2025-06-02)
+----------------------------
+
+- Implement EAPI=9 features (Arthur Zamarin)
+
+- Fix compatibility with python 3.14 (Michał Górny, #446)
+
+----------------------------
 pkgcore 0.12.29 (2025-01-24)
 ----------------------------
 

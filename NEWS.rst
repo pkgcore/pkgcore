@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.31 (????-??-??)
+----------------------------
+
+- rsync: fix bug in computing the current timestamp when the timezone is not
+  UTC (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.30 (2025-06-02)
 ----------------------------
 

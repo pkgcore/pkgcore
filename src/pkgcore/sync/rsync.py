@@ -193,7 +193,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                 date, offset = f.read().strip().rsplit("+", 1)
             date = time.mktime(time.strptime(date, "%a, %d %b %Y %H:%M:%S "))
             # add the hour/minute offset
-            date += int(offset[:2] * 60) + int(offset[2:])
+            date += int(offset[:2]) * 60 + int(offset[2:])
             return date
         except (FileNotFoundError, NotADirectoryError):
             return None

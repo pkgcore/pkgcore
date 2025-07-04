@@ -221,7 +221,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                         if delta >= 0:
                             doit = delta > self.forward_sync_delay
                         else:
-                            doit = delta > self.negative_sync_delay
+                            doit = -delta > self.negative_sync_delay
             if not doit:
                 return True
             ret = super()._sync(verbosity)

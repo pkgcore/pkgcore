@@ -228,22 +228,20 @@ class rsync_timestamp_syncer(rsync_syncer):
             # force a reset of the timestamp
             self.last_timestamp = self.current_timestamp()
         finally:
-            if ret:
-                return ret
-            # ensure the timestamp is back to the old
-            try:
-                timestamp_path = pjoin(self.basedir, "metadata", "timestamp.chk")
-                if self.last_timestamp is None:
-                    os.remove(timestamp_path)
-                else:
-                    with open(timestamp_path, "w") as f:
-                        f.write(
-                            time.strftime(
-                                "%a, %d %b %Y %H:%M:%S +0000",
-                                time.gmtime(self.last_timestamp),
+            if not ret:
+                # ensure the timestamp is back to the old
+                try:
+                    timestamp_path = pjoin(self.basedir, "metadata", "timestamp.chk")
+                    if self.last_timestamp is None:
+                        os.remove(timestamp_path)
+                    else:
+                        with open(timestamp_path, "w") as f:
+                            f.write(
+                                time.strftime(
+                                    "%a, %d %b %Y %H:%M:%S +0000",
+                                    time.gmtime(self.last_timestamp),
+                                )
                             )
-                        )
-            except EnvironmentError:
-                # don't care...
-                pass
+                except EnvironmentError:
+                    pass  # don't care...
         return ret

@@ -11,6 +11,8 @@ pkgcore 0.12.31 (????-??-??)
 
 - rsync: fix logical bug with negative sync delta (Arthur Zamarin)
 
+- rsync: fix SyntaxWarning when using Python 3.14 (Arthur Zamarin, #448)
+
 ----------------------------
 pkgcore 0.12.30 (2025-06-02)
 ----------------------------

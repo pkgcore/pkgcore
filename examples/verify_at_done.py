@@ -39,15 +39,13 @@ def check_args(parser, namespace):
     namespace.repo = namespace.domain.ebuild_repos
 
 
-def fetch_bugs() -> tuple[BugInfo, ...]:
+def fetch_bugs(api_key: str) -> tuple[BugInfo, ...]:
     params = urlencode(
         (
+            ("Bugzilla_api_key", api_key),
             ("component", "Stabilization"),
             ("component", "Keywording"),
-            (
-                "include_fields",
-                "id,cf_stabilisation_atoms,component,cc",
-            ),
+            ("include_fields", ",".join(BugInfo.__annotations__)),
             ("bug_status", "UNCONFIRMED"),
             ("bug_status", "CONFIRMED"),
             ("bug_status", "IN_PROGRESS"),
@@ -83,7 +81,7 @@ def collect_packages(repo, bug: BugInfo):
 
 @argparser.bind_main_func
 def main(options, out, err):
-    for bug in fetch_bugs():
+    for bug in fetch_bugs(options.api_key):
         try:
             pkgs = collect_packages(options.repo, bug)
             if not pkgs:

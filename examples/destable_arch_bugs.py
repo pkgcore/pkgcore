@@ -55,7 +55,7 @@ def fetch_bugs(arch: str, api_key: str) -> tuple[BugInfo, ...]:
         (
             ("Bugzilla_api_key", api_key),
             ("component", "Stabilization"),
-            ("include_fields", "id,cc"),
+            ("include_fields", ",".join(BugInfo.__annotations__)),
             ("bug_status", "UNCONFIRMED"),
             ("bug_status", "CONFIRMED"),
             ("bug_status", "IN_PROGRESS"),
@@ -94,12 +94,15 @@ def update_bug(arch: str, api_key: str, bug_id: int, to_close: bool):
 
 @argparser.bind_main_func
 def main(options, out, err):
-    for bug in fetch_bugs(options.arch, options.api_key):
+    for i, bug in enumerate(bugs := fetch_bugs(options.arch, options.api_key), start=1):
         cc = frozenset(bug["cc"])
         cc_names = frozenset(
             x.split("@", 1)[0] for x in cc if x.endswith("@gentoo.org") or "@" not in x
         )
         bug_arches = cc_names.intersection(options.known_arches)
+
+        out.write(f"[{i}/{len(bugs)}] https://bugs.gentoo.org/{bug['id']}")
+        out.flush()
 
         update_bug(
             arch=options.arch,

@@ -706,7 +706,7 @@ class EclassDoc(AttrDict):
         man_data = {
             "manual_section": "5",
             "manual_group": "eclass-manpages",
-            "date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "date": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d"),
             "version": "Gentoo Linux",
         }
         if self.blurb:

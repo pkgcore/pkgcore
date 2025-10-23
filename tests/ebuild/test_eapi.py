@@ -2,6 +2,7 @@ import shutil
 from unittest import mock
 
 import pytest
+
 from pkgcore.const import EBD_PATH
 from pkgcore.ebuild import eapi
 from pkgcore.ebuild.eapi import EAPI, eapi6, get_eapi
@@ -43,10 +44,10 @@ class TestEAPI:
             # adequate system bash versions
             bash_version.return_value = "3.2"
             test_eapi = EAPI.register(magic="test", optionals={"bash_compat": "3.2"})
-            assert test_eapi._magic == "test"
+            assert test_eapi.magic == "test"
             bash_version.return_value = "4.2"
             test_eapi = EAPI.register(magic="test1", optionals={"bash_compat": "4.1"})
-            assert test_eapi._magic == "test1"
+            assert test_eapi.magic == "test1"
 
     def test_is_supported(self, tmp_path, caplog):
         assert eapi6.is_supported

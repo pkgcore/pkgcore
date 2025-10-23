@@ -4,6 +4,7 @@ import subprocess
 import sys
 from collections import defaultdict
 from functools import partial
+from operator import attrgetter
 from weakref import WeakValueDictionary
 
 from snakeoil import klass
@@ -198,7 +199,7 @@ class EAPI(metaclass=klass.immutable_instance):
     @classmethod
     def register(cls, *args, **kwds):
         eapi = cls(*args, **kwds)
-        pre_existing = cls.known_eapis.get(eapi._magic)
+        pre_existing = cls.known_eapis.get(eapi.magic)
         if pre_existing is not None:
             raise ValueError(
                 f"EAPI '{eapi}' is already known/instantiated- {pre_existing!r}"
@@ -214,15 +215,17 @@ class EAPI(metaclass=klass.immutable_instance):
                 f"system version: {bash_version()}"
             )
 
-        cls.known_eapis[eapi._magic] = eapi
+        cls.known_eapis[eapi.magic] = eapi
         # generate EAPI bash libs when running from git repo
         eapi.bash_libs()
         return eapi
 
+    magic: str = property(attrgetter("_magic"))  # pyright: ignore[reportAssignmentType]
+
     @klass.jit_attr
     def is_supported(self):
         """Check if an EAPI is supported."""
-        if EAPI.known_eapis.get(self._magic) is not None:
+        if EAPI.known_eapis.get(self.magic) is not None:
             if not self.options.is_supported:
                 logger.warning(f"EAPI '{self}' isn't fully supported")
                 sys.stderr.flush()
@@ -256,14 +259,14 @@ class EAPI(metaclass=klass.immutable_instance):
     @klass.jit_attr
     def bash_funcs(self):
         """Internally implemented EAPI specific functions to skip when exporting."""
-        funcs = pjoin(const.EBD_PATH, ".generated", "funcs", self._magic)
+        funcs = pjoin(const.EBD_PATH, ".generated", "funcs", self.magic)
         if not os.path.exists(funcs):
             # we're probably running in a cacheless git repo, so generate a cached version
             try:
                 os.makedirs(os.path.dirname(funcs), exist_ok=True)
                 with open(funcs, "w") as f:
                     subprocess.run(
-                        [pjoin(const.EBD_PATH, "generate_eapi_func_list"), self._magic],
+                        [pjoin(const.EBD_PATH, "generate_eapi_func_list"), self.magic],
                         cwd=const.EBD_PATH,
                         stdout=f,
                     )
@@ -278,7 +281,7 @@ class EAPI(metaclass=klass.immutable_instance):
     @klass.jit_attr
     def bash_cmds_internal(self):
         """EAPI specific commands for this EAPI."""
-        cmds = pjoin(const.EBD_PATH, ".generated", "cmds", self._magic, "internal")
+        cmds = pjoin(const.EBD_PATH, ".generated", "cmds", self.magic, "internal")
         if not os.path.exists(cmds):
             # we're probably running in a cacheless git repo, so generate a cached version
             try:
@@ -288,7 +291,7 @@ class EAPI(metaclass=klass.immutable_instance):
                         [
                             pjoin(const.EBD_PATH, "generate_eapi_cmd_list"),
                             "-i",
-                            self._magic,
+                            self.magic,
                         ],
                         cwd=const.EBD_PATH,
                         stdout=f,
@@ -304,7 +307,7 @@ class EAPI(metaclass=klass.immutable_instance):
     @klass.jit_attr
     def bash_cmds_deprecated(self):
         """EAPI specific commands deprecated for this EAPI."""
-        cmds = pjoin(const.EBD_PATH, ".generated", "cmds", self._magic, "deprecated")
+        cmds = pjoin(const.EBD_PATH, ".generated", "cmds", self.magic, "deprecated")
         if not os.path.exists(cmds):
             # we're probably running in a cacheless git repo, so generate a cached version
             try:
@@ -314,7 +317,7 @@ class EAPI(metaclass=klass.immutable_instance):
                         [
                             pjoin(const.EBD_PATH, "generate_eapi_cmd_list"),
                             "-d",
-                            self._magic,
+                            self.magic,
                         ],
                         cwd=const.EBD_PATH,
                         stdout=f,
@@ -330,7 +333,7 @@ class EAPI(metaclass=klass.immutable_instance):
     @klass.jit_attr
     def bash_cmds_banned(self):
         """EAPI specific commands banned for this EAPI."""
-        cmds = pjoin(const.EBD_PATH, ".generated", "cmds", self._magic, "banned")
+        cmds = pjoin(const.EBD_PATH, ".generated", "cmds", self.magic, "banned")
         if not os.path.exists(cmds):
             # we're probably running in a cacheless git repo, so generate a cached version
             try:
@@ -340,7 +343,7 @@ class EAPI(metaclass=klass.immutable_instance):
                         [
                             pjoin(const.EBD_PATH, "generate_eapi_cmd_list"),
                             "-b",
-                            self._magic,
+                            self.magic,
                         ],
                         cwd=const.EBD_PATH,
                         stdout=f,
@@ -356,7 +359,7 @@ class EAPI(metaclass=klass.immutable_instance):
     def bash_libs(self):
         """Generate internally implemented EAPI specific bash libs required by the ebd."""
         eapi_global_lib = pjoin(
-            const.EBD_PATH, ".generated", "libs", self._magic, "global"
+            const.EBD_PATH, ".generated", "libs", self.magic, "global"
         )
         script = pjoin(const.EBD_PATH, "generate_eapi_lib")
         # skip generation when installing as the install process takes care of it
@@ -368,7 +371,7 @@ class EAPI(metaclass=klass.immutable_instance):
                 os.makedirs(os.path.dirname(eapi_global_lib), exist_ok=True)
                 with open(eapi_global_lib, "w") as f:
                     subprocess.run(
-                        [script, "-s", "global", self._magic],
+                        [script, "-s", "global", self.magic],
                         cwd=const.EBD_PATH,
                         stdout=f,
                     )
@@ -378,13 +381,13 @@ class EAPI(metaclass=klass.immutable_instance):
                 )
 
         for phase in self.phases.values():
-            eapi_lib = pjoin(const.EBD_PATH, ".generated", "libs", self._magic, phase)
+            eapi_lib = pjoin(const.EBD_PATH, ".generated", "libs", self.magic, phase)
             if not os.path.exists(eapi_lib):
                 try:
                     os.makedirs(os.path.dirname(eapi_lib), exist_ok=True)
                     with open(eapi_lib, "w") as f:
                         subprocess.run(
-                            [script, "-s", phase, self._magic],
+                            [script, "-s", phase, self.magic],
                             cwd=const.EBD_PATH,
                             stdout=f,
                         )
@@ -416,7 +419,7 @@ class EAPI(metaclass=klass.immutable_instance):
 
     @klass.jit_attr
     def atom_kls(self):
-        return partial(atom.atom, eapi=self._magic)
+        return partial(atom.atom, eapi=self.magic)
 
     def interpret_cache_defined_phases(self, sequence):
         phases = set(sequence)
@@ -430,7 +433,7 @@ class EAPI(metaclass=klass.immutable_instance):
         return frozenset(phases)
 
     def __str__(self):
-        return self._magic
+        return self.magic
 
     @klass.jit_attr
     def inherits(self):
@@ -450,8 +453,8 @@ class EAPI(metaclass=klass.immutable_instance):
         paths = defaultdict(list)
         for eapi in self.inherits:
             paths["global"].append(pjoin(const.EBUILD_HELPERS_PATH, "common"))
-            helper_dir = pjoin(const.EBUILD_HELPERS_PATH, eapi._magic)
-            for dirpath, dirnames, filenames in os.walk(helper_dir):
+            helper_dir = pjoin(const.EBUILD_HELPERS_PATH, eapi.magic)
+            for dirpath, _, filenames in os.walk(helper_dir):
                 if not filenames:
                     continue
                 if dirpath == helper_dir:
@@ -470,8 +473,8 @@ class EAPI(metaclass=klass.immutable_instance):
         d = {}
         for k in self._ebd_env_options:
             d[f"PKGCORE_{k.upper()}"] = str(getattr(self.options, k)).lower()
-        d["PKGCORE_EAPI_INHERITS"] = " ".join(x._magic for x in self.inherits)
-        d["EAPI"] = self._magic
+        d["PKGCORE_EAPI_INHERITS"] = " ".join(x.magic for x in self.inherits)
+        d["EAPI"] = self.magic
         return ImmutableDict(d)
 
     def is_valid_use_flag(self, s: str) -> bool:
@@ -489,7 +492,7 @@ def get_eapi(magic, suppress_unsupported=True):
         eapi = EAPI.unknown_eapis.get(magic)
         if eapi is None:
             eapi = EAPI(magic=magic, optionals={"is_supported": False})
-            EAPI.unknown_eapis[eapi._magic] = eapi
+            EAPI.unknown_eapis[eapi.magic] = eapi
     return eapi
 
 

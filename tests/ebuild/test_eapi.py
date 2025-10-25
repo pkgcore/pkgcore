@@ -49,8 +49,8 @@ class TestEAPI:
             test_eapi = EAPI.register(magic="test1", optionals={"bash_compat": "4.1"})
             assert test_eapi.magic == "test1"
 
-    def test_is_supported(self, tmp_path, caplog):
-        assert eapi6.is_supported
+    def test_supported(self, tmp_path, caplog):
+        assert eapi6.supported
 
         mock_ebd_temp = str(shutil.copytree(EBD_PATH, tmp_path / "ebd"))
         with (
@@ -58,13 +58,13 @@ class TestEAPI:
             mock.patch("pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp),
         ):
             # partially supported EAPI is flagged as such
-            test_eapi = EAPI.register("test", optionals={"is_supported": False})
-            assert test_eapi.is_supported
+            test_eapi = EAPI.register("test", optionals={"supported": False})
+            assert test_eapi.supported
             assert caplog.text.endswith("EAPI 'test' isn't fully supported\n")
 
             # unsupported/unknown EAPI is flagged as such
             unknown_eapi = get_eapi("blah")
-            assert not unknown_eapi.is_supported
+            assert not unknown_eapi.supported
 
     def test_inherits(self):
         for eapi_str, eapi_obj in EAPI.known_eapis.items():

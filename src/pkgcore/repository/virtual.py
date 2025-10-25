@@ -72,7 +72,7 @@ class InjectedPkg(pkg_base.wrapper):
         default_idepend
     ) = DepSet()
     package_is_real = False
-    is_supported = True
+    supported = True
 
     def __init__(self, raw_pkg, repo, data=None):
         pkg_base.wrapper.__init__(self, raw_pkg)

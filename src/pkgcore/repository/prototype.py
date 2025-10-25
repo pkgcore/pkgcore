@@ -122,7 +122,7 @@ class tree:
     """
 
     raw_repo = None
-    is_supported = True
+    supported = True
     livefs = False
     package_class = None
     configured = True

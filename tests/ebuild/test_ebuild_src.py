@@ -4,13 +4,14 @@ from functools import partial
 from types import SimpleNamespace
 
 import pytest
+from snakeoil.currying import post_curry
+from snakeoil.data_source import data_source, local_source
+from snakeoil.osutils import pjoin
+
 from pkgcore import fetch
 from pkgcore.ebuild import digest, ebuild_src, repo_objs
 from pkgcore.ebuild.eapi import EAPI, get_eapi
 from pkgcore.package import errors
-from snakeoil.currying import post_curry
-from snakeoil.data_source import data_source, local_source
-from snakeoil.osutils import pjoin
 
 from .test_eclass_cache import FakeEclassCache
 
@@ -215,8 +216,8 @@ class TestBase:
 
     def test_eapi(self):
         assert str(self.get_pkg({"EAPI": "0"}).eapi) == "0"
-        assert self.get_pkg({"EAPI": "0"}).eapi.is_supported
-        assert not self.get_pkg({"EAPI": "0.1"}).eapi.is_supported
+        assert self.get_pkg({"EAPI": "0"}).eapi.supported
+        assert not self.get_pkg({"EAPI": "0.1"}).eapi.supported
         assert self.get_pkg({"EAPI": "foon"}, suppress_unsupported=False).eapi is None
         with pytest.raises(errors.MetadataException):
             getattr(self.get_pkg({"EAPI": 0, "DEPEND": "d/b:0"}), "depend")

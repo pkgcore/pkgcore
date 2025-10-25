@@ -20,9 +20,8 @@ from ..package import errors as metadata_errors
 from ..package import metadata
 from ..package.base import DynamicGetattrSetter
 from ..restrictions import boolean, values
-from . import conditionals
+from . import conditionals, processor
 from . import errors as ebuild_errors
-from . import processor
 from .atom import atom
 from .eapi import get_eapi
 from .misc import sort_keywords
@@ -302,7 +301,7 @@ class base(metadata.package):
             error = str(e) if eapi else f"{e}: {eapi_str!r}"
             raise metadata_errors.MetadataException(self, "eapi", error)
 
-    is_supported = klass.alias_attr("eapi.is_supported")
+    supported = klass.alias_attr("eapi.supported")
     tracked_attributes = klass.alias_attr("eapi.tracked_attributes")
 
     @DynamicGetattrSetter.register
@@ -517,7 +516,7 @@ class package_factory(metadata.factory):
 
     def _update_metadata(self, pkg, ebp=None):
         parsed_eapi = pkg.eapi
-        if not parsed_eapi.is_supported:
+        if not parsed_eapi.supported:
             return {"EAPI": str(parsed_eapi)}
 
         with processor.reuse_or_request(ebp) as my_proc:

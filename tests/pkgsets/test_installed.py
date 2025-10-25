@@ -4,7 +4,7 @@ from pkgcore.repository.util import SimpleTree
 
 class FakePkg:
     package_is_real = True
-    is_supported = True
+    supported = True
 
     def __init__(self, cat, pn, ver):
         self.cat = cat

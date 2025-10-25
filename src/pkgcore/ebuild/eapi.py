@@ -80,7 +80,7 @@ eapi_optionals = ImmutableDict(
         "has_KV": True,
         # Controls whether or not pkgcore, or extensions loaded, actually fully
         # support this EAPI.
-        "is_supported": True,
+        "supported": True,
         # Controls whether IUSE defaults are supported; see PMS.
         "iuse_defaults": False,
         # Controls whether new* style bash functions can take their content input
@@ -223,10 +223,10 @@ class EAPI(metaclass=klass.immutable_instance):
     magic: str = property(attrgetter("_magic"))  # pyright: ignore[reportAssignmentType]
 
     @klass.jit_attr
-    def is_supported(self):
+    def supported(self):
         """Check if an EAPI is supported."""
         if EAPI.known_eapis.get(self.magic) is not None:
-            if not self.options.is_supported:
+            if not self.options.supported:
                 logger.warning(f"EAPI '{self}' isn't fully supported")
                 sys.stderr.flush()
             return True
@@ -491,7 +491,7 @@ def get_eapi(magic, suppress_unsupported=True):
     if eapi is None and suppress_unsupported:
         eapi = EAPI.unknown_eapis.get(magic)
         if eapi is None:
-            eapi = EAPI(magic=magic, optionals={"is_supported": False})
+            eapi = EAPI(magic=magic, optionals={"supported": False})
             EAPI.unknown_eapis[eapi.magic] = eapi
     return eapi
 
@@ -862,8 +862,6 @@ eapi9 = EAPI.register(
     eclass_keys=eapi8.eclass_keys,
     tracked_attributes=eapi8.tracked_attributes,
     archive_exts=eapi8.archive_exts,
-    optionals=_combine_dicts(
-        eapi8.options, dict(bash_compat="5.2", is_supported=False)
-    ),
+    optionals=_combine_dicts(eapi8.options, dict(bash_compat="5.2", supported=False)),
     ebd_env_options=eapi8._ebd_env_options,
 )

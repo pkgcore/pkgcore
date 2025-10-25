@@ -34,7 +34,7 @@ class base(klass.SlotsPicklingMixin, metaclass=klass.immutable_instance):
         return self._operations(domain, self, **kwds)
 
     @property
-    def is_supported(self):
+    def supported(self):
         return True
 
 
@@ -81,7 +81,7 @@ class wrapper(base):
     built = klass.alias_attr("_raw_pkg.built")
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
     unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
-    is_supported = klass.alias_attr("_raw_pkg.is_supported")
+    supported = klass.alias_attr("_raw_pkg.supported")
 
     def __hash__(self):
         return hash(self._raw_pkg)

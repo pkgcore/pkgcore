@@ -72,7 +72,7 @@ class tree(prototype.tree):
 
     def __getitem__(self, key):
         obj = self.package_class(self.raw_repo[key])
-        if not obj.is_supported:
+        if not obj.supported:
             raise KeyError(key)
         return obj
 

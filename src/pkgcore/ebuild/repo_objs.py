@@ -773,7 +773,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         except OSError as e:
             raise repo_errors.InitializationError(str(e))
 
-        if not self.eapi.is_supported:
+        if not self.eapi.supported:
             raise repo_errors.UnsupportedRepo(self)
 
     def _parse_config(self):

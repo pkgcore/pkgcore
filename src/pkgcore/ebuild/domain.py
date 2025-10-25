@@ -885,7 +885,7 @@ class domain(config_domain):
         for r in self.__repos:
             try:
                 repo = r.instantiate()
-                if not repo.is_supported:
+                if not repo.supported:
                     logger.warning(
                         f"skipping {r.name!r} repo: unsupported EAPI {str(repo.eapi)!r}"
                     )

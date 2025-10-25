@@ -33,10 +33,9 @@ from ..repository import configured, errors, prototype, util
 from ..repository.virtual import RestrictionRepo
 from ..restrictions import packages
 from ..util import packages as pkgutils
-from . import cpv, digest, ebd, ebuild_src
+from . import cpv, digest, ebd, ebuild_src, processor, repo_objs, restricts
 from . import eclass_cache as eclass_cache_mod
 from . import errors as ebuild_errors
-from . import processor, repo_objs, restricts
 from .atom import atom
 from .eapi import get_eapi
 
@@ -341,7 +340,7 @@ class UnconfiguredTree(prototype.tree):
             )
 
         # verify we support the repo's EAPI
-        if not self.is_supported:
+        if not self.supported:
             raise errors.UnsupportedRepo(self)
 
         if eclass_cache is None:
@@ -386,7 +385,7 @@ class UnconfiguredTree(prototype.tree):
     repo_name = klass.alias_attr("config.repo_name")
     aliases = klass.alias_attr("config.aliases")
     eapi = klass.alias_attr("config.eapi")
-    is_supported = klass.alias_attr("config.eapi.is_supported")
+    supported = klass.alias_attr("config.eapi.supported")
     external = klass.alias_attr("config.external")
     pkg_masks = klass.alias_attr("config.pkg_masks")
 
@@ -583,7 +582,7 @@ class UnconfiguredTree(prototype.tree):
             else:
                 # check pkgs for unsupported/invalid EAPIs and bad metadata
                 try:
-                    if not pkg.is_supported:
+                    if not pkg.supported:
                         exc = pkg_errors.MetadataException(
                             pkg, "eapi", f"EAPI '{pkg.eapi}' is not supported"
                         )

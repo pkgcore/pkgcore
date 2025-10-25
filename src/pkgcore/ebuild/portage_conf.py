@@ -93,6 +93,7 @@ class ParseConfig(configparser.ConfigParser):
 class PortageConfig(DictMixin):
     """Support for portage's config file layout."""
 
+    __slots__ = ("_config", "dir", "root", "features")
     _supported_repo_types = {}
 
     def __init__(self, location=None, profile_override=None, **kwargs):

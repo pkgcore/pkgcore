@@ -141,7 +141,7 @@ def incremental_expansion_license(
 
 
 class IncrementalsDict(mappings.DictMixin):
-    disable_py3k_rewriting = True
+    __slots__ = ("_dict", "_incrementals")
 
     def __init__(self, incrementals, **kwds):
         self._incrementals = incrementals

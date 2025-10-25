@@ -67,6 +67,8 @@ class RepositoryGroup(DictMixin):
         combined: combined repo, if None a multiplex repo is created
     """
 
+    __slots__ = ("repos", "combined")
+
     __externally_mutable__ = False
 
     def __init__(self, repos=(), combined=None):

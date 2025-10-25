@@ -36,6 +36,8 @@ class CacheEntry(StackedDict):
     returns None instead. This is likely to be changed.
     """
 
+    __slots__ = ()
+
     def pop(self, key, default=None):
         try:
             return self[key]

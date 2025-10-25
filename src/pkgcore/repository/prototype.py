@@ -4,8 +4,8 @@ base repository template
 
 __all__ = ("CategoryLazyFrozenSet", "PackageMapping", "VersionMapping", "tree")
 
-from pathlib import Path
 import typing
+from pathlib import Path
 
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import DictMixin, LazyValDict
@@ -42,6 +42,8 @@ class CategoryLazyFrozenSet:
 
 
 class PackageMapping(DictMixin):
+    __slots__ = ("_cache", "_parent", "_pull_vals")
+
     def __init__(self, parent_mapping, pull_vals):
         self._cache = {}
         self._parent = parent_mapping
@@ -67,6 +69,8 @@ class PackageMapping(DictMixin):
 
 
 class VersionMapping(DictMixin):
+    __slots__ = ("_cache", "_parent", "_pull_vals")
+
     def __init__(self, parent_mapping, pull_vals):
         self._cache = {}
         self._parent = parent_mapping

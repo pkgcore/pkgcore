@@ -184,6 +184,7 @@ class StackedXpakDict(DictMixin):
 
 
 class StackedCache(StackedDict):
+    __slots__ = ()
     __externally_mutable__ = True
 
     def __delitem__(self, key):

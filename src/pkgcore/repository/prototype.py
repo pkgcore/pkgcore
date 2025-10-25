@@ -76,7 +76,7 @@ class VersionMapping(DictMixin):
         o = self._cache.get(key)
         if o is not None:
             return o
-        if not key[1] in self._parent.get(key[0], ()):
+        if key[1] not in self._parent.get(key[0], ()):
             raise KeyError(key)
         val = tuple(self._pull_vals(key))
         self._cache[key] = val

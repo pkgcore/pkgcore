@@ -16,9 +16,8 @@ from ..restrictions import boolean, packages, restriction, values
 from ..restrictions.packages import AndRestriction as PkgAndRestriction
 from ..restrictions.packages import Conditional
 from ..restrictions.values import ContainmentMatch
-from . import cpv
+from . import cpv, errors, restricts
 from . import eapi as eapi_mod
-from . import errors, restricts
 
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
@@ -95,7 +94,6 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         if not atom:
             raise errors.MalformedAtom(atom)
 
-        sf = object.__setattr__
         orig_atom = atom
         override_kls = False
         use_start = atom.find("[")
@@ -116,7 +114,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 raise errors.MalformedAtom(orig_atom, "use restriction isn't completed")
             elif use_end != len(atom) - 1:
                 raise errors.MalformedAtom(orig_atom, "trailing garbage after use dep")
-            sf(self, "use", tuple(sorted(atom[use_start + 1 : use_end].split(","))))
+            self.use = tuple(sorted(atom[use_start + 1 : use_end].split(",")))
             for x in self.use:
                 # stripped purely for validation reasons
                 try:
@@ -152,10 +150,10 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 except IndexError:
                     raise errors.MalformedAtom(orig_atom, "empty use dep detected")
             if override_kls:
-                sf(self, "__class__", transitive_use_atom)
+                self.__class__ = transitive_use_atom
             atom = atom[0:use_start] + atom[use_end + 1 :]
         else:
-            sf(self, "use", None)
+            self.use = None
         if slot_start != -1:
             i2 = atom.find("::", slot_start)
             if i2 != -1:
@@ -173,9 +171,9 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                         f"repo_id may contain only [a-Z0-9_-/], found {repo_id!r}",
                     )
                 atom = atom[:i2]
-                sf(self, "repo_id", repo_id)
+                self.repo_id = repo_id
             else:
-                sf(self, "repo_id", None)
+                self.repo_id = None
             # slot dep.
             slot = atom[slot_start + 1 :]
             slot_operator = subslot = None
@@ -230,17 +228,12 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 if len(slots) == 2:
                     slot, subslot = slots
 
-            sf(self, "slot_operator", slot_operator)
-            sf(self, "slot", slot)
-            sf(self, "subslot", subslot)
+            self.slot_operator, self.slot, self.subslot = slot_operator, slot, subslot
             atom = atom[:slot_start]
         else:
-            sf(self, "slot_operator", None)
-            sf(self, "slot", None)
-            sf(self, "subslot", None)
-            sf(self, "repo_id", None)
+            self.slot_operator = self.slot = self.subslot = self.repo_id = None
 
-        sf(self, "blocks", atom[0] == "!")
+        self.blocks = atom[0] == "!"
         if self.blocks:
             atom = atom[1:]
             # hackish/slow, but lstrip doesn't take a 'prune this many' arg
@@ -251,32 +244,32 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                         f"strong blockers are not supported in EAPI {eapi}"
                     )
                 atom = atom[1:]
-                sf(self, "blocks_strongly", True)
+                self.blocks_strongly = True
             else:
-                sf(self, "blocks_strongly", False)
+                self.blocks_strongly = False
         else:
-            sf(self, "blocks_strongly", False)
+            self.blocks_strongly = False
 
         if atom[0] in ("<", ">"):
             if atom[1] == "=":
-                sf(self, "op", atom[:2])
+                self.op = atom[:2]
                 atom = atom[2:]
             else:
-                sf(self, "op", atom[0])
+                self.op = atom[0]
                 atom = atom[1:]
         elif atom[0] == "=":
             if atom[-1] == "*":
-                sf(self, "op", "=*")
+                self.op = "=*"
                 atom = atom[1:-1]
             else:
                 atom = atom[1:]
-                sf(self, "op", "=")
+                self.op = "="
         elif atom[0] == "~":
-            sf(self, "op", "~")
+            self.op = "~"
             atom = atom[1:]
         else:
-            sf(self, "op", "")
-        sf(self, "cpvstr", atom)
+            self.op = ""
+        self.cpvstr = atom
 
         if self.slot is not None and not eapi_obj.options.has_slot_deps:
             raise errors.MalformedAtom(
@@ -295,7 +288,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                     orig_atom, f"repo_id atoms aren't supported for EAPI {eapi}"
                 )
         try:
-            sf(self, "_cpv", cpv.CPV(self.cpvstr, versioned=bool(self.op)))
+            self._cpv = cpv.CPV(self.cpvstr, versioned=bool(self.op))
         except errors.InvalidCPV as e:
             raise errors.MalformedAtom(orig_atom) from e
 
@@ -308,8 +301,9 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
                 )
         elif self.version is not None:
             raise errors.MalformedAtom(orig_atom, "versioned atom requires an operator")
-        sf(self, "_hash", hash(orig_atom))
-        sf(self, "negate_vers", negate_vers)
+
+        self._hash = hash(orig_atom)
+        self.negate_vers = negate_vers
 
     __getattr__ = klass.GetAttrProxy("_cpv")
     __dir__ = klass.DirProxy("_cpv")
@@ -362,7 +356,7 @@ class atom(boolean.AndRestriction, metaclass=klass.generic_equality):
         return [[self]]
 
     @property
-    def is_simple(self):
+    def is_simple(self) -> bool:
         return len(self.restrictions) == 2
 
     @klass.jit_attr
@@ -694,7 +688,7 @@ class transitive_use_atom(atom):
     __inst_caching__ = True
     _nontransitive_use_atom = atom
 
-    is_simple = False
+    is_simple = False  # type: ignore
 
     def _stripped_use(self):
         return str(self).split("[", 1)[0]

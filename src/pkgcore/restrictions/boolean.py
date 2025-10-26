@@ -9,7 +9,7 @@ __all__ = ("AndRestriction", "OrRestriction")
 
 from itertools import islice
 
-from snakeoil.klass import cached_hash, generic_equality
+from snakeoil.klass import cached_hash, generic_equality, immutable
 
 from . import restriction
 
@@ -42,12 +42,10 @@ class base(restriction.base, metaclass=generic_equality):
         :keyword negate: should the logic be negated?
         """
 
-        sf = object.__setattr__
-
         node_type = kwds.pop("node_type", None)
 
-        sf(self, "type", node_type)
-        sf(self, "negate", kwds.pop("negate", False))
+        self.type = node_type
+        self.negate = kwds.pop("negate", False)
 
         if node_type is not None:
             try:
@@ -62,12 +60,9 @@ class base(restriction.base, metaclass=generic_equality):
                 )
 
         if kwds.pop("finalize", True):
-            if not isinstance(restrictions, tuple):
-                sf(self, "restrictions", tuple(restrictions))
-            else:
-                sf(self, "restrictions", restrictions)
+            self.restrictions = tuple(restrictions)
         else:
-            sf(self, "restrictions", list(restrictions))
+            self.restrictions = list(restrictions)
 
         if kwds:
             kwds.pop("disable_inst_caching", None)
@@ -123,9 +118,10 @@ class base(restriction.base, metaclass=generic_equality):
         except AttributeError:
             raise TypeError("%r is finalized" % self)
 
+    @immutable.Simple.__allow_mutation_wrapper__
     def finalize(self):
         """finalize the restriction instance, disallowing adding restrictions."""
-        object.__setattr__(self, "restrictions", tuple(self.restrictions))
+        self.restrictions = tuple(self.restrictions)
 
     def __repr__(self):
         return "<%s negate=%r type=%r finalized=%r restrictions=%r @%#8x>" % (

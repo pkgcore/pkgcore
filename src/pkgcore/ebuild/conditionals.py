@@ -34,13 +34,11 @@ class DepSet(boolean.AndRestriction):
         node_conds=True,
         known_conditionals=None,
     ):
-        sf = object.__setattr__
-        sf(self, "_known_conditionals", known_conditionals)
-        sf(self, "element_class", element_class)
-        sf(self, "restrictions", restrictions)
-        sf(self, "_node_conds", node_conds)
-        sf(self, "type", restriction.package_type)
-        sf(self, "negate", False)
+        self._known_conditionals = known_conditionals
+        self.element_class = element_class
+        self.restrictions = restrictions
+        self._node_conds = node_conds
+        self.type, self.negate = restriction.package_type, False
 
     @classmethod
     def parse(

@@ -7,6 +7,7 @@ attr from a package instance and hand it to their wrapped restriction
 """
 
 import re
+from typing import Any
 
 from snakeoil.klass import generic_equality, reflective_hash
 from snakeoil.sequences import iflatten_instance
@@ -88,23 +89,16 @@ class StrRegex(base, metaclass=hashed_base):
         :param negate: should the match results be negated?
         """
 
-        sf = object.__setattr__
-        sf(self, "regex", regex)
-        sf(self, "ismatch", match)
-        sf(self, "negate", negate)
-        flags = 0
-        if not case_sensitive:
-            flags = re.I
-        sf(self, "flags", flags)
+        self.regex, self.ismatch, self.negate = regex, match, negate
+
+        self.flags = 0 if case_sensitive else re.I
         try:
-            compiled_re = re.compile(regex, flags)
+            self._matchfunc = getattr(
+                re.compile(regex, self.flags), "match" if match else "search"
+            )
         except re.error as e:
             raise ValueError(f"invalid regex: {regex!r}, {e}")
-        if match:
-            sf(self, "_matchfunc", compiled_re.match)
-        else:
-            sf(self, "_matchfunc", compiled_re.search)
-        sf(self, "_hash", hash((self.regex, self.negate, self.flags, self.ismatch)))
+        self._hash = hash((self.regex, self.negate, self.flags, self.ismatch))
 
     def match(self, value):
         if not isinstance(value, str):
@@ -144,21 +138,18 @@ class StrExactMatch(base, metaclass=generic_equality):
     __slots__ = __attr_comparison__ = ("_hash", "exact", "case_sensitive", "negate")
     __inst_caching__ = True
 
-    def __init__(self, exact, case_sensitive=True, negate=False):
+    def __init__(self, exact: str, case_sensitive=True, negate=False):
         """
         :param exact: exact string to match
         :param case_sensitive: should the match be case sensitive?
         :param negate: should the match results be negated?
         """
 
-        sf = object.__setattr__
-        sf(self, "negate", negate)
-        sf(self, "case_sensitive", case_sensitive)
+        self.negate, self.case_sensitive = negate, case_sensitive
         if not case_sensitive:
-            sf(self, "exact", str(exact).lower())
-        else:
-            sf(self, "exact", str(exact))
-        sf(self, "_hash", hash((self.exact, self.negate, self.case_sensitive)))
+            exact = exact.lower()
+        self.exact = exact
+        self._hash = hash((self.exact, self.negate, self.case_sensitive))
 
     def match(self, value):
         value = str(value)
@@ -209,16 +200,14 @@ class StrGlobMatch(base, metaclass=hashed_base):
         :param negate: should the match results be negated?
         """
 
-        sf = object.__setattr__
-        sf(self, "negate", negate)
+        self.negate = negate
+
         if not case_sensitive:
-            sf(self, "flags", re.I)
-            sf(self, "glob", str(glob).lower())
+            self.flags, self.glob = re.I, glob.lower()
         else:
-            sf(self, "flags", 0)
-            sf(self, "glob", str(glob))
-        sf(self, "prefix", prefix)
-        sf(self, "_hash", hash((self.glob, self.negate, self.flags, self.prefix)))
+            self.flags, self.glob = 0, glob
+        self.prefix = prefix
+        self._hash = hash((self.glob, self.negate, self.flags, self.prefix))
 
     def match(self, value):
         value = str(value)
@@ -259,15 +248,12 @@ class EqualityMatch(base, metaclass=generic_equality):
     __slots__ = ("negate", "data")
     __attr_comparison__ = __slots__
 
-    def __init__(self, data, negate=False):
+    def __init__(self, data: Any, negate=False):
         """
         :param data: data to base comparison against
         :param negate: should the results be negated?
         """
-
-        sf = object.__setattr__
-        sf(self, "negate", negate)
-        sf(self, "data", data)
+        self.negate, self.data = negate, data
 
     def __hash__(self):
         return hash((self.__class__, self.negate, self.data))
@@ -302,11 +288,9 @@ class ContainmentMatch(base, metaclass=hashed_base):
         :keyword negate: should the match results be negated?
         """
 
-        sf = object.__setattr__
-        sf(self, "all", bool(match_all))
-        sf(self, "vals", frozenset((vals,) if isinstance(vals, str) else vals))
-        sf(self, "negate", bool(negate))
-        sf(self, "_hash", hash((self.all, self.negate, self.vals)))
+        self.all, self.negate = bool(match_all), bool(negate)
+        self.vals = frozenset((vals,) if isinstance(vals, str) else vals)
+        self._hash = hash((self.all, self.negate, self.vals))
 
     def match(self, val, _values_override=None):
         vals = _values_override
@@ -519,9 +503,9 @@ class FlatteningRestriction(base, metaclass=generic_equality):
         :type childrestriction: restriction
         :param childrestriction: restriction applied to the flattened list.
         """
-        object.__setattr__(self, "negate", negate)
-        object.__setattr__(self, "dont_iter", dont_iter)
-        object.__setattr__(self, "restriction", childrestriction)
+        self.negate = negate
+        self.dont_iter = dont_iter
+        self.restriction = childrestriction
 
     def match(self, val):
         return (
@@ -560,8 +544,7 @@ class FunctionRestriction(base, metaclass=generic_equality):
         restriction using this class you should only use it if it is
         very unlikely backend-specific optimizations will be possible.
         """
-        object.__setattr__(self, "negate", negate)
-        object.__setattr__(self, "func", func)
+        self.negate, self.func = negate, func
 
     def match(self, val):
         return self.func(val) != self.negate
@@ -582,7 +565,7 @@ class StrConversion(base, metaclass=generic_equality):
     __attr_comparison__ = __slots__ = ("restrict",)
 
     def __init__(self, restrict):
-        object.__setattr__(self, "restrict", restrict)
+        self.restrict = restrict
 
     def match(self, val):
         return self.restrict.match(str(val))

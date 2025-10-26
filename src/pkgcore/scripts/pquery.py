@@ -29,9 +29,8 @@ from ..fs import fs as fs_module
 from ..repository import multiplex
 from ..repository.util import get_raw_repos, get_virtual_repos
 from ..restrictions import boolean, packages, values
-from ..util import commandline
+from ..util import commandline, parserestrict
 from ..util import packages as pkgutils
-from ..util import parserestrict
 
 
 class DataSourceRestriction(values.base):
@@ -46,8 +45,7 @@ class DataSourceRestriction(values.base):
         **kwargs,
     ):
         super().__init__(**kwargs)
-        object.__setattr__(self, "restriction", childrestriction)
-        object.__setattr__(self, "negate", negate)
+        self.negate, self.restriction = negate, childrestriction
 
     def __str__(self):
         return f"DataSourceRestriction: {self.restriction} negate={self.negate}"

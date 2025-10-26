@@ -30,8 +30,7 @@ class delegate(restriction.base):
         if not callable(transform_func):
             raise TypeError(transform_func)
 
-        object.__setattr__(self, "negate", negate)
-        object.__setattr__(self, "_transform", transform_func)
+        self.negate, self._transform = negate, transform_func
 
     def match(self, pkginst):
         return self._transform(pkginst, "match") != self.negate

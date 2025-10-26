@@ -843,7 +843,7 @@ def main(options, out, err):
         if matches is None:
             if not options.ignore_failures:
                 error_msg = [f"no matching {pkg_type}: {token!r}"]
-                if token in config.pkgset:
+                if token in config.objects.pkgset:
                     error_msg.append(f"use '@{token}' instead for the package set")
                 elif options.usepkgonly:
                     matches = parse_target(

@@ -12,6 +12,7 @@ from snakeoil.chksum import get_chksums, get_handlers
 from snakeoil.compatibility import cmp
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.data_source import local_source
+from snakeoil.klass import immutable
 from snakeoil.mappings import LazyFullValLoadDict
 from snakeoil.osutils import normpath, pjoin
 
@@ -49,7 +50,7 @@ def gen_doc_additions(init, slots):
     )
 
 
-class fsBase:
+class fsBase(immutable.Simple):
     """base class, all extensions must derive from this class"""
 
     __slots__ = ("location", "mtime", "mode", "uid", "gid")
@@ -63,18 +64,16 @@ class fsBase:
     )
 
     klass.inject_richcmp_methods_from_cmp(locals())
-    klass.inject_immutable_instance(locals())
 
     def __init__(self, location, strict=True, **d):
         d["location"] = normpath(location)
 
-        s = object.__setattr__
         if strict:
             for k in self.__attrs__:
-                s(self, k, d[k])
+                object.__setattr__(self, k, d[k])
         else:
             for k, v in d.items():
-                s(self, k, v)
+                object.__setattr__(self, k, v)
 
     gen_doc_additions(__init__, __attrs__)
 

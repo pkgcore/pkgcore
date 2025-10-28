@@ -257,6 +257,8 @@ def _setup_restrictions(namespace):
 class _UnfilteredRepos(DictMixin):
     """Generate custom, unfiltered repos on demand."""
 
+    __slots__ = ("domain", "unfiltered_repos")
+
     _supported_attrs = {
         "pkg_masks",
         "pkg_unmasks",

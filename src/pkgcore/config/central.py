@@ -32,6 +32,7 @@ class _ConfigMapping(mappings.DictMixin):
     any of them are remote!
     """
 
+    __slots__ = ("manager", "typename")
     typename: str
 
     def __init__(self, manager, typename: str) -> None:

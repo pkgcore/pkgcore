@@ -6,9 +6,13 @@ from functools import partial
 
 from snakeoil import caching, klass
 from snakeoil.currying import pretty_docs
+from snakeoil.klass import meta
 
 
-class base(klass.SlotsPicklingMixin, metaclass=caching.WeakInstMeta):
+class base(
+    klass.SlotsPicklingMixin,
+    metaclass=meta.combine_classes(caching.WeakInstMeta, meta.Immutable),
+):
     """base restriction matching object.
 
     all derivatives *should* be __slots__ based (lot of instances may
@@ -20,8 +24,6 @@ class base(klass.SlotsPicklingMixin, metaclass=caching.WeakInstMeta):
     # __weakref__ here is implicit via the metaclass
     __slots__ = ()
     package_matching = False
-
-    klass.inject_immutable_instance(locals())
 
     def match(self, *arg, **kwargs):
         raise NotImplementedError
@@ -75,9 +77,7 @@ class AlwaysBool(base):
         return self.negate, self.type
 
     def __setstate__(self, state):
-        negate, node_type = state
-        object.__setattr__(self, "negate", negate)
-        object.__setattr__(self, "type", node_type)
+        self.negate, self.type = state
 
 
 class Negate(base):

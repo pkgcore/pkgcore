@@ -45,15 +45,14 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
         """
         if not childrestriction.type == self.subtype:
             raise TypeError("restriction must be of type %r" % (self.subtype,))
-        sf = object.__setattr__
-        sf(self, "negate", negate)
+        self.negate = negate
         self._parse_attr(attr)
-        sf(self, "restriction", childrestriction)
-        sf(self, "ignore_missing", ignore_missing)
+        self.restriction = childrestriction
+        self.ignore_missing = ignore_missing
 
     def _parse_attr(self, attr):
-        object.__setattr__(self, "_pull_attr_func", static_attrgetter(attr))
-        object.__setattr__(self, "_attr_split", attr.split("."))
+        self._pull_attr_func = static_attrgetter(attr)
+        self._attr_split = attr.split(".")
 
     def _pull_attr(self, pkg):
         try:
@@ -171,10 +170,8 @@ class PackageRestrictionMulti(PackageRestriction):
         return tuple(".".join(x) for x in self._attr_split)
 
     def _parse_attr(self, attrs):
-        object.__setattr__(
-            self, "_pull_attr_func", tuple(map(static_attrgetter, attrs))
-        )
-        object.__setattr__(self, "_attr_split", tuple(x.split(".") for x in attrs))
+        self._pull_attr_func = tuple(map(static_attrgetter, attrs))
+        self._attr_split = tuple(x.split(".") for x in attrs)
 
     def _pull_attr(self, pkg):
         val = []
@@ -216,7 +213,7 @@ class Conditional(PackageRestriction, metaclass=generic_equality):
         :param kwds: additional args to pass to :obj:`PackageRestriction`
         """
         PackageRestriction.__init__(self, attr, childrestriction, **kwds)
-        object.__setattr__(self, "payload", tuple(payload))
+        self.payload = tuple(payload)
 
     def __str__(self):
         s = PackageRestriction.__str__(self)
@@ -287,8 +284,8 @@ class KeyedAndRestriction(boolean.AndRestriction):
         key = kwds.pop("key", None)
         tag = kwds.pop("tag", None)
         boolean.AndRestriction.__init__(self, *a, **kwds)
-        object.__setattr__(self, "key", key)
-        object.__setattr__(self, "tag", tag)
+        self.key = key
+        self.tag = tag
 
     def __str__(self):
         boolean_str = boolean.AndRestriction.__str__(self)

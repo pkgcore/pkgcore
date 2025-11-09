@@ -7,10 +7,17 @@ man html:
 
 html: man
 
+.PHONY: docs
+docs: man html
+
 .PHONY: sdist wheel
 sdist wheel:
 	$(PYTHON) -m build --$@
 
+sdist: man
+
+.PHONY: release
+release: sdist wheel
 
 .PHONY: clean
 clean:

@@ -20,6 +20,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Reject any VCS dependencies
+      shell: python
+      run: |
+        import re, tomllib
+        deps = tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']
+        if rejects := list(filter(re.compile(r'@[^+]+').search, deps)):
+          rejects = "  \n".join(sorted(rejects))
+          raise Exception(f'VCS dependencies were detected in [build-system]:\n  {rejects}')
+
     - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:

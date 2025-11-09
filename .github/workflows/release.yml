@@ -24,7 +24,9 @@ jobs:
       shell: python
       run: |
         import re, tomllib
-        deps = tomllib.load(open('pyproject.toml', 'rb'))['build-system']['requires']
+        manifest = tomllib.load(open('pyproject.toml', 'rb'))
+        deps = manifest['build-system']['requires']
+        deps.extend(manifest['project']['dependencies'])
         if rejects := list(filter(re.compile(r'@[^+]+').search, deps)):
           rejects = "  \n".join(sorted(rejects))
           raise Exception(f'VCS dependencies were detected in [build-system]:\n  {rejects}')

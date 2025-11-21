@@ -5,7 +5,7 @@ import traceback
 from functools import partial
 
 from snakeoil.errors import dump_error
-from snakeoil.test.mixins import PythonNamespaceWalker
+from snakeoil.python_namespaces import PythonNamespaceWalker
 
 from ..config import basics, errors
 from ..ebuild import atom

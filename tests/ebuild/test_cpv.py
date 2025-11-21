@@ -1,6 +1,7 @@
 from random import shuffle
 
 import pytest
+
 from pkgcore.ebuild import cpv
 
 
@@ -20,19 +21,25 @@ def generate_misc_sufs():
 
 class TestCPV:
     good_cats = (
+        # see https://github.com/pkgcore/pkgcore/issues/453 .  PMS regex broke from pre spec allowing some weird stuff.
         "dev-util",
         "dev+",
-        "dev-util+",
-        "DEV-UTIL",
+        "DEV-UTIL+",
         "aaa0",
         "aaa-0",
-        "multi/depth",
-        "cross-dev_idiot.hacks-suck",
-        "a",
-        "foo---",
         "multi--hyphen",
+        "_dev",
+        "_",  # yep, that's legal.
     )
-    bad_cats = (".util", "_dev", "", "dev-util ", "multi//depth")
+    bad_cats = (
+        "",
+        "-",
+        "+",
+        "dev-util ",
+        "multi/blah/depth",
+        "multi//depth",
+        "reject.a",
+    )
     good_pkgs = (
         "diffball",
         "a9",

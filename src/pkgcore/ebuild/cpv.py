@@ -21,9 +21,9 @@ demand_compile_regexp(
     r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$",
 )
 
-demand_compile_regexp(
-    "isvalid_cat_re", r"^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$"
-)
+# see https://github.com/pkgcore/pkgcore/issues/453 for why this regex underscores
+# PMS Category names regex is directly replicated below.
+demand_compile_regexp("isvalid_cat_re", r"^(?:[A-Za-z0-9_][A-Za-z0-9+_-]*)$")
 
 # empty string is fine, means a -- was encounter.
 demand_compile_regexp("_pkg_re", r"^[a-zA-Z0-9+_]+$")

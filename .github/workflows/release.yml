@@ -2,34 +2,26 @@ name: release
 
 on:
   push:
-    branches: [deploy]
+    branches: [release-test-pypi, release-test-github, release-test-full]
     tags: [v*]
   workflow_dispatch:
 
+
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment: release
-
-    permissions:
-      id-token: write # Used to authenticate to PyPI via OIDC
-
-      contents: write # Used to authenticate github release publish
+    outputs:
+      release-artifact-id: ${{ steps.upload-release.outputs.artifact-id }}
+      wheel-artifact-id: ${{ steps.upload-wheel.outputs.artifact-id }}
+      artifact-runner: ${{ github.job }}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Reject any VCS dependencies
-      shell: python
-      run: |
-        import re, tomllib
-        manifest = tomllib.load(open('pyproject.toml', 'rb'))
-        deps = manifest['build-system']['requires']
-        deps.extend(manifest['project']['dependencies'])
-        if rejects := list(filter(re.compile(r'@[^+]+').search, deps)):
-          rejects = "  \n".join(sorted(rejects))
-          raise Exception(f'VCS dependencies were detected in [build-system]:\n  {rejects}')
+      continue-on-error: ${{ github.ref_type == 'branch' && github.ref_name != 'release-test-full' }}
+      uses: ferringb/gh-actions/reject-python-vcs-deps@main
 
     - name: Set up Python 3.13
       uses: actions/setup-python@v5
@@ -41,15 +33,11 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build ".[test,doc]"
-
-    - name: Test with pytest
-      env:
-        PY_COLORS: 1 # forcibly enable pytest colors
-      run: pytest
+        pip install build ".[doc]"
 
     - name: Build sdist
       run: |
+        which pytest && echo "safe"
         git clean -fxd
         make man
         make sdist
@@ -60,21 +48,89 @@ jobs:
     - name: Output dist file info
       run: |
         sha512sum dist/*
+        echo ::group::Release contents
         tar -ztf dist/*.tar.gz | sort
+        echo ::endgroup::
+        echo ::group::All generated content in dist
+        find .
+        echo ::endgroup::
 
-    - uses: actions/upload-artifact@v4
+    - name: Upload wheel
+      id: upload-wheel
+      uses: actions/upload-artifact@v5
       with:
-        name: results
-        path: dist/*
+        name: wheel-release
+        path: dist/*.whl
+        if-no-files-found: error
 
-    - name: publish
-      uses: pypa/gh-action-pypi-publish@release/v1
-      if: startsWith(github.ref, 'refs/tags/')
-
-    - name: Create GitHub release
-      uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
+    - name: Upload release source
+      id: upload-release
+      uses: actions/upload-artifact@v5
       with:
-        files: dist/*.tar.gz
+        name: release-source
+        path: dist/*.tar.gz
+        if-no-files-found: error
+
+  test:
+    needs: [build]
+    uses: ./.github/workflows/test.yml
+    with:
+      release-artifact-id: ${{ needs.build.outputs.release-artifact-id }}
+      format-check: false
+
+  publish:
+    if: github.ref_type == 'tag'
+    needs: [build, test]
+    environment: release
+    permissions:
+      id-token: write # Used to authenticate to PyPI via OIDC
+      contents: write # release uploads
+    runs-on: ubuntu-latest
+
+    steps:
+    - &common_download_artifacts
+      name: Download artifacts
+      uses: actions/download-artifact@v5
+      with:
+        merge-multiple: true # store both in the root, not in named directories
+        artifact-ids: ${{ needs.build.outputs.release-artifact-id }},${{ needs.build.outputs.wheel-artifact-id }}
+
+    - name: Publish github source
+      uses: softprops/action-gh-release@v2
+      with:
+        files: '*.tar.*'
+        fail_on_unmatched_files: true
+
+    - name: Publish to PyPi server
+      uses: pypa/gh-action-pypi-publish@release/v1.13
+      with:
+        packages-dir: .
+
+  test-publish:
+    # use the full form to ensure insane tags and errors in 'on' filter still don't kick.
+    if: github.ref_type == 'branch'
+    needs: [build, test]
+    environment: test-release
+    permissions:
+      id-token: write # Used to authenticate to PyPI via OIDC
+      contents: write # release uploads-
+    runs-on: ubuntu-latest
+
+    steps:
+    - *common_download_artifacts
+    - name: Publish github source
+      uses: softprops/action-gh-release@v2
+      if: github.ref_name == 'release-test-github' || github.ref_name == 'release-test-full'
+      with:
+        files: '*.tar.*'
         fail_on_unmatched_files: true
         draft: true
+
+    - name: Publish to Test PyPi server
+      if: github.ref_name == 'release-test-pypi' || github.ref_name == 'release-test-full'
+      uses: pypa/gh-action-pypi-publish@release/v1.13
+      with:
+        packages-dir: .
+        repository-url: https://test.pypi.org/legacy/
+        # attestations are bound in a way re-releasing isn't possible.  Disable for tests.
+        attestations: false

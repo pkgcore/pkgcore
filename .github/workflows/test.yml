@@ -2,10 +2,20 @@ name: test
 
 on:
   push:
-    branches-ignore: [deploy]
+    branches-ignore: [release-test-*]
   pull_request:
     branches: [master]
-
+  workflow_call:
+    inputs:
+      release-artifact-id:
+        required: false
+        type: string
+        default: ''
+        description: The artifact-id to run the tests against.
+      format-check:
+        type: boolean
+        default: true
+        description: Run the ruff format check.  This should only be disabled for releases.
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -32,8 +42,10 @@ jobs:
       fail-fast: false
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Checkout pkgcore
+      uses: ferringb/gh-actions/get-source@main
+      with:
+        artifact-id: ${{ inputs.release-artifact-id }}
 
     - name: Pin dependencies to minimal versions
       if: ${{ matrix.deps == 'minimal-deps' }}
@@ -77,12 +89,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v4
+      uses: ferringb/gh-actions/get-source@main
       with:
+        artifact-id: ${{ inputs.release-artifact-id }}
         path: pkgcore
 
     - name: Checkout pkgcheck
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: pkgcore/pkgcheck
         path: pkgcheck
@@ -99,7 +112,7 @@ jobs:
     - name: Install pip dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e "./pkgcore"
+        pip install "./pkgcore"
         pip install "./pkgcheck[test]"
 
     - name: Test with pytest
@@ -112,12 +125,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v4
+      uses: ferringb/gh-actions/get-source@main
       with:
+        artifact-id: ${{ inputs.release-artifact-id }}
         path: pkgcore
-
     - name: Checkout pkgdev
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
       with:
         repository: pkgcore/pkgdev
         path: pkgdev
@@ -134,7 +147,7 @@ jobs:
     - name: Install pip dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e "./pkgcore"
+        pip install "./pkgcore"
         pip install "./pkgdev[test]"
 
     - name: Test with pytest
@@ -145,9 +158,10 @@ jobs:
 
   format:
     runs-on: ubuntu-latest
+    if: inputs.format-check
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - name: Checkout pkgcore
+      uses: actions/checkout@v5
     - uses: astral-sh/ruff-action@v3
       with:
         args: "format --check --diff"
@@ -156,8 +170,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v4
+      uses: ferringb/gh-actions/get-source@main
       with:
+        artifact-id: ${{ inputs.release-artifact-id }}
         path: pkgcore
 
     - name: Checkout gentoo
@@ -174,7 +189,7 @@ jobs:
     - name: Install pip dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e "./pkgcore"
+        pip install "./pkgcore"
 
     - name: Run pmaint regen
       working-directory: ./gentoo

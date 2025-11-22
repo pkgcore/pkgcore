@@ -19,6 +19,7 @@ import sys
 import typing
 from functools import partial
 
+import snakeoil.formatters
 from snakeoil.cli import arghparse
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import sizeof_fmt
@@ -1230,7 +1231,9 @@ def _validate_args(parser, namespace):
 
 
 @argparser.bind_main_func
-def main(options, out, err):
+def main(
+    options, out: snakeoil.formatters.Formatter, err: snakeoil.formatters.Formatter
+):
     """Run a query."""
     if options.debug:
         for repo in options.repos:

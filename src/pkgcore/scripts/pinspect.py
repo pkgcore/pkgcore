@@ -19,6 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 from itertools import groupby, islice
 from operator import attrgetter, itemgetter
 
+import snakeoil.formatters
 from snakeoil.cli import arghparse
 from snakeoil.sequences import iflatten_instance, unstable_unique
 
@@ -54,7 +55,7 @@ del mux
 
 
 @pkgsets.bind_main_func
-def pkgsets_run(opts, out, err):
+def pkgsets_run(opts, out: snakeoil.formatters.PlainTextFormatter, _err):
     if not opts.pkgsets:
         if not opts.all:
             out.write(
@@ -427,7 +428,7 @@ digests.add_argument(
 
 
 @digests.bind_main_func
-def digest_manifest(options, out, err):
+def digest_manifest(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     for name, repo in options.repos:
         count = 0
         broken = []

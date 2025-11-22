@@ -4,6 +4,7 @@ import textwrap
 import traceback
 from functools import partial
 
+import snakeoil.formatters
 from snakeoil.errors import dump_error
 from snakeoil.python_namespaces import PythonNamespaceWalker
 
@@ -128,7 +129,11 @@ classes = subparsers.add_parser(
 
 
 @classes.bind_main_func
-def classes_main(options, out, err):
+def classes_main(
+    options,
+    out: snakeoil.formatters.PlainTextFormatter,
+    _err: snakeoil.formatters.PlainTextFormatter,
+):
     """List all classes referenced by the config."""
     configmanager = options.config
     sections = []
@@ -157,7 +162,11 @@ describe_class.add_argument(
 
 
 @describe_class.bind_main_func
-def describe_class_main(options, out, err):
+def describe_class_main(
+    options,
+    out: snakeoil.formatters.PlainTextFormatter,
+    err: snakeoil.formatters.PlainTextFormatter,
+):
     """Describe the arguments a class needs."""
     try:
         type_obj = basics.ConfigType(options.target_class)
@@ -194,7 +203,7 @@ uncollapsable = subparsers.add_parser(
 
 
 @uncollapsable.bind_main_func
-def uncollapsable_main(options, out, err):
+def uncollapsable_main(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     """Show things that could not be collapsed."""
     config = options.config
     for name in sorted(config.sections()):
@@ -233,7 +242,7 @@ dump.add_argument(
 
 
 @dump.bind_main_func
-def dump_main(options, out, err):
+def dump_main(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     """Dump the entire configuration."""
     config = options.config
     if options.typename is None:
@@ -293,7 +302,7 @@ configurables.add_argument(
 
 
 @configurables.bind_main_func
-def configurables_main(options, out, err):
+def configurables_main(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     """List registered configurables."""
 
     # try and sort this beast.
@@ -366,7 +375,11 @@ dump_uncollapsed = subparsers.add_parser(
 
 
 @dump_uncollapsed.bind_main_func
-def dump_uncollapsed_main(options, out, err):
+def dump_uncollapsed_main(
+    options,
+    out: snakeoil.formatters.PlainTextFormatter,
+    err: snakeoil.formatters.PlainTextFormatter,
+):
     """dump the configuration in a raw, uncollapsed form.
     Not directly usable as a configuration file, mainly used for inspection
     """
@@ -410,7 +423,11 @@ commandline.make_query(
 
 
 @package.bind_main_func
-def package_func(options, out, err):
+def package_func(
+    options,
+    out: snakeoil.formatters.PlainTextFormatter,
+    _err: snakeoil.formatters.PlainTextFormatter,
+):
     matched = True
     domain = options.domain
     for pkg in domain.installed_repos.combined.itermatch(options.query):
@@ -468,7 +485,11 @@ world.set_defaults(
 
 
 @world.bind_main_func
-def world_func(options, out, err):
+def world_func(
+    options,
+    out: snakeoil.formatters.PlainTextFormatter,
+    _err: snakeoil.formatters.PlainTextFormatter,
+):
     world_file = options.world
 
     if options.remove:

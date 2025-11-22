@@ -12,6 +12,7 @@ from collections import defaultdict
 from functools import partial
 from itertools import chain
 
+import snakeoil.formatters
 from snakeoil.mappings import DictMixin
 from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
 from snakeoil.sequences import iflatten_instance, split_negations
@@ -301,7 +302,7 @@ config = subparsers.add_parser(
 
 
 @config.bind_main_func
-def config_main(options, out, err):
+def config_main(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     domain = options.domain
     installed_repos = domain.all_installed_repos
     all_repos_raw = domain.all_repos_raw
@@ -685,7 +686,11 @@ def _tmp_validate_args(parser, namespace):
 @dist.bind_main_func
 @pkg.bind_main_func
 @tmp.bind_main_func
-def _remove(options, out, err):
+def _remove(
+    options,
+    out: snakeoil.formatters.PlainTextFormatter,
+    err: snakeoil.formatters.PlainTextFormatter,
+):
     """Generic removal runner."""
     ret = 0
     if sys.stdout.isatty():

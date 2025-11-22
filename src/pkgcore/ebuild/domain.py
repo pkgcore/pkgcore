@@ -573,7 +573,9 @@ class domain(config_domain):
                 ((packages.AlwaysTrue, default_keys),), (f(*i) for i in accept_keywords)
             )
         else:
-            data = non_incremental_collapsed_restrict_to_data(((packages.AlwaysTrue, default_keys),), accept_keywords)
+            data = non_incremental_collapsed_restrict_to_data(
+                ((packages.AlwaysTrue, default_keys),), accept_keywords
+            )
 
         return delegate(partial(self._apply_keywords_filter, data))
 

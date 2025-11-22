@@ -45,6 +45,7 @@ INCREMENTALS = (
     "ENV_UNSET",
 )
 
+
 class ProfileError(errors.ParsingError):
     def __init__(self, path, filename, error):
         self.path, self.filename, self.error = path, filename, error

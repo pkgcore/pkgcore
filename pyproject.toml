@@ -63,7 +63,6 @@ pebuild = "pkgcore.scripts.__init__:main"
 pinspect = "pkgcore.scripts.__init__:main"
 pmaint = "pkgcore.scripts.__init__:main"
 pmerge = "pkgcore.scripts.__init__:main"
-pplugincache = "pkgcore.scripts.__init__:main"
 pquery = "pkgcore.scripts.__init__:main"
 
 [tool.flit.external-data]

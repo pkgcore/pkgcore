@@ -282,7 +282,6 @@ def all_configurables():
         if getattr(obj := getattr(module, name), "pkgcore_config_type", None)
         is not None
         if not getattr(obj, "disabled", False)
-        if not getattr(obj, "_plugin_disabled_check", lambda: False)()
     )
 
 

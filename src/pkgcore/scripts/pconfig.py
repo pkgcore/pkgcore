@@ -6,7 +6,10 @@ from functools import partial
 
 import snakeoil.formatters
 from snakeoil.errors import dump_error
-from snakeoil.python_namespaces import PythonNamespaceWalker
+from snakeoil.klass import get_subclasses_of
+from snakeoil.python_namespaces import import_submodules_of
+
+from pkgcore.config.hint import ConfigHint
 
 from ..config import basics, errors
 from ..ebuild import atom
@@ -264,25 +267,14 @@ def dump_main(options, out: snakeoil.formatters.PlainTextFormatter, _err):
 
 
 def all_configurables():
-    class walker(PythonNamespaceWalker):
-        ignore_all_import_failures = True
-
-        def _default_module_blacklister(self, target):
-            if (
-                target.startswith(("pkgcore.test.", "pkgcore.plugins."))
-                or "pkgcore.test" == target
-            ):
-                return True
-            return super()._default_module_blacklister(target)
-
-    return (
-        obj
-        for module in walker().walk_namespace("pkgcore")
-        for name in dir(module)
-        if getattr(obj := getattr(module, name), "pkgcore_config_type", None)
-        is not None
-        if not getattr(obj, "disabled", False)
-    )
+    import_submodules_of(__import__("pkgcore"), dont_try=["pkgcore.test"])
+    # note: just because we said "don't load pkgcore.test" doesn't mean it's not already in
+    # memory due to tests being ran.  Still filter.
+    for cls in get_subclasses_of(object):  # yep, walking the full class hierachy.
+        # TODO: rewrite this to the eventual snakeoil.registry
+        if config_hint := getattr(cls, "pkgcore_config_type", None):
+            assert isinstance(config_hint, ConfigHint)
+            yield cls
 
 
 configurables = subparsers.add_parser(

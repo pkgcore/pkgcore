@@ -3,15 +3,18 @@ SPHINX_BUILD ?= $(PYTHON) -m sphinx.cmd.build
 
 .PHONY: man html
 man html:
-	$(SPHINX_BUILD) -a -b $@ doc build/sphinx/$@
+	doc/build.sh $@ "$$(pwd)/build/sphinx/$@"
+
+html: man
 
 .PHONY: sdist wheel
 sdist wheel:
 	$(PYTHON) -m build --$@
 
+
 .PHONY: clean
 clean:
-	$(RM) -r build/sphinx doc/api doc/generated dist
+	$(RM) -r build doc/api doc/generated dist
 	$(MAKE) -C data/lib/pkgcore/ebd clean
 
 .PHONY: format

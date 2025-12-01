@@ -70,7 +70,7 @@ jobs:
     uses: ./.github/workflows/test.yml
     with:
       release-artifact-id: ${{ needs.build.outputs.release-artifact-id }}
-      format-check: false
+      disable-format-check: true
 
   publish:
     if: github.ref_type == 'tag'

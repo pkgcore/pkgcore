@@ -12,10 +12,11 @@ on:
         type: string
         default: ''
         description: The artifact-id to run the tests against.
-      format-check:
-        type: boolean
-        default: true
-        description: Run the ruff format check.  This should only be disabled for releases.
+      disable-format-check:
+        type: string
+        default: ''
+        description: Disable ruff format check if it is a non empty value
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -140,7 +141,7 @@ jobs:
 
   format:
     runs-on: ubuntu-latest
-    if: inputs.format-check
+    if: inputs.disable-format-check == ''
     steps:
     - name: Checkout pkgcore
       uses: actions/checkout@v5

@@ -154,6 +154,14 @@ class TestCPV:
                 f"1{'0' * x}1"
             )
 
+    def test_parsing_recursion_gh459(self):
+        # if it hangs, it failed.
+        self.process_pkg(
+            True,
+            "dev-java",
+            "log5j-777777777777777777777777777777777-777777777777777777-7777777777777777777-7777777-7dev-q!7778/qt77ased-77",
+        )
+
     def process_pkg(self, ret, cat, pkg):
         if ret:
             with pytest.raises(cpv.InvalidCPV):

@@ -1,6 +1,6 @@
 *.py[co]
 .*.sw[po]
-.venv/
+.venv
 
 # C extensions
 src/**/*.so

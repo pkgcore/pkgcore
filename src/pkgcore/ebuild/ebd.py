@@ -22,6 +22,7 @@ import shutil
 import sys
 import time
 from collections import defaultdict
+from contextlib import chdir
 from functools import partial
 from itertools import chain
 from os.path import join as pjoin, normpath
@@ -29,7 +30,6 @@ from tempfile import TemporaryFile
 
 from snakeoil import data_source, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.contexts import chdir
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, listdir_files

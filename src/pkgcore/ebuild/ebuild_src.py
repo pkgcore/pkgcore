@@ -10,7 +10,7 @@ from itertools import chain
 from sys import intern
 
 from snakeoil import chksum, data_source, fileutils, klass
-from snakeoil.demandload import demand_compile_regexp
+from snakeoil.delayed import regexp
 from snakeoil.mappings import OrderedFrozenSet
 
 from .. import fetch
@@ -26,10 +26,8 @@ from .atom import atom
 from .eapi import get_eapi
 from .misc import sort_keywords
 
-demand_compile_regexp(
-    "_EAPI_regex", r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?"
-)
-demand_compile_regexp("_EAPI_str_regex", r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
+_EAPI_regex = regexp(r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
+_EAPI_str_regex = regexp(r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
 
 
 class base(metadata.package):

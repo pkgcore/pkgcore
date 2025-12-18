@@ -3,30 +3,29 @@
 from collections import UserString
 
 from snakeoil.compatibility import cmp
-from snakeoil.demandload import demand_compile_regexp
+from snakeoil.delayed import regexp
 
 from ..package import base
 from . import atom
 from .errors import InvalidCPV
 
-demand_compile_regexp("suffix_regexp", "^(alpha|beta|rc|pre|p)(\\d*)$")
+suffix_regexp = regexp("^(alpha|beta|rc|pre|p)(\\d*)$")
 
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
 # while the package section looks fugly, there is a reason for it-
 # to prevent version chunks from showing up in the package
 
-demand_compile_regexp(
-    "isvalid_version_re",
-    r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$",
+isvalid_version_re = regexp(
+    r"^(?:\d+)(?:\.\d+)*[a-zA-Z]?(?:_(p(?:re)?|beta|alpha|rc)\d*)*$"
 )
 
 # see https://github.com/pkgcore/pkgcore/issues/453 for why this regex underscores
 # PMS Category names regex is directly replicated below.
-demand_compile_regexp("isvalid_cat_re", r"^(?:[A-Za-z0-9_][A-Za-z0-9+_-]*)$")
+isvalid_cat_re = regexp(r"^(?:[A-Za-z0-9_][A-Za-z0-9+_-]*)$")
 
 # empty string is fine, means a -- was encounter.
-demand_compile_regexp("_pkg_re", r"^[a-zA-Z0-9+_]+$")
+_pkg_re = regexp(r"^[a-zA-Z0-9+_]+$")
 
 
 def isvalid_pkg_name(chunks):

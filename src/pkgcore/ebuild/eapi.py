@@ -9,7 +9,7 @@ from os.path import join as pjoin
 from weakref import WeakValueDictionary
 
 from snakeoil import klass
-from snakeoil.demandload import demand_compile_regexp
+from snakeoil.delayed import regexp
 from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
 from snakeoil.process.spawn import bash_version
 from snakeoil.sequences import unique_stable
@@ -25,8 +25,8 @@ def get_latest_PMS_eapi():
 from ..log import logger
 from . import atom, const
 
-demand_compile_regexp("_valid_EAPI_regex", r"^[A-Za-z0-9_][A-Za-z0-9+_.-]*$")
-demand_compile_regexp("_valid_use_flag", r"^[A-Za-z0-9][A-Za-z0-9+_@-]*$")
+_valid_EAPI_regex = regexp(r"^[A-Za-z0-9_][A-Za-z0-9+_.-]*$")
+_valid_use_flag = regexp(r"^[A-Za-z0-9][A-Za-z0-9+_@-]*$")
 
 eapi_optionals = ImmutableDict(
     {

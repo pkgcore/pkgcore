@@ -11,7 +11,7 @@ from os.path import join as pjoin
 from snakeoil.cli import arghparse
 from snakeoil.contexts import patch
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.sequences import iter_stable_unique
+from snakeoil.sequences import unique_stable
 
 from ..cache.flat_hash import md5_cache
 from ..ebuild import repository as ebuild_repo
@@ -86,7 +86,7 @@ def sync_main(options, out, err):
     """Update local repos to match their remotes."""
     succeeded, failed = [], []
 
-    for repo_name, repo in iter_stable_unique(options.repos):
+    for repo_name, repo in unique_stable(options.repos):
         # rewrite the name if it has the usual prefix
         if repo_name.startswith("conf:"):
             repo_name = repo_name[5:]
@@ -374,7 +374,7 @@ def regen_main(options, out, err):
     ret = []
 
     observer = observer_mod.formatter_output(out)
-    for repo in iter_stable_unique(options.repos):
+    for repo in unique_stable(options.repos):
         if options.cache_dir is not None:
             # recreate new repo object with cache dir override
             cache = (md5_cache(pjoin(options.cache_dir.rstrip(os.sep), repo.repo_id)),)

@@ -35,7 +35,7 @@ from snakeoil.fileutils import readfile, readlines
 from snakeoil.osutils import listdir, listdir_files
 from snakeoil.osutils.mount import umount
 from snakeoil.process.namespaces import simple_unshare
-from snakeoil.sequences import iter_stable_unique
+from snakeoil.sequences import unique_stable
 from snakeoil.strings import pluralism
 
 from ..config.hint import ConfigHint
@@ -794,14 +794,14 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         hashes = data.get("manifest-hashes", "").lower().split()
         if hashes:
             hashes = ["size"] + hashes
-            hashes = tuple(iter_stable_unique(hashes))
+            hashes = tuple(unique_stable(hashes))
         else:
             hashes = self.default_hashes
 
         required_hashes = data.get("manifest-required-hashes", "").lower().split()
         if required_hashes:
             required_hashes = ["size"] + required_hashes
-            required_hashes = tuple(iter_stable_unique(required_hashes))
+            required_hashes = tuple(unique_stable(required_hashes))
         else:
             required_hashes = self.default_required_hashes
 
@@ -828,7 +828,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             _missing_masters = True
             masters = ()
         else:
-            masters = tuple(iter_stable_unique(masters.split()))
+            masters = tuple(unique_stable(masters.split()))
         sf(self, "_missing_masters", _missing_masters)
         sf(self, "masters", masters)
         aliases = data.get("aliases", "").split() + [
@@ -837,41 +837,41 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
             self.pms_repo_name,
             self.location,
         ]
-        sf(self, "aliases", tuple(filter(None, iter_stable_unique(aliases))))
+        sf(self, "aliases", tuple(filter(None, unique_stable(aliases))))
         sf(
             self,
             "eapis_deprecated",
-            tuple(iter_stable_unique(data.get("eapis-deprecated", "").split())),
+            tuple(unique_stable(data.get("eapis-deprecated", "").split())),
         )
         sf(
             self,
             "eapis_banned",
-            tuple(iter_stable_unique(data.get("eapis-banned", "").split())),
+            tuple(unique_stable(data.get("eapis-banned", "").split())),
         )
         sf(
             self,
             "eapis_testing",
-            tuple(iter_stable_unique(data.get("eapis-testing", "").split())),
+            tuple(unique_stable(data.get("eapis-testing", "").split())),
         )
         sf(
             self,
             "profile_eapis_deprecated",
-            tuple(iter_stable_unique(data.get("profile-eapis-deprecated", "").split())),
+            tuple(unique_stable(data.get("profile-eapis-deprecated", "").split())),
         )
         sf(
             self,
             "profile_eapis_banned",
-            tuple(iter_stable_unique(data.get("profile-eapis-banned", "").split())),
+            tuple(unique_stable(data.get("profile-eapis-banned", "").split())),
         )
         sf(
             self,
             "properties_allowed",
-            tuple(iter_stable_unique(data.get("properties-allowed", "").split())),
+            tuple(unique_stable(data.get("properties-allowed", "").split())),
         )
         sf(
             self,
             "restrict_allowed",
-            tuple(iter_stable_unique(data.get("restrict-allowed", "").split())),
+            tuple(unique_stable(data.get("restrict-allowed", "").split())),
         )
         sf(self, "sign_commits", data.get("sign-commits", "false").lower() == "true")
 

@@ -145,7 +145,7 @@ class DynamicGetattrSetter(type):
             # only add slots for new attr's; assume the layer above already slotted
             # if this layer is setting slots.
             class_dict["__slots__"] = tuple(
-                sequences.iter_stable_unique(
+                sequences.unique_stable(
                     itertools.chain(slots, set(new_functions).difference(existing))
                 )
             )

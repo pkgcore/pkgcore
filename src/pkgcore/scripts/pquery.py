@@ -23,7 +23,7 @@ import snakeoil.formatters
 from snakeoil.cli import arghparse
 from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import sizeof_fmt
-from snakeoil.sequences import iter_stable_unique
+from snakeoil.sequences import unique_stable
 
 from ..ebuild import atom, conditionals
 from ..fs import fs as fs_module
@@ -1227,7 +1227,7 @@ def _validate_args(parser, namespace):
     attrs.extend(process_attrs(namespace.attr))
 
     # finally, uniquify the attrs.
-    namespace.attr = list(iter_stable_unique(attrs))
+    namespace.attr = list(unique_stable(attrs))
 
 
 @argparser.bind_main_func

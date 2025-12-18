@@ -39,7 +39,7 @@ from snakeoil.process.spawn import (
     spawn,
     spawn_bash,
 )
-from snakeoil.sequences import iflatten_instance, iter_stable_unique
+from snakeoil.sequences import iflatten_instance, unique_stable
 
 from .. import const
 from ..log import logger
@@ -759,7 +759,7 @@ class buildable(ebd, setup_mixin, format.build):
         self.env["PATH"] = os.pathsep.join(path)
 
         # ordering must match appearance order in SRC_URI per PMS
-        self.env["A"] = " ".join(iter_stable_unique(pkg.distfiles))
+        self.env["A"] = " ".join(unique_stable(pkg.distfiles))
 
         if self.eapi.options.has_AA:
             pkg = self.pkg

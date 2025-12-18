@@ -2,9 +2,11 @@
 restriction classes designed for package level matching
 """
 
+from operator import attrgetter
+
 from snakeoil import klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
-from snakeoil.klass import generic_equality, static_attrgetter
+from snakeoil.klass import generic_equality
 
 from ..log import logger
 from . import boolean, restriction
@@ -51,7 +53,7 @@ class PackageRestriction(restriction.base, metaclass=generic_equality):
         self.ignore_missing = ignore_missing
 
     def _parse_attr(self, attr):
-        self._pull_attr_func = static_attrgetter(attr)
+        self._pull_attr_func = attrgetter(attr)
         self._attr_split = attr.split(".")
 
     def _pull_attr(self, pkg):
@@ -170,7 +172,7 @@ class PackageRestrictionMulti(PackageRestriction):
         return tuple(".".join(x) for x in self._attr_split)
 
     def _parse_attr(self, attrs):
-        self._pull_attr_func = tuple(map(static_attrgetter, attrs))
+        self._pull_attr_func = tuple(map(attrgetter, attrs))
         self._attr_split = tuple(x.split(".") for x in attrs)
 
     def _pull_attr(self, pkg):

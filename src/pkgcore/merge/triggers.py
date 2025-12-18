@@ -29,7 +29,7 @@ import time
 from math import floor
 
 from snakeoil import process
-from snakeoil.bash import iter_read_bash
+from snakeoil.bash import read_bash
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, listdir_files, normpath, pjoin
@@ -294,7 +294,7 @@ class ldconfig(base):
         fp = self.ld_so_path(offset)
 
         try:
-            l = [x.lstrip(os.path.sep) for x in iter_read_bash(fp)]
+            l = [x.lstrip(os.path.sep) for x in read_bash(fp)]
         except FileNotFoundError:
             self._mk_ld_so_conf(fp)
             # fall back to an educated guess.

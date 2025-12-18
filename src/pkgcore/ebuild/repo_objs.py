@@ -27,7 +27,7 @@ from sys import intern
 
 from lxml import etree
 from snakeoil import klass, mappings
-from snakeoil.bash import BashParseError, iter_read_bash, read_dict
+from snakeoil.bash import BashParseError, read_bash, read_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import readfile, readlines
@@ -629,7 +629,7 @@ class Profiles(klass.ImmutableInstance):
         l = []
         fp = pjoin(profiles_base, "profiles.desc")
         try:
-            for lineno, line in iter_read_bash(fp, enum_line=True):
+            for lineno, line in read_bash(fp, enum_line=True):
                 try:
                     arch, profile, status = line.split()
                 except ValueError:
@@ -780,9 +780,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         """Load data from the repo's metadata/layout.conf file."""
         path = pjoin(self.location, self.layout_offset)
         data = read_dict(
-            iter_read_bash(
-                readlines(path, strip_whitespace=True, swallow_missing=True)
-            ),
+            read_bash(readlines(path, strip_whitespace=True, swallow_missing=True)),
             source_isiter=True,
             strip=True,
             filename=path,
@@ -911,7 +909,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
     def known_arches(self):
         """All valid KEYWORDS for the repo."""
         try:
-            return frozenset(iter_read_bash(pjoin(self.profiles_base, "arch.list")))
+            return frozenset(read_bash(pjoin(self.profiles_base, "arch.list")))
         except FileNotFoundError:
             return frozenset()
 
@@ -924,7 +922,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         fp = pjoin(self.profiles_base, "arches.desc")
         d = {"stable": set(), "transitional": set(), "testing": set()}
         try:
-            for lineno, line in iter_read_bash(fp, enum_line=True):
+            for lineno, line in read_bash(fp, enum_line=True):
                 try:
                     arch, status = line.split()
                 except ValueError:
@@ -1020,7 +1018,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         line = None
         fp = pjoin(self.profiles_base, name)
         try:
-            for line in iter_read_bash(fp):
+            for line in read_bash(fp):
                 try:
                     key, val = line.split(None, 1)
                     key = converter(key)

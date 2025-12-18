@@ -17,7 +17,7 @@ from multiprocessing import cpu_count
 from operator import itemgetter
 
 from snakeoil import klass
-from snakeoil.bash import iter_read_bash, read_bash_dict
+from snakeoil.bash import read_bash, read_bash_dict
 from snakeoil.cli.exceptions import find_user_exception
 from snakeoil.data_source import local_source
 from snakeoil.log import suppress_logging
@@ -190,7 +190,7 @@ def _read_config_file(path):
         for fs_obj in sorted(iter_scan(path, follow_symlinks=True)):
             if not fs_obj.is_reg or "/." in fs_obj.location:
                 continue
-            for lineno, line in iter_read_bash(
+            for lineno, line in read_bash(
                 fs_obj.location, allow_line_cont=True, enum_line=True
             ):
                 yield line, lineno, fs_obj.location

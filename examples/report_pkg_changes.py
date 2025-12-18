@@ -3,7 +3,7 @@
 import os
 import sys
 
-from snakeoil.bash import iter_read_bash
+from snakeoil.bash import read_bash
 from snakeoil.osutils import listdir_files
 
 from pkgcore.config import load_config
@@ -79,7 +79,7 @@ def parse_moves(location):
 
     moves = {}
     for update_file in sorted(listdir_files(location), key=get_key):
-        for line in iter_read_bash(pjoin(location, update_file)):
+        for line in read_bash(pjoin(location, update_file)):
             line = line.split()
             if line[0] != "move":
                 continue

@@ -12,7 +12,7 @@ from functools import partial
 from itertools import chain
 
 from snakeoil import caching, klass
-from snakeoil.bash import iter_read_bash, read_bash_dict
+from snakeoil.bash import read_bash, read_bash_dict
 from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
@@ -73,7 +73,7 @@ def _read_profile_files(files, allow_line_cont=False):
             # profiles base path
             relpath = os.path.basename(path)
 
-        for lineno, line in iter_read_bash(
+        for lineno, line in read_bash(
             path, allow_line_cont=allow_line_cont, enum_line=True
         ):
             yield line, lineno, relpath

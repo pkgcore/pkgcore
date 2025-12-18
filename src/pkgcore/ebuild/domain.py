@@ -15,6 +15,7 @@ from functools import partial
 from itertools import chain
 from multiprocessing import cpu_count
 from operator import itemgetter
+from os.path import join as pjoin
 
 from snakeoil import klass
 from snakeoil.bash import read_bash, read_bash_dict
@@ -22,7 +23,6 @@ from snakeoil.cli.exceptions import find_user_exception
 from snakeoil.data_source import local_source
 from snakeoil.log import suppress_logging
 from snakeoil.mappings import ImmutableDict, ProtectedDict
-from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import predicate_split, split_negations, stable_unique
 

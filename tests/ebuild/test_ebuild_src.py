@@ -1,12 +1,12 @@
 import os
 import textwrap
 from functools import partial
+from os.path import join as pjoin
 from types import SimpleNamespace
 
 import pytest
 from snakeoil.currying import post_curry
 from snakeoil.data_source import data_source, local_source
-from snakeoil.osutils import pjoin
 
 from pkgcore import fetch
 from pkgcore.ebuild import digest, ebuild_src, repo_objs

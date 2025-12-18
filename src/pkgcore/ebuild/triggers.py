@@ -18,10 +18,11 @@ __all__ = (
 
 import fnmatch
 import os
+from os.path import join as pjoin, normpath
 
 from snakeoil.bash import read_bash_dict
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.osutils import listdir_files, normpath, pjoin
+from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance, stable_unique
 
 from .. import os_data

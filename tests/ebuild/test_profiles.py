@@ -2,6 +2,7 @@ import binascii
 import os
 import shutil
 from functools import partial
+from os.path import normpath
 from unittest import mock
 
 import pytest
@@ -11,7 +12,6 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.misc import chunked_data
 from pkgcore.restrictions import packages
-from snakeoil.osutils import normpath
 
 atrue = packages.AlwaysTrue
 

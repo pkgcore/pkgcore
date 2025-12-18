@@ -17,13 +17,13 @@ import traceback
 from functools import partial
 from itertools import chain
 from multiprocessing import cpu_count
+from os.path import normpath
 
 from snakeoil import data_source
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import touch
 from snakeoil.mappings import ImmutableDict, LazyValDict, StackedDict
-from snakeoil.osutils import normpath
 
 from ..fs import contents, livefs
 from ..operations import observer as observer_mod

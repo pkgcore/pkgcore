@@ -3,10 +3,10 @@ import subprocess
 import textwrap
 from collections.abc import MutableSet
 from datetime import datetime
+from os.path import join as pjoin
 
 from snakeoil import klass
 from snakeoil.fileutils import touch
-from snakeoil.osutils import pjoin
 
 import pytest
 

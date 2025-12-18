@@ -5,6 +5,7 @@ in memory representation of on disk eclass stacking order
 __all__ = ("base", "cache", "StackedCaches")
 
 import os
+from os.path import join as pjoin, normpath
 from sys import intern
 from weakref import WeakValueDictionary
 
@@ -12,7 +13,7 @@ from snakeoil.chksum import LazilyHashedPath
 from snakeoil.data_source import local_source
 from snakeoil.klass import jit_attr_ext_method
 from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, StackedDict
-from snakeoil.osutils import listdir_files, normpath, pjoin
+from snakeoil.osutils import listdir_files
 
 from ..config.hint import ConfigHint
 

@@ -11,10 +11,11 @@ import time
 from collections import defaultdict
 from functools import partial
 from itertools import chain
+from os.path import join as pjoin
 
 import snakeoil.formatters
 from snakeoil.mappings import DictMixin
-from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
+from snakeoil.osutils import listdir_dirs, listdir_files
 from snakeoil.sequences import iflatten_instance, split_negations
 from snakeoil.strings import pluralism
 

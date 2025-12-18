@@ -8,8 +8,7 @@ import socket
 import tempfile
 import time
 from itertools import islice
-
-from snakeoil.osutils import pjoin
+from os.path import join as pjoin
 
 from ..config.hint import ConfigHint
 from . import base

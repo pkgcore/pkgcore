@@ -4,7 +4,7 @@ filesystem entry abstractions
 
 import fnmatch
 import stat
-from os.path import abspath, basename, dirname, realpath
+from os.path import abspath, basename, dirname, join as pjoin, normpath, realpath
 from os.path import sep as path_seperator
 
 from snakeoil import klass
@@ -14,7 +14,6 @@ from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.data_source import local_source
 from snakeoil.klass import immutable
 from snakeoil.mappings import LazyFullValLoadDict
-from snakeoil.osutils import normpath, pjoin
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 

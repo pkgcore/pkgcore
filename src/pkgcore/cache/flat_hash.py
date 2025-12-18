@@ -6,9 +6,9 @@ __all__ = ("database",)
 
 import os
 import stat
+from os.path import join as pjoin
 
 from snakeoil.fileutils import readlines_utf8
-from snakeoil.osutils import pjoin
 
 from ..config.hint import ConfigHint
 from . import errors, fs_template

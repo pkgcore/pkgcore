@@ -9,13 +9,13 @@ import shlex
 import shutil
 import stat
 from operator import itemgetter
+from os.path import join as pjoin
 
 from snakeoil.cli import arghparse
 from snakeoil.compression import ArComp, ArCompError
 from snakeoil.contexts import chdir
 from snakeoil.decorators import coroutine
 from snakeoil.iterables import partition
-from snakeoil.osutils import pjoin
 from snakeoil.process import spawn
 
 from .. import os_data

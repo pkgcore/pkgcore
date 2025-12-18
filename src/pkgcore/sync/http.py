@@ -5,9 +5,9 @@ import os
 import ssl
 import sys
 import urllib.request
+from os.path import join as pjoin
 
 from snakeoil.fileutils import AtomicWriteFile, readfile_ascii
-from snakeoil.osutils import pjoin
 
 from ..log import logger
 from . import base

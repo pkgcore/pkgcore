@@ -7,9 +7,9 @@ import time
 from collections import OrderedDict, defaultdict
 from functools import partial
 from operator import attrgetter
+from os.path import join as pjoin, normpath
 
 from snakeoil.klass import alias_method, generic_equality
-from snakeoil.osutils import normpath, pjoin
 
 from . import fs
 

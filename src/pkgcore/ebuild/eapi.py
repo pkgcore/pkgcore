@@ -5,12 +5,12 @@ import sys
 from collections import defaultdict
 from functools import partial
 from operator import attrgetter
+from os.path import join as pjoin
 from weakref import WeakValueDictionary
 
 from snakeoil import klass
 from snakeoil.demandload import demand_compile_regexp
 from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
-from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import bash_version
 from snakeoil.sequences import stable_unique
 

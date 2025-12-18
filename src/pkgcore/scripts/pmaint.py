@@ -6,11 +6,11 @@ import os
 import textwrap
 import time
 from multiprocessing import cpu_count
+from os.path import join as pjoin
 
 from snakeoil.cli import arghparse
 from snakeoil.contexts import patch
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iter_stable_unique
 
 from ..cache.flat_hash import md5_cache

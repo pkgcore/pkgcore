@@ -8,8 +8,8 @@ __all__ = (
 )
 
 import os
+from os.path import join as pjoin
 
-from snakeoil.osutils import pjoin
 from snakeoil.process.spawn import is_userpriv_capable, spawn_bash
 
 from ..config.hint import ConfigHint

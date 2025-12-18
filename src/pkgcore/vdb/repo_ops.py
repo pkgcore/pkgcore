@@ -4,10 +4,11 @@ import os
 import shutil
 import time
 from itertools import chain
+from os.path import join as pjoin, normpath
 
 from snakeoil import compression
 from snakeoil.data_source import local_source
-from snakeoil.osutils import ensure_dirs, normpath, pjoin
+from snakeoil.osutils import ensure_dirs
 from snakeoil.version import get_version
 
 from .. import __title__

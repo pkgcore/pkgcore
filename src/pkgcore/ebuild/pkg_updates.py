@@ -1,8 +1,9 @@
 from collections import defaultdict, deque
 from operator import itemgetter
+from os.path import join as pjoin
 
 from snakeoil.demandload import demand_compile_regexp
-from snakeoil.osutils import listdir_files, pjoin
+from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance
 
 from ..log import logger

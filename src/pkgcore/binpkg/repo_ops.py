@@ -12,10 +12,11 @@ it uninstalls, or adding a new operation (cleaning/cache regen for example).
 __all__ = ("install", "uninstall", "replace", "operations")
 
 import os
+from os.path import join as pjoin
 
 from snakeoil.compression import compress_data
 from snakeoil.klass import steal_docs
-from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
+from snakeoil.osutils import ensure_dirs, unlink_if_exists
 
 from ..fs import tar
 from ..log import logger

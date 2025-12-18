@@ -8,8 +8,9 @@ Shouldn't be accessed directly for the most part, use
 import errno
 import os
 from functools import partial
+from os.path import join as pjoin
 
-from snakeoil.osutils import ensure_dirs, pjoin, unlink_if_exists
+from snakeoil.osutils import ensure_dirs, unlink_if_exists
 from snakeoil.process.spawn import spawn
 
 from ..const import CP_BINARY

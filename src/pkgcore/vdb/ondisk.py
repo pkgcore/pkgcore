@@ -4,11 +4,12 @@ import errno
 import os
 import stat
 from functools import partial
+from os.path import join as pjoin
 
 from snakeoil import data_source
 from snakeoil.fileutils import readfile
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.osutils import listdir_dirs, pjoin
+from snakeoil.osutils import listdir_dirs
 
 from ..config.hint import ConfigHint
 from ..ebuild import ebd, ebuild_built

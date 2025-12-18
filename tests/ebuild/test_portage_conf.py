@@ -3,9 +3,9 @@ import os
 import shutil
 import stat
 import textwrap
+from os.path import join as pjoin
 
 import pytest
-from snakeoil.osutils import pjoin
 
 from pkgcore import const
 from pkgcore import exceptions as base_errors

@@ -27,12 +27,13 @@ import platform
 import re
 import time
 from math import floor
+from os.path import join as pjoin, normpath
 
 from snakeoil import process
 from snakeoil.bash import read_bash
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import touch
-from snakeoil.osutils import ensure_dirs, listdir_files, normpath, pjoin
+from snakeoil.osutils import ensure_dirs, listdir_files
 from snakeoil.process import spawn
 
 from .. import os_data

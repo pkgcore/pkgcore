@@ -1,7 +1,7 @@
 import os
 from functools import partial
+from os.path import join as pjoin, normpath
 
-from snakeoil import osutils
 from snakeoil.cli import arghparse
 
 from ..restrictions.boolean import AndRestriction
@@ -277,7 +277,7 @@ get_repo_path = BaseCommand.make_command(
 def get_repo_news_path(options, out, err):
     repo = options.config.repo.get(options.repo_id, None)
     if repo is not None and getattr(repo, "location", None) is not None:
-        out.write(osutils.normpath(osutils.pjoin(repo.location, "metadata", "news")))
+        out.write(normpath(pjoin(repo.location, "metadata", "news")))
         return 0
     return 1
 

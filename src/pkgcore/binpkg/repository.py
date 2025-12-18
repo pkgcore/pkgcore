@@ -6,12 +6,13 @@ __all__ = ("tree", "ConfiguredTree", "force_unpacking")
 
 import errno
 import os
+from os.path import join as pjoin
 
 from snakeoil import chksum, compression
 from snakeoil.data_source import data_source, local_source
 from snakeoil.klass import alias_attr, jit_attr, jit_attr_named
 from snakeoil.mappings import DictMixin, StackedDict
-from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
+from snakeoil.osutils import listdir_dirs, listdir_files
 
 from ..config.hint import ConfigHint
 from ..ebuild import ebd, ebuild_built

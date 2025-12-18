@@ -30,9 +30,9 @@ import threading
 import traceback
 from functools import partial, wraps
 from itertools import chain
+from os.path import join as pjoin
 
 from snakeoil import bash, klass
-from snakeoil.osutils import pjoin
 from snakeoil.process import spawn
 
 from .. import const, os_data

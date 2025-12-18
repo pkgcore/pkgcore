@@ -1,9 +1,10 @@
+from os.path import join as pjoin, normpath
+
 import pytest
 
 from pkgcore.fs import fs
 from snakeoil.chksum import get_chksums
 from snakeoil.data_source import data_source
-from snakeoil.osutils import normpath, pjoin
 
 
 class base:

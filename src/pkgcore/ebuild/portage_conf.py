@@ -13,11 +13,12 @@ import errno
 import os
 import sys
 from collections import OrderedDict
+from os.path import join as pjoin
 
 from snakeoil.bash import read_bash_dict
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.mappings import DictMixin, ImmutableDict
-from snakeoil.osutils import listdir_files, pjoin
+from snakeoil.osutils import listdir_files
 
 from .. import const
 from .. import exceptions as base_errors

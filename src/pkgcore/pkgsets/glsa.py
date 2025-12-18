@@ -5,12 +5,13 @@ Gentoo Linux Security Advisories (GLSA) support
 __all__ = ("GlsaDirSet", "SecurityUpgrades")
 
 import os
+from os.path import join as pjoin
 
 from lxml import etree
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import generic_equality
-from snakeoil.osutils import listdir_files, pjoin
+from snakeoil.osutils import listdir_files
 
 from ..config.hint import ConfigHint
 from ..ebuild import atom, cpv

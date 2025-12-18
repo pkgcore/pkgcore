@@ -8,6 +8,7 @@ import locale
 import os
 from functools import partial, wraps
 from itertools import chain, filterfalse
+from os.path import join as pjoin
 from random import shuffle
 from sys import intern
 from weakref import WeakValueDictionary
@@ -19,7 +20,7 @@ from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
-from snakeoil.osutils import listdir_dirs, listdir_files, pjoin
+from snakeoil.osutils import listdir_dirs, listdir_files
 from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 

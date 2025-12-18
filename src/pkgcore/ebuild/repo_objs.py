@@ -23,6 +23,7 @@ import platform
 import subprocess
 from collections import namedtuple
 from itertools import chain
+from os.path import join as pjoin
 from sys import intern
 
 from lxml import etree
@@ -31,7 +32,7 @@ from snakeoil.bash import BashParseError, read_bash, read_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import readfile, readlines
-from snakeoil.osutils import listdir, listdir_files, pjoin
+from snakeoil.osutils import listdir, listdir_files
 from snakeoil.osutils.mount import umount
 from snakeoil.process.namespaces import simple_unshare
 from snakeoil.sequences import iter_stable_unique

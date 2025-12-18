@@ -15,10 +15,10 @@ __all__ = (
 )
 
 import os
+from os.path import join as pjoin
 
 from snakeoil import klass
 from snakeoil.dependant_methods import ForcedDepends
-from snakeoil.osutils import pjoin
 
 from .. import operations as _operations_mod
 from ..exceptions import PkgcoreUserException

@@ -5,12 +5,12 @@ interaction with the livefs: generating fs objects to represent the livefs.
 import collections
 import errno
 import os
+from os.path import join as pjoin, normpath
 from stat import S_IMODE, S_ISDIR, S_ISFIFO, S_ISLNK, S_ISREG
 
 from snakeoil.chksum import get_handlers
 from snakeoil.data_source import local_source
 from snakeoil.mappings import LazyValDict
-from snakeoil.osutils import listdir, normpath, pjoin
 
 from .contents import contentsSet
 from .fs import fsBase, fsDev, fsDir, fsFifo, fsFile, fsSymlink, get_major_minor
@@ -106,7 +106,7 @@ def _internal_iter_scan(
         return
     while dirs:
         base = dirs.popleft()
-        for x in listdir(base):
+        for x in os.listdir(base):
             if not hidden and x.startswith("."):
                 continue
             if not backup and x.endswith("~"):
@@ -137,7 +137,7 @@ def _internal_offset_iter_scan(
         base = dirs.popleft()
         real_base = pjoin(offset, base.lstrip(sep))
         base = base.rstrip(sep) + sep
-        for x in listdir(real_base):
+        for x in os.listdir(real_base):
             if not hidden and x.startswith("."):
                 continue
             if not backup and x.endswith("~"):

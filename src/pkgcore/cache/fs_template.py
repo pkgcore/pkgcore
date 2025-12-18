@@ -5,8 +5,9 @@ template for fs based backends
 __all__ = ("FsBased",)
 
 import os
+from os.path import join as pjoin
 
-from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.osutils import ensure_dirs
 
 from ..os_data import portage_gid
 from . import base

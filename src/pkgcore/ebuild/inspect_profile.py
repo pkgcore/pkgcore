@@ -2,9 +2,9 @@ import argparse
 import operator
 from collections import defaultdict
 from itertools import chain
+from os.path import join as pjoin
 
 from snakeoil.cli import arghparse
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 
 from ..util import commandline

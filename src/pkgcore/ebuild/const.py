@@ -2,7 +2,7 @@
 ebuild internal constants
 """
 
-from snakeoil.osutils import pjoin
+from os.path import join as pjoin
 
 from ..const import EBD_PATH
 

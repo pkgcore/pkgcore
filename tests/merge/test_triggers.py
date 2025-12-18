@@ -4,6 +4,7 @@ import textwrap
 import time
 from functools import partial
 from math import ceil, floor
+from os.path import normpath
 
 import pytest
 from pkgcore.fs import fs
@@ -13,7 +14,7 @@ from pkgcore.merge import const, triggers
 from snakeoil import process
 from snakeoil.contexts import os_environ
 from snakeoil.currying import post_curry
-from snakeoil.osutils import ensure_dirs, normpath
+from snakeoil.osutils import ensure_dirs
 
 from .util import fake_engine, fake_reporter, fake_trigger
 

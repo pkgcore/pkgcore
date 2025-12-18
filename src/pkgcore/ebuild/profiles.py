@@ -17,7 +17,7 @@ from snakeoil.bash import read_bash, read_bash_dict
 from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
-from snakeoil.sequences import split_negations, stable_unique
+from snakeoil.sequences import split_negations, unique_stable
 
 from ..config import errors
 from ..config.hint import ConfigHint
@@ -341,7 +341,7 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         for line, lineno, relpath in iterable:
             v = line.split()
             try:
-                yield (atom(v[0]), tuple(stable_unique(v[1:])))
+                yield (atom(v[0]), tuple(unique_stable(v[1:])))
             except ebuild_errors.MalformedAtom as e:
                 logger.error(f"{relpath!r}, line {lineno}: parsing error: {e}")
 

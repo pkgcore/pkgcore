@@ -19,7 +19,7 @@ from os.path import abspath, join as pjoin, normpath
 from snakeoil import modules
 from snakeoil.cli import arghparse, tool
 from snakeoil.log import suppress_logging
-from snakeoil.sequences import iflatten_instance, unstable_unique
+from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import const
@@ -334,7 +334,7 @@ class StoreRepoObject(StoreConfigObject):
 
         If a repo doesn't have a proper location just the name is returned.
         """
-        for repo_name, repo in sorted(unstable_unique(sections.items())):
+        for repo_name, repo in sorted(set(sections.items())):
             repo_name = getattr(repo, "repo_id", repo_name)
             if hasattr(repo, "location"):
                 yield f"{repo_name}:{repo.location}"

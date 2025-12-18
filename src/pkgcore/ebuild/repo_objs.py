@@ -32,7 +32,7 @@ from snakeoil.bash import BashParseError, read_bash, read_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import readfile, readlines
-from snakeoil.osutils import listdir, listdir_files
+from snakeoil.osutils import listdir_files
 from snakeoil.osutils.mount import umount
 from snakeoil.process.namespaces import simple_unshare
 from snakeoil.sequences import unique_stable
@@ -1040,7 +1040,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta)
         result = True
         try:
             # any files existing means it's not empty
-            result = not listdir(self.location)
+            result = not os.listdir(self.location)
             if result:
                 logger.debug(f"repo is empty: {self.location!r}")
         except FileNotFoundError:

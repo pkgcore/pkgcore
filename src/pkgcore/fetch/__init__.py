@@ -6,10 +6,10 @@ __all__ = ("fetchable", "mirror", "default_mirror", "uri_list")
 
 from itertools import zip_longest
 
-from snakeoil.klass import generic_equality
+from snakeoil.klass import GenericEquality
 
 
-class fetchable(metaclass=generic_equality):
+class fetchable(GenericEquality):
     """class representing uri sources for a file and chksum information."""
 
     __slots__ = ("filename", "uri", "chksums")
@@ -53,7 +53,7 @@ class fetchable(metaclass=generic_equality):
         return self.__class__(self.filename, uri=uri_list, chksums=self.chksums)
 
 
-class mirror(metaclass=generic_equality):
+class mirror(GenericEquality):
     """uri source representing a mirror tier"""
 
     __attr_comparison__ = ("mirror_name", "mirrors")

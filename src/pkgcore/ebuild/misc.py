@@ -23,7 +23,7 @@ from functools import partial
 from itertools import chain
 
 from snakeoil import mappings
-from snakeoil.klass import alias_method, generic_equality
+from snakeoil.klass import alias_method, GenericEquality
 from snakeoil.sequences import iflatten_instance
 
 from ..restrictions import boolean, packages, restriction
@@ -166,7 +166,7 @@ class IncrementalsDict(mappings.DictMixin):
     del x, s
 
 
-class collapsed_restrict_to_data(metaclass=generic_equality):
+class collapsed_restrict_to_data(GenericEquality):
     __attr_comparison__ = ("defaults", "freeform", "atoms", "__class__")
     incremental = True
 
@@ -383,7 +383,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
     return tuple(new_l)
 
 
-class ChunkedDataDict(metaclass=generic_equality):
+class ChunkedDataDict(GenericEquality):
     __attr_comparison__ = ("_global_settings", "_dict")
 
     def __init__(self):

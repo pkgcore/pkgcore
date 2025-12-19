@@ -10,7 +10,7 @@ from os.path import join as pjoin
 from lxml import etree
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.iterables import caching_iter
-from snakeoil.klass import generic_equality
+from snakeoil.klass import GenericEquality
 from snakeoil.osutils import listdir_files
 
 from ..config.hint import ConfigHint
@@ -22,7 +22,7 @@ from ..repository.util import get_virtual_repos
 from ..restrictions import packages, restriction, values
 
 
-class GlsaDirSet(metaclass=generic_equality):
+class GlsaDirSet(GenericEquality):
     """generate a pkgset based on GLSA's distributed via a directory.
 
     (rsync tree is the usual source.)
@@ -229,7 +229,7 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
             yield restrict, matches
 
 
-class SecurityUpgrades(metaclass=generic_equality):
+class SecurityUpgrades(GenericEquality):
     """Set of packages for available security upgrades."""
 
     pkgcore_config_type = ConfigHint(

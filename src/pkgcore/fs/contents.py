@@ -9,7 +9,7 @@ from functools import partial
 from operator import attrgetter
 from os.path import join as pjoin, normpath
 
-from snakeoil.klass import alias_method, generic_equality
+from snakeoil.klass import alias_method, GenericEquality
 
 from . import fs
 
@@ -36,7 +36,7 @@ def check_instance(obj):
     return obj.location, obj
 
 
-class contentsSet(metaclass=generic_equality):
+class contentsSet(GenericEquality):
     """set of :class:`pkgcore.fs.fs.fsBase` objects"""
 
     __attr_comparison__ = ("_dict",)

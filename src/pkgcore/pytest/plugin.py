@@ -54,7 +54,7 @@ class GitRepo:
             **kwargs,
         )
 
-    def log(self, args):
+    def log(self, args: list[str]):
         """Run ``git log`` with given args and return a list of outputted lines."""
         p = self.run(["git", "log"] + args, stdout=subprocess.PIPE)
         return p.stdout.strip().splitlines()
@@ -75,7 +75,7 @@ class GitRepo:
     def __str__(self):
         return self.path
 
-    def commit(self, msg, signoff=False):
+    def commit(self, msg: str | list[str], signoff=False):
         """Make a commit to the repo."""
         if isinstance(msg, str):
             msg = msg.splitlines()
@@ -237,10 +237,10 @@ class EbuildRepo:
                 with open(pjoin(self.path, "profiles", p.path, "eapi"), "w") as f:
                     f.write(f"{p.eapi}\n")
 
-    def create_ebuild(self, cpvstr, data=None, **kwargs):
-        from pkgcore.ebuild import cpv as cpv_mod
+    def create_ebuild(self, cpvstr: str, data=None, **kwargs):
+        from pkgcore.ebuild.cpv import VersionedCPV
 
-        cpv = cpv_mod.VersionedCPV(cpvstr)
+        cpv = VersionedCPV(cpvstr)
         self._repo.notify_add_package(cpv)
         ebuild_dir = pjoin(self.path, cpv.category, cpv.package)
         os.makedirs(ebuild_dir, exist_ok=True)

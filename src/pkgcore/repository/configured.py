@@ -77,10 +77,4 @@ class tree(prototype.tree):
         return obj
 
     def __repr__(self):
-        return "<%s.%s raw_repo=%r wrapped=%r @%#8x>" % (
-            self.__class__.__module__,
-            self.__class__.__name__,
-            getattr(self, "raw_repo", "unset"),
-            list(getattr(self, "wrapped_attrs", {}).keys()),
-            id(self),
-        )
+        return f"<{self.__class__.__module__}.{self.__class__.__name__} raw_repo={getattr(self, 'raw_repo', 'unset')!r} wrapped={list(getattr(self, 'wrapped_attrs', {}).keys())!r} @{id(self):#8x}>"

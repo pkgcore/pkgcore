@@ -75,7 +75,7 @@ class install(repo_interfaces.install):
         final_path = discern_loc(self.repo.base, pkg, self.repo.extension)
         tmp_path = pjoin(
             os.path.dirname(final_path),
-            ".tmp.%i.%s" % (os.getpid(), os.path.basename(final_path)),
+            f".tmp.{os.getpid()}.{os.path.basename(final_path)}",
         )
 
         self.tmp_path, self.final_path = tmp_path, final_path

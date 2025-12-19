@@ -20,7 +20,7 @@ from . import errors, prototype
 
 
 class operations(repo_interface.operations_proxy):
-    ops_stop_after_first_supported = frozenset(["install", "uninstall", "replace"])
+    ops_stop_after_first_supported = frozenset({"install", "uninstall", "replace"})
 
     @klass.cached_property
     def raw_operations(self):

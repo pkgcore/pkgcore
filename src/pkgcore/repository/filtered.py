@@ -84,10 +84,4 @@ class tree(prototype.tree):
         return v
 
     def __repr__(self):
-        return "<%s raw_repo=%r restrict=%r sentinel=%r @%#8x>" % (
-            self.__class__.__name__,
-            getattr(self, "raw_repo", "unset"),
-            getattr(self, "restrict", "unset"),
-            getattr(self, "sentinel_val", "unset"),
-            id(self),
-        )
+        return f"<{self.__class__.__name__} raw_repo={getattr(self, 'raw_repo', 'unset')!r} restrict={getattr(self, 'restrict', 'unset')!r} sentinel={getattr(self, 'sentinel_val', 'unset')!r} @{id(self):#8x}>"

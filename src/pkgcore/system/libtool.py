@@ -19,7 +19,7 @@ pkgconfig2_sub = post_curry(
     partial(re.compile(r"usr/+lib[^/]*/+pkgconfig/+\.\.").sub, "usr"), 1
 )
 flags_match = re.compile(
-    r"-(?:mt|mthreads|kthread|Kthread|pthread" r"|pthreads|-thread-safe|threads)"
+    r"-(?:mt|mthreads|kthread|Kthread|pthread|pthreads|-thread-safe|threads)"
 ).match
 
 template = """# %(file)s - a libtool library file
@@ -35,7 +35,7 @@ class UnknownData(PkgcoreException):
     def __str__(self):
         s = f"we don't know how to parse line {self.line!r}"
         if self.token:
-            s += f"specifically token {self.token!r}"
+            s += f" specifically token {self.token!r}"
         return s
 
 

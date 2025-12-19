@@ -4,6 +4,7 @@ filesystem entry abstractions
 
 import fnmatch
 import stat
+from functools import total_ordering
 from os.path import abspath, basename, dirname, join as pjoin, normpath, realpath
 from os.path import sep as path_seperator
 
@@ -49,6 +50,7 @@ def gen_doc_additions(init, slots):
     )
 
 
+@total_ordering
 class fsBase(immutable.Simple):
     """base class, all extensions must derive from this class"""
 
@@ -61,8 +63,6 @@ class fsBase(immutable.Simple):
         for x in __all__
         if x.startswith("is") and x.islower() and not x.endswith("fs_obj")
     )
-
-    klass.inject_richcmp_methods_from_cmp(locals())
 
     def __init__(self, location, strict=True, **d):
         d["location"] = normpath(location)
@@ -129,8 +129,8 @@ class fsBase(immutable.Simple):
     def fnmatch(self, pattern):
         return fnmatch.fnmatch(self.location, pattern)
 
-    def __cmp__(self, other):
-        return cmp(self.location, other.location)
+    def __lt__(self, other):
+        return self.location < other.location
 
     def __str__(self):
         return self.location

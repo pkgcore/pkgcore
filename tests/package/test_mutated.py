@@ -1,16 +1,15 @@
-from functools import partial
+from functools import partial, total_ordering
 
 import pytest
 from pkgcore.package.base import base, dynamic_getattr_dict
 from pkgcore.package.mutated import MutatedPkg
-from snakeoil.compatibility import cmp
-from snakeoil.klass import inject_richcmp_methods_from_cmp
 
 
 def passthru(val, self):
     return val
 
 
+@total_ordering
 class FakePkg(base):
     # XXX why isn't this using existing classes?
     __slotting_intentionally_disabled__ = True
@@ -25,10 +24,8 @@ class FakePkg(base):
     __setattr__ = object.__setattr__
     __getattr__ = dynamic_getattr_dict
 
-    def __cmp__(self, other):
-        return cmp(self.ver, other.ver)
-
-    inject_richcmp_methods_from_cmp(locals())
+    def __lt__(self, other):
+        return self.ver < other.ver
 
 
 class TestMutatedPkg:
@@ -48,8 +45,8 @@ class TestMutatedPkg:
         mpkg2 = MutatedPkg(pkg2, {})
 
         for lpkg in (pkg1, mpkg1):
-            assert cmp(lpkg, mpkg2) < 0
-            assert cmp(mpkg2, lpkg) > 0
+            assert lpkg < mpkg2
+            assert mpkg2 > lpkg
         assert mpkg1 == mpkg1
         assert pkg1 == mpkg1
 

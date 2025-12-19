@@ -1,5 +1,6 @@
+from contextlib import chdir
+
 from pkgcore.ebuild import eclass
-from snakeoil.contexts import chdir
 
 
 class FakeEclass:

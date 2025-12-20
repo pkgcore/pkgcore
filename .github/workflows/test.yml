@@ -168,6 +168,12 @@ jobs:
         repository: gentoo/gentoo
         path: gentoo
 
+    - name: Collect gentoo sha1
+      run: |
+        rev=$(git --git-dir gentoo/.git/ rev-parse HEAD)
+        echo "sha1 is $rev"
+        echo "GENTOO_SHA1=${rev}" >> "$GITHUB_ENV"
+
     - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
@@ -178,6 +184,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install "./pkgcore"
 
-    - name: Run pmaint regen
+    - name: Run pmaint regen against ${{ env.GENTOO_SHA1 }}
       working-directory: ./gentoo
       run: pmaint regen --use-local-desc --pkg-desc-index --rsync --force .

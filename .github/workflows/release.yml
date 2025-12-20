@@ -19,6 +19,9 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v5
 
+    - name: Install bash 5.3
+      uses: pkgcore/gh-actions/bash-5.3@main
+
     - name: Reject any VCS dependencies
       continue-on-error: ${{ github.ref_type == 'branch' && github.ref_name != 'release-test-full' }}
       uses: pkgcore/gh-actions/reject-python-vcs-deps@main

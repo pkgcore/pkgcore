@@ -48,6 +48,9 @@ jobs:
       with:
         artifact-id: ${{ inputs.release-artifact-id }}
 
+    - name: Install bash 5.3
+      uses: pkgcore/gh-actions/bash-5.3@main
+
     - name: Pin dependencies to minimal versions
       if: ${{ matrix.deps == 'minimal-deps' }}
       run: sed -e '/dependencies/,$s/~=/==/' -i pyproject.toml
@@ -63,11 +66,6 @@ jobs:
     - name: Install libxml2 and libxslt development packages
       if: ${{ matrix.experimental }}
       run: sudo apt install libxml2-dev libxslt-dev python3-dev
-
-    # macos needs newer bash
-    - name: Install macos deps
-      if: ${{ matrix.os == 'macos-latest' }}
-      run: brew install bash
 
     - name: Install dependencies
       run: |
@@ -98,6 +96,9 @@ jobs:
       with:
         artifact-id: ${{ inputs.release-artifact-id }}
         path: pkgcore
+
+    - name: Install bash 5.3
+      uses: pkgcore/gh-actions/bash-5.3@main
 
     - name: Find last ${{ matrix.repo }} release
       run: |
@@ -157,6 +158,9 @@ jobs:
       with:
         artifact-id: ${{ inputs.release-artifact-id }}
         path: pkgcore
+
+    - name: Install bash 5.3
+      uses: pkgcore/gh-actions/bash-5.3@main
 
     - name: Checkout gentoo
       uses: actions/checkout@v4

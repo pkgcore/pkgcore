@@ -152,6 +152,7 @@ jobs:
 
   gentoo-regen:
     runs-on: ubuntu-latest
+    continue-on-error: true # This job currently fails with ubuntu's bash 5.3
     steps:
     - name: Checkout pkgcore
       uses: pkgcore/gh-actions/get-source@main

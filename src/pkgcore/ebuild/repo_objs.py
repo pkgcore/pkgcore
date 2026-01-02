@@ -25,6 +25,7 @@ from collections import namedtuple
 from itertools import chain
 from os.path import join as pjoin
 from sys import intern
+from typing import NamedTuple
 
 from lxml import etree
 from snakeoil import klass, mappings
@@ -32,6 +33,7 @@ from snakeoil.bash import BashParseError, read_bash, read_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import post_curry
 from snakeoil.fileutils import readfile, readlines
+from snakeoil.klass import immutable
 from snakeoil.osutils import listdir_files
 from snakeoil.osutils.mount import umount
 from snakeoil.process.namespaces import simple_unshare
@@ -45,30 +47,22 @@ from ..repository import errors as repo_errors
 from ..repository import syncable
 from ..restrictions import packages
 from . import atom, pkg_updates, profiles
+from .digest import Manifest
 from .eapi import get_eapi
 
 
-class Maintainer:
-    """Data on a single maintainer.
-
-    At least one of email and name is not C{None}.
-
-    :type email: C{unicode} object or C{None}
-    :ivar email: email address.
-    :type name: C{unicode} object or C{None}
-    :ivar name: full name
-    :type description: C{unicode} object or C{None}
-    :ivar description: description of maintainership.
-    :type maint_type: C{unicode} object or C{None}
-    :ivar maint_type: maintainer type (person or project).
-    :type proxied: C{unicode} object or C{None}
-    :ivar proxied: proxied maintainer status (yes, no, proxy)
-    """
+class Maintainer(immutable.Simple):
+    """Data on a single maintainer"""
 
     __slots__ = ("email", "description", "name", "maint_type", "proxied")
 
     def __init__(
-        self, email=None, name=None, description=None, maint_type=None, proxied=None
+        self,
+        email: str | None,
+        name: str | None,
+        description: str | None,
+        maint_type: str | None,
+        proxied: str | None,
     ):
         if email is None and name is None:
             raise ValueError("need at least one of name and email")
@@ -102,24 +96,11 @@ class Maintainer:
         return hash((self.email, self.name))
 
 
-class Upstream:
+class Upstream(NamedTuple):
     """Data on a single upstream."""
 
-    __slots__ = ("type", "name")
-
-    def __init__(self, type, name):
-        self.type = type
-        self.name = name
-
-    def __eq__(self, other):
-        try:
-            return self.type == other.type and self.name == other.name
-        except AttributeError:
-            pass
-        return False
-
-    def __hash__(self):
-        return hash((self.type, self.name))
+    type: str | None
+    name: str
 
 
 class MetadataXml:
@@ -250,7 +231,7 @@ class LocalMetadataXml(MetadataXml):
 class SharedPkgData:
     __slots__ = ("__weakref__", "metadata_xml", "manifest")
 
-    def __init__(self, metadata_xml, manifest):
+    def __init__(self, metadata_xml: LocalMetadataXml, manifest: Manifest):
         self.metadata_xml = metadata_xml
         self.manifest = manifest
 
@@ -474,7 +455,7 @@ class LocalProjectsXml(ProjectsXml):
             return mappings.ImmutableDict()
 
 
-class Licenses(metaclass=WeakInstMeta):
+class Licenses(immutable.Simple, metaclass=WeakInstMeta):
     __inst_caching__ = True
     __slots__ = (
         "_base",
@@ -494,22 +475,18 @@ class Licenses(metaclass=WeakInstMeta):
         license_groups="profiles/license_groups",
     ):
         repo_base = repo.location
-        object.__setattr__(self, "_base", repo_base)
-        object.__setattr__(
-            self, "license_groups_path", pjoin(repo_base, license_groups)
-        )
-        object.__setattr__(self, "licenses_dir", pjoin(repo_base, licenses_dir))
-        object.__setattr__(self, "_repo_masters", repo_masters)
-        self._load_license_instances()
+        self._base = repo_base
+        self.license_groups_path = pjoin(repo_base, license_groups)
+        self.licenses_dir = pjoin(repo_base, licenses_dir)
+        self._repo_masters = repo_masters
 
-    def _load_license_instances(self):
         l = []
         for x in self._repo_masters:
             if isinstance(x, Licenses):
                 l.append(x)
             elif hasattr(x, "licenses"):
                 l.append(x.licenses)
-        object.__setattr__(self, "_license_instances", tuple(l))
+        self._license_instances = tuple(l)
 
     @klass.jit_attr_none
     def licenses(self):
@@ -570,13 +547,6 @@ class Licenses(metaclass=WeakInstMeta):
                         l.append(v2)
                 groups[k] = l
 
-    def refresh(self):
-        self._load_license_instances()
-        for li in self._license_instances:
-            li.refresh()
-        self._licenses = None
-        self._groups = None
-
     def __getitem__(self, license):
         if license not in self:
             for li in self._license_instances:
@@ -609,16 +579,13 @@ _KnownProfile = namedtuple(
 )
 
 
-class Profiles(klass.ImmutableInstance):
+class Profiles(immutable.Simple):
     __slots__ = ("config", "profiles_base", "_profiles")
     __inst_caching__ = True
 
     def __init__(self, repo_config, profiles_base=None):
-        object.__setattr__(self, "config", repo_config)
-        profiles_base = (
-            profiles_base if profiles_base is not None else repo_config.profiles_base
-        )
-        object.__setattr__(self, "profiles_base", profiles_base)
+        self.config = repo_config
+        self.profiles_base = profiles_base or repo_config.profiles_base
 
     @klass.jit_attr_none
     def profiles(self):
@@ -711,27 +678,18 @@ class OverlayedProfiles(Profiles):
     __slots__ = ("_profiles_instances", "_profiles_sources")
 
     def __init__(self, *profiles_sources):
-        object.__setattr__(self, "_profiles_sources", profiles_sources)
-        self._load_profiles_instances()
-
-    @klass.jit_attr_none
-    def profiles(self):
-        return frozenset(chain.from_iterable(self._profiles_instances))
-
-    def refresh(self):
-        self._load_profiles_instances()
-        for pi in self._profiles_instances:
-            pi.refresh()
-        Profiles.refresh(self)
-
-    def _load_profiles_instances(self):
+        self._profiles_sources = profiles_sources
         l = []
         for x in self._profiles_sources:
             if isinstance(x, Profiles):
                 l.append(x)
             elif hasattr(x, "profiles"):
                 l.append(x.profiles)
-        object.__setattr__(self, "_profiles_instances", tuple(l))
+        self._profiles_instances = tuple(l)
+
+    @klass.jit_attr_none
+    def profiles(self):
+        return frozenset(chain.from_iterable(self._profiles_instances))
 
 
 class RepoConfig(syncable.tree, klass.ImmutableInstance, metaclass=WeakInstMeta):

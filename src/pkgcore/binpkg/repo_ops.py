@@ -94,7 +94,7 @@ class install(repo_interfaces.install):
             end("wrote Xpak", True)
             # ok... we tagged the xpak on.
             os.chmod(tmp_path, 0o644)
-        except Exception as e:
+        except Exception:
             try:
                 unlink_if_exists(tmp_path)
             except EnvironmentError as e:

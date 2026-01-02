@@ -3,7 +3,7 @@ Release Notes
 =============
 
 ----------------------------
-pkgcore 0.12.31 (????-??-??)
+pkgcore 0.12.31 (2026-01-02)
 ----------------------------
 
 - rsync: fix bug in computing the current timestamp when the timezone is not
@@ -12,6 +12,16 @@ pkgcore 0.12.31 (????-??-??)
 - rsync: fix logical bug with negative sync delta (Arthur Zamarin)
 
 - rsync: fix SyntaxWarning when using Python 3.14 (Arthur Zamarin, #448)
+
+- eclass: avoid deprecated ``utcnow()`` (Sam James, #450)
+
+- cpv: update categories rules to match PMS (Brian Harring, #453)
+
+- drop plugin implementation and ``pplugincache`` command (Brian Harring)
+
+- EAPI 9: Update bash_compat from 5.2 to 5.3 (Ulrich Müller, #456)
+
+- Massive refactoring done by Brian Harring
 
 ----------------------------
 pkgcore 0.12.30 (2025-06-02)

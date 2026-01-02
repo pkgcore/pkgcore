@@ -97,6 +97,7 @@ jobs:
       with:
         files: '*.tar.*'
         fail_on_unmatched_files: true
+        draft: true
 
     - name: Publish to PyPi server
       uses: pypa/gh-action-pypi-publish@release/v1.13

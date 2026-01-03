@@ -22,7 +22,7 @@ isvalid_version_re = regexp(
 
 # see https://github.com/pkgcore/pkgcore/issues/453 for why this regex underscores
 # PMS Category names regex is directly replicated below.
-isvalid_cat_re = regexp(r"^(?:[A-Za-z0-9_][A-Za-z0-9+_-]*)$")
+isvalid_cat_re = regexp(r"^(?:[A-Za-z0-9_][A-Za-z0-9+_.-]*)$")
 
 # empty string is fine, means a -- was encounter.
 _pkg_re = regexp(r"^[a-zA-Z0-9+_]+$")
@@ -350,11 +350,7 @@ class CPV(base.base):
         return hash(self.cpvstr)
 
     def __repr__(self):
-        return "<%s cpvstr=%s @%#8x>" % (
-            self.__class__.__name__,
-            getattr(self, "cpvstr", None),
-            id(self),
-        )
+        return f"<{self.__class__.__name__} cpvstr={getattr(self, 'cpvstr', None)} @{id(self):#8x}>"
 
     def __str__(self):
         return getattr(self, "cpvstr", "None")

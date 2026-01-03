@@ -30,15 +30,17 @@ class TestCPV:
         "multi--hyphen",
         "_dev",
         "_",  # yep, that's legal.
+        "cross-hppa2.0-unknown-linux-gnu",  # https://github.com/pkgcore/pkgcore/issues/463
     )
     bad_cats = (
         "",
+        ".reject",
+        " reject",
         "-",
         "+",
         "dev-util ",
         "multi/blah/depth",
         "multi//depth",
-        "reject.a",
     )
     good_pkgs = (
         "diffball",
@@ -83,7 +85,7 @@ class TestCPV:
 
     testing_secondary_args = False
 
-    def make_inst(self, cat, pkg, fullver=""):
+    def make_inst(self, cat: str, pkg: str, fullver: str = ""):
         if self.testing_secondary_args:
             return cpv.CPV(cat, pkg, fullver, versioned=bool(fullver))
         if fullver:
@@ -176,7 +178,7 @@ class TestCPV:
             assert c.version is None
             assert c.fullver is None
 
-    def process_ver(self, ret, cat, pkg, ver, rev):
+    def process_ver(self, ret: bool, cat: str, pkg: str, ver: str, rev: str):
         if ret:
             with pytest.raises(cpv.InvalidCPV):
                 self.make_inst(cat, pkg, f"{ver}{rev}")

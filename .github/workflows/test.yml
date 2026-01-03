@@ -183,7 +183,7 @@ jobs:
       run: ln -s ${PWD}/gentoo /var/db/repos/gentoo
 
     - name: Install dev-python/pip
-      run: FEATURES="-pid-sandbox -ipc-sandbox -network-sandbox" emerge -1 dev-python/pip
+      run: getuto && FEATURES="-pid-sandbox -ipc-sandbox -network-sandbox" emerge -j2 -g1 dev-python/pip
 
     - name: Install pkgcore
       run: pip install --break-system-packages "./pkgcore"

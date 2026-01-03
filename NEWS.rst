@@ -3,6 +3,14 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.32 (2026-01-03)
+----------------------------
+
+- cpv: fix category validation regular expression (Arthur Zamarin, #463)
+
+- ci: run gentoo-regen in a gentoo container image (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.31 (2026-01-02)
 ----------------------------
 

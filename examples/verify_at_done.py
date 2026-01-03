@@ -8,10 +8,9 @@ import urllib.request as urllib
 from typing import TypedDict
 from urllib.parse import urlencode
 
-from pkgcore.util import commandline
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import MalformedAtom
-
+from pkgcore.util import commandline
 
 argparser = commandline.ArgumentParser(version=False, description=__doc__)
 argparser.add_argument(
@@ -88,6 +87,8 @@ def main(options, out, err):
                 continue
             for cc in bug["cc"]:
                 cc = cc.removesuffix("@gentoo.org")
+                if bug["component"] == "Keywording":
+                    continue  # skip keywording for now, the heuristic is wrong
                 if all(cc in pkg.keywords for pkg in pkgs):
                     out.write(
                         out.fg("yellow"),

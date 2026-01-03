@@ -83,7 +83,7 @@ class BinPkg(ebuild_built.generate_new_factory):
             t = force_unpacking(op_inst.format_op)
             t.register(engine_inst)
 
-        klass._add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst)
+        super()._add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst)
 
     def scan_contents(self, location):
         return scan(location, offset=location)
@@ -251,7 +251,6 @@ class tree(prototype.tree):
         l = set()
         d = {}
         lext = len(self.extension)
-        bad = False
         try:
             for x in listdir_files(cpath):
                 # don't use lstat; symlinks may exist

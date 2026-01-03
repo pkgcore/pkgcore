@@ -57,12 +57,6 @@ class profile_mixin:
             given_mapping.render_to_dict(), desired_mapping, f, chunked_data
         )
 
-    def assertEqualPayload(self, given_mapping, desired_mapping):
-        def f(chunk):
-            return chunked_data(chunk.restrict, tuple(sorted(chunk.data)))
-
-        return self._assertEqualPayload(given_mapping, desired_mapping, f, chunked_data)
-
     assertEqualPayload = assertEqualChunks
 
     def _assertEqualPayload(self, given_mapping, desired_mapping, reformat_f, bare_kls):
@@ -543,7 +537,7 @@ class TestPmsProfileNode(profile_mixin):
 
         # verify that use.force is layered first, then package.use.force
         self.write_file(tmp_path, "package.use.force", "dev-util/bar -mmx foon")
-        p = self.klass(path)
+        _ = self.klass(path)
         self.assertEqualChunks(
             self.klass(path).forced_use,
             {
@@ -634,7 +628,7 @@ class TestPmsProfileNode(profile_mixin):
 
         # verify that use.stable.force is layered first, then package.use.stable.force
         self.write_file(tmp_path, "package.use.stable.force", "dev-util/bar -mmx foon")
-        p = self.klass(path)
+        _ = self.klass(path)
         self.assertEqualChunks(
             self.klass(path).stable_forced_use,
             {

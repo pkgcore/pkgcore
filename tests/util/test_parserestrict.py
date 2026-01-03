@@ -35,7 +35,7 @@ class TestExtendedRestrictionGeneration:
 
         for token in ("*", ""):
             i = parserestrict.convert_glob(token)
-            assert i == None, (
+            assert i is None, (
                 f"verifying None is returned on pointless restrictions, failed token: {token}"
             )
 

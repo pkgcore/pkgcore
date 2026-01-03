@@ -35,18 +35,18 @@ class TestSyncer:
         assert o.uri == "foon@site"
 
         with pytest.raises(base.MissingLocalUser):
-            base.Syncer(self.repo_path, f"foo_nonexistent_user::foon@site")
+            base.Syncer(self.repo_path, "foo_nonexistent_user::foon@site")
 
     @mock.patch("snakeoil.process.spawn.spawn")
     def test_usersync_disabled(self, spawn):
-        o = base.Syncer(self.repo_path, f"http://foo/bar.git", usersync=False)
+        o = base.Syncer(self.repo_path, "http://foo/bar.git", usersync=False)
         o.uid == os_data.uid
         o.gid == os_data.gid
 
     @mock.patch("snakeoil.process.spawn.spawn")
     def test_usersync_portage_perms(self, spawn):
         # sync uses portage perms if repo dir doesn't exist
-        o = base.Syncer(self.repo_path, f"http://foo/bar.git", usersync=True)
+        o = base.Syncer(self.repo_path, "http://foo/bar.git", usersync=True)
         o.uid == os_data.portage_uid
         o.gid == os_data.portage_gid
 
@@ -55,7 +55,7 @@ class TestSyncer:
         # and repo dir perms if it does exist
         with mock.patch("os.stat") as stat:
             stat.return_value = mock.Mock(st_uid=1234, st_gid=5678)
-            o = base.Syncer(self.repo_path, f"http://foo/bar.git", usersync=True)
+            o = base.Syncer(self.repo_path, "http://foo/bar.git", usersync=True)
             stat.assert_called()
             assert o.uid == 1234
             assert o.gid == 5678
@@ -144,13 +144,13 @@ class TestGenericSyncer:
         with pytest.raises(base.UriError):
             base.GenericSyncer("/", "seriouslynotaprotocol://blah/")
 
-        syncer = base.GenericSyncer("/", f"tar+https://blah.tar.gz")
+        syncer = base.GenericSyncer("/", "tar+https://blah.tar.gz")
         assert tar.tar_syncer is syncer.__class__
 
 
 class TestDisabledSyncer:
     def test_init(self):
-        syncer = base.DisabledSyncer("/foo/bar", f"https://blah.git")
+        syncer = base.DisabledSyncer("/foo/bar", "https://blah.git")
         assert syncer.disabled
         # syncing should also be disabled
         assert not syncer.uri

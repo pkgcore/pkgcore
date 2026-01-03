@@ -140,6 +140,18 @@ jobs:
         PY_COLORS: 1 # forcibly enable pytest colors
       run: pytest -v
 
+  lint:
+    runs-on: ubuntu-latest
+    if: inputs.disable-format-check == ''
+    steps:
+    - name: Checkout pkgcore
+      uses: actions/checkout@v5
+
+    - name: Ruff lint check
+      uses: astral-sh/ruff-action@v3
+      with:
+        args: "check --diff"
+
   format:
     runs-on: ubuntu-latest
     if: inputs.disable-format-check == ''

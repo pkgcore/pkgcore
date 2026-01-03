@@ -14,7 +14,7 @@ def reclaim_threads(threads):
             x.join()
         except IGNORED_EXCEPTIONS:
             raise
-        except Exception as e:
+        except Exception:
             # should do something better here
             pass
 

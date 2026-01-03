@@ -1,4 +1,3 @@
-import textwrap
 from unittest import mock
 
 import pytest

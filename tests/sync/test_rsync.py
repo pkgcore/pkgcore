@@ -38,7 +38,7 @@ class TestRsyncSyncer:
         find_binary.side_effect = lambda x: x
         o = self._syncer_class(self.repo_path, "rsync://dar/module")
         assert o.uri == "rsync://dar/module/"
-        assert o.rsh == None
+        assert o.rsh is None
 
         o = self._syncer_class(self.repo_path, "rsync+/bin/sh://dar/module")
         assert o.uri == "rsync://dar/module/"

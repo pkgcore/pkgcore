@@ -246,8 +246,8 @@ class collapsed_restrict_to_data(GenericEquality):
             for restrict, data in specific:
                 if restrict.match(pkg):
                     l.append(data)
-        for atom, data in self.atoms.get(pkg.key, ()):
-            if atom.match(pkg):
+        for a, data in self.atoms.get(pkg.key, ()):
+            if a.match(pkg):
                 l.append(data)
 
         if pre_defaults:
@@ -270,8 +270,8 @@ class collapsed_restrict_to_data(GenericEquality):
                 if restrict.match(pkg):
                     for item in data:
                         yield item
-        for atom, data in self.atoms.get(pkg.key, ()):
-            if atom.match(pkg):
+        for a, data in self.atoms.get(pkg.key, ()):
+            if a.match(pkg):
                 for item in data:
                     yield item
 
@@ -283,8 +283,8 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
             for restrict, data in specific:
                 if restrict.match(pkg):
                     l.append(data)
-        for atom, data in self.atoms.get(pkg.key, ()):
-            if atom.match(pkg):
+        for a, data in self.atoms.get(pkg.key, ()):
+            if a.match(pkg):
                 l.append(data)
         if not l:
             if force_copy:
@@ -298,8 +298,8 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
         l = [self.defaults]
         for specific in self.freeform:
             l.extend(data for restrict, data in specific if restrict.match(pkg))
-        for atom, data in self.atoms.get(pkg.key, ()):
-            if atom.match(pkg):
+        for a, data in self.atoms.get(pkg.key, ()):
+            if a.match(pkg):
                 l.append(data)
         if len(l) == 1:
             return iter(self.defaults)

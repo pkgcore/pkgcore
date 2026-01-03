@@ -90,11 +90,16 @@ class RepositoryGroup(DictMixin):
 
     def __getitem__(self, key):
         if isinstance(key, str):
-            func = lambda x: key in x.aliases
+
+            def func(x):
+                return key in x.aliases
         elif isinstance(key, int):
             return self.repos[key]
         else:
-            func = lambda x: key == x
+
+            def func(x):
+                return key == x
+
         try:
             return next(filter(func, self.repos))
         except StopIteration:

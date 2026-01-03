@@ -12,7 +12,6 @@ from snakeoil.dependant_methods import ForcedDepends
 
 from ..exceptions import PkgcoreException
 from ..log import logger
-from ..merge import errors as merge_errors
 from ..merge.engine import MergeEngine
 from ..package.mutated import MutatedPkg
 

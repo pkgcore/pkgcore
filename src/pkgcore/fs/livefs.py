@@ -248,7 +248,10 @@ def intersect(cset, realpath=False):
     if realpath:
         f2 = _realpath_dir()
     else:
-        f2 = lambda x: x
+
+        def f2(x):
+            return x
+
     for x in cset:
         try:
             yield f(f2(x.location))

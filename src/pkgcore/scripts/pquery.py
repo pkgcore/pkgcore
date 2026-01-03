@@ -1132,7 +1132,7 @@ output.add_argument(
     "--format",
     metavar="format",
     help="print this format filled with package attributes, suppresses other output",
-    docs=f"""
+    docs="""
         Use the given format string to print package attributes. The format
         uses standard Python format string syntax (see :ref:`formatspec` for
         details), with the all attributes of ``--attr``.
@@ -1167,7 +1167,7 @@ one_attr_mux.add_argument(
     choices=printable_attrs,
     metavar="attribute",
     help="print one attribute, suppresses other output",
-    docs=f"""
+    docs="""
         Print the given attribute's value, while suppressing all other output.
         All attributes of ``--attr`` are accepted.
     """,

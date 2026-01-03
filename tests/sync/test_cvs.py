@@ -33,13 +33,13 @@ class TestCVSSyncer:
             o = cvs.cvs_syncer(str(self.repo_path), "cvs://dar:module")
             assert o.uri == ":anoncvs:dar"
             assert o.module == "module"
-            assert o.rsh == None
+            assert o.rsh is None
             assert o.env["CVSROOT"] == ":anoncvs:dar"
 
             o = cvs.cvs_syncer(str(self.repo_path), "cvs+pserver://dar:module")
             assert o.uri == ":pserver:dar"
             assert o.module == "module"
-            assert o.rsh == None
+            assert o.rsh is None
             assert o.env["CVSROOT"] == ":pserver:dar"
 
             with mock.patch(

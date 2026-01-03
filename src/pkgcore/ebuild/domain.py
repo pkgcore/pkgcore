@@ -41,7 +41,6 @@ from ..repository.util import RepositoryGroup
 from ..restrictions import packages, values
 from ..restrictions.delegated import delegate
 from ..util.parserestrict import ParseError, parse_match
-from . import const
 from . import repository as ebuild_repo
 from .atom import atom as _atom
 from .eapi import get_latest_PMS_eapi

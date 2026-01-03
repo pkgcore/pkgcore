@@ -214,13 +214,18 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
 
     i = glsa_src.pkg_grouped_iter() if grouped else iter(glsa_src)
     if arch is None:
-        wrapper = lambda p: p
+
+        def wrapper(p):
+            return p
     else:
         if isinstance(arch, str):
             arch = (arch,)
         else:
             arch = tuple(arch)
-        wrapper = lambda p: mutated.MutatedPkg(p, {"keywords": arch})
+
+        def wrapper(p):
+            return mutated.MutatedPkg(p, {"keywords": arch})
+
     for restrict in i:
         matches = caching_iter(
             wrapper(x) for x in repo.itermatch(restrict, sorter=sorted)

@@ -7,7 +7,10 @@ __all__ = (
 
 def group_attempts(sequence, filter_func=None):
     if filter_func is None:
-        filter_func = lambda x: True
+
+        def filter_func(x):
+            return True
+
     last, l = None, []
     for x in sequence:
         if isinstance(x, tuple) and x[0] == "inspecting":

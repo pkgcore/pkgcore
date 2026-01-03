@@ -81,7 +81,7 @@ class use_expand_filter:
                 usel.append(flag)
             elif data:
                 # non hidden flag.
-                if not data[0] in ue_dict:
+                if data[0] not in ue_dict:
                     ue_dict[data[0]] = set([data[1]])
                 else:
                     ue_dict[data[0]].add(data[1])
@@ -369,8 +369,8 @@ class PortageFormatter(CountingFormatter):
             try:
                 sorter = op.pkg.repo.use_expand_sorter(expand)
             except AttributeError:
-                # TODO: hack for unit tests using fake repo objs
-                sorter = lambda k: k
+                # TODO: hack for unit tests using fake repo objs, use identity
+                sorter = None
             flaglists = [sorted(d.get(expand, ()), key=sorter) for d in usedicts]
             self.format_use(expand, *flaglists, sorter=sorter)
 

@@ -801,7 +801,7 @@ class _RegenOpHelper:
     def __call__(self, pkg):
         try:
             return pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
-        except pkg_errors.MetadataException as e:
+        except pkg_errors.MetadataException:
             # ebuild processor is dead, so force a replacement request
             self.ebp = self.request_ebp()
             raise

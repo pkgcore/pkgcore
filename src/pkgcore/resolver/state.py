@@ -129,10 +129,10 @@ class base_op_state:
         )
 
     def apply(self, plan):
-        raise NotImplemented(self, "apply")
+        raise NotImplementedError(self, "apply")
 
     def revert(self, plan):
-        raise NotImplemented(self, "revert")
+        raise NotImplementedError(self, "revert")
 
 
 class add_op(base_op_state):

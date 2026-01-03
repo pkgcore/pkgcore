@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Copyright 2007 Charlie Shepherd
 
-import os
 import sys
 from operator import attrgetter
 

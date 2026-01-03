@@ -4,7 +4,7 @@ restriction related utilities
 
 from snakeoil.sequences import iflatten_func
 
-from . import boolean, packages, restriction
+from . import boolean, restriction
 
 
 def _is_package_instance(inst):

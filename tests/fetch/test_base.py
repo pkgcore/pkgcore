@@ -4,15 +4,13 @@ from functools import partial
 import pytest
 from snakeoil import data_source
 from snakeoil.chksum import get_handlers
+from snakeoil.mappings import LazyValDict
 
 from pkgcore.fetch import base, errors, fetchable
 
 repeating_str = "asdf"
 data = repeating_str * 4000
 handlers = get_handlers()
-
-
-from snakeoil.mappings import LazyValDict
 
 
 def _callback(chf):
@@ -47,7 +45,7 @@ class TestFetcher:
         o.fetch(1, foon=True)
         assert [(1,), {"foon": True}] == l
         self.write_data()
-        assert self.fetcher._verify(self.fp, self.obj) == None
+        assert self.fetcher._verify(self.fp, self.obj) is None
         self.write_data("asdf")
         with pytest.raises(errors.FetchError) as excinfo:
             self.fetcher._verify(self.fp, self.obj)
@@ -59,8 +57,11 @@ class TestFetcher:
         with pytest.raises(errors.RequiredChksumDataMissing):
             self.fetcher._verify(self.fp, self.obj, handlers=subhandlers)
         self.fetcher._verify(self.fp, self.obj)
-        assert None == self.fetcher._verify(
-            self.fp, self.obj, handlers=subhandlers, all_chksums=False
+        assert (
+            self.fetcher._verify(
+                self.fp, self.obj, handlers=subhandlers, all_chksums=False
+            )
+            is None
         )
 
     def test_size_verification_first(self):
@@ -100,7 +101,7 @@ class TestFetcher:
 
     def test_normal(self):
         self.write_data()
-        assert self.fetcher._verify(self.fp, self.obj) == None
+        assert self.fetcher._verify(self.fp, self.obj) is None
         self.write_data(data[:-1])
         with pytest.raises(errors.FetchError) as excinfo:
             self.fetcher._verify(self.fp, self.obj)
@@ -123,5 +124,5 @@ class TestFetcher:
             return chksums[chf]
 
         alt_handlers = {chf: partial(f, chf) for chf in chksums}
-        assert None == self.fetcher._verify(self.fp, self.obj, handlers=alt_handlers)
+        assert self.fetcher._verify(self.fp, self.obj, handlers=alt_handlers) is None
         assert sorted(l) == sorted(alt_handlers)

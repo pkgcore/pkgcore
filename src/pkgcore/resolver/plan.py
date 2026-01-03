@@ -695,7 +695,7 @@ class merge_plan:
             self.insoluble.add(atom)
         if ret is not None:
             self.notify_viable(stack, atom, *ret[0], **ret[1])
-            if ret[0][0] == True:
+            if ret[0][0] is True:
                 state.add_backref_op(choices, choices.current_pkg).apply(self.state)
                 return True
             return None

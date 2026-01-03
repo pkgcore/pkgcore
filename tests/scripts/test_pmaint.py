@@ -6,7 +6,6 @@ from snakeoil.mappings import AttrAccessible
 
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint
-from pkgcore.ebuild.cpv import CPV
 from pkgcore.operations.repo import install, operations, replace, uninstall
 from pkgcore.repository import syncable, util
 from pkgcore.scripts import pmaint

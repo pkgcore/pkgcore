@@ -124,8 +124,8 @@ class database(fs_template.FsBased):
             except FileNotFoundError:
                 continue
             except EnvironmentError as e:
-                raise KeyError(cpv, f"access failure: {e}")
-            for l in os.listdir(d):
+                raise KeyError(d, f"access failure: {e}") from e
+            for l in subdirs:
                 if l.endswith(".cpickle"):
                     continue
                 p = pjoin(d, l)
@@ -134,7 +134,7 @@ class database(fs_template.FsBased):
                 except FileNotFoundError:
                     continue
                 except EnvironmentError as e:
-                    raise KeyError(cpv, f"Unhandled IO error: {e}")
+                    raise KeyError(d, f"Unhandled IO error: {e}") from e
                 if stat.S_ISDIR(st.st_mode):
                     dirs.append(p)
                     continue

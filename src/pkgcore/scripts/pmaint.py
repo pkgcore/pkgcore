@@ -284,7 +284,7 @@ def update_pkg_desc_index(repo, observer):
                         versions = " ".join(x.fullver for x in cpvs)
                         f.write(f"{cat}/{pkg} {versions}: {desc}\n")
                         break
-                    except MetadataException as e:
+                    except MetadataException:
                         # should be caught and outputted already by cache regen
                         ret = 1
         f.close()

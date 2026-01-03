@@ -135,7 +135,7 @@ class TestMetadataXml:
 
     def test_longdesc(self):
         # empty...
-        assert None == self.get_metadata_xml().longdescription
+        assert self.get_metadata_xml().longdescription is None
         s = """
 I saw the best minds of my generation destroyed by madness, starving
 hysterical naked, dragging themselves throughout the negro streets at dawn

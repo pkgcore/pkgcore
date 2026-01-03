@@ -82,7 +82,9 @@ class base:
     def _setup_api(self):
         recast_exc = self.__casting_exception__
         if recast_exc is None:
-            f = lambda x, y: x
+
+            def f(x, y):
+                return x
         else:
             f = self._wrap_exception
         for op in self.enabled_operations:

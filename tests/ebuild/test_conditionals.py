@@ -158,7 +158,7 @@ class TestDepSetParsing(base):
             v = depset.split()
         got = list(self.flatten_restricts(base.gen_depset(self, depset)))
         wanted = list(v)
-        assert got == v, "given {s!r}\nexpected {wanted!r} but got {got!r}"
+        assert got == v, f"given {depset!r}\nexpected {wanted!r} but got {got!r}"
 
     @pytest.mark.parametrize("depset", depsets)
     def test_depset_str(self, depset):

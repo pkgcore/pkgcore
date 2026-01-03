@@ -8,7 +8,7 @@ import typing
 from pathlib import Path
 
 from snakeoil.klass import jit_attr
-from snakeoil.mappings import DictMixin, LazyValDict
+from snakeoil.mappings import DictMixin
 from snakeoil.sequences import iflatten_instance
 
 from ..ebuild.atom import atom
@@ -260,7 +260,9 @@ class tree:
             if versioned:
                 raw_pkg_cls = self.package_class
             else:
-                raw_pkg_cls = lambda *args: args
+
+                def raw_pkg_cls(*args):
+                    return args
 
         if isinstance(restrict, atom):
             candidates = [(restrict.category, restrict.package)]

@@ -200,9 +200,14 @@ def iterative_quad_toggling(
     kill_switch=None,
 ):
     if desired_false is None:
-        desired_false = lambda r, a: r.force_False(*a)
+
+        def desired_false(r, a):
+            return r.force_False(*a)
+
     if desired_true is None:
-        desired_true = lambda r, a: r.force_True(*a)
+
+        def desired_true(r, a):
+            return r.force_True(*a)
 
     reset = True
     if starting == 0:

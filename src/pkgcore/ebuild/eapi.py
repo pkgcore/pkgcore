@@ -14,6 +14,9 @@ from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as
 from snakeoil.process.spawn import bash_version
 from snakeoil.sequences import unique_stable
 
+from ..log import logger
+from . import atom, const
+
 LATEST_PMS_EAPI_VER = "9"
 
 
@@ -21,9 +24,6 @@ def get_latest_PMS_eapi():
     """return the latest PMS EAPI object known to this version of pkgcore"""
     return get_eapi(LATEST_PMS_EAPI_VER)
 
-
-from ..log import logger
-from . import atom, const
 
 _valid_EAPI_regex = regexp(r"^[A-Za-z0-9_][A-Za-z0-9+_.-]*$")
 _valid_use_flag = regexp(r"^[A-Za-z0-9][A-Za-z0-9+_@-]*$")

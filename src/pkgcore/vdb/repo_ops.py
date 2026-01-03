@@ -13,7 +13,6 @@ from snakeoil.osutils import ensure_dirs
 from snakeoil.version import get_version
 
 from .. import __title__
-from ..ebuild import conditionals
 from ..log import logger
 from ..operations import repo as repo_ops
 from .contents import ContentsFile

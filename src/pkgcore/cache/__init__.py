@@ -227,16 +227,15 @@ class base:
         for (chf, convert), item in data:
             yield chf, convert(item)
 
-    def reconstruct_eclasses(self, cpv, eclass_string):
+    def reconstruct_eclasses(self, cpv, eclass_string: str):
         """Turn a string from :obj:`serialize_eclasses` into a dict."""
         if not isinstance(eclass_string, str):
-            raise TypeError("eclass_string must be basestring, got %r" % eclass_string)
+            raise TypeError(f"eclass_string must be basestring, got {eclass_string!r}")
         eclass_data = eclass_string.strip().split(self.eclass_splitter)
         if eclass_data == [""]:
             # occasionally this occurs in the fs backends.  they suck.
             return []
 
-        l = len(eclass_data)
         chf_funcs = self.eclass_chf_deserializers
         tuple_len = len(chf_funcs) + 1
         if len(eclass_data) % tuple_len:

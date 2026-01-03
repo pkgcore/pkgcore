@@ -1,6 +1,5 @@
 __all__ = ("http_syncer",)
 
-import errno
 import os
 import ssl
 import sys
@@ -59,7 +58,9 @@ class http_syncer(base.Syncer):
 
         # Manually check cached values ourselves since some servers appear to
         # ignore If-None-Match or If-Modified-Since headers.
-        convert = lambda x: x.strip() if x else None
+        def convert(x):
+            return x.strip() if x else None
+
         etag = resp.getheader("ETag")
         modified = resp.getheader("Last-Modified")
         if not force:

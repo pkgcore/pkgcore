@@ -121,7 +121,7 @@ def _process_updates(sequence, filename, mods, moved):
                 continue
 
             src_slot = atom(f"{src}:{line[2]}")
-            trg_slot = atom(f"{src.key}:{line[3]}")
+            _ = atom(f"{src.key}:{line[3]}")
 
             mods[src.key][1].append(("slotmove", src_slot, line[3]))
         else:

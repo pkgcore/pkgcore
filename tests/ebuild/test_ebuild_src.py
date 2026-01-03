@@ -641,7 +641,7 @@ class TestPackageFactory:
         assert len(pf._cache) == 0
         assert sorted(pf.mirrors) == sorted(mirrors)
         assert pf.mirrors["gentoo"] == mirrors["gentoo"]
-        assert pf.default_mirrors == None
+        assert pf.default_mirrors is None
 
         def_mirrors = ["http://def1/", "http://blah1/"]
         pf = self.mkinst(default_mirrors=def_mirrors)

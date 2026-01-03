@@ -355,7 +355,7 @@ class MergeEngine:
                             f"modification error occurred during trigger {trigger!r}: {e}"
                         )
                         raise
-                    except Exception as e:
+                    except Exception:
                         if not trigger.suppress_exceptions:
                             raise
 

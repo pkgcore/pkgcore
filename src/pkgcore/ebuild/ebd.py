@@ -139,7 +139,7 @@ class ebd:
         self.restrict = pkg.restrict
 
         for x in ("sandbox", "userpriv"):
-            setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
+            setattr(self, x, self.feat_or_bool(x) and x not in self.restrict)
         if self.userpriv and os.getuid() != 0:
             self.userpriv = False
 

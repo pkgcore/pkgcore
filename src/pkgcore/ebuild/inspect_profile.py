@@ -326,7 +326,9 @@ class defaults(_base, metaclass=_register_command):
         if var_filter:
             var_filter = set(var_filter).__contains__
         else:
-            var_filter = lambda x: True
+
+            def var_filter(x):
+                return True
 
         settings = namespace.profile.default_env
         vars = sorted(filter(var_filter, settings))

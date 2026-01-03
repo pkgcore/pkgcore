@@ -257,7 +257,7 @@ class TestAtom(TestRestriction):
         self.assertMatch(kls(f"{astr}[debug,-not]"), c)
         self.assertMatch(kls(f"{astr}:1[debug,-not]"), c)
 
-        for atom in (
+        for atom_str in (
             f"{astr}[]",
             f"{astr}[-]",
             "dev-util/diffball[foon",
@@ -277,7 +277,7 @@ class TestAtom(TestRestriction):
             "dev-util/diffball[!-x?]",
         ):
             with pytest.raises(errors.MalformedAtom):
-                kls(atom)
+                kls(atom_str)
 
     def test_slot(self):
         astr = "dev-util/confcache"

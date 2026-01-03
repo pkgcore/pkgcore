@@ -621,7 +621,9 @@ class BlockFileType(base):
         file_typer = file_type.file_identifier()
 
         if self.filter_regex is None:
-            filter_re = lambda x: True
+
+            def filter_re(x):
+                return True
         else:
             filter_re = re.compile(self.filter_regex).match
         bad_pat = re.compile(self.bad_regex).match

@@ -187,9 +187,9 @@ def do_link(src, trg):
         return False
     try:
         os.rename(path, trg.location)
-    except EnvironmentError:
+    except EnvironmentError as e:
         unlink_if_exists(path)
-        if e.eerrno != errno.EXDEV:
+        if e.errno != errno.EXDEV:
             # weird error, broken FS codes, perms, or someone is screwing with us.
             raise
         # this is only possible on overlay fs's; while annoying, you can have two
@@ -211,7 +211,9 @@ def merge_contents(cset, offset=None, callback=None):
     """
 
     if callback is None:
-        callback = lambda obj: None
+
+        def callback(obj):
+            return None
 
     if not isinstance(cset, contents.contentsSet):
         raise TypeError(f"cset must be a contentsSet, got {cset!r}")
@@ -306,7 +308,9 @@ def unmerge_contents(cset, offset=None, callback=None):
     """
 
     if callback is None:
-        callback = lambda obj: None
+
+        def callback(obj):
+            return None
 
     iterate = iter
     if offset is not None:
@@ -323,7 +327,7 @@ def unmerge_contents(cset, offset=None, callback=None):
         try:
             os.rmdir(x.location)
         except OSError as e:
-            if not e.errno in (
+            if e.errno not in (
                 errno.ENOTEMPTY,
                 errno.ENOENT,
                 errno.ENOTDIR,

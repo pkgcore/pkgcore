@@ -2,6 +2,7 @@ import os
 from functools import partial
 
 import pytest
+
 from pkgcore.fs import contents, fs
 
 mk_file = partial(fs.fsFile, strict=False)

@@ -3,8 +3,9 @@
 from unittest import mock
 
 import pytest
-from pkgcore.sync import base, git_svn
 from snakeoil.process import CommandNotFound
+
+from pkgcore.sync import base, git_svn
 
 
 class TestGitSVNSyncer:

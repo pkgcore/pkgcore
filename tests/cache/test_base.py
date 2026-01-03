@@ -1,7 +1,7 @@
 import pytest
+from snakeoil.chksum import LazilyHashedPath
 
 from pkgcore.cache import base, bulk, errors
-from snakeoil.chksum import LazilyHashedPath
 
 
 def _mk_chf_obj(**kwargs):

@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from pkgcore.sync import base
 from pkgcore.sync.sqfs import sqfs_syncer
 

@@ -1,6 +1,7 @@
 import os
 from functools import partial
-from os.path import join as pjoin, normpath
+from os.path import join as pjoin
+from os.path import normpath
 
 from snakeoil.cli import arghparse
 

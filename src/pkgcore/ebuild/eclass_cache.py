@@ -5,7 +5,8 @@ in memory representation of on disk eclass stacking order
 __all__ = ("base", "cache", "StackedCaches")
 
 import os
-from os.path import join as pjoin, normpath
+from os.path import join as pjoin
+from os.path import normpath
 from sys import intern
 from weakref import WeakValueDictionary
 

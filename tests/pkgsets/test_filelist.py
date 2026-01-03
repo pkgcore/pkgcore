@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from pkgcore import os_data
 from pkgcore.ebuild.atom import atom
 from pkgcore.pkgsets import filelist

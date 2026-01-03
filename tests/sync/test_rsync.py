@@ -3,9 +3,10 @@ import os
 from unittest import mock
 
 import pytest
+from snakeoil.process import CommandNotFound
+
 from pkgcore.sync import base, rsync
 from pkgcore.sync.tar import tar_syncer
-from snakeoil.process import CommandNotFound
 
 
 def fake_ips(num):

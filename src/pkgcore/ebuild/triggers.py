@@ -18,7 +18,8 @@ __all__ = (
 
 import fnmatch
 import os
-from os.path import join as pjoin, normpath
+from os.path import join as pjoin
+from os.path import normpath
 
 from snakeoil.bash import read_bash_dict
 from snakeoil.fileutils import AtomicWriteFile

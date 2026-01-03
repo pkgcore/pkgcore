@@ -2,8 +2,9 @@ import os
 from unittest import mock
 
 import pytest
-from pkgcore.sync import base, git
 from snakeoil.process import CommandNotFound
+
+from pkgcore.sync import base, git
 
 
 class TestGitSyncer:

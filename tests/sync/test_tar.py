@@ -1,6 +1,7 @@
 import os
 
 import pytest
+
 from pkgcore.sync import base
 from pkgcore.sync.tar import tar_syncer
 

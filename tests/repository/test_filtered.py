@@ -1,6 +1,6 @@
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.restricts import CategoryDep
 from pkgcore.ebuild.cpv import VersionedCPV
+from pkgcore.ebuild.restricts import CategoryDep
 from pkgcore.repository import filtered
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages, values

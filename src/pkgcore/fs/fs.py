@@ -5,7 +5,8 @@ filesystem entry abstractions
 import fnmatch
 import stat
 from functools import total_ordering
-from os.path import abspath, basename, dirname, join as pjoin, normpath, realpath
+from os.path import abspath, basename, dirname, normpath, realpath
+from os.path import join as pjoin
 from os.path import sep as path_seperator
 
 from snakeoil import klass

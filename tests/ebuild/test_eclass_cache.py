@@ -2,10 +2,10 @@ import os
 from os.path import join as pjoin
 
 import pytest
-
-from pkgcore.ebuild import eclass_cache
 from snakeoil import data_source
 from snakeoil.chksum import LazilyHashedPath
+
+from pkgcore.ebuild import eclass_cache
 
 
 class FakeEclassCache(eclass_cache.base):

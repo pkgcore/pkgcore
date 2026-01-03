@@ -1,8 +1,9 @@
 from types import SimpleNamespace
 
 import pytest
-from pkgcore.restrictions import packages, values
 from snakeoil.mappings import AttrAccessible
+
+from pkgcore.restrictions import packages, values
 
 from .utils import TestRestriction
 

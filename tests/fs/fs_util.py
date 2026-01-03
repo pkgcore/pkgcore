@@ -4,10 +4,10 @@ the default strictness tests that fsBase.* derivatives have to ease
 testing.  Do not use it in non-test code.
 """
 
-from pkgcore.fs import fs
-
 # we use pre_curry to preserve the docs for the wrapped target
 from snakeoil.currying import pre_curry
+
+from pkgcore.fs import fs
 
 # we're anal about del'ing here to prevent the vars from lingering around,
 # showing up when folks are poking around

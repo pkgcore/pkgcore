@@ -4,16 +4,15 @@ filtering repository
 
 __all__ = ("tree",)
 
-from itertools import filterfalse
 import typing
+from itertools import filterfalse
 
 from snakeoil.klass import DirProxy, GetAttrProxy, alias_method
 
+from ..ebuild.atom import atom
 from ..operations.repo import operations_proxy
 from ..restrictions import restriction
 from . import errors, prototype
-from pkgcore.ebuild.restricts import CategoryDep
-from pkgcore.ebuild.atom import atom
 
 
 class tree(prototype.tree):

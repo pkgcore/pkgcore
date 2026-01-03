@@ -1,4 +1,5 @@
 import pytest
+
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
 from pkgcore.scripts import pmerge

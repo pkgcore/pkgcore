@@ -89,3 +89,6 @@ testpaths = ["tests"]
 markers = [
 	"net: tests that require network access (must enable --network option to run)",
 ]
+
+[tool.ruff.lint]
+extend-select = ["I"]

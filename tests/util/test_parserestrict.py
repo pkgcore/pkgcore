@@ -1,4 +1,5 @@
 import pytest
+
 from pkgcore.ebuild import restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import util

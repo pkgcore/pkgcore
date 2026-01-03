@@ -1,7 +1,7 @@
 import pytest
+from snakeoil.chksum import LazilyHashedPath
 
 from pkgcore.cache import errors, flat_hash
-from snakeoil.chksum import LazilyHashedPath
 
 from . import test_base
 

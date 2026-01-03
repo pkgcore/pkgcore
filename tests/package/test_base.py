@@ -2,6 +2,7 @@ from functools import partial
 from types import SimpleNamespace
 
 import pytest
+
 from pkgcore.package import base
 
 

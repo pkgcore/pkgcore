@@ -6,6 +6,7 @@ from os.path import normpath
 from unittest import mock
 
 import pytest
+
 from pkgcore.config import central
 from pkgcore.ebuild import const, profiles, repo_objs
 from pkgcore.ebuild.atom import atom

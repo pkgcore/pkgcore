@@ -3,9 +3,8 @@
 .. [#] https://devmanual.gentoo.org/appendices/devbook-guide/index.html
 """
 
-from docutils import nodes, writers
-
 import lxml.etree as etree
+from docutils import nodes, writers
 
 
 class DevBookWriter(writers.Writer):

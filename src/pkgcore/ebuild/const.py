@@ -6,7 +6,6 @@ from os.path import join as pjoin
 
 from ..const import EBD_PATH
 
-
 incrementals_unfinalized = ("USE",)
 
 metadata_keys = (

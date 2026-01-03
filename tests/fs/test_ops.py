@@ -2,9 +2,9 @@ import os
 from pathlib import Path
 
 import pytest
+from snakeoil.data_source import local_source
 
 from pkgcore.fs import contents, fs, livefs, ops
-from snakeoil.data_source import local_source
 
 
 def verify(obj, kwds):

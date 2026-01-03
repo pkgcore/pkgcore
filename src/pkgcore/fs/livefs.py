@@ -5,7 +5,8 @@ interaction with the livefs: generating fs objects to represent the livefs.
 import collections
 import errno
 import os
-from os.path import join as pjoin, normpath
+from os.path import join as pjoin
+from os.path import normpath
 from stat import S_IMODE, S_ISDIR, S_ISFIFO, S_ISLNK, S_ISREG
 
 from snakeoil.chksum import get_handlers

@@ -25,7 +25,8 @@ from collections import defaultdict
 from contextlib import chdir
 from functools import partial
 from itertools import chain
-from os.path import join as pjoin, normpath
+from os.path import join as pjoin
+from os.path import normpath
 from tempfile import TemporaryFile
 
 from snakeoil import data_source, klass

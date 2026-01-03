@@ -5,10 +5,9 @@ from collections.abc import MutableSet
 from datetime import datetime
 from os.path import join as pjoin
 
+import pytest
 from snakeoil import klass
 from snakeoil.fileutils import touch
-
-import pytest
 
 
 class GitRepo:
@@ -213,7 +212,7 @@ class EbuildRepo:
     def sync(self):
         """Forcibly create underlying repo object avoiding cache usage."""
         # avoid issues loading modules that set signal handlers
-        from pkgcore.ebuild import repo_objs, repository
+        from ..ebuild import repo_objs, repository
 
         repo_config = repo_objs.RepoConfig(
             location=self.path, disable_inst_caching=True
@@ -238,7 +237,7 @@ class EbuildRepo:
                     f.write(f"{p.eapi}\n")
 
     def create_ebuild(self, cpvstr: str, data=None, **kwargs):
-        from pkgcore.ebuild.cpv import VersionedCPV
+        from ..ebuild.cpv import VersionedCPV
 
         cpv = VersionedCPV(cpvstr)
         self._repo.notify_add_package(cpv)

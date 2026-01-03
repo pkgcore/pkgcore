@@ -1,6 +1,7 @@
 from functools import partial, total_ordering
 
 import pytest
+
 from pkgcore.package.base import base, dynamic_getattr_dict
 from pkgcore.package.mutated import MutatedPkg
 

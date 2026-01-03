@@ -2,6 +2,7 @@ import io
 import textwrap
 
 import pytest
+
 from pkgcore.ebuild.filter_env import main_run
 
 

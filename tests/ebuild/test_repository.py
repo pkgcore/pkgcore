@@ -4,8 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pkgcore.ebuild import eclass_cache
-from pkgcore.ebuild import repository, restricts
+from pkgcore.ebuild import eclass_cache, repository, restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
 

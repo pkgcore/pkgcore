@@ -7,7 +7,6 @@ This is will be removed once pkgcore and snakeoil data_source usage is removed.
 
 from snakeoil.python_namespaces import protect_imports
 
-
 # force a fresh module import of tarfile that is ours to monkey patch.
 with protect_imports() as (_paths, modules):
     modules.pop("tarfile", None)

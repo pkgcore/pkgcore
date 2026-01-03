@@ -10,7 +10,6 @@ from urllib.parse import urlencode
 
 from pkgcore.util import commandline
 
-
 argparser = commandline.ArgumentParser(version=False, description=__doc__)
 argparser.add_argument(
     "--api-key",

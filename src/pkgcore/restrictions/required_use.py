@@ -1,7 +1,8 @@
 from typing import Iterator, Protocol
 
 from snakeoil.constraints import Constraint, Problem
-from . import restriction, boolean, packages, values
+
+from . import boolean, packages, restriction, values
 
 
 class _use_constraint(Protocol):

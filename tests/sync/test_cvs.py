@@ -1,8 +1,9 @@
 from unittest import mock
 
 import pytest
-from pkgcore.sync import base, cvs
 from snakeoil.process import CommandNotFound
+
+from pkgcore.sync import base, cvs
 
 
 class TestCVSSyncer:

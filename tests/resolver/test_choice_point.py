@@ -1,4 +1,5 @@
 import pytest
+
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 

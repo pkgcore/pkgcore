@@ -3,13 +3,14 @@ from functools import partial
 from types import SimpleNamespace
 
 import pytest
+from snakeoil.currying import post_curry
+
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import VersionedCPV
 from pkgcore.operations.repo import operations
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import boolean, packages, values
-from snakeoil.currying import post_curry
 
 
 class TestPrototype:

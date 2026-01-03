@@ -42,7 +42,6 @@ from ..restrictions import packages, values
 from ..restrictions.delegated import delegate
 from ..util.parserestrict import ParseError, parse_match
 from . import const
-from .profiles import INCREMENTALS
 from . import repository as ebuild_repo
 from .atom import atom as _atom
 from .eapi import get_latest_PMS_eapi
@@ -56,6 +55,7 @@ from .misc import (
     optimize_incrementals,
 )
 from .portage_conf import PortageConfig
+from .profiles import INCREMENTALS
 from .repo_objs import Licenses, RepoConfig
 from .triggers import GenerateTriggers
 

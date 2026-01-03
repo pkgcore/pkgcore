@@ -10,7 +10,8 @@ import os
 from collections import defaultdict, namedtuple
 from functools import partial
 from itertools import chain
-from os.path import abspath, join as pjoin
+from os.path import abspath
+from os.path import join as pjoin
 
 from snakeoil import caching, klass
 from snakeoil.bash import read_bash, read_bash_dict
@@ -23,9 +24,8 @@ from ..config import errors
 from ..config.hint import ConfigHint
 from ..fs.livefs import sorted_scan
 from ..log import logger
-from . import const, cpv
+from . import const, cpv, misc, repo_objs
 from . import errors as ebuild_errors
-from . import misc, repo_objs
 from .atom import atom
 from .eapi import EAPI, get_eapi
 

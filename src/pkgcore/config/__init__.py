@@ -46,7 +46,7 @@ def load_config(
         # otherwise load the portage config
         else:
             # delay importing to avoid circular imports
-            from pkgcore.ebuild.portage_conf import PortageConfig
+            from ..ebuild.portage_conf import PortageConfig
 
             configs.append(
                 PortageConfig(

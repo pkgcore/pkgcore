@@ -10,7 +10,7 @@ from importlib import import_module
 def run(script_name):
     """Run a given script module."""
     try:
-        from pkgcore.util.commandline import Tool
+        from ..util.commandline import Tool
 
         script_module = ".".join(
             os.path.realpath(__file__).split(os.path.sep)[-3:-1]

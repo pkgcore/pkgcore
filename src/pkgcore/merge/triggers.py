@@ -27,7 +27,8 @@ import platform
 import re
 import time
 from math import floor
-from os.path import join as pjoin, normpath
+from os.path import join as pjoin
+from os.path import normpath
 
 from snakeoil import process
 from snakeoil.bash import read_bash

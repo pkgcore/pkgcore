@@ -25,6 +25,7 @@ clean:
 
 .PHONY: format
 format:
+	$(PYTHON) -m ruff check --select I --fix . && \
 	$(PYTHON) -m ruff format
 
 .PHONY: dev-environment

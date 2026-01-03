@@ -1,4 +1,5 @@
 import pytest
+
 from pkgcore.ebuild import misc
 from pkgcore.restrictions import packages
 

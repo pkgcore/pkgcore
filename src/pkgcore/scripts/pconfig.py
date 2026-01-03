@@ -9,9 +9,8 @@ from snakeoil.errors import dump_error
 from snakeoil.klass import get_subclasses_of
 from snakeoil.python_namespaces import import_submodules_of
 
-from pkgcore.config.hint import ConfigHint
-
 from ..config import basics, errors
+from ..config.hint import ConfigHint
 from ..ebuild import atom
 from ..util import commandline
 

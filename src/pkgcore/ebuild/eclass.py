@@ -738,6 +738,6 @@ class EclassDoc(AttrDict):
 
     def to_devbook(self):
         """Convert eclassdoc object to an HTML 5 document."""
-        from pkgcore.util.rst2devbook import DevBookWriter
+        from ..util.rst2devbook import DevBookWriter
 
         return self._to_docutils(DevBookWriter(self.name))

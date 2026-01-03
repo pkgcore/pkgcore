@@ -4,7 +4,8 @@ import os
 import shutil
 import time
 from itertools import chain
-from os.path import join as pjoin, normpath
+from os.path import join as pjoin
+from os.path import normpath
 
 from snakeoil import compression
 from snakeoil.data_source import local_source

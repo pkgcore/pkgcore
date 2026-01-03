@@ -1,7 +1,7 @@
 import pytest
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore import fetch
-from snakeoil.sequences import iflatten_instance
 
 
 def assert_uri(obj, uri):

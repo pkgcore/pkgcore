@@ -14,7 +14,8 @@ import os
 import sys
 from functools import partial
 from importlib import import_module
-from os.path import abspath, join as pjoin, normpath
+from os.path import abspath, normpath
+from os.path import join as pjoin
 
 from snakeoil import modules
 from snakeoil.cli import arghparse, tool

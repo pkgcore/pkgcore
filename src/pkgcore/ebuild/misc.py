@@ -23,7 +23,7 @@ from functools import partial
 from itertools import chain
 
 from snakeoil import mappings
-from snakeoil.klass import alias_method, GenericEquality
+from snakeoil.klass import GenericEquality, alias_method
 from snakeoil.sequences import iflatten_instance
 
 from ..restrictions import boolean, packages, restriction

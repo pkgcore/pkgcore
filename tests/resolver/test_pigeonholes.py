@@ -1,4 +1,5 @@
 import pytest
+
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.restrictions import restriction
 

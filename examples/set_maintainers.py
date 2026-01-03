@@ -5,10 +5,9 @@ import sys
 import urllib.request as urllib
 from urllib.parse import urlencode
 
-from pkgcore.util import commandline
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import MalformedAtom
-
+from pkgcore.util import commandline
 
 argparser = commandline.ArgumentParser(color=False, version=False)
 argparser.add_argument(

@@ -1,6 +1,7 @@
 import pytest
 
 from pkgcore.restrictions.delegated import delegate
+
 from .utils import TestRestriction
 
 

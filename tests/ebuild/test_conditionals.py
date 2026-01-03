@@ -1,11 +1,11 @@
 import pytest
+from snakeoil.iterables import expandable_chain
+from snakeoil.sequences import iflatten_instance
 
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import DepsetParseError
 from pkgcore.restrictions import boolean, packages
-from snakeoil.iterables import expandable_chain
-from snakeoil.sequences import iflatten_instance
 
 
 class base:

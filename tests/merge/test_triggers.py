@@ -7,14 +7,15 @@ from math import ceil, floor
 from os.path import normpath
 
 import pytest
-from pkgcore.fs import fs
-from pkgcore.fs.contents import contentsSet
-from pkgcore.fs.livefs import gen_obj
-from pkgcore.merge import const, triggers
 from snakeoil import process
 from snakeoil.contexts import os_environ
 from snakeoil.currying import post_curry
 from snakeoil.osutils import ensure_dirs
+
+from pkgcore.fs import fs
+from pkgcore.fs.contents import contentsSet
+from pkgcore.fs.livefs import gen_obj
+from pkgcore.merge import const, triggers
 
 from .util import fake_engine, fake_reporter, fake_trigger
 

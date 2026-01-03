@@ -1,4 +1,5 @@
 import pytest
+
 from pkgcore.resolver import plan
 from pkgcore.test.misc import FakePkg
 

@@ -236,7 +236,7 @@ class SharedPkgData:
         self.manifest = manifest
 
 
-class ProjectMember(metaclass=klass.generic_equality):
+class ProjectMember(klass.GenericEquality):
     """Data on a single project member.
 
     :type email: C{unicode} object

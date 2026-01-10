@@ -98,3 +98,6 @@ extend-select = ["I"]
 ignore = [
 	"E741",  # ambiguous variable name
 ]
+
+[tool.vulture]
+paths = ["src/pkgcore"]

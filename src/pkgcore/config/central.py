@@ -597,4 +597,3 @@ class ConfigManager:
             raise errors.ConfigurationError(
                 f"failed instantiating default {type_name} {defaults[0][0]!r}"
             ) from e
-        return None

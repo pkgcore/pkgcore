@@ -558,7 +558,6 @@ def run_generic_phase(
                 raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)"
                 )
-                logger.warning(f"executing phase {phase}: execution failed, ignoring")
     except Exception as e:
         if isinstance(e, ebd_ipc.IpcError):
             # notify bash side of IPC error

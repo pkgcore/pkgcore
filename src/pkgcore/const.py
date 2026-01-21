@@ -5,7 +5,7 @@ Internal constants.
 import os
 import sys
 
-from snakeoil import mappings, process
+from snakeoil import mappings
 
 from . import __title__
 
@@ -58,4 +58,3 @@ LIBDIR_PATH = _GET_CONST("LIBDIR_PATH", "%(REPO_PATH)s/data/lib/pkgcore")
 EBD_PATH = _GET_CONST("EBD_PATH", "%(LIBDIR_PATH)s/ebd")
 CONFIG_PATH = _GET_CONST("CONFIG_PATH", "%(DATA_PATH)s/config")
 PATH_FORCED_PREPEND = _GET_CONST("INJECTED_BIN_PATH", ("%(REPO_PATH)s/bin",))
-CP_BINARY = process.find_binary("cp", fallback="/bin/cp")

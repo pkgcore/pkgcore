@@ -13,7 +13,6 @@ from os.path import join as pjoin
 from snakeoil.osutils import ensure_dirs, unlink_if_exists
 from snakeoil.process.spawn import spawn
 
-from ..const import CP_BINARY
 from . import contents, fs
 from .livefs import gen_obj
 
@@ -152,9 +151,9 @@ def copyfile(obj, mkdirs=False):
         dev = os.makedev(obj.major, obj.minor)
         os.mknod(fp, obj.mode, dev)
     else:
-        ret = spawn([CP_BINARY, "-Rp", obj.location, fp])
+        ret = spawn(["cp", "-Rp", obj.location, fp])
         if ret != 0:
-            raise FailedCopy(obj, f"got {ret} from {CP_BINARY} -Rp")
+            raise FailedCopy(obj, f"got {ret} from cp -Rp")
 
     ensure_perms(obj.change_attributes(location=fp))
 

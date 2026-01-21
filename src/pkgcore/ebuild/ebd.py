@@ -6,13 +6,10 @@ api, for example per phase methods.
 """
 
 __all__ = (
-    "ebd",
-    "setup_mixin",
     "install_op",
     "uninstall_op",
     "replace_op",
-    "buildable",
-    "binpkg_localize",
+    "built_operations",
 )
 
 import errno

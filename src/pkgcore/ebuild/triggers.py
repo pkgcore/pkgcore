@@ -9,7 +9,6 @@ __all__ = (
     "preinst_contents_reset",
     "CollisionProtect",
     "ProtectOwned",
-    "install_into_symdir_protect",
     "InfoRegen",
     "SFPerms",
     "FixImageSymlinks",
@@ -513,44 +512,6 @@ class ProtectOwned(FileCollision):
         # TODO: output a file override warning here
 
 
-class install_into_symdir_protect(triggers.base):
-    required_csets = {
-        const.INSTALL_MODE: ("install", "install_existing"),
-        const.REPLACE_MODE: ("install", "install_existing", "old_cset"),
-    }
-
-    _hooks = ("sanity_check",)
-    _engine_types = triggers.INSTALLING_MODES
-
-    def __init__(self, extra_protects=(), extra_disables=()):
-        super().__init__()
-        self.extra_protects = extra_protects
-        self.extra_disables = extra_disables
-
-    def trigger(self, engine, install, existing, old_cset=()):
-        return
-        if not existing:
-            return
-
-        # avoid generator madness
-        install_into_symdir = []
-        for linkset in [install.iterlinks(), existing.iterlinks()]:
-            linkset = list(linkset)
-            if linkset:
-                for inst_file in install.iterfiles():
-                    for sym in linkset:
-                        if inst_file.location.startswith(sym.location + "/"):
-                            install_into_symdir.append(inst_file)
-
-        if install_into_symdir:
-            raise errors.BlockModification(
-                self,
-                "file(s) installed into symlinked dir, will break when "
-                "removing files from the original dir: ( %s )"
-                % ", ".join(repr(x) for x in sorted(install_into_symdir)),
-            )
-
-
 class InfoRegen(triggers.InfoRegen):
     _label = "ebuild info regen"
 
@@ -713,10 +674,6 @@ class GenerateTriggers:
 
         if "sfperms" in self.domain.features:
             yield SFPerms()
-
-        yield install_into_symdir_protect(
-            self.opts["CONFIG_PROTECT"], self.opts["CONFIG_PROTECT_MASK"]
-        )
 
         # TODO: support multiple binpkg repo targets?
         pkgdir = self.opts.get("PKGDIR", None)

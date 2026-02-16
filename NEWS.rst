@@ -7,6 +7,9 @@ Release Notes
 pkgcore 0.12.33 (unreleased)
 -----------------------------
 
+- fix regression introducd in 0.12.31 incorrectly limiting `pquery` filtration, masking
+  packages that should be visible.
+
 Packaging
 ~~~~~~~~~~
 

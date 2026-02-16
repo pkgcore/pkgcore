@@ -11,7 +11,7 @@ from textwrap import dedent
 from time import time
 
 from snakeoil.cli.exceptions import ExitException
-from snakeoil.sequences import iflatten_instance, unique_stable
+from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
 from ..config.basics import ConfigSectionFromStringDict
@@ -865,7 +865,7 @@ def main(options, out, err):
         err.write(f"{options.prog}: no targets specified; nothing to do")
         return 1
 
-    atoms = unique_stable(atoms)
+    atoms = stable_unique(atoms)
     if options.force_stable_ordering_of_targets:
         atoms = sorted(atoms)
 

@@ -21,7 +21,7 @@ from operator import attrgetter, itemgetter
 
 import snakeoil.formatters
 from snakeoil.cli import arghparse
-from snakeoil.sequences import iflatten_instance
+from snakeoil.sequences import iflatten_instance, unstable_unique
 
 from .. import fetch
 from ..ebuild import inspect_profile
@@ -264,7 +264,7 @@ class license_usage_kls(histo_data):
         data = {}
         pos = 0
         for pos, pkg in enumerate(repo):
-            for license in set(iflatten_instance(pkg.license)):
+            for license in unstable_unique(iflatten_instance(pkg.license)):
                 data.setdefault(license, 0)
                 data[license] += 1
         return data, pos + 1

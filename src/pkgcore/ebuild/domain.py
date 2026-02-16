@@ -24,7 +24,7 @@ from snakeoil.data_source import local_source
 from snakeoil.log import suppress_logging
 from snakeoil.mappings import ImmutableDict, ProtectedDict
 from snakeoil.process.spawn import spawn_get_output
-from snakeoil.sequences import predicate_split, split_negations, unique_stable
+from snakeoil.sequences import predicate_split, split_negations, stable_unique
 
 from ..binpkg import repository as binary_repo
 from ..cache.flat_hash import md5_cache
@@ -301,7 +301,7 @@ class domain(config_domain):
     def system_shell_profile(self, data):
         # prepend system profile $PATH if it exists
         if "PATH" in data:
-            path = unique_stable(
+            path = stable_unique(
                 data["PATH"].split(os.pathsep) + os.environ["PATH"].split(os.pathsep)
             )
             os.environ["PATH"] = os.pathsep.join(path)
@@ -457,25 +457,25 @@ class domain(config_domain):
     def pkg_keywords(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], unique_stable(x[1])) for x in data)
+        return tuple((x[0], stable_unique(x[1])) for x in data)
 
     @load_property("package.accept_keywords", parse_func=restriction_payload_splitter)
     def pkg_accept_keywords(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], unique_stable(x[1])) for x in data)
+        return tuple((x[0], stable_unique(x[1])) for x in data)
 
     @load_property("package.license", parse_func=restriction_payload_splitter)
     def pkg_licenses(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], unique_stable(x[1])) for x in data)
+        return tuple((x[0], stable_unique(x[1])) for x in data)
 
     @load_property("package.use", parse_func=package_use_splitter)
     def pkg_use(self, data, debug=False):
         if debug:
             return tuple(data)
-        return tuple((x[0], split_negations(unique_stable(x[1]))) for x in data)
+        return tuple((x[0], split_negations(stable_unique(x[1]))) for x in data)
 
     @load_property("package.env")
     def pkg_env(self, data, debug=False):

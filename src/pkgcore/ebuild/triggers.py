@@ -23,7 +23,7 @@ from os.path import normpath
 from snakeoil.bash import read_bash_dict
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.osutils import listdir_files
-from snakeoil.sequences import iflatten_instance, unique_stable
+from snakeoil.sequences import iflatten_instance, stable_unique
 
 from .. import os_data
 from ..fs import livefs
@@ -206,13 +206,13 @@ def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
 
     r = [
         values.StrGlobMatch(normpath(x).rstrip("/") + "/")
-        for x in set(unique_stable(collapsed_d["CONFIG_PROTECT"] + ["/etc"]))
+        for x in set(stable_unique(collapsed_d["CONFIG_PROTECT"] + ["/etc"]))
     ]
     if len(r) > 1:
         r = values.OrRestriction(*r)
     else:
         r = r[0]
-    neg = unique_stable(collapsed_d["CONFIG_PROTECT_MASK"])
+    neg = stable_unique(collapsed_d["CONFIG_PROTECT_MASK"])
     if neg:
         if len(neg) == 1:
             r2 = values.StrGlobMatch(normpath(neg[0]).rstrip("/") + "/", negate=True)
@@ -231,11 +231,11 @@ def gen_collision_ignore_filter(offset, extra_ignores=()):
     ignored.extend(extra_ignores)
     ignored.extend(["*/.keep", "*/.keep_*"])
 
-    ignored = unique_stable(ignored)
+    ignored = stable_unique(ignored)
     for i, x in enumerate(ignored):
         if not x.endswith("/*") and os.path.isdir(x):
             ignored[i] = ignored.rstrip("/") + "/*"
-    ignored = [values.StrRegex(fnmatch.translate(x)) for x in unique_stable(ignored)]
+    ignored = [values.StrRegex(fnmatch.translate(x)) for x in stable_unique(ignored)]
     if len(ignored) == 1:
         return ignored[0]
     return values.OrRestriction(*ignored)

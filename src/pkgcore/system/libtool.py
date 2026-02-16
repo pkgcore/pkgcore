@@ -5,7 +5,7 @@ from functools import partial
 from os.path import basename, dirname
 
 from snakeoil.currying import post_curry
-from snakeoil.sequences import unique_stable
+from snakeoil.sequences import stable_unique
 
 from ..exceptions import PkgcoreException
 from ..merge import triggers
@@ -68,7 +68,7 @@ def rewrite_lafile(handle, filename):
     rpaths, libs, libladirs, inherited_flags = [], [], [], []
     original_inherited_flags = data.get("inherited_linker_flags", [])
 
-    for item in unique_stable(original_libs):
+    for item in stable_unique(original_libs):
         if item.startswith("-l"):
             libs.append(item)
         elif item.endswith(".la"):
@@ -95,8 +95,8 @@ def rewrite_lafile(handle, filename):
                 libs.append(item)
         else:
             raise UnknownData(raw_dep_libs, item)
-    libs = unique_stable(rpaths + libladirs + libs)
-    inherited_flags = unique_stable(inherited_flags)
+    libs = stable_unique(rpaths + libladirs + libs)
+    inherited_flags = stable_unique(inherited_flags)
     if libs == original_libs and inherited_flags == original_inherited_flags:
         return False, None
 

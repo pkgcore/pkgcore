@@ -21,7 +21,7 @@ from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
 from snakeoil.osutils import listdir_dirs, listdir_files
-from snakeoil.sequences import iflatten_instance, unique_stable
+from snakeoil.sequences import iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
 from .. import fetch
@@ -892,7 +892,7 @@ class ConfiguredTree(configured.tree):
     @_wrap_attr(config_wrappables)
     def _distfiles(self, raw_pkg_distfiles, enabled_use, pkg):
         """Distfiles used by a package."""
-        return tuple(unique_stable(raw_pkg_distfiles.evaluate_depset(enabled_use)))
+        return tuple(stable_unique(raw_pkg_distfiles.evaluate_depset(enabled_use)))
 
     @_wrap_attr(config_wrappables)
     def _user_patches(self, _raw_pkg_patches, _enabled_use, pkg):

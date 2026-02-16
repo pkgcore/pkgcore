@@ -5,7 +5,6 @@ virtual repository, pkgs generated via callable
 __all__ = ("tree", "RestrictionRepo")
 
 from snakeoil.compatibility import cmp
-from snakeoil.sequences import stable_unique
 
 from ..ebuild import atom
 from ..ebuild.conditionals import DepSet

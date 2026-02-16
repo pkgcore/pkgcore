@@ -4,17 +4,15 @@ Release Notes
 
 
 -----------------------------
-pkgcore 0.12.33 (unreleased)
+pkgcore 0.12.33 (2026-02-16)
 -----------------------------
 
-- fix regression introducd in 0.12.31 incorrectly limiting `pquery` filtration, masking
-  packages that should be visible.
+- Fix regression introduced in 0.12.31 that incorrectly limited ``pquery``
+  filtering and masked packages that should have been visible.
 
-Packaging
-~~~~~~~~~~
+- Require ``pytest >= 9.0`` to run the test suite.
 
-- ``pytest >= 9.0`` is now required for tests.
-
+- Continued refactoring work by Brian Harring.
 
 ----------------------------
 pkgcore 0.12.32 (2026-01-03)

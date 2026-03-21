@@ -910,7 +910,7 @@ class OnDiskProfile(ProfileStack):
     def stack(self):
         l = ProfileStack.stack.function(self)
         if self.load_profile_base:
-            l = (EmptyRootNode._autodetect_and_create(self.basepath),) + l
+            l = (ProfileNode._autodetect_and_create(self.basepath),) + l
         return l
 
     @klass.jit_attr

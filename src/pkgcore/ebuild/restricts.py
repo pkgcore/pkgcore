@@ -62,24 +62,22 @@ class _VersionMatch(restriction.base, metaclass=generic_equality):
             currently forced to False
         """
 
-        kwd["negate"] = False
-        sf = object.__setattr__
-        sf(self, "ver", ver)
-        sf(self, "rev", rev)
+        self.ver = ver
+        self.rev = rev
         if operator != "~" and operator not in self._convert_str2op:
             raise errors.InvalidVersion(
                 self.ver, self.rev, f"invalid operator, '{operator}'"
             )
 
-        sf(self, "negate", negate)
+        self.negate = negate
         if operator == "~":
             if ver is None:
                 raise ValueError("for ~ op, version must be something other then None")
-            sf(self, "droprev", True)
-            sf(self, "vals", (0,))
+            self.droprev = True
+            self.vals = (0,)
         else:
-            sf(self, "droprev", False)
-            sf(self, "vals", self._convert_str2op[operator])
+            self.droprev = False
+            self.vals = self._convert_str2op[operator]
 
     def match(self, pkg, *args, **kwargs):
         if self.droprev:
@@ -221,8 +219,8 @@ class StaticUseDep(packages.PackageRestriction):
 class _UseDepDefaultContainment(values.ContainmentMatch):
     __slots__ = ("if_missing",)
 
-    def __init__(self, if_missing, vals, negate=False):
-        object.__setattr__(self, "if_missing", bool(if_missing))
+    def __init__(self, if_missing: bool, vals, negate=False):
+        self.if_missing = bool(if_missing)
         super().__init__(vals, negate=negate, match_all=True)
 
     def match(self, val):

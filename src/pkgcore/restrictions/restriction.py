@@ -53,8 +53,8 @@ class AlwaysBool(base):
             :obj:`pkgcore.restrictions.restriction.value_type`
         :param negate: boolean to return for the match
         """
-        object.__setattr__(self, "negate", negate)
-        object.__setattr__(self, "type", node_type)
+        self.negate = negate
+        self.type = node_type
 
     def match(self, *a, **kw):
         return self.negate
@@ -92,9 +92,8 @@ class Negate(base):
         :param restrict: :obj:`pkgcore.restrictions.restriction.base` instance
             to negate
         """
-        sf = object.__setattr__
-        sf(self, "type", restrict.type)
-        sf(self, "_restrict", restrict)
+        self.type = restrict.type
+        self._restrict = restrict
 
     def match(self, *a, **kw):
         return not self._restrict.match(*a, **kw)
@@ -115,9 +114,8 @@ class FakeType(base):
             to wrap
         :param new_type: new node_type
         """
-        sf = object.__setattr__
-        sf(self, "type", new_type)
-        sf(self, "_restrict", restrict)
+        self.type = new_type
+        self._restrict = restrict
 
     def match(self, *a, **kw):
         return self._restrict.match(*a, **kw)
@@ -139,10 +137,9 @@ class AnyMatch(base):
         :type node_type: string
         :param node_type: type of this restriction.
         """
-        sf = object.__setattr__
-        sf(self, "negate", negate)
-        sf(self, "restriction", childrestriction)
-        sf(self, "type", node_type)
+        self.negate = negate
+        self.restriction = childrestriction
+        self.type = node_type
 
     def match(self, val):
         for x in val:

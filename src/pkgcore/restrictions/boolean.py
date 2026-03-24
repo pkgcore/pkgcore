@@ -42,9 +42,7 @@ class base(restriction.base, metaclass=generic_equality):
         :keyword negate: should the logic be negated?
         """
 
-        node_type = kwds.pop("node_type", None)
-
-        self.type = node_type
+        self.type = node_type = kwds.pop("node_type", None)
         self.negate = kwds.pop("negate", False)
 
         if node_type is not None:

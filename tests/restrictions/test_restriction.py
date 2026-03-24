@@ -13,7 +13,7 @@ class SillyBool(restriction.base):
     __slots__ = ("negate",)
 
     def __init__(self, negate=False):
-        object.__setattr__(self, "negate", negate)
+        self.negate = negate
 
     def match(self, *args, **kwargs):
         return not self.negate

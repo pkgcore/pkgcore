@@ -1,7 +1,6 @@
 __all__ = (
     "ProfileError",
     "ProfileNode",
-    "EmptyRootNode",
     "OnDiskProfile",
     "UserProfile",
 )
@@ -617,20 +616,6 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         # optimization to avoid re-parsing what we already did.
         object.__setattr__(profile, "_repoconfig", repo_config)
         return profile
-
-
-class EmptyRootNode(ProfileNode):
-    __inst_caching__ = True
-
-    parents = ()
-    deprecated = None
-    pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = (
-        misc.ChunkedDataDict()
-    )
-    forced_use.freeze()
-    pkg_bashrc = ()
-    pkg_use_force = pkg_use_mask = ImmutableDict()
-    pkg_provided = system = profile_set = ((), ())
 
 
 class ProfileStack:

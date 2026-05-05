@@ -665,8 +665,8 @@ class TestRepoConfig:
         with open(self.metadata_path, "w") as f:
             f.write("cache-formats = foo bar\n")
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.cache_format is None
-        assert "no supported cache format" in caplog.text
+        assert repo_config.cache_format == "md5-dict"
+        assert "unknown cache format:" in caplog.text
         caplog.clear()
 
         # known format

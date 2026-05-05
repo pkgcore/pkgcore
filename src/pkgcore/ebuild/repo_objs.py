@@ -813,22 +813,16 @@ class RepoConfig(syncable.tree, immutable.Simple):
         )
         self.sign_commits = data.get("sign-commits", "false".lower() == "true")
 
-        if caches := data.get("cache-formats", "md5-dict").lower().split():
-            # we have preferred ordering for caches- trace the list selecting the 'most preferred'
-            for preferred_cache in self.supported_cache_formats:
-                if preferred_cache in caches:
-                    self.cache_format = preferred_cache
-                    break
-            else:
-                logger.warning(
-                    "no supported cache format for repo %r; caches requested: %r, supported is %r",
-                    self.location,
-                    caches,
-                    self.supported_cache_formats,
-                )
-                self.cache_format = None
+        v = set(data.get("cache-formats", "md5-dict").lower().split())
+        if not v:
+            v = [None]
         else:
-            self.cache_format = None
+            # sort into favored order
+            v = [f for f in self.supported_cache_formats if f in v]
+            if not v:
+                logger.warning("unknown cache format: falling back to md5-dict format")
+                v = ["md5-dict"]
+        self.cache_format = list(v)[0]
 
         profile_formats = set(data.get("profile-formats", "pms").lower().split())
         if not profile_formats:

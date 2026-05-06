@@ -105,6 +105,7 @@ class fetcher(base.fetcher):
         if not isinstance(target, fetchable):
             raise TypeError(f"target must be fetchable instance/derivative: {target}")
 
+        partial_fetch = False
         path = pjoin(self.distdir, target.filename)
         uris = iter(target.uri)
         last_exc = RuntimeError("fetching failed for an unknown reason")
@@ -112,10 +113,18 @@ class fetcher(base.fetcher):
         if self.userpriv and is_userpriv_capable():
             spawn_opts.update({"uid": portage_uid, "gid": portage_gid})
 
+        if os.path.exists(f"{path}._partial_"):
+            command = self.resume_command
+            partial_fetch = True
+
         for _attempt in range(self.attempts):
             try:
-                self._verify(path, target)
-                return path
+                if partial_fetch:
+                    # Can't verify here, but we still need to keep fetching
+                    partial_fetch = False
+                else:
+                    self._verify(path, target)
+                    return path
             except errors.MissingDistfile as exc:
                 command = self.command
                 last_exc = exc
@@ -135,9 +144,15 @@ class fetcher(base.fetcher):
             # the loop handles this. In other words, don't trust the external
             # fetcher's exit code, trust our chksums instead.
             try:
-                spawn_bash(
-                    command % {"URI": next(uris), "FILE": target.filename}, **spawn_opts
-                )
+                if 0 == spawn_bash(
+                    command % {"URI": next(uris), "FILE": f"{target.filename}._partial_"}, **spawn_opts
+                ):
+                    os.rename(f"{path}._partial_", path)
+            except FileNotFoundError:
+                # If a _partial_ rename fails then that should imply it's
+                # completed.
+                assert os.path.exists(path)
+                pass
             except StopIteration:
                 raise errors.FetchFailed(
                     target.filename, "ran out of urls to fetch from"

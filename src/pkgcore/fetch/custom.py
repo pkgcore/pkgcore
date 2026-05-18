@@ -134,14 +134,22 @@ class fetcher(base.fetcher):
             # Note we're not even checking the results, the verify portion of
             # the loop handles this. In other words, don't trust the external
             # fetcher's exit code, trust our chksums instead.
+            # Exception: when there are no checksums (e.g. first-time manifest
+            # generation), _verify() cannot detect a partial download, so we
+            # must rely on the fetcher's exit code and discard any incomplete file.
             try:
-                spawn_bash(
+                ret = spawn_bash(
                     command % {"URI": next(uris), "FILE": target.filename}, **spawn_opts
                 )
             except StopIteration:
                 raise errors.FetchFailed(
                     target.filename, "ran out of urls to fetch from"
                 )
+            if ret != 0 and not target.chksums:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
         else:
             raise last_exc
 

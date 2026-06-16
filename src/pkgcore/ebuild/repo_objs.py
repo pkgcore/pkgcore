@@ -1059,7 +1059,7 @@ class RepoConfig(syncable.tree, klass.ImmutableInstance):
     @klass.jit_attr
     def base_profile(self):
         pms_strict = "pms" in self.profile_formats
-        return profiles.EmptyRootNode(self.profiles_base, pms_strict=pms_strict)
+        return profiles.ProfileNode(self.profiles_base, pms_strict=pms_strict)
 
     @klass.jit_attr
     def eapi(self):

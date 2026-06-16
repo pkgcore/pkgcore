@@ -1,7 +1,6 @@
 __all__ = (
     "ProfileError",
     "ProfileNode",
-    "EmptyRootNode",
     "OnDiskProfile",
     "UserProfile",
 )
@@ -619,20 +618,6 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         return profile
 
 
-class EmptyRootNode(ProfileNode):
-    __inst_caching__ = True
-
-    parents = ()
-    deprecated = None
-    pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = (
-        misc.ChunkedDataDict()
-    )
-    forced_use.freeze()
-    pkg_bashrc = ()
-    pkg_use_force = pkg_use_mask = ImmutableDict()
-    pkg_provided = system = profile_set = ((), ())
-
-
 class ProfileStack:
     _node_kls = ProfileNode
 
@@ -910,7 +895,7 @@ class OnDiskProfile(ProfileStack):
     def stack(self):
         l = ProfileStack.stack.function(self)
         if self.load_profile_base:
-            l = (EmptyRootNode._autodetect_and_create(self.basepath),) + l
+            l = (ProfileNode._autodetect_and_create(self.basepath),) + l
         return l
 
     @klass.jit_attr

@@ -21,6 +21,7 @@ class TestMetadataXml:
         maint_type=None,
         proxied=None,
         stabilize_allarches=False,
+        straight_to_stable=False,
     ):
         cs = "\n".join(comments)
         ms = us = ls = ""
@@ -48,10 +49,11 @@ class TestMetadataXml:
         if longdescription:
             ls = f"<longdescription>{longdescription}</longdescription>\n"
         sa = "<stabilize-allarches/>" if stabilize_allarches else ""
+        sts = "<straight-to-stable/>" if straight_to_stable else ""
         s = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-{cs}{ms}{us}{ls}{sa}</pkgmetadata>"""
+{cs}{ms}{us}{ls}{sa}{sts}</pkgmetadata>"""
         return repo_objs.MetadataXml(data_source(s.encode("utf-8")))
 
     def test_empty_maintainers(self):
@@ -159,6 +161,12 @@ Blake-light tragedy among the scholars of war.
         assert not self.get_metadata_xml().stabilize_allarches
         # present
         assert self.get_metadata_xml(stabilize_allarches=True).stabilize_allarches
+
+    def straight_to_stable(self):
+        # missing
+        assert not self.get_metadata_xml().straight_to_stable
+        # present
+        assert self.get_metadata_xml(straight_to_stable=True).straight_to_stable
 
 
 class TestProjectsXml:

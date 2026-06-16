@@ -21,6 +21,8 @@ Internal Changes
   caches instances.  These are objects created once for a repo, so no caching is possible,
   nor is it worth dealing with.
 
+- Add support for <straight-to-stable/> in metadata.xml files.
+
 Deprecations
 ~~~~~~~~~~~~
 

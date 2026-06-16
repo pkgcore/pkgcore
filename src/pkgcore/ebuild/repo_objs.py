@@ -117,6 +117,7 @@ class MetadataXml:
         "_longdescription",
         "_source",
         "_stabilize_allarches",
+        "_straight_to_stable",
     )
 
     def __init__(self, source):
@@ -133,6 +134,7 @@ class MetadataXml:
         "local_use",
         "longdescription",
         "stabilize_allarches",
+        "straight_to_stable",
     ):
         locals()[attr] = property(post_curry(_generic_attr, "_" + attr))
     del attr
@@ -149,6 +151,7 @@ class MetadataXml:
             self._longdescription = None
             self._source = None
             self._stabilize_allarches = False
+            self._straight_to_stable = False
             logger.error(e)
             return
 
@@ -209,6 +212,7 @@ class MetadataXml:
             break
 
         self._stabilize_allarches = tree.find("stabilize-allarches") is not None
+        self._straight_to_stable = tree.find("straight-to-stable") is not None
 
 
 class LocalMetadataXml(MetadataXml):
@@ -225,6 +229,7 @@ class LocalMetadataXml(MetadataXml):
             self._longdescription = None
             self._source = None
             self._stabilize_allarches = False
+            self._straight_to_stable = False
 
 
 class SharedPkgData:

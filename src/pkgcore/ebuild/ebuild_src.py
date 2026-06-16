@@ -441,6 +441,9 @@ class package(base):
     stabilize_allarches = klass.alias_attr(
         "_shared_pkg_data.metadata_xml.stabilize_allarches"
     )
+    straight_to_stable = klass.alias_attr(
+        "_shared_pkg_data.metadata_xml.straight_to_stable"
+    )
 
     @property
     def _mtime_(self):

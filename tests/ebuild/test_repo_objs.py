@@ -14,14 +14,14 @@ from pkgcore.repository import errors as repo_errors
 class TestMetadataXml:
     @staticmethod
     def get_metadata_xml(
-        maintainers=(),
-        comments=(),
-        local_use={},
-        longdescription=None,
-        maint_type=None,
-        proxied=None,
-        stabilize_allarches=False,
-        straight_to_stable=False,
+        maintainers: tuple[tuple[str, ...], ...] = (),
+        comments: tuple[str, ...] = (),
+        local_use: dict[str, str] = {},
+        longdescription: str | None = None,
+        maint_type: str | None = None,
+        proxied: str | None = None,
+        stabilize_allarches: str | bool = False,
+        straight_to_stable: str | bool = False,
     ):
         cs = "\n".join(comments)
         ms = us = ls = ""
@@ -48,8 +48,21 @@ class TestMetadataXml:
             us = "\n".join(us)
         if longdescription:
             ls = f"<longdescription>{longdescription}</longdescription>\n"
-        sa = "<stabilize-allarches/>" if stabilize_allarches else ""
-        sts = "<straight-to-stable/>" if straight_to_stable else ""
+
+        sa = (
+            ""
+            if not stabilize_allarches
+            else "<stabilize-allarches/>"
+            if stabilize_allarches is True
+            else f'<stabilize-allarches restrict="{stabilize_allarches}"/>'
+        )
+        sts = (
+            ""
+            if not straight_to_stable
+            else "<straight-to-stable/>"
+            if straight_to_stable is True
+            else f'<straight-to-stable restrict="{straight_to_stable}"/>'
+        )
         s = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
@@ -161,12 +174,24 @@ Blake-light tragedy among the scholars of war.
         assert not self.get_metadata_xml().stabilize_allarches
         # present
         assert self.get_metadata_xml(stabilize_allarches=True).stabilize_allarches
+        # with restriction
+        x = self.get_metadata_xml(stabilize_allarches=">dev-lang/foo-1.0")
+        assert x.stabilize_allarches.restrict == atom.atom(">dev-lang/foo-1.0")
+        # invalid restriction should be ignored
+        x = self.get_metadata_xml(stabilize_allarches="invalid")
+        assert x.stabilize_allarches.restrict is None
 
-    def straight_to_stable(self):
+    def test_straight_to_stable(self):
         # missing
         assert not self.get_metadata_xml().straight_to_stable
         # present
         assert self.get_metadata_xml(straight_to_stable=True).straight_to_stable
+        # with restriction
+        x = self.get_metadata_xml(straight_to_stable=">dev-lang/foo-1.0")
+        assert x.straight_to_stable.restrict == atom.atom(">dev-lang/foo-1.0")
+        # invalid restriction should be ignored
+        x = self.get_metadata_xml(straight_to_stable="invalid")
+        assert x.straight_to_stable.restrict is None
 
 
 class TestProjectsXml:

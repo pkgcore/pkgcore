@@ -102,6 +102,26 @@ class Upstream(NamedTuple):
     name: str
 
 
+class FlagWithRestrict(NamedTuple):
+    """A metadata.xml boolean flag with an optional atom-level package restriction."""
+
+    value: bool
+    restrict: atom.atom | None
+
+    def __bool__(self):
+        return self.value
+
+    def __eq__(self, other):
+        if isinstance(other, bool):
+            return self.value == other
+        if isinstance(other, FlagWithRestrict):
+            # ignores restriction for backwards compatibility
+            return self.value == other.value
+        return NotImplemented
+
+    __hash__ = tuple.__hash__
+
+
 class MetadataXml:
     """metadata.xml parsed results
 
@@ -150,8 +170,8 @@ class MetadataXml:
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None
-            self._stabilize_allarches = False
-            self._straight_to_stable = False
+            self._stabilize_allarches = FlagWithRestrict(value=False, restrict=None)
+            self._straight_to_stable = FlagWithRestrict(value=False, restrict=None)
             logger.error(e)
             return
 
@@ -211,8 +231,20 @@ class MetadataXml:
             )
             break
 
-        self._stabilize_allarches = tree.find("stabilize-allarches") is not None
-        self._straight_to_stable = tree.find("straight-to-stable") is not None
+        def parse_flag_with_restrict(name):
+            node = tree.find(name)
+            if node is None:
+                return FlagWithRestrict(value=False, restrict=None)
+            restrict = node.get("restrict")
+            try:
+                restrict = atom.atom(restrict, eapi="5") if restrict else None
+            except ValueError:
+                # ignore invalid restrict that should be caught by pkgcheck
+                restrict = None
+            return FlagWithRestrict(value=True, restrict=restrict)
+
+        self._stabilize_allarches = parse_flag_with_restrict("stabilize-allarches")
+        self._straight_to_stable = parse_flag_with_restrict("straight-to-stable")
 
 
 class LocalMetadataXml(MetadataXml):
@@ -228,8 +260,8 @@ class LocalMetadataXml(MetadataXml):
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
             self._source = None
-            self._stabilize_allarches = False
-            self._straight_to_stable = False
+            self._stabilize_allarches = FlagWithRestrict(value=False, restrict=None)
+            self._straight_to_stable = FlagWithRestrict(value=False, restrict=None)
 
 
 class SharedPkgData:

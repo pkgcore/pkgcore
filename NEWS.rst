@@ -3,6 +3,20 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.35 (unreleased)
+----------------------------
+
+Features
+~~~~~~~~
+
+- EAPI 9: add support for the ``use.stable`` and ``package.use.stable`` profile
+  files. (Arthur Zamarin)
+
+- EAPI 9: profile directories without an ``eapi`` file now inherit the EAPI of
+  the top-level ``profiles`` directory, instead of always defaulting to EAPI 0.
+  (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------
 

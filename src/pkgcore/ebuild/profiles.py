@@ -582,11 +582,25 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
                 d[a].append(local_source(pjoin(self.path, "bashrc", filename)))
         return tuple((k, tuple(v)) for k, v in d.items())
 
-    @load_property("eapi", fallback="0")
+    def _default_eapi(self):
+        """EAPI used when the profile directory lacks its own eapi file.
+
+        Defaults to EAPI 0, unless the top-level profiles directory uses an EAPI
+        that enables the profile-eapi-default feature (EAPI 9+), in which case
+        that EAPI is inherited; see PMS.
+        """
+        repo_config = self.repoconfig
+        if repo_config is not None:
+            top_level = repo_config.eapi
+            if top_level.options.profile_eapi_default:
+                return top_level
+        return get_eapi("0")
+
+    @load_property("eapi", fallback=None)
     def eapi(self, data):
-        # handle fallback
-        if isinstance(data, str):
-            return get_eapi(data)
+        # handle fallback; no eapi file is present
+        if data is None:
+            return self._default_eapi()
 
         try:
             line, lineno, relpath = next(data)
@@ -656,6 +670,11 @@ class EmptyRootNode(ProfileNode):
     pkg_bashrc = ()
     pkg_use_force = pkg_use_mask = pkg_use_stable = ImmutableDict()
     pkg_provided = system = profile_set = ((), ())
+
+    def _default_eapi(self):
+        # this node *is* the top-level profiles directory, so its eapi is read
+        # directly from profiles/eapi; avoid recursing back through repoconfig.
+        return get_eapi("0")
 
 
 class ProfileStack:

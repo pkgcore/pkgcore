@@ -1847,3 +1847,39 @@ class TestOnDiskProfile(profile_mixin):
         assert p is not None
         assert normpath(p.basepath) == normpath(str(base))
         assert normpath(p.profile) == normpath(str(base / "1"))
+
+
+class TestProfileEapiDefault:
+    """EAPI 9 profile-eapi-default: profile dirs without an eapi file inherit
+    the top-level profiles directory EAPI; see PMS."""
+
+    @staticmethod
+    def _mk_profile(base, top_level_eapi=None, profile_eapi=None):
+        # build a minimal repo: <base>/profiles/{eapi,default/eapi}
+        profiles_base = base / "profiles"
+        (profiles_base / "default").mkdir(parents=True)
+        (profiles_base / "repo_name").write_text("test\n")
+        if top_level_eapi is not None:
+            (profiles_base / "eapi").write_text(f"{top_level_eapi}\n")
+        if profile_eapi is not None:
+            (profiles_base / "default" / "eapi").write_text(f"{profile_eapi}\n")
+        return ProfileNode(str(profiles_base / "default"))
+
+    def test_no_top_level_eapi(self, tmp_path):
+        assert str(self._mk_profile(tmp_path / "r").eapi) == "0"
+
+    def test_top_level_without_feature(self, tmp_path):
+        assert str(self._mk_profile(tmp_path / "r", top_level_eapi="8").eapi) == "0"
+
+    def test_top_level_with_feature(self, tmp_path):
+        assert str(self._mk_profile(tmp_path / "r", top_level_eapi="9").eapi) == "9"
+
+    def test_explicit_profile_eapi_wins(self, tmp_path):
+        node = self._mk_profile(tmp_path / "r", top_level_eapi="9", profile_eapi="7")
+        assert str(node.eapi) == "7"
+
+    def test_top_level_node_itself(self, tmp_path):
+        profiles_base = tmp_path / "r" / "profiles"
+        profiles_base.mkdir(parents=True)
+        (profiles_base / "repo_name").write_text("test\n")
+        assert str(profiles.EmptyRootNode(str(profiles_base)).eapi) == "0"

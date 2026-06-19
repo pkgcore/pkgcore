@@ -16,6 +16,10 @@ Features
   the top-level ``profiles`` directory, instead of always defaulting to EAPI 0.
   (Arthur Zamarin)
 
+- EAPI 9: absolute symlinks pointing into the image directory (``$D``) are no
+  longer rewritten with the leading ``$D`` removed during merge. (Arthur
+  Zamarin)
+
 ----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------

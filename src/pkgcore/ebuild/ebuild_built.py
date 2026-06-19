@@ -209,8 +209,10 @@ def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
             t.register(engine_inst)
         # for ebuild format, always check the syms.
         # this isn't perfect for binpkgs since if the binpkg is already
-        # screwed, the target is in place already
-        triggers.FixImageSymlinks(format_op_inst).register(engine_inst)
+        # screwed, the target is in place already.
+        # EAPI 9+ no longer rewrites absolute symlinks pointing into $D.
+        if pkg.eapi.options.rewrite_image_symlinks:
+            triggers.FixImageSymlinks(format_op_inst).register(engine_inst)
 
 
 def _generic_format_install_op(self, domain, newpkg, observer):

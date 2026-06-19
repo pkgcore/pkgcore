@@ -42,6 +42,9 @@ eapi_optionals = ImmutableDict(
         "doman_language_override": False,
         # Controls whether dosym -r option is allowed.
         "dosym_relative": False,
+        # Controls whether absolute symlinks pointing into the image directory (D)
+        # are rewritten with the leading D removed during merge; dropped in EAPI 9.
+        "rewrite_image_symlinks": True,
         # Controls whether an ebuild_phase function exists for ebuild consumption.
         "ebuild_phase_func": False,
         # Controls whether REPLACING vars are exported to ebuilds; see PMS.
@@ -874,6 +877,7 @@ eapi9 = EAPI.register(
         dict(
             bash_compat="5.3",
             profile_eapi_default=True,
+            rewrite_image_symlinks=False,
             profile_stable_use_defaults=True,
             supported=False,
         ),

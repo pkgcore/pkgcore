@@ -2,9 +2,9 @@
 Release Notes
 =============
 
------------------------------
-pkgcore 0.12.34 (unreleased)
------------------------------
+----------------------------
+pkgcore 0.12.34 (2026-06-19)
+----------------------------
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
@@ -21,7 +21,18 @@ Internal Changes
   caches instances.  These are objects created once for a repo, so no caching is possible,
   nor is it worth dealing with.
 
-- Add support for <straight-to-stable/> in metadata.xml files.
+- Add support for ``<straight-to-stable/>`` in metadata.xml files, including
+  an optional ``restrict`` attribute that scopes the flag to a specific atom.
+  Both ``stabilize_allarches`` and ``straight_to_stable`` on ``MetadataXml``
+  now return a ``FlagWithRestrict`` named-tuple exposing a ``.restrict``
+  attribute (``None`` when no restriction is given).  Existing boolean
+  comparisons continue to work unchanged.
+
+- ``fetcher``: when a fetch command exits with a non-zero status and the
+  fetchable has no checksums (e.g. first-time manifest generation), any
+  partially-written file is now removed automatically.  Previously the stale
+  partial file would be left on disk and silently treated as a successful
+  download on the next run.
 
 Deprecations
 ~~~~~~~~~~~~

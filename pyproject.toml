@@ -1,8 +1,7 @@
 [build-system]
 requires = [
 	"flit_core >=3.8,<4",
-	# replace with 0.11.1 when it's released
-	"snakeoil@git+https://github.com/pkgcore/snakeoil.git#master",
+	"snakeoil >= 0.11.1",
 ]
 build-backend = "py_build"
 backend-path = ["."]
@@ -33,7 +32,7 @@ classifiers = [
 dynamic = ["version"]
 
 dependencies = [
-	"snakeoil@git+https://github.com/pkgcore/snakeoil.git#master",
+	"snakeoil >= 0.11.1",
 	"lxml",
 ]
 

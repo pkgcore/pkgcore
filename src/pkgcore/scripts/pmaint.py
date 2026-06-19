@@ -7,9 +7,9 @@ import textwrap
 import time
 from multiprocessing import cpu_count
 from os.path import join as pjoin
+from unittest.mock import patch
 
 from snakeoil.cli import arghparse
-from snakeoil.contexts import patch
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.sequences import unique_stable
 

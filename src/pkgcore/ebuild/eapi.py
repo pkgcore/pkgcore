@@ -879,7 +879,6 @@ eapi9 = EAPI.register(
             profile_eapi_default=True,
             rewrite_image_symlinks=False,
             profile_stable_use_defaults=True,
-            supported=False,
         ),
     ),
     ebd_env_options=eapi8._ebd_env_options,

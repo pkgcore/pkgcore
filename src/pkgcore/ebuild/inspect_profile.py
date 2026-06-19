@@ -273,6 +273,20 @@ class use(_use, metaclass=_register_command):
         super().__call__(namespace, out, err)
 
 
+class stable_use(_use, metaclass=_register_command):
+    """inspect enabled USE flags for packages merged as stable
+
+    Including USE, USE_EXPAND, package.use, use.stable, and package.use.stable settings.
+    """
+
+    def __call__(self, namespace, out, err):
+        u = ChunkedDataDict()
+        u.add_bare_global(*split_negations(namespace.profile.use))
+        u.merge(namespace.profile.stable_use)
+        namespace.use = u
+        super().__call__(namespace, out, err)
+
+
 class masked_use(_use, metaclass=_register_command):
     """inspect masked use flags"""
 

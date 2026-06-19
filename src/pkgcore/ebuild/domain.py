@@ -424,6 +424,15 @@ class domain(config_domain):
         use.freeze()
         return use
 
+    @klass.jit_attr_named("_jit_reset_stable_enabled_use", uncached_val=None)
+    def stable_enabled_use(self):
+        use = ChunkedDataDict()
+        use.add_bare_global(*split_negations(self.use))
+        use.merge(self.profile.stable_use)
+        use.update_from_stream(chunked_data(k, *v) for k, v in self.pkg_use)
+        use.freeze()
+        return use
+
     @klass.jit_attr_none
     def forced_use(self):
         use = ChunkedDataDict()
@@ -647,7 +656,9 @@ class domain(config_domain):
 
         # lock the configurable use flags to only what's in IUSE, and what's forced
         # from the profiles (things like userland_GNU and arch)
-        enabled = self.enabled_use.pull_data(pkg, pre_defaults=pre_defaults)
+        enabled = getattr(self, attr + "enabled_use").pull_data(
+            pkg, pre_defaults=pre_defaults
+        )
 
         # support globs for USE_EXPAND vars
         use_globs = [u for u in enabled if u.endswith("*")]

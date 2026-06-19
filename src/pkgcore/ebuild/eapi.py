@@ -98,6 +98,9 @@ eapi_optionals = ImmutableDict(
         "profile_iuse_injection": False,
         # Controls whether profiles support package.use.stable.* and use.stable.* files.
         "profile_stable_use": False,
+        # Controls whether profiles support use.stable and package.use.stable files,
+        # which override the default USE flags for packages merged as stable; see PMS.
+        "profile_stable_use_defaults": False,
         # Controls whether has_version/best_version supports --host-root option; see PMS.
         "query_host_root": False,
         # Controls whether has_version/best_version supports -b/-d/-r options; see PMS.
@@ -863,6 +866,9 @@ eapi9 = EAPI.register(
     eclass_keys=eapi8.eclass_keys,
     tracked_attributes=eapi8.tracked_attributes,
     archive_exts=eapi8.archive_exts,
-    optionals=_combine_dicts(eapi8.options, dict(bash_compat="5.3", supported=False)),
+    optionals=_combine_dicts(
+        eapi8.options,
+        dict(bash_compat="5.3", profile_stable_use_defaults=True, supported=False),
+    ),
     ebd_env_options=eapi8._ebd_env_options,
 )

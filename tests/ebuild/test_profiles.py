@@ -703,6 +703,72 @@ class TestPmsProfileNode(profile_mixin):
             good_data="=de/bs-1 x\nda/bs y",
         )
 
+    def test_stable_use(self, tmp_path, caplog):
+        path = tmp_path / self.profile
+        self.assertEqualChunks(self.klass(path).stable_use, {})
+
+        # use.stable/package.use.stable only >= EAPI 9; package.use always applies
+        self.write_file(tmp_path, "use.stable", "mmx")
+        self.write_file(tmp_path, "package.use.stable", "dev-util/bar Y")
+        self.write_file(tmp_path, "package.use", "dev-util/foo X")
+        self.assertEqualChunks(
+            self.klass(path).stable_use,
+            {"dev-util/foo": (chunked_data(atom("dev-util/foo"), (), ("X",)),)},
+        )
+        self.wipe_path(path / "use.stable")
+        self.wipe_path(path / "package.use.stable")
+        self.wipe_path(path / "package.use")
+
+        self.write_file(tmp_path, "eapi", "9")
+        self.assertEqualChunks(self.klass(path).stable_use, {})
+        self.parsing_checks(tmp_path, "package.use.stable", "stable_use")
+        self.parsing_checks(tmp_path, "use.stable", "stable_use")
+
+        # global use.stable plus per-package package.use/package.use.stable
+        self.write_file(tmp_path, "use.stable", "mmx")
+        self.write_file(tmp_path, "package.use", "dev-util/foo X")
+        self.write_file(tmp_path, "package.use.stable", "dev-util/bar Y")
+        self.assertEqualChunks(
+            self.klass(path).stable_use,
+            {
+                "dev-util/foo": (chunked_data(atom("dev-util/foo"), (), ("X", "mmx")),),
+                "dev-util/bar": (chunked_data(atom("dev-util/bar"), (), ("Y", "mmx")),),
+                atrue: (chunked_data(atrue, (), ("mmx",)),),
+            },
+        )
+
+        # precedence: package.use.stable > package.use > use.stable
+        self.write_file(tmp_path, "use.stable", "-X")
+        self.write_file(tmp_path, "package.use", "dev-util/bar X")
+        self.write_file(tmp_path, "package.use.stable", "dev-util/bar -X")
+        self.assertEqualChunks(
+            self.klass(path).stable_use,
+            {
+                "dev-util/bar": (chunked_data(atom("dev-util/bar"), ("X",), ()),),
+                atrue: (chunked_data(atrue, ("X",), ()),),
+            },
+        )
+
+        # package.use takes precedence over use.stable
+        self.write_file(tmp_path, "use.stable", "-X")
+        self.write_file(tmp_path, "package.use", "dev-util/bar X")
+        self.write_file(tmp_path, "package.use.stable", "")
+        self.assertEqualChunks(
+            self.klass(path).stable_use,
+            {
+                "dev-util/bar": (chunked_data(atom("dev-util/bar"), (), ("X",)),),
+                atrue: (chunked_data(atrue, ("X",), ()),),
+            },
+        )
+
+        self.simple_eapi_awareness_check(
+            tmp_path,
+            "package.use.stable",
+            "stable_use",
+            bad_data="=de/bs-1:1 x\nda/bs y",
+            good_data="=de/bs-1 x\nda/bs y",
+        )
+
     def test_parents(self, tmp_path):
         path = tmp_path / self.profile
         (path / "child").mkdir()

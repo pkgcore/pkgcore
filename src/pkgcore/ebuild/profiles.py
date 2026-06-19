@@ -374,6 +374,20 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         c.freeze()
         return c
 
+    @load_property(
+        "use.stable", allow_recurse=True, eapi_optional="profile_stable_use_defaults"
+    )
+    def use_stable(self, data):
+        return self._parse_use(data)
+
+    @load_property(
+        "package.use.stable",
+        allow_recurse=True,
+        eapi_optional="profile_stable_use_defaults",
+    )
+    def pkg_use_stable(self, data):
+        return self._parse_package_use(data)
+
     @load_property("deprecated", read_func=None, fallback=None)
     def deprecated(self, data):
         if data is not None:
@@ -509,6 +523,17 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
         c.freeze()
         return c
 
+    @klass.jit_attr
+    def stable_use(self):
+        c = misc.ChunkedDataDict()
+        if self.use_stable:
+            c.merge(self.use_stable)
+        c.merge(self.pkg_use)
+        if self.pkg_use_stable:
+            c.update_from_stream(chain.from_iterable(self.pkg_use_stable.values()))
+        c.freeze()
+        return c
+
     @load_property("make.defaults", read_func=None, fallback=None)
     def make_defaults(self, data):
         d = {}
@@ -625,11 +650,11 @@ class EmptyRootNode(ProfileNode):
     parents = ()
     deprecated = None
     pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = (
-        misc.ChunkedDataDict()
-    )
+        stable_use
+    ) = misc.ChunkedDataDict()
     forced_use.freeze()
     pkg_bashrc = ()
-    pkg_use_force = pkg_use_mask = ImmutableDict()
+    pkg_use_force = pkg_use_mask = pkg_use_stable = ImmutableDict()
     pkg_provided = system = profile_set = ((), ())
 
 
@@ -705,6 +730,10 @@ class ProfileStack:
     @klass.jit_attr
     def pkg_use(self):
         return self._collapse_use_dict("pkg_use")
+
+    @klass.jit_attr
+    def stable_use(self):
+        return self._collapse_use_dict("stable_use")
 
     def _collapse_generic(self, attr, clear=False):
         s = set()

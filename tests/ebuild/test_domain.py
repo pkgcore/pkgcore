@@ -7,6 +7,7 @@ from pkgcore.ebuild import profiles
 from pkgcore.ebuild.atom import atom
 from pkgcore.fs.livefs import iter_scan
 from pkgcore.restrictions import packages
+from pkgcore.test.misc import FakePkg
 
 from .test_profiles import profile_mixin
 
@@ -118,6 +119,33 @@ class TestDomain:
                 ),
             ),
         ) == self.mk_domain().pkg_use
+
+    def test_stable_use_defaults(self):
+        """EAPI 9 use.stable/package.use.stable: default USE flags that only
+        apply to packages merged via a stable keyword"""
+
+        (self.profile1 / "make.defaults").write_text(
+            'ARCH="amd64"\nACCEPT_KEYWORDS="amd64"\n'
+        )
+        (self.profile1 / "eapi").write_text("9")
+        (self.profile1 / "use.stable").write_text("globalflag")
+        (self.profile1 / "package.use").write_text("dev-util/foo baseflag")
+        (self.profile1 / "package.use.stable").write_text("dev-util/foo stableflag")
+
+        domain = self.mk_domain()
+        iuse = ("globalflag", "baseflag", "stableflag")
+
+        # package merged as stable -> use.stable + package.use.stable apply
+        stable_pkg = FakePkg("dev-util/foo-1", iuse=iuse, keywords=["amd64"])
+        _, enabled, _ = domain.get_package_use_unconfigured(stable_pkg)
+        assert {"baseflag", "stableflag", "globalflag"} <= enabled
+
+        # package merged as unstable -> only package.use applies
+        unstable_pkg = FakePkg("dev-util/foo-1", iuse=iuse, keywords=["~amd64"])
+        _, enabled, _ = domain.get_package_use_unconfigured(unstable_pkg)
+        assert "baseflag" in enabled
+        assert "stableflag" not in enabled
+        assert "globalflag" not in enabled
 
     def test_use_flag_parsing_enforcement(self, caplog):
         (self.pusedir / "a").write_text("*/* X:")

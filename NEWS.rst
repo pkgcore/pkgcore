@@ -40,6 +40,10 @@ Fixes
   matching reverse dependencies, so raw (unconfigured) target packages, which
   carry no enabled USE state, are matched correctly. (Arthur Zamarin, #473)
 
+- Parsing a Manifest with duplicate entries (the same type and filename listed
+  more than once) now raises an error instead of silently collapsing them.
+  (Arthur Zamarin, pkgcheck#783)
+
 ----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------

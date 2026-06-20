@@ -1,10 +1,12 @@
 import os
 import tempfile
 
+import pytest
 from snakeoil.data_source import local_source
 
 from pkgcore import gpg
 from pkgcore.ebuild import digest
+from pkgcore.package import errors
 
 # "Line too long" (and our custom more aggressive version of that)
 # pylint: disable-msg=C0301,CPC01
@@ -70,6 +72,14 @@ class TestManifest:
         s += "\n".join(data[2:])
         # ensure it can parse it
         (dist, aux, ebuild, misc) = self.get_manifest(s)
+
+    def test_duplicate_entry(self):
+        lines = pure_manifest2.strip().split("\n")
+        data = pure_manifest2 + lines[-1] + "\n"
+        with pytest.raises(
+            errors.ParseChksumError, match="duplicate DIST manifest entry"
+        ):
+            self.get_manifest(data)
 
     def test_manifest2(self):
         (dist, aux, ebuild, misc) = self.get_manifest(pure_manifest2)

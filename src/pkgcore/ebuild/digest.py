@@ -69,6 +69,10 @@ def parse_manifest(source, ignore_gpg=True):
                     "manifest 2 entry doesn't have right "
                     f"number of tokens, {len(line)}: {line!r}",
                 )
+            if line[1] in d:
+                raise errors.ParseChksumError(
+                    source, f"duplicate {line[0]} manifest entry: {line[1]!r}"
+                )
             chf_types.update(line[3::2])
             # this is a trick to do pairwise collapsing;
             # [size, 1] becomes [(size, 1)]

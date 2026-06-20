@@ -69,6 +69,8 @@ class MissingChksum(ChksumError):
 
 class ParseChksumError(ChksumError):
     def __init__(self, filename, error, missing=False):
+        if not isinstance(filename, str):
+            filename = getattr(filename, "path", None) or str(filename)
         filename = os.sep.join(filename.split(os.sep)[-3:])
         if missing:
             super().__init__(

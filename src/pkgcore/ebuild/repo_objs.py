@@ -725,7 +725,7 @@ class OverlayedProfiles(Profiles):
         return frozenset(chain.from_iterable(self._profiles_instances))
 
 
-class RepoConfig(syncable.tree, klass.ImmutableInstance):
+class RepoConfig(syncable.tree, immutable.Strict):
     """Configuration data for an ebuild repository."""
 
     layout_offset = "metadata/layout.conf"

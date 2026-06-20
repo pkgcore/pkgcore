@@ -10,6 +10,7 @@ from weakref import WeakValueDictionary
 
 from snakeoil import klass
 from snakeoil.delayed import regexp
+from snakeoil.klass import immutable
 from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
 from snakeoil.process.spawn import bash_version
 from snakeoil.sequences import stable_unique
@@ -152,7 +153,7 @@ class _optionals_cls(ImmutableDict):
     inject_getitem_as_getattr(locals())
 
 
-class EAPI(metaclass=klass.immutable_instance):
+class EAPI(immutable.Strict):
     known_eapis = WeakValueDictionary()
     unknown_eapis = WeakValueDictionary()
 

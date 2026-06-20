@@ -8,13 +8,14 @@ __all__ = ("base", "wrapper", "dynamic_getattr_dict", "DynamicGetattrSetter")
 import itertools
 
 from snakeoil import klass, sequences
+from snakeoil.klass import immutable
 
 from .. import exceptions as base_errors
 from ..operations import format
 from . import errors
 
 
-class base(klass.SlotsPicklingMixin, metaclass=klass.immutable_instance):
+class base(klass.SlotsPicklingMixin, immutable.Strict):
     built = False
     configurable = False
     _operations = format.operations

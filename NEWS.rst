@@ -53,6 +53,12 @@ Fixes
   define the phase, caused by ``PKGCORE_EMPTYDIR`` being unset on the pretend
   code path. (Arthur Zamarin, #449)
 
+- ``has_version`` and ``best_version`` now resolve conditional USE dependencies
+  (e.g. ``dev-lang/rust[abi_x86_64(-)?]``) against the USE flags of the package
+  being built before matching, instead of misinterpreting them against the
+  installed candidate. This fixes spurious failures such as ``rust_pkg_setup``
+  reporting no suitable Rust installed. (Arthur Zamarin, #442)
+
 ----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------

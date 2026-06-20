@@ -903,6 +903,13 @@ class _QueryCmd(IpcCommand):
             )
         args = super().parse_args(options, args)
 
+        # Resolve conditional USE deps (e.g. cat/pkg[foo?,bar=]) against the USE
+        # flags of the package being built.
+        if isinstance(self.opts.atom, atom_mod.transitive_use_atom):
+            evaluated = []
+            self.opts.atom.evaluate_conditionals(atom_mod.atom, evaluated, self.pkg.use)
+            self.opts.atom = evaluated[0]
+
         root = None
         self.opts.domain = self.op.domain
 

@@ -328,18 +328,6 @@ resolution_options.add_argument(
         Force (un)merging on the livefs (vdb), regardless of if it's frozen.
     """,
 )
-resolution_options.add_argument(
-    "--preload-vdb-state",
-    action="store_true",
-    help="enable preloading of the installed packages database",
-    docs="""
-        Preload the installed package database which causes the resolver to
-        work with a complete graph, thus disallowing actions that conflict with
-        installed packages. If disabled, it's possible for the requested action
-        to conflict with already installed dependencies that aren't involved in
-        the graph of the requested operation.
-    """,
-)
 
 output_options = argparser.add_argument_group("output options")
 output_options.add_argument(
@@ -926,14 +914,6 @@ def main(options, out, err):
         **extra_kwargs,
     )
 
-    if options.preload_vdb_state:
-        out.write(out.bold, " * ", out.reset, "Preloading vdb... ")
-        vdb_time = time()
-        resolver_inst.load_vdb_state()
-        vdb_time = time() - vdb_time
-    else:
-        vdb_time = 0.0
-
     # flush warning messages before dep resolution begins
     out.flush()
     err.flush()
@@ -1034,14 +1014,6 @@ def main(options, out, err):
         for op in changes:
             formatter.format(op)
         formatter.end()
-
-    if vdb_time:
-        out.write(
-            out.bold,
-            "Took %.2f" % (vdb_time,),
-            out.reset,
-            " seconds to preload vdb state",
-        )
 
     if changes:
         if not options.fetchonly:

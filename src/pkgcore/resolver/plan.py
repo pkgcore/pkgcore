@@ -343,8 +343,6 @@ class merge_plan:
         )
 
         self.insoluble = set()
-        self.vdb_preloaded = False
-        self._ensure_livefs_is_loaded = self._ensure_livefs_is_loaded_nonpreloaded
         self.drop_cycles = drop_cycles
         self.process_built_depends = process_built_depends
         self._debugging = debug
@@ -413,18 +411,6 @@ class merge_plan:
             "%s%s%s%s%s", (t_viable.ljust(13), "  " * stack.depth, atom, s, t_msg)
         )
         stack.add_event(("viable", viable, pre_solved, atom, msg))
-
-    def load_vdb_state(self):
-        for pkg in self.livefs_dbs:
-            self._dprint("inserting %s", (pkg,), "vdb")
-            ret = self.add_atom(pkg.versioned_atom)
-            self._dprint("insertion of %s: %s", (pkg, ret), "vdb")
-            if ret:
-                raise Exception(
-                    "couldn't load vdb state, %s %s" % (pkg.versioned_atom, ret)
-                )
-        self.vdb_preloaded = True
-        self._ensure_livefs_is_loaded = self._ensure_livefs_is_loaded_preloaded
 
     def add_atoms(self, restricts, finalize=False):
         if restricts:
@@ -852,10 +838,7 @@ class merge_plan:
         )
         return [ret[0]]
 
-    def _ensure_livefs_is_loaded_preloaded(self, restrict):
-        return
-
-    def _ensure_livefs_is_loaded_nonpreloaded(self, restrict):
+    def _ensure_livefs_is_loaded(self, restrict):
         # do a trick to make the resolver now aware of vdb pkgs if needed
         # check for any matches; none, try and insert vdb nodes.
         l = self.state.match_atom(restrict)

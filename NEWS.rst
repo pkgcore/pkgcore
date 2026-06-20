@@ -24,6 +24,14 @@ Features
   runtime (and masks the packages using it) instead of aborting pkgcore on
   import. This keeps pkgcore somewhat usable. (Arthur Zamarin, #461)
 
+Removed Features
+~~~~~~~~~~~~~~~~
+
+- ``pmerge --preload-vdb-state`` has been removed. The option dated back to an
+  era of far slower hardware; a full VDB walk is now fast enough that lazily
+  loading the installed package database during resolution is no longer a
+  bottleneck. (Arthur Zamarin, #458)
+
 ----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------

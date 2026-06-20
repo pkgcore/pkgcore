@@ -1,0 +1,3 @@
+#!/usr/bin/env pkgcore-ebuild-helper
+
+die "${HELPER_NAME}: banned in EAPI ${HELPER_EAPI}"

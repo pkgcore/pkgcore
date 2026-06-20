@@ -55,6 +55,10 @@ for (( eapi=${INITIAL_EAPI} ; eapi<=${EAPI} ; eapi++ )) ; do
 			cmd=${file##*/}
 			if $(cmp -s "${file}" "${BANNED_HELPER}"); then
 				BANNED_CMDS+=( "${cmd}" )
+				# remove internal entry inherited from a previous EAPI if one exists
+				for i in "${!INTERNAL_CMDS[@]}"; do
+					[[ ${INTERNAL_CMDS[i]} == ${cmd} ]] && unset 'INTERNAL_CMDS[i]'
+				done
 				# remove deprecated entry if one exists
 				for i in "${!DEPRECATED_CMDS[@]}"; do
 					[[ ${DEPRECATED_CMDS[i]} == ${cmd} ]] && unset 'DEPRECATED_CMDS[i]'

@@ -1,1 +1,0 @@
-PKGCORE_BANNED_FUNCS=( domo )

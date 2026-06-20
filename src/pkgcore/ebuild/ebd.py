@@ -1081,6 +1081,10 @@ class ebuild_operations:
         # allowed to write to the filesystem anyway.
         self.env = expected_ebuild_env(pkg)
         self.env["T"] = domain.pm_tmpdir
+        # every phase is started in PKGCORE_EMPTYDIR (see __run_ebuild_phase);
+        # reuse $T here since pkg_pretend can't write to the filesystem anyway.
+        self.env["PKGCORE_EMPTYDIR"] = domain.pm_tmpdir
+        ensure_dirs(self.env["T"], mode=0o770, gid=portage_gid, minimal=True)
         ebd.set_path_vars(self.env, pkg, domain)
         # avoid clipping eend() messages
         self.env["PKGCORE_RC_PREFIX"] = "2"

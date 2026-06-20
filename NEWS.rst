@@ -49,6 +49,10 @@ Fixes
   more than once) now raises an error instead of silently collapsing them.
   (Arthur Zamarin, pkgcheck#783)
 
+- ``pkg_pretend`` no longer dies with "unable to cd into" for packages that
+  define the phase, caused by ``PKGCORE_EMPTYDIR`` being unset on the pretend
+  code path. (Arthur Zamarin, #449)
+
 ----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------

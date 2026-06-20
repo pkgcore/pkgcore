@@ -23,8 +23,8 @@ __all__ = (
 
 import typing
 from functools import partial
+from importlib import import_module
 
-from snakeoil import modules
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 
 from . import errors
@@ -364,9 +364,12 @@ def convert_string(central, value, arg_type: str):
             f"val({value!r}), arg_type({arg_type!r})"
         )
     if arg_type == "callable":
+        module, _, attr = value.rpartition(".")
         try:
-            func = modules.load_attribute(value)
-        except modules.FailedImport as e:
+            if not module:
+                raise ImportError("not a dotted attribute path")
+            func = getattr(import_module(module), attr)
+        except (AttributeError, ImportError) as e:
             raise errors.ConfigurationError(f"cannot import {value!r}") from e
         if not callable(func):
             raise errors.ConfigurationError(f"{value!r} is not callable")

@@ -44,6 +44,7 @@ from ..log import logger
 from ..operations import format, observer
 from ..os_data import portage_gid, portage_uid, xargs
 from ..package.mutated import MutatedPkg
+from . import const as e_const
 from . import ebd_ipc, ebuild_built, errors
 from .processor import (
     ProcessorError,
@@ -168,6 +169,25 @@ class ebd:
             del self.env[k]
 
         self._set_op_vars(tmp_offset)
+
+        # EAPI 9+: PMS-defined and special profile variables are no longer
+        # exported to the ebuild environment, they are only set as plain shell
+        # variables (see PMS). Mark which env keys must not be exported; the
+        # helper-needed path variables and the always-exported exceptions stay
+        # exported. The actual export/no-export split happens in
+        # processor._generate_env_str().
+        if not self.eapi.options.export_vars:
+            nonexported = set(e_const.PMS_DEFINED_VARS | e_const.SPECIAL_PROFILE_VARS)
+            # dynamic USE_EXPAND variables (e.g. PYTHON_TARGETS) and the
+            # USE_EXPAND_VALUES_* variables for implicit USE_EXPAND groups
+            nonexported.update(u.upper() for u in self.domain.profile.use_expand)
+            nonexported.update(
+                k for k in self.env if k.startswith("USE_EXPAND_VALUES_")
+            )
+            nonexported.difference_update(e_const.ALWAYS_EXPORTED_VARS)
+            nonexported.difference_update(e_const.HELPER_EXPORTED_VARS)
+            self.env["PKGCORE_NONEXPORTED_VARS"] = " ".join(sorted(nonexported))
+
         self.clean_at_start = clean
         self.clean_needed = False
 

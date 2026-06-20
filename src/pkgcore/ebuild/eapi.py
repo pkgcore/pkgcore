@@ -77,6 +77,10 @@ eapi_optionals = ImmutableDict(
         "has_use_dep_defaults": False,
         # Controls whether ENV_UNSET is supported, see PMS.
         "has_env_unset": False,
+        # Controls whether PMS-defined and special profile variables are exported
+        # to the ebuild environment; disabled in EAPI 9 (see PMS), where they are
+        # only set as plain shell variables.
+        "export_vars": True,
         # Controls whether AA env var is exported to ebuilds; this is a flattened
         # listing of each filename in SRC_URI.
         "has_AA": True,
@@ -878,6 +882,7 @@ eapi9 = EAPI.register(
         eapi8.options,
         dict(
             bash_compat="5.3",
+            export_vars=False,
             profile_eapi_default=True,
             rewrite_image_symlinks=False,
             profile_stable_use_defaults=True,

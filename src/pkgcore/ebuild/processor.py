@@ -735,7 +735,13 @@ class EbuildProcessor:
         self.pid = None
 
     def _generate_env_str(self, env_dict):
-        data = []
+        env_dict = dict(env_dict)
+        # EAPI 9+ marks variables that must be set but not exported (see PMS);
+        # ebd.py stashes their names here. Absent the key, everything is exported
+        # exactly as before.
+        nonexported = frozenset(env_dict.pop("PKGCORE_NONEXPORTED_VARS", "").split())
+
+        exported, plain = [], []
         for key, val in sorted(env_dict.items()):
             if key in self._readonly_vars:
                 continue
@@ -749,21 +755,27 @@ class EbuildProcessor:
                 )
 
             if isinstance(val, (list, tuple)):
-                data.append(
-                    "%s=(%s)"
-                    % (key, " ".join(f'[{i}]="{value}"' for i, value in enumerate(val)))
-                )
+                assign = f"{key}=({' '.join(f'[{i}]="{value}"' for i, value in enumerate(val))})"
             elif val.isalnum():
-                data.append(f"{key}={val}")
+                assign = f"{key}={val}"
             elif "'" not in val:
-                data.append(f"{key}='{val}'")
+                assign = f"{key}='{val}'"
             else:
-                data.append("%s=$'%s'" % (key, val.replace("'", "\\'")))
+                assign = f"{key}=$'{val.replace("'", "\\'")}'"
 
+            (plain if key in nonexported else exported).append(assign)
+
+        # Bare assignments create global, *unexported* shell variables when the
+        # env is eval'd/sourced; exported ones get the `export` prefix.
         # TODO: Move to using unprefixed lines to avoid leaking internal
         # variables to spawned commands once builtins are used for all commands
         # currently using pkgcore-ebuild-helper.
-        return f"export {' '.join(data)}"
+        lines = []
+        if plain:
+            lines.append(" ".join(plain))
+        if exported:
+            lines.append(f"export {' '.join(exported)}")
+        return "\n".join(lines)
 
     def send_env(self, env_dict, async_req=False, tmpdir=None):
         """Transfer the ebuild's desired env (env_dict) to the running daemon.

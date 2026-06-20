@@ -20,6 +20,11 @@ Features
   longer rewritten with the leading ``$D`` removed during merge. (Arthur
   Zamarin)
 
+- EAPI 9: PMS-defined and special profile variables (``A``, ``ARCH``, ``USE``,
+  ``USE_EXPAND`` targets, ...) are no longer exported to the ebuild environment;
+  they are only set as plain shell variables. ``HOME``, ``TMPDIR``, ``SYSROOT``,
+  ``ESYSROOT`` and ``BROOT`` remain exported. (Arthur Zamarin)
+
 - An EAPI that requires a newer bash than the one installed is now disabled at
   runtime (and masks the packages using it) instead of aborting pkgcore on
   import. This keeps pkgcore somewhat usable. (Arthur Zamarin, #461)

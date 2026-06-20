@@ -315,6 +315,8 @@ class EbuildProcessor:
     Contains the env, functions, etc that ebuilds expect.
     """
 
+    pid = None
+
     def __init__(self, userpriv, sandbox, fd_pipes=None):
         """
         :param sandbox: enables a sandboxed processor

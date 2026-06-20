@@ -4,6 +4,8 @@ pkgset based around loading a list of atoms from a world file
 
 __all__ = ("FileList", "WorldFile")
 
+import contextlib
+
 from snakeoil import klass
 from snakeoil.fileutils import AtomicWriteFile, readlines_ascii
 
@@ -30,23 +32,20 @@ class FileList:
     def _atoms(self):
         try:
             s = set()
-            for x in readlines_ascii(self.path, True):
-                if not x or x.startswith("#"):
-                    continue
-                elif x.startswith("@"):
-                    if self.error_on_subsets:
-                        raise ValueError(
-                            f"set {x} isn't a valid atom in pkgset {self.path!r}"
+            with contextlib.closing(readlines_ascii(self.path, True)) as lines:
+                for x in lines:
+                    if not x or x.startswith("#"):
+                        continue
+                    elif x.startswith("@"):
+                        if self.error_on_subsets:
+                            raise ValueError(
+                                f"set {x} isn't a valid atom in pkgset {self.path!r}"
+                            )
+                        logger.warning(
+                            f"set item {x[1:]!r} found in pkgset {self.path!r}: it will be wiped on update since portage/pkgcore store set items in a separate way"
                         )
-                    logger.warning(
-                        "set item %r found in pkgset %r: it will be "
-                        "wiped on update since portage/pkgcore store set items "
-                        "in a separate way",
-                        x[1:],
-                        self.path,
-                    )
-                    continue
-                s.add(atom(x))
+                        continue
+                    s.add(atom(x))
         except InvalidDependency as exc:
             raise errors.ParsingError(f"parsing {self.path!r}", exception=exc) from exc
 

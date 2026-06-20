@@ -219,11 +219,13 @@ class EAPI(metaclass=klass.immutable_instance):
             getattr(eapi.options, "bash_compat", False)
             and bash_version() < eapi.options.bash_compat
         ):
-            # hard exit if the system doesn't have an adequate bash installed
-            raise SystemExit(
+            logger.warning(
                 f"EAPI '{eapi}' requires >=bash-{eapi.options.bash_compat}, "
-                f"system version: {bash_version()}"
+                f"system version: {bash_version()}; disabling EAPI"
             )
+            sys.stderr.flush()
+            cls.unknown_eapis[eapi.magic] = eapi
+            return eapi
 
         cls.known_eapis[eapi.magic] = eapi
         # generate EAPI bash libs when running from git repo

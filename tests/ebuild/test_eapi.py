@@ -21,7 +21,7 @@ def test_get_eapi():
 
 
 class TestEAPI:
-    def test_register(self, tmp_path):
+    def test_register(self, tmp_path, caplog):
         # re-register known EAPI
         with pytest.raises(ValueError):
             EAPI.register(magic="0")
@@ -30,24 +30,30 @@ class TestEAPI:
         with (
             mock.patch("pkgcore.ebuild.eapi.bash_version") as bash_version,
             mock.patch.dict(eapi.EAPI.known_eapis),
+            mock.patch.dict(eapi.EAPI.unknown_eapis),
             mock.patch("pkgcore.ebuild.eapi.const.EBD_PATH", mock_ebd_temp),
         ):
             # inadequate bash version
             bash_version.return_value = "3.1"
-            with pytest.raises(SystemExit) as excinfo:
-                _ = EAPI.register(magic="new", optionals={"bash_compat": "3.2"})
+            disabled_eapi = EAPI.register(magic="new", optionals={"bash_compat": "3.2"})
+            assert disabled_eapi.magic == "new"
+            assert not disabled_eapi.supported
+            assert "new" not in EAPI.known_eapis
+            assert get_eapi("new") is disabled_eapi
             assert (
-                "EAPI 'new' requires >=bash-3.2, system version: 3.1"
-                == excinfo.value.args[0]
+                "EAPI 'new' requires >=bash-3.2, system version: 3.1; disabling EAPI"
+                in caplog.text
             )
 
             # adequate system bash versions
             bash_version.return_value = "3.2"
             test_eapi = EAPI.register(magic="test", optionals={"bash_compat": "3.2"})
             assert test_eapi.magic == "test"
+            assert "test" in EAPI.known_eapis
             bash_version.return_value = "4.2"
             test_eapi = EAPI.register(magic="test1", optionals={"bash_compat": "4.1"})
             assert test_eapi.magic == "test1"
+            assert "test1" in EAPI.known_eapis
 
     def test_supported(self, tmp_path, caplog):
         assert eapi6.supported

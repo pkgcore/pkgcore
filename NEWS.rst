@@ -20,6 +20,10 @@ Features
   longer rewritten with the leading ``$D`` removed during merge. (Arthur
   Zamarin)
 
+- An EAPI that requires a newer bash than the one installed is now disabled at
+  runtime (and masks the packages using it) instead of aborting pkgcore on
+  import. This keeps pkgcore somewhat usable. (Arthur Zamarin, #461)
+
 ----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------

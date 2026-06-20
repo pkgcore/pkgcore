@@ -15,7 +15,6 @@ import os
 from os.path import join as pjoin
 
 from snakeoil.compression import compress_data
-from snakeoil.klass import steal_docs
 from snakeoil.osutils import ensure_dirs, unlink_if_exists
 
 from ..fs import tar
@@ -64,7 +63,6 @@ def generate_attr_dict(pkg, portage_compatible=True):
 
 
 class install(repo_interfaces.install):
-    @steal_docs(repo_interfaces.install)
     def add_data(self):
         if self.observer is None:
             end = start = lambda x: None
@@ -108,18 +106,15 @@ class install(repo_interfaces.install):
 
 
 class uninstall(repo_interfaces.uninstall):
-    @steal_docs(repo_interfaces.uninstall)
     def remove_data(self):
         return True
 
-    @steal_docs(repo_interfaces.uninstall)
     def finalize_data(self):
         os.unlink(discern_loc(self.repo.base, self.old_pkg, self.repo.extension))
         return True
 
 
 class replace(install, uninstall, repo_interfaces.replace):
-    @steal_docs(repo_interfaces.replace)
     def finalize_data(self):
         # we just invoke install finalize_data, since it atomically
         # transfers the new pkg in

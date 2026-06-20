@@ -488,9 +488,9 @@ class ContainmentMatch(_HashedGenericEquality, base):
         return f"{negate}{restricts_str}"
 
 
-ContainmentMatch2 = deprecated("use ContainmentMatch instead", removal_in=(0, 13, 0))(
-    ContainmentMatch
-)
+@deprecated("use ContainmentMatch instead", removal_in=(0, 13, 0))
+class ContainmentMatch2(ContainmentMatch):
+    __slots__ = ()
 
 
 class FlatteningRestriction(klass.GenericEquality, base):

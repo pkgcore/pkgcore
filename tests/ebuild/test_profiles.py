@@ -17,7 +17,7 @@ from pkgcore.restrictions import packages
 atrue = packages.AlwaysTrue
 
 
-class ProfileNode(profiles.ProfileNode):
+class ProfileNode(profiles.ProfileNode, caching=False):
     # re-inherited to disable inst-caching
     pass
 

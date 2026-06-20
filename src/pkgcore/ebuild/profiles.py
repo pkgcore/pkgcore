@@ -13,10 +13,11 @@ from itertools import chain
 from os.path import abspath
 from os.path import join as pjoin
 
-from snakeoil import caching, klass
+from snakeoil import klass
 from snakeoil.bash import read_bash, read_bash_dict
 from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines_utf8
+from snakeoil.klass.memoize import WeaklyCached
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import split_negations, stable_unique
 
@@ -177,8 +178,7 @@ _make_incrementals_dict = partial(misc.IncrementalsDict, INCREMENTALS)
 _Packages = namedtuple("_Packages", ("system", "profile"))
 
 
-class ProfileNode(metaclass=caching.WeakInstMeta):
-    __inst_caching__ = True
+class ProfileNode(WeaklyCached):
     _repo_map = None
 
     def __init__(self, path, pms_strict=True):
@@ -659,8 +659,6 @@ class ProfileNode(metaclass=caching.WeakInstMeta):
 
 
 class EmptyRootNode(ProfileNode):
-    __inst_caching__ = True
-
     parents = ()
     deprecated = None
     pkg_use = masked_use = stable_masked_use = forced_use = stable_forced_use = (
@@ -976,7 +974,7 @@ class OnDiskProfile(ProfileStack):
         return ProfileStack._incremental_unmasks(self, stack_override=stack)
 
 
-class UserProfileNode(ProfileNode):
+class UserProfileNode(ProfileNode, caching=False):
     parent_node_kls = ProfileNode
 
     def __init__(self, path, parent_path):

@@ -104,3 +104,14 @@ class TestCommandline(ArgParseMixin):
 
     def test_no_contents(self):
         self.assertOut([], "--contents", "--all", test_domain=domain_config)
+
+
+def test_revdep_pkgs_match_ignores_use_deps():
+    pkg = FakePkg("dev-python/snakeoil-0.11.0", iuse=["foo"], use=[])
+    assert pquery._revdep_pkgs_match(
+        (pkg,), atom.atom(">=dev-python/snakeoil-0.11.0[foo]")
+    )
+    # a non-matching version is still rejected
+    assert not pquery._revdep_pkgs_match(
+        (pkg,), atom.atom(">=dev-python/snakeoil-99[foo]")
+    )

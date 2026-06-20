@@ -851,6 +851,9 @@ def parse_revdep(value):
 
 
 def _revdep_pkgs_match(pkgs, value):
+    # Ignore USE dependencies when matching: whether a package is a reverse
+    # dependency shouldn't hinge on USE constraints, and raw (unconfigured).
+    value = value.no_usedeps
     return any(value.match(pkg) for pkg in pkgs)
 
 

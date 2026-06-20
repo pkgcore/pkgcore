@@ -32,6 +32,14 @@ Removed Features
   loading the installed package database during resolution is no longer a
   bottleneck. (Arthur Zamarin, #458)
 
+Fixes
+~~~~~
+
+- ``pquery --revdep-pkg`` (and ``--restrict-revdep-pkgs``) no longer returns
+  nothing when combined with ``--raw``. USE dependencies are now ignored when
+  matching reverse dependencies, so raw (unconfigured) target packages, which
+  carry no enabled USE state, are matched correctly. (Arthur Zamarin, #473)
+
 ----------------------------
 pkgcore 0.12.34 (2026-06-19)
 ----------------------------

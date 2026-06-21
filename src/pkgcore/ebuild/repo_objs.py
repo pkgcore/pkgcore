@@ -44,8 +44,9 @@ from ..exceptions import PermissionDenied
 from ..log import logger
 from ..repository import errors as repo_errors
 from ..repository import syncable
-from ..restrictions import packages
+from ..restrictions import boolean, packages, restriction
 from . import atom, pkg_updates, profiles
+from .cpv import VersionedCPV
 from .digest import Manifest
 from .eapi import get_eapi
 
@@ -102,24 +103,24 @@ class Upstream(NamedTuple):
     name: str
 
 
-class FlagWithRestrict(NamedTuple):
-    """A metadata.xml boolean flag with an optional atom-level package restriction."""
+class FlagWithRestrict(immutable.Simple):
+    """A metadata.xml boolean flag with an optional package restriction."""
 
-    value: bool
-    restrict: atom.atom | None
+    __slots__ = ("value", "restrict")
 
-    def __bool__(self):
-        return self.value
+    def __init__(self, value: bool, restrict: restriction.base | None):
+        self.value = value
+        self.restrict = restrict
 
-    def __eq__(self, other):
-        if isinstance(other, bool):
-            return self.value == other
-        if isinstance(other, FlagWithRestrict):
-            # ignores restriction for backwards compatibility
-            return self.value == other.value
-        return NotImplemented
+    def __contains__(self, pkg: str | VersionedCPV):
+        if not self.value:
+            return False
+        if self.restrict is None:
+            return True
 
-    __hash__ = tuple.__hash__
+        if isinstance(pkg, str):
+            pkg = VersionedCPV(pkg)
+        return self.restrict.match(pkg)
 
 
 class MetadataXml:
@@ -232,16 +233,21 @@ class MetadataXml:
             break
 
         def parse_flag_with_restrict(name):
-            node = tree.find(name)
-            if node is None:
-                return FlagWithRestrict(value=False, restrict=None)
-            restrict = node.get("restrict")
-            try:
-                restrict = atom.atom(restrict, eapi="5") if restrict else None
-            except ValueError:
-                # ignore invalid restrict that should be caught by pkgcheck
-                restrict = None
-            return FlagWithRestrict(value=True, restrict=restrict)
+            all_restricts: set[atom.atom] = set()
+            value = False
+            for node in tree.findall(name):
+                value = True
+                if restrict := node.get("restrict"):
+                    try:
+                        all_restricts.add(atom.atom(restrict, eapi="5"))
+                    except ValueError:
+                        # ignore invalid restrict that should be caught by pkgcheck
+                        pass
+            if not all_restricts:
+                return FlagWithRestrict(value, None)
+            elif len(all_restricts) == 1:
+                return FlagWithRestrict(value, all_restricts.pop())
+            return FlagWithRestrict(value, boolean.OrRestriction(*all_restricts))
 
         self._stabilize_allarches = parse_flag_with_restrict("stabilize-allarches")
         self._straight_to_stable = parse_flag_with_restrict("straight-to-stable")

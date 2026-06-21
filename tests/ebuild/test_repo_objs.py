@@ -171,24 +171,28 @@ Blake-light tragedy among the scholars of war.
 
     def test_stabilize_allarches(self):
         # missing
-        assert not self.get_metadata_xml().stabilize_allarches
+        assert not self.get_metadata_xml().stabilize_allarches.value
         # present
-        assert self.get_metadata_xml(stabilize_allarches=True).stabilize_allarches
+        assert self.get_metadata_xml(stabilize_allarches=True).stabilize_allarches.value
         # with restriction
         x = self.get_metadata_xml(stabilize_allarches=">dev-lang/foo-1.0")
         assert x.stabilize_allarches.restrict == atom.atom(">dev-lang/foo-1.0")
+        assert "dev-lang/foo-2" in x.stabilize_allarches
+        assert "dev-lang/foo-1" not in x.stabilize_allarches
         # invalid restriction should be ignored
         x = self.get_metadata_xml(stabilize_allarches="invalid")
         assert x.stabilize_allarches.restrict is None
 
     def test_straight_to_stable(self):
         # missing
-        assert not self.get_metadata_xml().straight_to_stable
+        assert not self.get_metadata_xml().straight_to_stable.value
         # present
-        assert self.get_metadata_xml(straight_to_stable=True).straight_to_stable
+        assert self.get_metadata_xml(straight_to_stable=True).straight_to_stable.value
         # with restriction
         x = self.get_metadata_xml(straight_to_stable=">dev-lang/foo-1.0")
         assert x.straight_to_stable.restrict == atom.atom(">dev-lang/foo-1.0")
+        assert "dev-lang/foo-2" in x.straight_to_stable
+        assert "dev-lang/foo-1" not in x.straight_to_stable
         # invalid restriction should be ignored
         x = self.get_metadata_xml(straight_to_stable="invalid")
         assert x.straight_to_stable.restrict is None

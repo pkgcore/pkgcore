@@ -29,6 +29,10 @@ Features
   runtime (and masks the packages using it) instead of aborting pkgcore on
   import. This keeps pkgcore somewhat usable. (Arthur Zamarin, #461)
 
+- The package ``stabilize_allarches`` and ``straight_to_stable`` attributes are
+  now simple booleans, evaluating the ``metadata.xml`` flag together with its
+  optional ``restrict`` against the package itself. (Arthur Zamarin)
+
 Removed Features
 ~~~~~~~~~~~~~~~~
 

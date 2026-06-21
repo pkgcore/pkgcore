@@ -438,12 +438,14 @@ class package(base):
     local_use = klass.alias_attr("_shared_pkg_data.metadata_xml.local_use")
     longdescription = klass.alias_attr("_shared_pkg_data.metadata_xml.longdescription")
     manifest = klass.alias_attr("_shared_pkg_data.manifest")
-    stabilize_allarches = klass.alias_attr(
-        "_shared_pkg_data.metadata_xml.stabilize_allarches"
-    )
-    straight_to_stable = klass.alias_attr(
-        "_shared_pkg_data.metadata_xml.straight_to_stable"
-    )
+
+    @DynamicGetattrSetter.register
+    def stabilize_allarches(self):
+        return self in self._shared_pkg_data.metadata_xml.stabilize_allarches
+
+    @DynamicGetattrSetter.register
+    def straight_to_stable(self):
+        return self in self._shared_pkg_data.metadata_xml.straight_to_stable
 
     @property
     def _mtime_(self):

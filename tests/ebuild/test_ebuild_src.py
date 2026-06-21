@@ -9,7 +9,7 @@ from snakeoil.currying import post_curry
 from snakeoil.data_source import data_source, local_source
 
 from pkgcore import fetch
-from pkgcore.ebuild import digest, ebuild_src, repo_objs
+from pkgcore.ebuild import atom, digest, ebuild_src, repo_objs
 from pkgcore.ebuild.eapi import EAPI, get_eapi
 from pkgcore.package import errors
 
@@ -615,6 +615,38 @@ class TestPackage(TestBase):
         m = digest.Manifest(None)
         o = self.make_shared_pkg_data(manifest=m)
         assert o.manifest is m
+
+    @pytest.mark.parametrize("attr", ("stabilize_allarches", "straight_to_stable"))
+    def test_flag_with_restrict(self, attr):
+        def mk_pkg(flag):
+            m = repo_objs.MetadataXml(None)
+            object.__setattr__(m, "_source", None)
+            object.__setattr__(m, "_" + attr, flag)
+            return self.make_shared_pkg_data(metadata_xml=m)
+
+        # the package attr is a simple bool, derived from the raw flag
+        assert (
+            getattr(
+                mk_pkg(repo_objs.FlagWithRestrict(value=False, restrict=None)), attr
+            )
+            is False
+        )
+        assert (
+            getattr(mk_pkg(repo_objs.FlagWithRestrict(value=True, restrict=None)), attr)
+            is True
+        )
+
+        # restrict that matches the package
+        match = repo_objs.FlagWithRestrict(
+            value=True, restrict=atom.atom(">dev-util/diffball-0")
+        )
+        assert getattr(mk_pkg(match), attr) is True
+
+        # restrict that doesn't match the package
+        no_match = repo_objs.FlagWithRestrict(
+            value=True, restrict=atom.atom(">dev-util/diffball-1")
+        )
+        assert getattr(mk_pkg(no_match), attr) is False
 
 
 class TestPackageFactory:

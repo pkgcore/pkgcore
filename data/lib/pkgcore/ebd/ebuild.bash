@@ -475,6 +475,7 @@ __execute_phases() {
 							LC_ALL=C "${__path}" -F $'\0' 'BEGIN { content="";chars=0;RS="\0";ORS=""} {chars += length($0);content = content $0} END {printf("receive_env %i\n%s",chars, content)}' >&${PKGCORE_EBD_WRITE_FD}
 					else
 						local my_env=$(__environ_dump)
+						local LC_ALL=C
 						__ebd_write_line "receive_env ${#my_env}"
 						__ebd_write_raw "${my_env}"
 						unset -v my_env __path

@@ -6,6 +6,15 @@ Release Notes
 pkgcore 0.12.36 (unreleased)
 ----------------------------
 
+Features
+~~~~~~~~
+
+- ``metadata.xml`` parsing now exposes the full ``<upstream>`` element through a
+  new ``upstream`` attribute (an ``UpstreamMetadata`` object with ``maintainers``,
+  ``changelog``, ``doc``, ``bugs-to`` and ``remote-id`` data). The existing
+  ``upstreams`` attribute is kept as an alias for the remote-ids.
+  (Arthur Zamarin, https://bugs.gentoo.org/909349)
+
 Bug fixes
 ~~~~~~~~~
 

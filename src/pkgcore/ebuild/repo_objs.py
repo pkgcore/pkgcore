@@ -97,10 +97,28 @@ class Maintainer(immutable.Simple):
 
 
 class Upstream(NamedTuple):
-    """Data on a single upstream."""
+    """Data on a single upstream remote-id."""
 
     type: str | None
     name: str
+
+
+class UpstreamMaintainer(NamedTuple):
+    """Data on a single upstream maintainer."""
+
+    name: str | None
+    email: str | None
+    status: str | None
+
+
+class UpstreamMetadata(NamedTuple):
+    """Data from the ``<upstream>`` element of metadata.xml."""
+
+    maintainers: tuple[UpstreamMaintainer, ...] = ()
+    changelog: str | None = None
+    doc: str | None = None
+    bugs_to: str | None = None
+    remote_ids: tuple[Upstream, ...] = ()
 
 
 class FlagWithRestrict(immutable.Simple):
@@ -133,6 +151,7 @@ class MetadataXml:
     __slots__ = (
         "__weakref__",
         "_maintainers",
+        "_upstream",
         "_upstreams",
         "_local_use",
         "_longdescription",
@@ -151,6 +170,7 @@ class MetadataXml:
 
     for attr in (
         "maintainers",
+        "upstream",
         "upstreams",
         "local_use",
         "longdescription",
@@ -167,6 +187,7 @@ class MetadataXml:
             tree = etree.parse(source)
         except etree.XMLSyntaxError as e:
             self._maintainers = ()
+            self._upstream = None
             self._upstreams = ()
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None
@@ -202,11 +223,42 @@ class MetadataXml:
                 pass
 
         self._maintainers = tuple(maintainers)
-        self._upstreams = tuple(
-            Upstream(e.get("type"), e.text)
-            for e in chain.from_iterable(tree.findall("upstream"))
-            if e.tag == "remote-id"
-        )
+
+        self._upstream = None
+        if (upstream := tree.find("upstream")) is not None:
+            up_maintainers = []
+            for m in upstream.findall("maintainer"):
+                name = email = None
+                for e in m:
+                    if e.tag == "name":
+                        name = e.text
+                    elif e.tag == "email":
+                        email = e.text
+                up_maintainers.append(
+                    UpstreamMaintainer(name=name, email=email, status=m.get("status"))
+                )
+
+            changelog = bugs_to = doc = None
+            if (node := upstream.find("changelog")) is not None:
+                changelog = node.text
+            if (node := upstream.find("bugs-to")) is not None:
+                bugs_to = node.text
+            for node in upstream.findall("doc"):
+                if node.get("lang", "en") == "en":
+                    doc = node.text
+                    break
+
+            self._upstream = UpstreamMetadata(
+                maintainers=tuple(up_maintainers),
+                changelog=changelog,
+                doc=doc,
+                bugs_to=bugs_to,
+                remote_ids=tuple(
+                    Upstream(e.get("type"), e.text)
+                    for e in upstream.findall("remote-id")
+                ),
+            )
+        self._upstreams = self._upstream.remote_ids if self._upstream else ()
 
         # Could be unicode!
         self._longdescription = None
@@ -262,6 +314,7 @@ class LocalMetadataXml(MetadataXml):
                 MetadataXml._parse_xml(self, src)
         except FileNotFoundError:
             self._maintainers = ()
+            self._upstream = None
             self._upstreams = ()
             self._local_use = mappings.ImmutableDict()
             self._longdescription = None

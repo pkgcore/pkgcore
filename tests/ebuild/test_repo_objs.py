@@ -22,6 +22,7 @@ class TestMetadataXml:
         proxied: str | None = None,
         stabilize_allarches: str | bool = False,
         straight_to_stable: str | bool = False,
+        upstream: str = "",
     ):
         cs = "\n".join(comments)
         ms = us = ls = ""
@@ -66,7 +67,7 @@ class TestMetadataXml:
         s = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
-{cs}{ms}{us}{ls}{sa}{sts}</pkgmetadata>"""
+{cs}{ms}{us}{ls}{sa}{sts}{upstream}</pkgmetadata>"""
         return repo_objs.MetadataXml(data_source(s.encode("utf-8")))
 
     def test_empty_maintainers(self):
@@ -196,6 +197,73 @@ Blake-light tragedy among the scholars of war.
         # invalid restriction should be ignored
         x = self.get_metadata_xml(straight_to_stable="invalid")
         assert x.straight_to_stable.restrict is None
+
+    def test_no_upstream(self):
+        mx = self.get_metadata_xml()
+        assert mx.upstream is None
+        assert mx.upstreams == ()
+
+    def test_empty_upstream(self):
+        mx = self.get_metadata_xml(upstream="<upstream></upstream>")
+        assert mx.upstream is not None
+        assert mx.upstream.maintainers == ()
+        assert mx.upstream.changelog is None
+        assert mx.upstream.doc is None
+        assert mx.upstream.bugs_to is None
+        assert mx.upstream.remote_ids == ()
+        assert mx.upstreams == ()
+
+    def test_upstream_remote_ids(self):
+        mx = self.get_metadata_xml(
+            upstream="""<upstream>
+            <remote-id type="github">foo/bar</remote-id>
+            <remote-id type="pypi">baz</remote-id>
+            </upstream>"""
+        )
+        assert mx.upstream.remote_ids == (
+            repo_objs.Upstream("github", "foo/bar"),
+            repo_objs.Upstream("pypi", "baz"),
+        )
+        # backwards compatible alias
+        assert mx.upstreams == mx.upstream.remote_ids
+
+    def test_upstream_links(self):
+        mx = self.get_metadata_xml(
+            upstream="""<upstream>
+            <bugs-to>https://example.com/bugs</bugs-to>
+            <changelog>https://example.com/changelog</changelog>
+            <doc>https://example.com/doc</doc>
+            </upstream>"""
+        )
+        assert mx.upstream.bugs_to == "https://example.com/bugs"
+        assert mx.upstream.changelog == "https://example.com/changelog"
+        assert mx.upstream.doc == "https://example.com/doc"
+
+    def test_upstream_doc_lang(self):
+        mx = self.get_metadata_xml(
+            upstream="""<upstream>
+            <doc lang="de">https://example.com/de</doc>
+            <doc>https://example.com/en</doc>
+            </upstream>"""
+        )
+        assert mx.upstream.doc == "https://example.com/en"
+
+    def test_upstream_maintainers(self):
+        mx = self.get_metadata_xml(
+            upstream="""<upstream>
+            <maintainer status="active">
+                <name>Foo Bar</name>
+                <email>foo@example.com</email>
+            </maintainer>
+            <maintainer status="inactive">
+                <name>Baz</name>
+            </maintainer>
+            </upstream>"""
+        )
+        assert mx.upstream.maintainers == (
+            repo_objs.UpstreamMaintainer("Foo Bar", "foo@example.com", "active"),
+            repo_objs.UpstreamMaintainer("Baz", None, "inactive"),
+        )
 
 
 class TestProjectsXml:

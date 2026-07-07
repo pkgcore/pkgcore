@@ -6,6 +6,13 @@ Release Notes
 pkgcore 0.12.36 (unreleased)
 ----------------------------
 
+Bug fixes
+~~~~~~~~~
+
+- ``pquery --size`` no longer crashes with ``FileNotFoundError`` when a package
+  records contents that no longer exist on disk (e.g. kernel initrd or module
+  files); missing files are now skipped. (Arthur Zamarin, https://bugs.gentoo.org/944838)
+
 ----------------------------
 pkgcore 0.12.35 (2026-06-21)
 ----------------------------

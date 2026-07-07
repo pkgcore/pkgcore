@@ -454,11 +454,17 @@ def print_package(options, out, err, pkg):
     if options.size:
         size = 0
         files = 0
+        missing_files = 0
         for location in (obj.location for obj in get_pkg_attr(pkg, "contents", ())):
             files += 1
-            size += os.lstat(location).st_size
+            try:
+                size += os.lstat(location).st_size
+            except FileNotFoundError:
+                missing_files += 1
         out.write(f"Total files: {files}")
         out.write(f"Total size: {sizeof_fmt(size)}")
+        if missing_files:
+            out.write(f"Missing files: {missing_files}")
 
 
 def print_packages_noversion(options, out, err, pkgs):

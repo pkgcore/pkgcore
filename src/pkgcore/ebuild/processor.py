@@ -423,7 +423,9 @@ class EbuildProcessor:
             if dwrite is not None:
                 os.close(dwrite)
         self.ebd_write = os.fdopen(cwrite, "w")
-        self.ebd_read = os.fdopen(dread, "r")
+        # binary: receive_env's payload is prefixed by its byte count, so
+        # read(n) must read n bytes rather than n characters
+        self.ebd_read = os.fdopen(dread, "rb")
 
         # verify ebd is running
         self.write("ebd?")
@@ -541,7 +543,7 @@ class EbuildProcessor:
     def readlines(self, lines):
         mydata = []
         while lines > 0:
-            mydata.append(self.ebd_read.readline())
+            mydata.append(self.ebd_read.readline().decode())
             cmd, _, args_str = mydata[-1].strip().partition(" ")
             if cmd == "SIGINT":
                 chuck_KeyboardInterrupt(self, args_str)
@@ -878,7 +880,7 @@ class EbuildProcessor:
             elif not line.isdigit():
                 raise InternalError(line, "Returned size wasn't an integer")
             # This is a raw transfer, for obvious reasons.
-            environ.append(self.ebd_read.read(int(line)))
+            environ.append(self.ebd_read.read(int(line)).decode())
 
         self._run_depend_like_phase(
             "gen_ebuild_env",

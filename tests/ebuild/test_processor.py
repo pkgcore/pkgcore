@@ -1,4 +1,18 @@
+from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.processor import EbuildProcessor
+
+
+class TestEnvironmentDump:
+    def test_multibyte_function_body(self, repo):
+        # raw non-ASCII in a function body makes the receive_env byte count
+        # exceed the char count; reading as text over-read past the payload
+        # (https://bugs.gentoo.org/930852)
+        data = 'src_prepare() {\n\techo "café résumé naïve größe" || die\n}\n'
+        repo.create_ebuild("cat/pkg-1", data=data)
+        repo.sync()
+        pkg = max(repo.itermatch(atom("cat/pkg")))
+        env = pkg.environment.text_fileobj().read()
+        assert "café résumé naïve größe" in env
 
 
 class TestGenerateEnvStr:

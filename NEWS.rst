@@ -13,6 +13,11 @@ Bug fixes
   records contents that no longer exist on disk (e.g. kernel initrd or module
   files); missing files are now skipped. (Arthur Zamarin, https://bugs.gentoo.org/944838)
 
+- Dumping an ebuild's environment no longer fails with ``UnhandledCommand`` when
+  it contains raw multibyte characters (e.g. non-ASCII in a phase function body);
+  the daemon's byte-counted payload is now read as bytes instead of text.
+  (Arthur Zamarin, https://bugs.gentoo.org/930852)
+
 ----------------------------
 pkgcore 0.12.35 (2026-06-21)
 ----------------------------

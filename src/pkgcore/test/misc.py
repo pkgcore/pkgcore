@@ -153,7 +153,7 @@ class FakePkg(FakePkgBase):
 # misc setup code for generating glsas for testing
 
 glsa_template = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE glsa SYSTEM "http://www.gentoo.org/dtd/glsa.dtd">
+<!DOCTYPE glsa SYSTEM "https://www.gentoo.org/dtd/glsa.dtd">
 <?xml-stylesheet href="/xsl/glsa.xsl" type="text/xsl"?>
 <?xml-stylesheet href="/xsl/guide.xsl" type="text/xsl"?>
 

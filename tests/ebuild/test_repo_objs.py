@@ -202,7 +202,7 @@ class TestProjectsXml:
     @staticmethod
     def get_projects_xml(s=None):
         default_s = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<!DOCTYPE projects SYSTEM "https://www.gentoo.org/dtd/projects.dtd">
 <projects>
   <project>
     <email>nomembers@example.com</email>
@@ -307,7 +307,7 @@ class TestProjectsXml:
     def test_project_member_without_email(self):
         p = self.get_projects_xml(
             """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<!DOCTYPE projects SYSTEM "https://www.gentoo.org/dtd/projects.dtd">
 <projects>
   <project>
     <email>nolead@example.com</email>
@@ -327,7 +327,7 @@ class TestProjectsXml:
     def test_subproject_without_ref(self):
         p = self.get_projects_xml(
             """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<!DOCTYPE projects SYSTEM "https://www.gentoo.org/dtd/projects.dtd">
 <projects>
   <project>
     <email>nolead@example.com</email>
@@ -349,7 +349,7 @@ class TestProjectsXml:
     def test_subproject_with_invalid_ref(self):
         p = self.get_projects_xml(
             """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<!DOCTYPE projects SYSTEM "https://www.gentoo.org/dtd/projects.dtd">
 <projects>
   <project>
     <email>nolead@example.com</email>
@@ -372,7 +372,7 @@ class TestProjectsXml:
     def test_deep_subproject_with_invalid_ref(self):
         p = self.get_projects_xml(
             """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE projects SYSTEM "http://www.gentoo.org/dtd/projects.dtd">
+<!DOCTYPE projects SYSTEM "https://www.gentoo.org/dtd/projects.dtd">
 <projects>
   <project>
     <email>nolead@example.com</email>

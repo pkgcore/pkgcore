@@ -6,6 +6,14 @@ Release Notes
 pkgcore 0.12.37 (unreleased)
 ----------------------------
 
+Features
+~~~~~~~~
+
+- ``pkgcore.restrictions.required_use.iter_flags``: yields every USE flag named
+  in a REQUIRED_USE restriction, so callers can keep unconstrained flags out of
+  the solver (Arthur Zamarin)
+
+
 Changes
 ~~~~~~~
 

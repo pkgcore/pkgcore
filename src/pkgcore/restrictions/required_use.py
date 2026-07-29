@@ -6,6 +6,19 @@ from snakeoil.constraints import Constraint, Problem
 from . import boolean, packages, restriction, values
 
 
+def iter_flags(restrict: restriction.base) -> Iterator[str]:
+    """Yield every USE flag named in a REQUIRED_USE restriction"""
+    if isinstance(restrict, values.ContainmentMatch):
+        yield from restrict.vals
+    elif isinstance(restrict, packages.Conditional):
+        yield from restrict.restriction.vals
+        for child in restrict.payload:
+            yield from iter_flags(child)
+    else:
+        for child in restrict.restrictions:
+            yield from iter_flags(child)
+
+
 class _use_constraint(Protocol):
     def __call__(self, on: frozenset[str]) -> bool:
         raise NotImplementedError("Constraint", "__call__")

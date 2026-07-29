@@ -1,3 +1,4 @@
+from functools import lru_cache
 from typing import Iterator, Protocol
 
 from snakeoil.constraints import Constraint, Problem
@@ -128,6 +129,22 @@ def __wrapper(constraint_func: _use_constraint) -> Constraint:
     return check
 
 
+@lru_cache(maxsize=512)
+def _compiled_constraints(
+    restricts: restriction.base,
+) -> tuple[tuple[Constraint, frozenset[str]], ...]:
+    """Compile REQUIRED_USE into solver constraints.
+
+    Depends only on the restriction, never on which flags are forced, so it is
+    reused across profiles and across packages sharing a REQUIRED_USE.
+    """
+    return tuple(
+        (__wrapper(constraint_func), variables)
+        for rule in restricts
+        for constraint_func, variables in __to_multiple_constraint(rule)
+    )
+
+
 def find_constraint_satisfaction(
     restricts: restriction.base,
     iuse: set[str],
@@ -158,9 +175,8 @@ def find_constraint_satisfaction(
     problem.add_variable((False,), *iuse.intersection(force_false))
     problem.add_variable((True,), *iuse.intersection(force_true))
 
-    for rule in restricts:
-        for constraint_func, variables in __to_multiple_constraint(rule):
-            if missing_vars := variables - problem.variables.keys():
-                problem.add_variable((False,), *missing_vars)
-            problem.add_constraint(__wrapper(constraint_func), variables)
+    for constraint, variables in _compiled_constraints(restricts):
+        if missing_vars := variables - problem.variables.keys():
+            problem.add_variable((False,), *missing_vars)
+        problem.add_constraint(constraint, variables)
     return iter(problem)

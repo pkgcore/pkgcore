@@ -6,6 +6,14 @@ Release Notes
 pkgcore 0.12.37 (unreleased)
 ----------------------------
 
+Changes
+~~~~~~~
+
+- ``pkgcore.restrictions.required_use``: cache the compiled constraints per
+  REQUIRED_USE, so repeated calls for different profiles or for packages
+  sharing a formula skip recompiling it (Arthur Zamarin)
+
+
 Fixes
 ~~~~~
 

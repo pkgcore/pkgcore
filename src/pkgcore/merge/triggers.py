@@ -3,15 +3,16 @@ triggers, callables to bind to a step in a MergeEngine to affect changes
 """
 
 __all__ = (
-    "base",
-    "UNINSTALLING_MODES",
     "INSTALLING_MODES",
+    "UNINSTALLING_MODES",
     "BaseSystemUnmergeProtection",
     "BinaryDebug",
     "BlockFileType",
     "CommonDirectoryModes",
+    "InfoRegen",
     "PruneFiles",
     "SavePkg",
+    "base",
     "detect_world_writable",
     "fix_gid_perms",
     "fix_set_bits",
@@ -19,13 +20,13 @@ __all__ = (
     "ldconfig",
     "merge",
     "unmerge",
-    "InfoRegen",
 )
 
 import os
 import platform
 import re
 import time
+import typing
 from math import floor
 from os.path import join as pjoin
 from os.path import normpath
@@ -101,10 +102,9 @@ class base:
 
     def get_required_csets(self, mode):
         csets = self.required_csets
-        if csets is not None:
-            if not isinstance(csets, tuple):
-                # has to be a dict.
-                csets = csets.get(mode)
+        if csets is not None and not isinstance(csets, tuple):
+            # has to be a dict.
+            csets = csets.get(mode)
         return csets
 
     def localize(self, engine):
@@ -134,7 +134,7 @@ class base:
         return f"{self.label}: cset({self.required_csets}) ftrigger({self.trigger})"
 
     def __repr__(self):
-        return "<%s cset=%r @#%x>" % (self.label, self.required_csets, id(self))
+        return f"<{self.label} cset={self.required_csets!r} @#{id(self):x}>"
 
 
 class ThreadedTrigger(base):
@@ -283,7 +283,14 @@ class ldconfig(base):
     _engine_types = None
     _hooks = ("pre_merge", "post_merge", "pre_unmerge", "post_unmerge")
 
-    default_ld_path = ["usr/lib", "usr/lib64", "usr/lib32", "lib", "lib64", "lib32"]
+    default_ld_path: typing.ClassVar[list] = [
+        "usr/lib",
+        "usr/lib64",
+        "usr/lib32",
+        "lib",
+        "lib64",
+        "lib32",
+    ]
 
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
@@ -310,7 +317,7 @@ class ldconfig(base):
             )
         try:
             touch(fp)
-        except EnvironmentError as e:
+        except OSError as e:
             raise errors.BlockModification(self, e) from e
 
     def trigger(self, engine):
@@ -372,7 +379,7 @@ class InfoRegen(base):
         if bin_path is None:
             return
 
-        regens = set(x.location for x in self.saved_mtimes.get_changes(locations))
+        regens = {x.location for x in self.saved_mtimes.get_changes(locations)}
         # force regeneration of any directory lacking the info index.
         regens.update(x for x in locations if not os.path.isfile(pjoin(x, "dir")))
 
@@ -406,7 +413,7 @@ class InfoRegen(base):
             if x in ignores or x.startswith("."):
                 continue
 
-            ret, data = spawn.spawn_get_output(
+            _ret, data = spawn.spawn_get_output(
                 [binary, "--quiet", pjoin(basepath, x), "--dir-file", index],
                 collect_fds=(1, 2),
                 split_lines=False,
@@ -589,7 +596,7 @@ class CommonDirectoryModes(base):
     _hooks = ("pre_merge",)
     _engine_types = INSTALLING_MODES
 
-    directories = [
+    directories: typing.ClassVar[list] = [
         pjoin("/usr", x) for x in (".", "lib", "lib64", "lib32", "bin", "sbin", "local")
     ]
     directories.extend(pjoin("/usr/share", x) for x in (".", "man", "info"))
@@ -662,10 +669,7 @@ class SavePkg(base):
     def trigger(self, engine, cset):
         pkg = getattr(engine, self._copy_source)
         # don't build binpkgs of target repo binpkgs
-        if (
-            self.skip_if_source
-            and str(getattr(pkg, "repo")) == self.target_repo.repo_id
-        ):
+        if self.skip_if_source and str(pkg.repo) == self.target_repo.repo_id:
             return
 
         old_pkg = self.target_repo.match(pkg.versioned_atom)
@@ -836,9 +840,10 @@ class BinaryDebug(ThreadedTrigger):
         for fs_objs, ftype in iterable:
             if "ar archive" in ftype:
                 continue
-            if "relocatable" in ftype:
-                if not any(x.basename.endswith(".ko") for x in fs_objs):
-                    continue
+            if "relocatable" in ftype and not any(
+                x.basename.endswith(".ko") for x in fs_objs
+            ):
+                continue
             fs_obj = fs_objs[0]
             debug_loc = pjoin(debug_store, fs_obj.location.lstrip("/") + ".debug")
             if debug_loc in cset:

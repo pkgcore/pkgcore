@@ -88,8 +88,7 @@ def sync_main(options, out, err):
 
     for repo_name, repo in unique_stable(options.repos):
         # rewrite the name if it has the usual prefix
-        if repo_name.startswith("conf:"):
-            repo_name = repo_name[5:]
+        repo_name = repo_name.removeprefix("conf:")
 
         if not repo.operations.supports("sync"):
             continue
@@ -234,7 +233,7 @@ def update_use_local_desc(repo, observer):
     f = None
 
     def _raise_xml_error(exc):
-        observer.error(f"{cat}/{pkg}: failed parsing metadata.xml: {str(exc)}")
+        observer.error(f"{cat}/{pkg}: failed parsing metadata.xml: {exc!s}")
         nonlocal ret
         ret = 1
 
@@ -255,7 +254,7 @@ def update_use_local_desc(repo, observer):
                     for flag, desc in sorted(metadata.local_use.items()):
                         f.write(f"{cat}/{pkg}:{flag} - {desc}\n")
         f.close()
-    except IOError as e:
+    except OSError as e:
         observer.error(
             f"Unable to update use.local.desc file {use_local_desc!r}: {e.strerror}"
         )
@@ -288,7 +287,7 @@ def update_pkg_desc_index(repo, observer):
                         # should be caught and outputted already by cache regen
                         ret = 1
         f.close()
-    except IOError as e:
+    except OSError as e:
         observer.error(
             f"Unable to update pkg_desc_index file {pkg_desc_index!r}: {e.strerror}"
         )
@@ -399,7 +398,7 @@ def regen_main(options, out, err):
 
         if options.verbosity > 0:
             out.write(
-                "finished %d nodes in %.2f seconds" % (len(repo), end_time - start_time)
+                f"finished {len(repo)} nodes in {end_time - start_time:.2f} seconds"
             )
 
         if options.rsync:
@@ -407,7 +406,7 @@ def regen_main(options, out, err):
             try:
                 with open(timestamp, "w") as f:
                     f.write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime()))
-            except IOError as e:
+            except OSError as e:
                 err.write(
                     f"Unable to update timestamp file {timestamp!r}: {e.strerror}"
                 )
@@ -573,7 +572,7 @@ def _eclass_main(options, out, err):
             # skip eclasses lacking eclassdoc support
             err.write(f"{eclass.prog}: skipping {path!r}: {e}")
             err.flush()
-        except IOError as e:
+        except OSError as e:
             err.write(f"{eclass.prog}: error: {path!r}: {e}")
             err.flush()
             failed.append(path)

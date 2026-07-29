@@ -105,7 +105,7 @@ class StrRegex(_HashedGenericEquality, base):
 
         self.regex, self.ismatch, self.negate = regex, match, negate
 
-        self.flags = 0 if case_sensitive else re.I
+        self.flags = 0 if case_sensitive else re.IGNORECASE
         try:
             self._matchfunc = getattr(
                 re.compile(regex, self.flags), "match" if match else "search"
@@ -211,14 +211,14 @@ class StrGlobMatch(_HashedGenericEquality, base):
         self.negate = negate
 
         if not case_sensitive:
-            self.flags, self.glob = re.I, glob.lower()
+            self.flags, self.glob = re.IGNORECASE, glob.lower()
         else:
             self.flags, self.glob = 0, glob
         self.prefix = prefix
 
     def match(self, value):
         value = str(value)
-        if self.flags == re.I:
+        if self.flags == re.IGNORECASE:
             value = value.lower()
         if self.prefix:
             f = value.startswith
@@ -238,7 +238,7 @@ class StrGlobMatch(_HashedGenericEquality, base):
         return string % (
             self.__class__.__name__,
             g,
-            self.flags == re.I and True or False,
+            self.flags == re.IGNORECASE and True or False,
             id(self),
         )
 
@@ -252,7 +252,7 @@ class StrGlobMatch(_HashedGenericEquality, base):
 
 
 class EqualityMatch(base):
-    __slots__ = ("negate", "data")
+    __slots__ = ("data", "negate")
 
     def __init__(self, data: Any, negate=False):
         """
@@ -524,13 +524,7 @@ class FlatteningRestriction(klass.GenericEquality, base):
         )
 
     def __repr__(self):
-        return "<%s restriction=%r dont_iter=%r negate=%r @%#8x>" % (
-            self.__class__.__name__,
-            self.restriction,
-            self.dont_iter,
-            self.negate,
-            id(self),
-        )
+        return f"<{self.__class__.__name__} restriction={self.restriction!r} dont_iter={self.dont_iter!r} negate={self.negate!r} @{id(self):#8x}>"
 
 
 class FunctionRestriction(klass.GenericEquality, base):
@@ -556,12 +550,7 @@ class FunctionRestriction(klass.GenericEquality, base):
         return self.func(val) != self.negate
 
     def __repr__(self):
-        return "<%s func=%r negate=%r @%#8x>" % (
-            self.__class__.__name__,
-            self.func,
-            self.negate,
-            id(self),
-        )
+        return f"<{self.__class__.__name__} func={self.func!r} negate={self.negate!r} @{id(self):#8x}>"
 
 
 class StrConversion(klass.GenericEquality):

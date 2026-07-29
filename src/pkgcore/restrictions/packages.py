@@ -17,11 +17,11 @@ class PackageRestriction(klass.GenericEquality, restriction.base):
     """Package data restriction."""
 
     __slots__ = (
-        "_pull_attr_func",
         "_attr_split",
-        "restriction",
+        "_pull_attr_func",
         "ignore_missing",
         "negate",
+        "restriction",
     )
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
 
@@ -46,7 +46,7 @@ class PackageRestriction(klass.GenericEquality, restriction.base):
         :param negate: should the results be negated?
         """
         if not childrestriction.type == self.subtype:
-            raise TypeError("restriction must be of type %r" % (self.subtype,))
+            raise TypeError(f"restriction must be of type {self.subtype!r}")
         self.negate = negate
         self._parse_attr(attr)
         self.restriction = childrestriction
@@ -85,7 +85,7 @@ class PackageRestriction(klass.GenericEquality, restriction.base):
             eargs = [x for x in exc.args if isinstance(x, str)]
             if any(x in attr_split for x in eargs):
                 return False
-            elif any("'%s'" % x in y for x in attr_split for y in eargs):
+            elif any(f"'{x}'" in y for x in attr_split for y in eargs):
                 # this is fairly horrible; probably specific to cpython also.
                 # either way, does a lookup specifically for attr components
                 # in the string exception string, looking for 'attr' in the
@@ -252,13 +252,12 @@ class Conditional(PackageRestriction, tolerate_uncachable_args=True):
     ):
         if tristate_locked is not None:
             assert len(self.restriction.vals) == 1
-            val = list(self.restriction.vals)[0]
-            if val in tristate_locked:
-                # if val is forced true, but the check is
-                # negation ignore it
-                # if !mips != mips
-                if (val in enabled) == self.restriction.negate:
-                    return
+            val = next(iter(self.restriction.vals))
+            # if val is forced true, but the check is
+            # negation ignore it
+            # if !mips != mips
+            if val in tristate_locked and (val in enabled) == self.restriction.negate:
+                return
         elif not self.restriction.match(enabled):
             return
 

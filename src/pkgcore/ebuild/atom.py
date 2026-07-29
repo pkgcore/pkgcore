@@ -43,18 +43,18 @@ class atom(boolean.AndRestriction):
 
     # note we don't need _hash
     __slots__ = (
-        "blocks",
-        "blocks_strongly",
-        "op",
-        "cpvstr",
-        "negate_vers",
-        "use",
-        "slot_operator",
-        "slot",
-        "subslot",
-        "repo_id",
         "_cpv",
         "_restrictions",
+        "blocks",
+        "blocks_strongly",
+        "cpvstr",
+        "negate_vers",
+        "op",
+        "repo_id",
+        "slot",
+        "slot_operator",
+        "subslot",
+        "use",
     )
 
     type = restriction.package_type
@@ -281,11 +281,10 @@ class atom(boolean.AndRestriction):
             )
 
         # note that we're checking eapi, not eapi_obj.  eapi_obj defaults to latest PMS
-        if eapi != "-1":
-            if self.repo_id is not None:
-                raise errors.MalformedAtom(
-                    orig_atom, f"repo_id atoms aren't supported for EAPI {eapi}"
-                )
+        if eapi != "-1" and self.repo_id is not None:
+            raise errors.MalformedAtom(
+                orig_atom, f"repo_id atoms aren't supported for EAPI {eapi}"
+            )
         try:
             self._cpv = cpv.CPV(self.cpvstr, versioned=bool(self.op))
         except errors.InvalidCPV as e:
@@ -602,7 +601,7 @@ class atom(boolean.AndRestriction):
 
         # If we get here at least one of us is a <, <=, > or >=:
         if self.op in ("<", "<=", ">", ">="):
-            ranged, other = self, other
+            ranged = self
         else:
             ranged, other = other, self
 
@@ -791,13 +790,12 @@ class transitive_use_atom(atom):
             if conditional == "=":
                 # if it's locked to a state, take that state; else use whatever
                 # the default state was.
-                if flag in tristate:
-                    # it's locked; take the allowed state, and force it, take that bool
-                    # and use it to decide if the target dep gets a disabled assertion.
-                    # roughly if locked to enabled: x= == x, !x= == -x
-                    # if locked to disabled: x= == -x , !x= == x
-                    if (flag in enabled) == negated:
-                        real_flag = "-" + real_flag
+                # it's locked; take the allowed state, and force it, take that bool
+                # and use it to decide if the target dep gets a disabled assertion.
+                # roughly if locked to enabled: x= == x, !x= == -x
+                # if locked to disabled: x= == -x , !x= == x
+                if flag in tristate and (flag in enabled) == negated:
+                    real_flag = "-" + real_flag
             else:
                 if flag in tristate:
                     # if the flag was on, but it was !x?, then skip it.
@@ -849,14 +847,14 @@ class transitive_use_atom(atom):
                     # for !x? with -x, the assertion becomes !x; conditionally transitive basically.
                     if (raw_flag in enabled) == negated:
                         continue
-                    flag = "%s%s" % (negated and "-" or "", flag)
+                    flag = "{}{}".format(negated and "-" or "", flag)
                 new_flags.append(flag)
 
         if not new_flags:
             a = self._nontransitive_use_atom(self._stripped_use())
         else:
             a = self._nontransitive_use_atom(
-                "%s[%s]" % (self._stripped_use(), ",".join(new_flags))
+                "{}[{}]".format(self._stripped_use(), ",".join(new_flags))
             )
         parent_seq.append(a)
 

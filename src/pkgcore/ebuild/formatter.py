@@ -1,13 +1,13 @@
 """pmerge formatting module"""
 
 __all__ = (
-    "Formatter",
-    "use_expand_filter",
     "BasicFormatter",
-    "PkgcoreFormatter",
     "CountingFormatter",
+    "Formatter",
+    "PkgcoreFormatter",
     "PortageFormatter",
     "PortageVerboseFormatter",
+    "use_expand_filter",
 )
 
 import operator
@@ -82,7 +82,7 @@ class use_expand_filter:
             elif data:
                 # non hidden flag.
                 if data[0] not in ue_dict:
-                    ue_dict[data[0]] = set([data[1]])
+                    ue_dict[data[0]] = {data[1]}
                 else:
                     ue_dict[data[0]].add(data[1])
 
@@ -377,11 +377,11 @@ class PortageFormatter(CountingFormatter):
         # output download size
         if self.verbosity > 0:
             if not op.pkg.built:
-                downloads = set(
+                downloads = {
                     f
                     for f in op.pkg.distfiles
                     if not os.path.isfile(pjoin(self.distdir, f))
-                )
+                }
                 if downloads.difference(self.downloads):
                     self.downloads.update(downloads)
                     size = sum(
@@ -440,9 +440,7 @@ class PortageFormatter(CountingFormatter):
             removed = set(old_pkg_iuse) - set(pkg_iuse)
 
             for flag in sorted(enabled, key=sorter):
-                expanded_flag = (
-                    "_".join((attr.lower(), flag)) if attr != "use" else flag
-                )
+                expanded_flag = f"{attr.lower()}_{flag}" if attr != "use" else flag
                 if flag in old_enabled:
                     # unchanged
                     if self.verbosity > 0:
@@ -464,9 +462,7 @@ class PortageFormatter(CountingFormatter):
                         flags.extend((yellow, bold, flag, reset, "%*", " "))
 
             for flag in sorted(disabled, key=sorter):
-                expanded_flag = (
-                    "_".join((attr.lower(), flag)) if attr != "use" else flag
-                )
+                expanded_flag = f"{attr.lower()}_{flag}" if attr != "use" else flag
                 if flag in old_disabled:
                     # unchanged
                     if self.verbosity > 0:
@@ -497,17 +493,13 @@ class PortageFormatter(CountingFormatter):
         # new pkg install
         else:
             for flag in sorted(enabled, key=sorter):
-                expanded_flag = (
-                    "_".join((attr.lower(), flag)) if attr != "use" else flag
-                )
+                expanded_flag = f"{attr.lower()}_{flag}" if attr != "use" else flag
                 if expanded_flag in self.pkg_forced_use:
                     flags.extend(("(", red, bold, flag, reset, ")", " "))
                 else:
                     flags.extend((red, bold, flag, reset, " "))
             for flag in sorted(disabled, key=sorter):
-                expanded_flag = (
-                    "_".join((attr.lower(), flag)) if attr != "use" else flag
-                )
+                expanded_flag = f"{attr.lower()}_{flag}" if attr != "use" else flag
                 if expanded_flag in self.pkg_disabled_use:
                     flags.extend(("(", blue, bold, "-", flag, reset, ")", " "))
                 else:

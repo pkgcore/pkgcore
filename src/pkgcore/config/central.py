@@ -68,9 +68,7 @@ class _ConfigStack(defaultdict[str, list[typing.Any]]):
     def __init__(self) -> None:
         super().__init__(list)
 
-    def render_value(
-        self, manager, key: str, type_name: str
-    ) -> typing.Optional[typing.Any]:
+    def render_value(self, manager, key: str, type_name: str) -> typing.Any | None:
         for data in self.get(key, ()):
             if key in data.section:
                 return data.section.render_value(manager, key, type_name)
@@ -175,14 +173,14 @@ class CollapsedConfig:
 
         if self.type.requires_config:
             if self.manager is None:
-                raise Exception(
+                raise RuntimeError(
                     "configuration internal error; "
                     "requires_config is enabled "
                     "but we have no config manager to return "
                 )
             manager = self.manager()
             if manager is None:
-                raise Exception(
+                raise RuntimeError(
                     "Configuration internal error, potentially "
                     "client code error; manager requested, but the config "
                     "manager is no longer in memory"
@@ -436,7 +434,7 @@ class ConfigManager:
         slist = [(name, sections)]
 
         # first map out inherits.
-        inherit_names = set([name])
+        inherit_names = {name}
         for current_section, section_stack in slist:
             current_conf = section_stack[0]
             if "inherit" not in current_conf:
@@ -469,23 +467,23 @@ class ConfigManager:
         return [_section_data(name, stack[0]) for (name, stack) in slist]
 
     def _section_is_inherit_only(self, section) -> bool:
-        if "inherit-only" in section:
-            if section.render_value(self, "inherit-only", "bool"):
-                return True
-        return False
+        return "inherit-only" in section and section.render_value(
+            self, "inherit-only", "bool"
+        )
 
-    def collapse_section(self, sections, _name: typing.Optional[str] = None):
+    def collapse_section(self, sections, _name: str | None = None):
         """Collapse a ConfigSection to a :obj:`CollapsedConfig`."""
 
-        if self._section_is_inherit_only(sections[0]):
-            if sections[0].render_value(self, "inherit-only", "bool"):
-                raise errors.CollapseInheritOnly("cannot collapse inherit-only section")
+        if self._section_is_inherit_only(sections[0]) and sections[0].render_value(
+            self, "inherit-only", "bool"
+        ):
+            raise errors.CollapseInheritOnly("cannot collapse inherit-only section")
 
         relevant_sections = self._get_inherited_sections(_name, sections)
 
         config_stack = _ConfigStack()
         for data in relevant_sections:
-            for key in data.section.keys():
+            for key in data.section.keys():  # noqa: SIM118 (ConfigSection has no __iter__)
                 config_stack[key].append(data)
 
         kls = config_stack.render_value(self, "class", "callable")
@@ -530,8 +528,7 @@ class ConfigManager:
             is_ref = typename.startswith("ref:")
             is_refs = typename.startswith("refs:")
 
-            if typename.startswith("lazy_"):
-                typename = typename[5:]
+            typename = typename.removeprefix("lazy_")
 
             result = config_stack.render_value(self, key, typename)
 
@@ -565,7 +562,7 @@ class ConfigManager:
 
         return mappings.ImmutableDict(conf)
 
-    def get_default(self, type_name: str) -> typing.Optional[typing.Any]:
+    def get_default(self, type_name: str) -> typing.Any | None:
         """Finds the configuration specified default obj of type_name.
 
         Returns C{None} if no defaults.

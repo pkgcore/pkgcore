@@ -38,6 +38,9 @@ def _render_and_evaluate_attr(self, attr_func, render_func):
     return render_func(attr_func(self), self.use)
 
 
+_EMPTY_FETCHABLES = conditionals.DepSet.parse("", fetch.fetchable, operators={})
+
+
 class package(ebuild_src.base):
     """Built form of an ebuild."""
 
@@ -135,9 +138,7 @@ class package(ebuild_src.base):
         return repo if repo else None
 
     @DynamicGetattrSetter.register
-    def fetchables(
-        self, ret=conditionals.DepSet.parse("", fetch.fetchable, operators={})
-    ):
+    def fetchables(self, ret=_EMPTY_FETCHABLES):
         return ret
 
     @DynamicGetattrSetter.register

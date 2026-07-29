@@ -3,9 +3,10 @@
 Right now, doesn't provide much, need to change that down the line
 """
 
-__all__ = ("base", "wrapper", "dynamic_getattr_dict", "DynamicGetattrSetter")
+__all__ = ("DynamicGetattrSetter", "base", "dynamic_getattr_dict", "wrapper")
 
 import itertools
+import typing
 
 from snakeoil import klass, sequences
 from snakeoil.klass import immutable
@@ -21,7 +22,7 @@ class base(klass.SlotsPicklingMixin, immutable.Strict):
     _operations = format.operations
 
     __slots__ = ("__weakref__",)
-    _get_attr = {}
+    _get_attr: typing.ClassVar[dict] = {}
 
     @property
     def versioned_atom(self):
@@ -40,7 +41,7 @@ class base(klass.SlotsPicklingMixin, immutable.Strict):
 
 
 class wrapper(base):
-    __slots__ = ("_raw_pkg", "_domain")
+    __slots__ = ("_domain", "_raw_pkg")
 
     def operations(self, domain, **kwds):
         return self._raw_pkg._operations(domain, self, **kwds)

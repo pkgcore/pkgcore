@@ -2,10 +2,11 @@
 repository modifications (installing, removing, replacing)
 """
 
-__all__ = ("Failure", "base", "install", "uninstall", "replace")
+__all__ = ("Failure", "base", "install", "replace", "uninstall")
 
 import shutil
 import tempfile
+import typing
 
 from snakeoil import osutils
 from snakeoil.dependant_methods import ForcedDepends
@@ -29,9 +30,9 @@ class Failure(PkgcoreException):
 
 
 class base(metaclass=ForcedDepends):
-    stage_depends = {}
+    stage_depends: typing.ClassVar[dict] = {}
 
-    stage_hooks = []
+    stage_hooks: typing.ClassVar[list] = []
 
     def __init__(self, domain, repo, observer, offset):
         self.domain = domain
@@ -41,7 +42,7 @@ class base(metaclass=ForcedDepends):
         self.observer = observer
         self.triggers = self.domain.triggers
         self.create_op()
-        self.lock = getattr(repo, "lock")
+        self.lock = repo.lock
         self.tempspace = None
         if self.lock is None:
             self.lock = fake_lock()
@@ -116,7 +117,7 @@ class install(base):
     Repositories should override as needed.
     """
 
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "finish": "postinst",
         "postinst": "finalize_repo",
         "finalize_repo": "repo_add",
@@ -126,7 +127,12 @@ class install(base):
         "preinst": "start",
     }
 
-    stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
+    stage_hooks: typing.ClassVar[list] = [
+        "merge_metadata",
+        "postinst",
+        "preinst",
+        "transfer",
+    ]
     format_install_op_name = "_repo_install_op"
     engine_kls = staticmethod(MergeEngine.install)
 
@@ -182,7 +188,7 @@ class uninstall(base):
     Repositories should override as needed.
     """
 
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "finish": "postrm",
         "postrm": "finalize_repo",
         "finalize_repo": "repo_remove",
@@ -192,7 +198,7 @@ class uninstall(base):
         "create_repo_op": "start",
     }
 
-    stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
+    stage_hooks: typing.ClassVar[list] = ["merge_metadata", "postrm", "prerm", "remove"]
     format_uninstall_op_name = "_repo_uninstall_op"
     engine_kls = staticmethod(MergeEngine.uninstall)
 
@@ -256,7 +262,7 @@ class replace(install, uninstall):
     Repositories should override as needed.
     """
 
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "finish": "postinst",
         "postinst": "postrm",
         "postrm": "finalize_repo",
@@ -270,7 +276,7 @@ class replace(install, uninstall):
         "preinst": "start",
     }
 
-    stage_hooks = [
+    stage_hooks: typing.ClassVar[list] = [
         "merge_metadata",
         "unmerge_metadata",
         "postrm",

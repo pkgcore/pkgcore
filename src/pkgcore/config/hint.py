@@ -11,7 +11,7 @@ class ConfigHint:
     types: dict[str, str]
     positional: tuple[str, ...]
     required: tuple[str, ...]
-    typename: typing.Optional[str]
+    typename: str | None
     allow_unknowns: bool
     authorative: bool
     requires_config: bool
@@ -19,24 +19,24 @@ class ConfigHint:
 
     # be aware this is used in clone
     __slots__ = (
-        "types",
-        "positional",
-        "required",
-        "typename",
         "allow_unknowns",
-        "doc",
         "authorative",
-        "requires_config",
+        "doc",
+        "positional",
         "raw_class",
+        "required",
+        "requires_config",
+        "typename",
+        "types",
     )
 
     def __init__(
         self,
-        types: typing.Optional[dict[str, str]] = None,
-        positional: typing.Optional[typing.Sequence[str]] = None,
-        required: typing.Optional[typing.Sequence[str]] = None,
-        doc: typing.Optional[str] = None,
-        typename: typing.Optional[str] = None,
+        types: dict[str, str] | None = None,
+        positional: typing.Sequence[str] | None = None,
+        required: typing.Sequence[str] | None = None,
+        doc: str | None = None,
+        typename: str | None = None,
         allow_unknowns: bool = False,
         authorative: bool = False,
         requires_config: bool = False,

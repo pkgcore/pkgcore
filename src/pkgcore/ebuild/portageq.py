@@ -52,7 +52,7 @@ def make_atom(value):
 def _render_atom(value, namespace, attr):
     a = namespace.atom_kls(value)
     if isinstance(a, atom.transitive_use_atom):
-        a.restrictions
+        _ = a.restrictions
         # XXX bit of a hack.
         a = conditionals.DepSet(a.restrictions, atom.atom, True)
         a = a.evaluate_depset(getattr(namespace, "use", ()))
@@ -199,7 +199,7 @@ def mass_best_version(options, out, err):
     multiple best_version calls.
     """
     for x in options.atom:
-        out.write("%s:%s" % (x, _best_version(options.domain, x).rstrip()))
+        out.write(f"{x}:{_best_version(options.domain, x).rstrip()}")
     return 0
 
 
@@ -236,7 +236,7 @@ def find_profile_paths_by_repo_id(config, repo_id, fullpath=False):
     repo = config.repo.get(repo_id, None)
     if repo is not None and getattr(repo, "location", None) is not None:
         profiles = repo.config.profiles.arch_profiles
-        for arch in profiles.keys():
+        for arch in profiles:
             for path, stability in profiles[arch]:
                 if fullpath:
                     path = os.path.join(repo.location, "profiles", path)

@@ -157,7 +157,7 @@ class IncrementalsDict(mappings.DictMixin):
         else:
             self._dict[key] = value
 
-    for x in "getitem delitem len iter".split():
+    for x in ("getitem", "delitem", "len", "iter"):
         x = f"__{x}__"
         locals()[x] = alias_method(f"_dict.{x}")
     s = "pop clear keys items values"
@@ -202,9 +202,7 @@ class collapsed_restrict_to_data(GenericEquality):
                             atomlist.append(
                                 (
                                     a,
-                                    set(
-                                        [flag for flag in data if flag.startswith("-")]
-                                    ),
+                                    {flag for flag in data if flag.startswith("-")},
                                 )
                             )
                 elif isinstance(a, atom.atom):
@@ -224,7 +222,7 @@ class collapsed_restrict_to_data(GenericEquality):
                             f"package/category/repo: data {data!r}"
                         )
                 else:
-                    raise ValueError(
+                    raise TypeError(
                         f"{a!r} is not an AlwaysBool, PackageRestriction, "
                         f"or atom: data {data!r}"
                     )
@@ -236,7 +234,7 @@ class collapsed_restrict_to_data(GenericEquality):
         else:
             always = set()
         self.defaults = always
-        self.defaults_finalized = set(x for x in self.defaults if not x.startswith("-"))
+        self.defaults_finalized = {x for x in self.defaults if not x.startswith("-")}
         self.freeform = tuple(x for x in (repo, cat, pkg, multi) if x)
         self.atoms = atom_d
 

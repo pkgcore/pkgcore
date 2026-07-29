@@ -1,21 +1,20 @@
 __all__ = (
-    "SyncError",
-    "UriError",
-    "MissingLocalUser",
-    "MissingBinary",
-    "Syncer",
-    "ExternalSyncer",
-    "VcsSyncer",
-    "GenericSyncer",
-    "DisabledSyncer",
     "AutodetectSyncer",
+    "DisabledSyncer",
+    "ExternalSyncer",
+    "GenericSyncer",
+    "MissingBinary",
+    "MissingLocalUser",
+    "SyncError",
+    "Syncer",
+    "UriError",
+    "VcsSyncer",
 )
 
 import os
 import pwd
 import stat
 import sys
-import typing
 from importlib import import_module
 
 from snakeoil import process
@@ -113,8 +112,7 @@ class Syncer:
 
             return uid, gid, raw_uri
         try:
-            if uri[1].startswith("@"):
-                uri[1] = uri[1][1:]
+            uri[1] = uri[1].removeprefix("@")
             if "/" in uri[0] or ":" in uri[0]:
                 proto = uri[0].split("/", 1)
                 proto[1] = proto[1].lstrip("/")
@@ -125,7 +123,7 @@ class Syncer:
         except KeyError as exc:
             raise MissingLocalUser(raw_uri, str(exc))
 
-    def sync(self, verbosity: typing.Optional[int] = None, force=False):
+    def sync(self, verbosity: int | None = None, force=False):
         if self.disabled:
             return False
         kwds = {}
@@ -229,7 +227,7 @@ class VcsSyncer(ExternalSyncer):
         except FileNotFoundError:
             command = self._initial_pull() + self.opts
             chdir = None
-        except EnvironmentError as exc:
+        except OSError as exc:
             raise PathError(self.basedir, exc.strerror) from exc
         else:
             if not stat.S_ISDIR(st.st_mode):

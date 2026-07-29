@@ -16,7 +16,7 @@ from snakeoil.mappings import LazyValDict
 from .contents import contentsSet
 from .fs import fsBase, fsDev, fsDir, fsFifo, fsFile, fsSymlink, get_major_minor
 
-__all__ = ["gen_obj", "scan", "iter_scan", "sorted_scan"]
+__all__ = ["gen_obj", "iter_scan", "scan", "sorted_scan"]
 
 
 def gen_chksums(handlers, location):
@@ -49,7 +49,7 @@ def gen_obj(
     if stat is None:
         try:
             stat = stat_func(real_location)
-        except EnvironmentError as e:
+        except OSError as e:
             if stat_func == os.lstat or e.errno != errno.ENOENT:
                 raise
             stat = os.lstat(real_location)
@@ -210,7 +210,7 @@ def sorted_scan(path, nonexistent=False, *args, **kwargs):
 
     try:
         files = sorted(x.location for x in iter_scan(path, *args, **kwargs) if x.is_reg)
-    except EnvironmentError as e:
+    except OSError as e:
         if e.errno != errno.ENOENT:
             raise
 
@@ -272,7 +272,7 @@ def recursively_fill_syms(cset, limiter=fsBase):
                 continue
             try:
                 obj = gen_obj(new_loc)
-            except EnvironmentError as e:
+            except OSError as e:
                 if e.errno != errno.ENOENT:
                     raise
                 continue

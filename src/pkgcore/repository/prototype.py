@@ -184,7 +184,7 @@ class tree:
         if isinstance(obj, str):
             path = Path(obj)
             try:
-                repo_path = Path(getattr(self, "location")).resolve()
+                repo_path = Path(self.location).resolve()
             except AttributeError:
                 return False
 

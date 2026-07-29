@@ -1,8 +1,9 @@
-__all__ = ("tree", "ConfiguredTree")
+__all__ = ("ConfiguredTree", "tree")
 
 import errno
 import os
 import stat
+import typing
 from functools import partial
 from os.path import join as pjoin
 
@@ -79,7 +80,7 @@ class tree(prototype.tree):
                 return tuple(
                     x for x in listdir_dirs(self.location) if not x.startswith(".")
                 )
-            except EnvironmentError as e:
+            except OSError as e:
                 raise KeyError(f"failed fetching categories: {e}") from e
         finally:
             pass
@@ -91,11 +92,7 @@ class tree(prototype.tree):
         bad = False
         try:
             for x in listdir_dirs(cpath):
-                if (
-                    x.startswith(".tmp.")
-                    or x.endswith(".lockfile")
-                    or x.startswith("-MERGING-")
-                ):
+                if x.startswith((".tmp.", "-MERGING-")) or x.endswith(".lockfile"):
                     continue
                 try:
                     pkg = VersionedCPV(f"{category}/{x}")
@@ -123,7 +120,7 @@ class tree(prototype.tree):
                     )
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
-        except EnvironmentError as e:
+        except OSError as e:
             category = pjoin(self.location, category.lstrip(os.path.sep))
             raise KeyError(
                 f"failed fetching packages for category {category}: {e}"
@@ -143,7 +140,7 @@ class tree(prototype.tree):
         s = f"{pkg.package}-{pkg.fullver}"
         return pjoin(self.location, pkg.category, s)
 
-    _metadata_rewrites = {
+    _metadata_rewrites: typing.ClassVar[dict[str, str]] = {
         "bdepend": "BDEPEND",
         "depend": "DEPEND",
         "rdepend": "RDEPEND",

@@ -38,14 +38,24 @@ class FakePkgBase(package):
 class FakeProfile:
     def __init__(
         self,
-        masked_use={},
-        forced_use={},
-        provides={},
-        masks=[],
-        virtuals={},
+        masked_use=None,
+        forced_use=None,
+        provides=None,
+        masks=None,
+        virtuals=None,
         arch="x86",
         name="none",
     ):
+        if virtuals is None:
+            virtuals = {}
+        if masks is None:
+            masks = []
+        if provides is None:
+            provides = {}
+        if forced_use is None:
+            forced_use = {}
+        if masked_use is None:
+            masked_use = {}
         self.provides_repo = SimpleTree(provides)
         self.masked_use = {atom(k): v for k, v in masked_use.items()}
         self.forced_use = {atom(k): v for k, v in forced_use.items()}
@@ -92,9 +102,7 @@ class FakeRepo:
     def __contains__(self, obj):
         """Determine if a path or a package is in a repo."""
         if isinstance(obj, str):
-            if self.location and obj.startswith(self.location):
-                return True
-            return False
+            return bool(self.location and obj.startswith(self.location))
         else:
             for pkg in self.itermatch(obj):
                 return True
@@ -121,7 +129,9 @@ class FakePkg(FakePkgBase):
         subslot=None,
         iuse=None,
         use=(),
-        repo=FakeRepo(),
+        # shared on purpose: packages built without an explicit repo= are meant
+        # to be treated as coming from the same anonymous default test repo
+        repo=FakeRepo(),  # noqa: B008
         restrict="",
         keywords=None,
         **kwargs,
@@ -211,7 +221,7 @@ def convert_range(text, tag, slot):
 def mk_glsa(*pkgs, **kwds):
     id = kwds.pop("id", None)
     if kwds:
-        raise TypeError("id is the only allowed kwds; got %r" % kwds)
+        raise TypeError(f"id is the only allowed kwds; got {kwds!r}")
     id = str(id)
     horked = ""
     for data in pkgs:
@@ -224,7 +234,7 @@ def mk_glsa(*pkgs, **kwds):
             pkg, ranges = data
             slot = ""
             arch = "*"
-        horked += '<package name="%s" auto="yes" arch="%s">%s%s\n</package>' % (
+        horked += '<package name="{}" auto="yes" arch="{}">{}{}\n</package>'.format(
             pkg,
             arch,
             "\n".join(convert_range(x, "unaffected", slot) for x in ranges[0]),

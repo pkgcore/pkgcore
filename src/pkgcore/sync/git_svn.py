@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 __all__ = ("git_svn_syncer",)
 
 import os

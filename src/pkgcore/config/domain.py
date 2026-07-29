@@ -4,7 +4,7 @@ base class to derive from for domain objects
 Bit empty at the moment
 """
 
-__all__ = ("MissingFile", "Failure", "domain")
+__all__ = ("Failure", "MissingFile", "domain")
 
 from ..exceptions import PkgcoreException
 from ..operations import domain as domain_ops

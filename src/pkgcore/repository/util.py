@@ -1,6 +1,6 @@
 __all__ = (
-    "SimpleTree",
     "RepositoryGroup",
+    "SimpleTree",
     "get_raw_repos",
     "get_virtual_repos",
 )
@@ -67,7 +67,7 @@ class RepositoryGroup(DictMixin):
         combined: combined repo, if None a multiplex repo is created
     """
 
-    __slots__ = ("repos", "combined")
+    __slots__ = ("combined", "repos")
 
     __externally_mutable__ = False
 
@@ -125,8 +125,7 @@ class RepositoryGroup(DictMixin):
         elif isinstance(other, (list, tuple)):
             return RepositoryGroup(self.repos + tuple(other))
         raise TypeError(
-            "cannot add '%s' and '%s' objects"
-            % (self.__class__.__name__, other.__class__.__name__)
+            f"cannot add '{self.__class__.__name__}' and '{other.__class__.__name__}' objects"
         )
 
     def __radd__(self, other):
@@ -140,8 +139,7 @@ class RepositoryGroup(DictMixin):
         elif isinstance(other, (list, tuple)):
             return RepositoryGroup(tuple(other) + self.repos)
         raise TypeError(
-            "cannot add '%s' and '%s' objects"
-            % (other.__class__.__name__, self.__class__.__name__)
+            f"cannot add '{other.__class__.__name__}' and '{self.__class__.__name__}' objects"
         )
 
     @classmethod

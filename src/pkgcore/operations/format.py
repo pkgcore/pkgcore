@@ -3,18 +3,19 @@ build operation
 """
 
 __all__ = (
-    "build_base",
-    "install",
-    "uninstall",
-    "replace",
-    "fetch_base",
-    "empty_build_op",
     "FailedDirectory",
-    "GenericBuildError",
     "FetchError",
+    "GenericBuildError",
+    "build_base",
+    "empty_build_op",
+    "fetch_base",
+    "install",
+    "replace",
+    "uninstall",
 )
 
 import os
+import typing
 from os.path import join as pjoin
 
 from snakeoil import klass
@@ -178,7 +179,7 @@ class build_operations(operations):
 
 
 class build_base(metaclass=ForcedDepends):
-    stage_depends = {"finish": "start"}
+    stage_depends: typing.ClassVar[dict] = {"finish": "start"}
 
     def __init__(self, domain, observer):
         self.domain = domain
@@ -192,7 +193,7 @@ class build_base(metaclass=ForcedDepends):
 
 
 class build(build_base):
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "setup": "start",
         "unpack": "setup",
         "configure": "prepare",
@@ -239,8 +240,8 @@ class build(build_base):
 
     for k in ("setup", "unpack", "configure", "compile", "test", "install"):
         locals()[k].__doc__ = (
-            "execute any %s steps required; "
-            "implementations of this interface should overide this as needed" % k
+            f"execute any {k} steps required; "
+            "implementations of this interface should overide this as needed"
         )
     for k in ("setup", "unpack", "configure", "compile", "test", "install", "finalize"):
         o = locals()[k]
@@ -253,7 +254,7 @@ class build(build_base):
 
 
 class install(build_base):
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "preinst": "start",
         "postinst": "preinst",
         "finalize": "postinst",
@@ -280,7 +281,7 @@ class install(build_base):
 
 
 class uninstall(build_base):
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "prerm": "start",
         "postrm": "prerm",
         "finalize": "postrm",
@@ -311,7 +312,7 @@ class uninstall(build_base):
 
 
 class replace(install, uninstall):
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "finalize": "postinst",
         "postinst": "postrm",
         "postrm": "prerm",
@@ -326,7 +327,7 @@ class replace(install, uninstall):
 
 
 class empty_build_op(build_base):
-    stage_depends = {}
+    stage_depends: typing.ClassVar[dict] = {}
 
     def __init__(self, pkg, observer=None, clean=False):
         super().__init__(observer)

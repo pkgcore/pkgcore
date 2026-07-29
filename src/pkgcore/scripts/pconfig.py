@@ -33,7 +33,7 @@ def dump_section(config, out):
         out.write(f"# type: {typename}")
         if typename.startswith("lazy_refs"):
             typename = typename[5:]
-            val = list(ref.collapse() for ref in val)
+            val = [ref.collapse() for ref in val]
         elif typename.startswith("lazy_ref"):
             typename = typename[5:]
             val = val.collapse()
@@ -297,7 +297,9 @@ def configurables_main(options, out: snakeoil.formatters.PlainTextFormatter, _er
 
     # try and sort this beast.
     def key_func(obj):
-        return "%s.%s" % (getattr(obj, "__module__", ""), getattr(obj, "__name__", ""))
+        return "{}.{}".format(
+            getattr(obj, "__module__", ""), getattr(obj, "__name__", "")
+        )
 
     for configurable in sorted(all_configurables(), key=key_func):
         type_obj = basics.ConfigType(configurable)

@@ -8,6 +8,7 @@ local binpkg repositories
 __all__ = ("PackagesCacheV0", "PackagesCacheV1")
 
 import os
+import typing
 from operator import itemgetter
 from time import time
 
@@ -67,13 +68,13 @@ class PackagesCacheV0(cache.bulk):
     )
 
     # this maps from literal keys in the cache to .data[key] expected forms
-    _deserialize_map = {
+    _deserialize_map: typing.ClassVar[dict[str, str]] = {
         "DESC": "DESCRIPTION",
         "MTIME": "mtime",
         "repo": "REPO",
     }
     # this maps from .attr to data items.
-    _serialize_map = {
+    _serialize_map: typing.ClassVar[dict[str, str]] = {
         "DESCRIPTION": "DESC",
         "mtime": "MTIME",
         "source_repository": "REPO",
@@ -200,7 +201,7 @@ class PackagesCacheV0(cache.bulk):
             cls._stored_chfs, get_chksums(pkg.path, *cls._stored_chfs)
         ):
             if key != "size":
-                value = "%x" % (value,)
+                value = f"{value:x}"
             d[key.upper()] = value
         d["MTIME"] = str(os.stat(pkg.path).st_mtime)
         return d
@@ -257,7 +258,7 @@ class PackagesCacheV0(cache.bulk):
         chfs = [x for x in self._stored_chfs if x != "mtime"]
         for key, value in zip(chfs, get_chksums(pkg.path, *chfs)):
             if key != "size":
-                value = "%x" % (value,)
+                value = f"{value:x}"
             new_dict[key.upper()] = value
         self[pkg.cpvstr] = new_dict
         return new_dict

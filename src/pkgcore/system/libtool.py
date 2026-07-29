@@ -1,4 +1,4 @@
-__all__ = ("UnknownData", "FixLibtoolArchivesTrigger")
+__all__ = ("FixLibtoolArchivesTrigger", "UnknownData")
 
 import re
 from functools import partial

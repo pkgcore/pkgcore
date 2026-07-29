@@ -7,6 +7,7 @@ import os
 import socket
 import tempfile
 import time
+import typing
 from itertools import islice
 from os.path import join as pjoin
 
@@ -15,10 +16,10 @@ from . import base
 
 
 class rsync_syncer(base.ExternalSyncer):
-    default_excludes = ["/distfiles", "/local", "/packages"]
-    default_includes = []
+    default_excludes: typing.ClassVar[list] = ["/distfiles", "/local", "/packages"]
+    default_includes: typing.ClassVar[list] = []
     default_conn_timeout = 15
-    default_opts = [
+    default_opts: typing.ClassVar[list] = [
         "--recursive",
         "--delete",
         "--delete-delay",
@@ -241,6 +242,6 @@ class rsync_timestamp_syncer(rsync_syncer):
                                     time.gmtime(self.last_timestamp),
                                 )
                             )
-                except EnvironmentError:
+                except OSError:
                     pass  # don't care...
         return ret

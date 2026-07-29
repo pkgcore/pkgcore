@@ -2,7 +2,7 @@
 exceptions thrown by the MergeEngine
 """
 
-__all__ = ("ModificationError", "BlockModification", "TriggerUnknownCset")
+__all__ = ("BlockModification", "ModificationError", "TriggerUnknownCset")
 
 
 from ..exceptions import PkgcoreException
@@ -21,9 +21,8 @@ class BlockModification(ModificationError):
     """Merging cannot proceed"""
 
     def __str__(self):
-        return "Modification was blocked by %s: %s" % (
-            self.trigger.__class__.__name__,
-            self.msg,
+        return (
+            f"Modification was blocked by {self.trigger.__class__.__name__}: {self.msg}"
         )
 
 

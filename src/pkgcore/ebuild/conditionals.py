@@ -24,7 +24,7 @@ from .errors import DepsetParseError
 class DepSet(boolean.AndRestriction, caching=False):
     """Gentoo DepSet syntax parser"""
 
-    __slots__ = ("element_class", "_node_conds", "_known_conditionals")
+    __slots__ = ("_known_conditionals", "_node_conds", "element_class")
 
     _evaluate_collapse = True
 
@@ -235,10 +235,9 @@ class DepSet(boolean.AndRestriction, caching=False):
                     nc.setdefault(payload, []).append(current)
 
             for k in always_required:
-                if k in nc:
-                    del nc[k]
-            for k in nc:
-                nc[k] = tuple(nc[k])
+                nc.pop(k, None)
+            for k, value in nc.items():
+                nc[k] = tuple(value)
 
             object.__setattr__(self, "_node_conds", nc)
 
@@ -323,8 +322,10 @@ def _internal_stringify_boolean(
         assert len(node.restriction.vals) == 1
         iterable = node.payload
         visit(
-            "%s%s? ("
-            % ("!" if node.restriction.negate else "", list(node.restriction.vals)[0])
+            "{}{}? (".format(
+                "!" if node.restriction.negate else "",
+                next(iter(node.restriction.vals)),
+            )
         )
     else:
         if domain is not None and (
@@ -335,6 +336,6 @@ def _internal_stringify_boolean(
             object.__setattr__(node, "subslot", pkg.subslot)
         visit(func(node))
         return
-    for node in iterable:
-        _internal_stringify_boolean(node, domain, func, visit)
+    for child in iterable:
+        _internal_stringify_boolean(child, domain, func, visit)
     visit(")")

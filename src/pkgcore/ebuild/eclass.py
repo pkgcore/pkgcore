@@ -4,6 +4,7 @@ import os
 import re
 import shlex
 import subprocess
+import typing
 from datetime import datetime
 from functools import partial
 
@@ -61,7 +62,7 @@ class ParseEclassDoc:
     default = False
 
     # mapping from eclass doc blocks to parsing instances
-    blocks = {}
+    blocks: typing.ClassVar[dict] = {}
 
     def __init_subclass__(cls, **kwargs):
         """Register known eclass doc block tags."""
@@ -83,9 +84,7 @@ class ParseEclassDoc:
         """Parse boolean tags."""
         try:
             args = next(x for x in block if x)
-            logger.warning(
-                f"{repr(tag)}, line {lineno}: tag takes no args, got {repr(args)}"
-            )
+            logger.warning(f"{tag!r}, line {lineno}: tag takes no args, got {args!r}")
         except StopIteration:
             pass
         return True
@@ -93,9 +92,9 @@ class ParseEclassDoc:
     def _tag_inline_arg(self, block, tag, lineno):
         """Parse tags with inline argument."""
         if not block[0]:
-            logger.warning(f"{repr(tag)}, line {lineno}: missing inline arg")
+            logger.warning(f"{tag!r}, line {lineno}: missing inline arg")
         elif len(block) > 1:
-            logger.warning(f"{repr(tag)}, line {lineno}: non-inline arg")
+            logger.warning(f"{tag!r}, line {lineno}: non-inline arg")
         return block[0]
 
     def _tag_inline_list(self, block, tag, lineno):
@@ -106,9 +105,9 @@ class ParseEclassDoc:
     def _tag_multiline_args(self, block, tag, lineno):
         """Parse tags with multiline arguments."""
         if block[0]:
-            logger.warning(f"{repr(tag)}, line {lineno}: invalid inline arg")
+            logger.warning(f"{tag!r}, line {lineno}: invalid inline arg")
         if not block[1:]:
-            logger.warning(f"{repr(tag)}, line {lineno}: missing args")
+            logger.warning(f"{tag!r}, line {lineno}: missing args")
         return tuple(block[1:])
 
     def _tag_multiline_str(self, block, tag, lineno):
@@ -169,6 +168,7 @@ class ParseEclassDoc:
             stderr=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             encoding="utf8",
+            check=False,
         )
         if p.returncode == 0:
             variables = p.stdout.splitlines()
@@ -197,15 +197,15 @@ class ParseEclassDoc:
                 blocks[-1][-1].append(line)
 
         # parse each tag block
-        for tag, line_ind, block in blocks:
-            name, required, func, _default = self.tags[tag]
-            data[name] = func(block, tag, line_ind)
+        for tag, block_line_ind, block in blocks:
+            name, _required, func, _default = self.tags[tag]
+            data[name] = func(block, tag, block_line_ind)
 
         # check if any required tags are missing
         if missing_tags:
             missing_tags_str = ", ".join(map(repr, missing_tags))
             s = pluralism(missing_tags)
-            logger.warning(f"{repr(lines[0])}: missing tag{s}: {missing_tags_str}")
+            logger.warning(f"{lines[0]!r}: missing tag{s}: {missing_tags_str}")
 
         return AttrDict(data)
 
@@ -239,9 +239,7 @@ class EclassBlock(ParseEclassDoc):
         if unknown:
             s = pluralism(unknown)
             unknown_str = " ".join(sorted(unknown))
-            logger.warning(
-                f"{repr(tag)}, line {lineno}: unknown EAPI{s}: {unknown_str}"
-            )
+            logger.warning(f"{tag!r}, line {lineno}: unknown EAPI{s}: {unknown_str}")
         return OrderedSet(eapis)
 
 
@@ -301,7 +299,7 @@ class EclassVarBlockCompat(ParseEclassDoc):
     def _eclass_variable(self, block, tag, lineno):
         """Parse @ECLASS-VARIABLE tag."""
         logger.warning(
-            f"{repr(tag)}, line {lineno}: deprecated, use '@ECLASS_VARIABLE' instead"
+            f"{tag!r}, line {lineno}: deprecated, use '@ECLASS_VARIABLE' instead"
         )
         return self._tag_inline_arg(block, tag, lineno)
 
@@ -333,7 +331,7 @@ class EclassFuncBlock(ParseEclassDoc):
         Empty usage is allowed for functions with no arguments.
         """
         if len(block) > 1:
-            logger.warning(f"{repr(tag)}, line {lineno}: non-inline arg")
+            logger.warning(f"{tag!r}, line {lineno}: non-inline arg")
         return block[0]
 
     def parse(self, *args):
@@ -414,16 +412,19 @@ class EclassDoc(AttrDict):
                 "-i",
                 "bash",
                 "-c",
-                f"source {shlex.quote(path)}; "
-                f"compgen -A function; "
-                f'echo "#"; '
-                f"compgen -A variable; "
-                f'echo "#"; '
-                f"echo ${{PROPERTIES}}",
+                (
+                    f"source {shlex.quote(path)}; "
+                    f"compgen -A function; "
+                    f'echo "#"; '
+                    f"compgen -A variable; "
+                    f'echo "#"; '
+                    f"echo ${{PROPERTIES}}"
+                ),
             ],
             stderr=subprocess.DEVNULL,
             stdout=subprocess.PIPE,
             encoding="utf8",
+            check=False,
         )
         if p.returncode == 0:
             eclass_obj = ParseEclassDoc.blocks["@ECLASS:"]
@@ -561,9 +562,7 @@ class EclassDoc(AttrDict):
                 # item block
                 name = block_data["name"]
                 if name in duplicates[tag]:
-                    logger.warning(
-                        f"{repr(block[0])}, line {block_start}: duplicate block"
-                    )
+                    logger.warning(f"{block[0]!r}, line {block_start}: duplicate block")
                 duplicates[tag].add(name)
                 data[block_obj.key].add(block_data)
 
@@ -608,7 +607,7 @@ class EclassDoc(AttrDict):
             rst.append("")
 
         raw_eclass_name = self.name[: -len(".eclass")]
-        latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
+        latest_eapi = EAPI.known_eapis[max(EAPI.known_eapis)]
         if exported_phases := [
             x
             for x in latest_eapi.phases.values()

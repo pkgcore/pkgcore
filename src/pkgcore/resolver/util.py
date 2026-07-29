@@ -1,6 +1,6 @@
 __all__ = (
-    "group_attempts",
     "fails_filter",
+    "group_attempts",
     "reduce_to_failures",
 )
 

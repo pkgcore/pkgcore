@@ -4,12 +4,12 @@
 """Exceptions raised by the config code."""
 
 __all__ = (
-    "TypeDefinitionError",
-    "ConfigurationError",
-    "ParsingError",
     "CollapseInheritOnly",
     "ComplexInstantiationError",
+    "ConfigurationError",
+    "ParsingError",
     "QuoteInterpretationError",
+    "TypeDefinitionError",
 )
 
 from ..exceptions import PkgcoreException, PkgcoreUserException
@@ -92,7 +92,7 @@ class InstantiationError(ConfigurationError):
         if s is None:
             s = ""
         else:
-            s = ": %s" % (s,)
+            s = f": {s}"
         return self._txt % (self.section_name, s)
 
 

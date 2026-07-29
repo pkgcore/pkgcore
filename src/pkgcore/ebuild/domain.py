@@ -178,7 +178,7 @@ def generate_filter(masks, unmasks, *extra):
         else:
             r = (masking,)
     return packages.AndRestriction(
-        disable_inst_caching=True, finalize=True, *(r + extra)
+        *(r + extra), disable_inst_caching=True, finalize=True
     )
 
 
@@ -195,7 +195,7 @@ def _read_config_file(path):
                 yield line, lineno, fs_obj.location
     except FileNotFoundError:
         pass
-    except EnvironmentError as e:
+    except OSError as e:
         raise Failure(f"failed reading {path!r}: {e}") from e
 
 
@@ -436,7 +436,7 @@ class domain(config_domain):
     @klass.jit_attr_none
     def forced_use(self):
         use = ChunkedDataDict()
-        use.merge(getattr(self.profile, "forced_use"))
+        use.merge(self.profile.forced_use)
         use.add_bare_global((), (self.arch,))
         use.freeze()
         return use
@@ -444,7 +444,7 @@ class domain(config_domain):
     @klass.jit_attr_none
     def stable_forced_use(self):
         use = ChunkedDataDict()
-        use.merge(getattr(self.profile, "stable_forced_use"))
+        use.merge(self.profile.stable_forced_use)
         use.add_bare_global((), (self.arch,))
         use.freeze()
         return use
@@ -506,7 +506,7 @@ class domain(config_domain):
             pkg_keywords = self.pkg_keywords
 
         # ~amd64 -> [amd64, ~amd64]
-        default_keywords = set([self.arch])
+        default_keywords = {self.arch}
         default_keywords.update(self.settings["ACCEPT_KEYWORDS"])
         for x in self.settings["ACCEPT_KEYWORDS"]:
             if x.startswith("~"):
@@ -863,7 +863,7 @@ class domain(config_domain):
         if not os.path.exists(path):
             try:
                 os.mkdir(path)
-            except EnvironmentError:
+            except OSError:
                 path = tempfile.gettempdir()
                 logger.warning(
                     f"nonexistent PORTAGE_TMPDIR path, defaulting to {path!r}"

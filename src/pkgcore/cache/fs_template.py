@@ -65,7 +65,7 @@ class FsBased(base):
             if mtime is not None:
                 mtime = int(mtime)
                 os.utime(path, (mtime, mtime))
-        except EnvironmentError:
+        except OSError:
             return False
         return True
 

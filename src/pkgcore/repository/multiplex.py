@@ -2,7 +2,7 @@
 repository that combines multiple repos together
 """
 
-__all__ = ("tree", "operations")
+__all__ = ("operations", "tree")
 
 import os
 from functools import partial
@@ -141,10 +141,7 @@ class tree(prototype.tree):
         for repo in self.trees:
             if path not in repo:
                 continue
-            try:
-                return repo.path_restrict(path)
-            except ValueError:
-                raise
+            return repo.path_restrict(path)
         raise ValueError(f"no repo contains: {path!r}")
 
     def itermatch(self, restrict, **kwds):

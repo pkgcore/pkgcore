@@ -5,6 +5,7 @@ XPAK container support
 __all__ = ("MalformedXpak", "Xpak")
 
 import os
+import typing
 from collections import OrderedDict
 
 from snakeoil import klass
@@ -34,18 +35,16 @@ class MalformedXpak(PkgcoreException):
 
 
 class Xpak:
-    __slots__ = ("_source", "_source_is_path", "xpak_start", "_keys_dict")
+    __slots__ = ("_keys_dict", "_source", "_source_is_path", "xpak_start")
 
-    _reading_key_rewrites = {"repo": "REPO"}
+    _reading_key_rewrites: typing.ClassVar[dict[str, str]] = {"repo": "REPO"}
 
     trailer_pre_magic = "XPAKSTOP"
     trailer_post_magic = "STOP"
-    trailer = struct.Struct(
-        ">%isL%is" % (len(trailer_pre_magic), len(trailer_post_magic))
-    )
+    trailer = struct.Struct(f">{len(trailer_pre_magic)}sL{len(trailer_post_magic)}s")
 
     header_pre_magic = "XPAKPACK"
-    header = struct.Struct(">%isLL" % (len(header_pre_magic),))
+    header = struct.Struct(f">{len(header_pre_magic)}sLL")
 
     trailer_post_magic = trailer_post_magic.encode("ascii")
     trailer_pre_magic = trailer_pre_magic.encode("ascii")
@@ -82,7 +81,7 @@ class Xpak:
             list(old_xpak.keys())
             start = old_xpak.xpak_start
             source_is_path = old_xpak._source_is_path
-        except (MalformedXpak, IOError):
+        except (OSError, MalformedXpak):
             source_is_path = isinstance(target_source, str)
             if source_is_path:
                 try:
@@ -102,14 +101,15 @@ class Xpak:
             if isinstance(key, str):
                 key = key.encode()
             new_index.append(
-                struct.pack(">L%isLL" % len(key), len(key), key, cur_pos, len(val))
+                struct.pack(f">L{len(key)}sLL", len(key), key, cur_pos, len(val))
             )
             new_data.append(val)
             cur_pos += len(val)
 
         if source_is_path:
             # rb+ required since A) binary, B) w truncates from the getgo
-            handle = open(target_source, "r+b")
+            # closed below, shared with the else branch's non-file handle
+            handle = open(target_source, "r+b")  # noqa: SIM115
         else:
             handle = target_source.bytes_fileobj(writable=True)
 
@@ -121,9 +121,7 @@ class Xpak:
         cls.header.write(handle, cls.header_pre_magic, len(new_index), len(new_data))
 
         handle.write(
-            struct.pack(
-                ">%is%is" % (len(new_index), len(new_data)), new_index, new_data
-            )
+            struct.pack(f">{len(new_index)}s{len(new_data)}s", new_index, new_data)
         )
 
         # the +8 is for the longs for new_index/new_data
@@ -150,15 +148,13 @@ class Xpak:
             key = key.decode("ascii")
             if len(key) != key_len:
                 raise MalformedXpak(
-                    "tried reading key %i of len %i, but hit EOF"
-                    % (len(keys_dict) + 1, key_len)
+                    f"tried reading key {len(keys_dict) + 1} of len {key_len}, but hit EOF"
                 )
             try:
                 offset, data_len = struct.unpack(">LL", fd.read(8))
             except struct.error as e:
                 raise MalformedXpak(
-                    "key %i, tried reading data offset/len but hit EOF"
-                    % (len(keys_dict) + 1)
+                    f"key {len(keys_dict) + 1}, tried reading data offset/len but hit EOF"
                 ) from e
             key = key_rewrite(key, key)
             keys_dict[key] = (
@@ -176,11 +172,11 @@ class Xpak:
             pre, size, post = self.trailer.read(fd)
             if pre != self.trailer_pre_magic or post != self.trailer_post_magic:
                 raise MalformedXpak(
-                    "not an xpak segment, trailer didn't match: %r" % fd
+                    f"not an xpak segment, trailer didn't match: {fd!r}"
                 )
         except struct.error as e:
             raise MalformedXpak(
-                "not an xpak segment, failed parsing trailer: %r" % fd
+                f"not an xpak segment, failed parsing trailer: {fd!r}"
             ) from e
 
         # this is a bit daft, but the format seems to intentionally
@@ -192,10 +188,10 @@ class Xpak:
         try:
             pre, index_len, data_len = self.header.read(fd)
             if pre != self.header_pre_magic:
-                raise MalformedXpak("not an xpak segment, header didn't match: %r" % fd)
+                raise MalformedXpak(f"not an xpak segment, header didn't match: {fd!r}")
         except struct.error as e:
             raise MalformedXpak(
-                "not an xpak segment, failed parsing header: %r" % fd
+                f"not an xpak segment, failed parsing header: {fd!r}"
             ) from e
 
         return self.xpak_start + self.header.size, index_len, data_len

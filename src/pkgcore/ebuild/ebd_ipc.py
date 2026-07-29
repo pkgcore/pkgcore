@@ -258,12 +258,14 @@ class _InstallWrapper(IpcCommand):
         """Parse install command options."""
         self.insoptions = arghparse.Namespace()
         self.diroptions = arghparse.Namespace()
-        if self.opts.insoptions:
-            if not self._parse_install_options(self.opts.insoptions, self.insoptions):
-                self.install = self._install_cmd().send
-        if self.opts.diroptions:
-            if not self._parse_install_options(self.opts.diroptions, self.diroptions):
-                self.install_dirs = self._install_dirs_cmd().send
+        if self.opts.insoptions and not self._parse_install_options(
+            self.opts.insoptions, self.insoptions
+        ):
+            self.install = self._install_cmd().send
+        if self.opts.diroptions and not self._parse_install_options(
+            self.opts.diroptions, self.diroptions
+        ):
+            self.install_dirs = self._install_dirs_cmd().send
 
     def _parse_install_options(self, options, namespace):
         """Internal install command option parser.
@@ -466,7 +468,7 @@ class _InstallWrapper(IpcCommand):
             # group and install sets of files by destination to decrease `install` calls
             files = sorted(self._prefix_targets(files), key=itemgetter(1))
             for dest, files_group in itertools.groupby(files, itemgetter(1)):
-                sources = list(path for path, _ in files_group)
+                sources = [path for path, _ in files_group]
                 command = ["install"] + self.opts.insoptions + sources + [dest]
                 ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
                 if not ret:

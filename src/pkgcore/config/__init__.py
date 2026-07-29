@@ -7,20 +7,19 @@ __all__ = ("load_config",)
 # actually needed
 
 import os
-import typing
 
 from .. import const
 from . import central, cparser
 
 
 def load_config(
-    user_conf_file: typing.Optional[str] = const.USER_CONF_FILE,
-    system_conf_file: typing.Optional[str] = const.SYSTEM_CONF_FILE,
+    user_conf_file: str | None = const.USER_CONF_FILE,
+    system_conf_file: str | None = const.SYSTEM_CONF_FILE,
     debug: bool = False,
     prepend_sources=(),
     skip_config_files: bool = False,
-    profile_override: typing.Optional[str] = None,
-    location: typing.Optional[str] = None,
+    profile_override: str | None = None,
+    location: str | None = None,
     **kwargs,
 ) -> central.CompatConfigManager:
     """The main entry point for any code looking to use pkgcore.

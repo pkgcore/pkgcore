@@ -15,11 +15,11 @@ design) reduces regen time by over 40% compared to portage-2.1
 # originally, but it still isn't what I would define as 'right'
 
 __all__ = (
-    "request_ebuild_processor",
-    "release_ebuild_processor",
     "EbuildProcessor",
     "UnhandledCommand",
     "expected_ebuild_env",
+    "release_ebuild_processor",
+    "request_ebuild_processor",
 )
 
 import contextlib
@@ -63,7 +63,7 @@ def shutdown_all_processors():
         while active_ebp_list:
             try:
                 active_ebp_list.pop().shutdown_processor(ignore_keyboard_interrupt=True)
-            except EnvironmentError:
+            except OSError:
                 pass
 
         while inactive_ebp_list:
@@ -71,7 +71,7 @@ def shutdown_all_processors():
                 inactive_ebp_list.pop().shutdown_processor(
                     ignore_keyboard_interrupt=True
                 )
-            except EnvironmentError:
+            except OSError:
                 pass
     except Exception as e:
         traceback.print_exc()
@@ -279,9 +279,9 @@ def chuck_TermInterrupt(ebp, *args):
     """Event handler for SIGTERM."""
     if ebp is None:
         # main python process got SIGTERM-ed, shutdown everything
-        for ebp in chain(active_ebp_list, inactive_ebp_list):
-            drop_ebuild_processor(ebp)
-            ebp.shutdown_processor()
+        for other_ebp in chain(active_ebp_list, inactive_ebp_list):
+            drop_ebuild_processor(other_ebp)
+            other_ebp.shutdown_processor()
         raise SystemExit(128 + signal.SIGTERM)
     else:
         # individual ebd got SIGTERM-ed, shutdown corresponding processor
@@ -355,9 +355,9 @@ class EbuildProcessor:
         # force invalid bashrc
         env = {x: "/not/valid" for x in ("BASHRC", "BASH_ENV")}
 
-        if int(os.environ.get("PKGCORE_PERF_DEBUG", 0)):
+        if int(os.environ.get("PKGCORE_PERF_DEBUG", "0")):
             env["PKGCORE_PERF_DEBUG"] = os.environ["PKGCORE_PERF_DEBUG"]
-        if int(os.environ.get("PKGCORE_DEBUG", 0)):
+        if int(os.environ.get("PKGCORE_DEBUG", "0")):
             env["PKGCORE_DEBUG"] = os.environ["PKGCORE_DEBUG"]
 
         # prepend script dir to PATH for git repo or unpacked tarball, for
@@ -471,9 +471,8 @@ class EbuildProcessor:
         if not self.send_env(env, tmpdir=tmpdir):
             return False
         self.write(f"set_sandbox_state {int(sandbox)}")
-        if logging:
-            if not self.set_logfile(logging):
-                return False
+        if logging and not self.set_logfile(logging):
+            return False
         self.write("start_processing")
         return self.generic_handler(additional_commands=additional_commands)
 
@@ -490,13 +489,12 @@ class EbuildProcessor:
         """
         string = str(string)
         try:
-            if append_newline:
-                if string != "\n":
-                    string += "\n"
+            if append_newline and string != "\n":
+                string += "\n"
             self.ebd_write.write(string)
             if flush:
                 self.ebd_write.flush()
-        except IOError as ie:
+        except OSError as ie:
             if ie.errno == errno.EPIPE and not disable_runtime_exceptions:
                 raise RuntimeError(ie)
             raise
@@ -510,7 +508,7 @@ class EbuildProcessor:
         return ret
 
     def _timeout_ebp(self, signum, frame):
-        raise TimeoutError("ebp for pid '%i' appears dead, timing out" % self.pid)
+        raise TimeoutError(f"ebp for pid '{self.pid}' appears dead, timing out")
 
     def expect(self, want, async_req=False, flush=False, timeout=0):
         """Read from the daemon, check if the returned string is expected.
@@ -578,13 +576,12 @@ class EbuildProcessor:
             move_log = self.__sandbox_log
         elif move_log != self.__sandbox_log:
             with open(move_log) as myf:
-                for x in violations:
-                    myf.write(x + "\n")
+                myf.writelines(x + "\n" for x in violations)
 
         # XXX this is fugly, use a colorizer or something
         # (but it is better than "from output import red" (portage's output))
         def red(text):
-            return "\x1b[31;1m%s\x1b[39;49;00m" % (text,)
+            return f"\x1b[31;1m{text}\x1b[39;49;00m"
 
         self.write(
             red(
@@ -606,7 +603,7 @@ class EbuildProcessor:
         self.write("end_sandbox_summary")
         try:
             os.remove(self.__sandbox_log)
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error(f"exception caught when cleansing sandbox_log={e}")
         return 1
 
@@ -635,9 +632,10 @@ class EbuildProcessor:
         else:
             i = cache.eclasses.items()
         for eclass, data in i:
-            if data.path != self._preloaded_eclasses.get(eclass):
-                if self._preload_eclass(data.path, async_req=True):
-                    self._preloaded_eclasses[eclass] = data.path
+            if data.path != self._preloaded_eclasses.get(
+                eclass
+            ) and self._preload_eclass(data.path, async_req=True):
+                self._preloaded_eclasses[eclass] = data.path
         if not async_req:
             return self._consume_async_expects()
         return True
@@ -663,9 +661,9 @@ class EbuildProcessor:
             logger.error(f"failed: {ec_file}")
             return False
         self.write(f"preload_eclass {ec_file}")
-        if self.expect("preload_eclass succeeded", async_req=async_req, flush=True):
-            return True
-        return False
+        return bool(
+            self.expect("preload_eclass succeeded", async_req=async_req, flush=True)
+        )
 
     def lock(self):
         """Lock the processor.
@@ -691,7 +689,7 @@ class EbuildProcessor:
                 if (0, 0) == os.waitpid(current_pid, os.WNOHANG):
                     # still alive.
                     return True
-            except EnvironmentError as e:
+            except OSError as e:
                 if e.errno != errno.ECHILD:
                     raise
             # making it here means waitpid reaped, or the pid was already reaped by another thread (two
@@ -720,7 +718,7 @@ class EbuildProcessor:
                     self.ebd_write.close()
                     self.ebd_read.close()
                     kill = False
-            except (EnvironmentError, ValueError):
+            except (OSError, ValueError):
                 kill = self.pid is not None
 
         if self.pid:
@@ -754,7 +752,7 @@ class EbuildProcessor:
                     f"{key}: bash doesn't allow digits or _ as the first char"
                 )
             if not isinstance(val, (str, list, tuple)):
-                raise ValueError(
+                raise TypeError(
                     f"_generate_env_str was fed a bad value; key={key}, val={val}"
                 )
 
@@ -834,10 +832,12 @@ class EbuildProcessor:
             self._metadata_paths = paths
 
     def _run_depend_like_phase(
-        self, command, package_inst, eclass_cache, env=None, extra_commands={}
+        self, command, package_inst, eclass_cache, env=None, extra_commands=None
     ):
         # ebuild is not allowed to run any external programs during
         # depend phases; use /dev/null since "" == "."
+        if extra_commands is None:
+            extra_commands = {}
         self._ensure_metadata_paths(("/dev/null",))
 
         env = expected_ebuild_env(package_inst, env, depends=True)
@@ -969,10 +969,9 @@ class EbuildProcessor:
         self.lock()
 
         try:
-            if self._outstanding_expects:
-                if not self._consume_async_expects():
-                    logger.error("error in daemon")
-                    raise UnhandledCommand("expects out of alignment")
+            if self._outstanding_expects and not self._consume_async_expects():
+                logger.error("error in daemon")
+                raise UnhandledCommand("expects out of alignment")
             while True:
                 line = self.read().strip()
                 # split on first whitespace

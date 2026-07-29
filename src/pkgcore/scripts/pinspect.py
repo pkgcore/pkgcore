@@ -97,8 +97,7 @@ def print_simple_histogram(
 
     for key, val in data:
         out.write(
-            format
-            % {"key": str(key), "val": val, "percent": "%2.2f%%" % (val / total,)}
+            format % {"key": str(key), "val": val, "percent": f"{val / total:2.2f}%"}
         )
 
 
@@ -408,7 +407,7 @@ inspect_profile.bind_parser(profile, "profile")
 def _bad_digest(pkg):
     """Check if a given package has a broken or missing digest."""
     try:
-        pkg.fetchables
+        _ = pkg.fetchables
     except errors.MetadataException:
         return pkg, True
     return pkg, False

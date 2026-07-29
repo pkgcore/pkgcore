@@ -12,6 +12,7 @@ See dev-notes/commandline.rst for more complete documentation.
 import argparse
 import os
 import sys
+import typing
 from functools import partial
 from importlib import import_module
 from os.path import abspath, normpath
@@ -73,7 +74,7 @@ class StoreTarget(argparse._AppendAction):
             if not sys.stdin.isatty():
                 values = [x.strip() for x in sys.stdin.readlines() if x.strip() != ""]
                 # reassign stdin to allow interactivity (currently only works for unix)
-                sys.stdin = open("/dev/tty")
+                sys.stdin = open("/dev/tty")  # noqa: SIM115 (replaces sys.stdin for the rest of the process)
             else:
                 raise argparse.ArgumentError(
                     self, "'-' is only valid when piping data in"
@@ -162,8 +163,7 @@ class StoreConfigObject(argparse._StoreAction):
     @staticmethod
     def _choices(sections):
         """Yield available values for a given option."""
-        for k, v in sections.items():
-            yield k
+        yield from sections.keys()
 
     def _load_obj(self, sections, name):
         obj_type = self.metavar if self.metavar is not None else self.config_type
@@ -271,7 +271,7 @@ class StoreRepoObject(StoreConfigObject):
 
     # mapping between supported repo type requests and the related attr on
     # domain objects to pull the requested repos from
-    valid_repo_types = {
+    valid_repo_types: typing.ClassVar[dict[str, str]] = {
         "config": "repo_configs",
         "all": "repos",
         "all-raw": "repos_raw",

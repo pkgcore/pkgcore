@@ -2,7 +2,7 @@
 functionality related to downloading files
 """
 
-__all__ = ("fetchable", "mirror", "default_mirror", "uri_list")
+__all__ = ("default_mirror", "fetchable", "mirror", "uri_list")
 
 from itertools import zip_longest
 
@@ -12,7 +12,7 @@ from snakeoil.klass import GenericEquality
 class fetchable(GenericEquality):
     """class representing uri sources for a file and chksum information."""
 
-    __slots__ = ("filename", "uri", "chksums")
+    __slots__ = ("chksums", "filename", "uri")
     __attr_comparison__ = __slots__
 
     def __init__(self, filename, uri=None, chksums=None):
@@ -32,13 +32,7 @@ class fetchable(GenericEquality):
         return f"({self.filename!r}, {self.uri!r}, {chksums})"
 
     def __repr__(self):
-        return "<%s filename=%r uri=%r chksums=%r @%#8x>" % (
-            self.__class__.__name__,
-            self.filename,
-            self.uri,
-            self.chksums,
-            id(self),
-        )
+        return f"<{self.__class__.__name__} filename={self.filename!r} uri={self.uri!r} chksums={self.chksums!r} @{id(self):#8x}>"
 
     def __lt__(self, other):
         return self.filename < other.filename
@@ -58,7 +52,7 @@ class mirror(GenericEquality):
 
     __attr_comparison__ = ("mirror_name", "mirrors")
 
-    __slots__ = ("mirrors", "mirror_name")
+    __slots__ = ("mirror_name", "mirrors")
 
     def __init__(self, mirrors, mirror_name):
         """
@@ -104,7 +98,7 @@ class default_mirror(mirror):
 
 
 class uri_list:
-    __slots__ = ("_uri_source", "filename", "__weakref__")
+    __slots__ = ("__weakref__", "_uri_source", "filename")
 
     def __init__(self, filename):
         self._uri_source = []

@@ -2,7 +2,7 @@
 ebuild tree manifest/digest support
 """
 
-__all__ = ("parse_manifest", "Manifest")
+__all__ = ("Manifest", "parse_manifest")
 
 import errno
 import operator
@@ -20,9 +20,11 @@ from . import cpv
 def _write_manifest(handle, chf, filename, chksums):
     """Convenient, internal method for writing manifests"""
     size = chksums.pop("size")
-    handle.write("%s %s %i" % (chf.upper(), filename, size))
-    for chf in sorted(chksums):
-        handle.write(" %s %s" % (chf.upper(), get_handler(chf).long2str(chksums[chf])))
+    handle.write(f"{chf.upper()} {filename} {size}")
+    for other_chf in sorted(chksums):
+        handle.write(
+            f" {other_chf.upper()} {get_handler(other_chf).long2str(chksums[other_chf])}"
+        )
     handle.write("\n")
 
 
@@ -49,7 +51,7 @@ def parse_manifest(source, ignore_gpg=True):
     f = None
     try:
         if isinstance(source, str):
-            i = f = open(source, "r", 32768)
+            i = f = open(source, "r", 32768)  # noqa: SIM115 (closed in the finally below, shared with the else branch's file-like object)
         else:
             i = f = source.text_fileobj()
         if ignore_gpg:
@@ -103,7 +105,7 @@ class Manifest:
             return
         try:
             data = parse_manifest(self.path, ignore_gpg=self._gpg)
-        except EnvironmentError as e:
+        except OSError as e:
             if not (self.thin or self.allow_missing) or e.errno != errno.ENOENT:
                 raise errors.ParseChksumError(self.path, e) from e
             data = {}, {}, {}, {}
@@ -149,31 +151,29 @@ class Manifest:
                     else:
                         d = misc
                 else:
-                    raise Exception(
-                        "Unexpected directory found in %r; %r"
-                        % (self.path, obj.dirname)
+                    raise ValueError(
+                        f"Unexpected directory found in {self.path!r}; {obj.dirname!r}"
                     )
                 d[pathname] = dict(obj.chksums)
 
-        handle = open(self.path, "w")
+        with open(self.path, "w") as handle:
+            # write it in alphabetical order; aux gets flushed now.
+            for path, chksums in sorted(aux.items(), key=_key_sort):
+                _write_manifest(handle, "AUX", path, chksums)
 
-        # write it in alphabetical order; aux gets flushed now.
-        for path, chksums in sorted(aux.items(), key=_key_sort):
-            _write_manifest(handle, "AUX", path, chksums)
+            # next dist...
+            for fetchable in sorted(fetchables, key=operator.attrgetter("filename")):
+                _write_manifest(
+                    handle,
+                    "DIST",
+                    os.path.basename(fetchable.filename),
+                    dict(fetchable.chksums),
+                )
 
-        # next dist...
-        for fetchable in sorted(fetchables, key=operator.attrgetter("filename")):
-            _write_manifest(
-                handle,
-                "DIST",
-                os.path.basename(fetchable.filename),
-                dict(fetchable.chksums),
-            )
-
-        # then ebuild and misc
-        for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
-            for path, chksum in sorted(inst.items(), key=_key_sort):
-                _write_manifest(handle, mtype, path, chksum)
+            # then ebuild and misc
+            for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
+                for path, chksum in sorted(inst.items(), key=_key_sort):
+                    _write_manifest(handle, mtype, path, chksum)
 
     @property
     def aux_files(self):

@@ -53,7 +53,7 @@ def build_regex_string(tokens, invert=False):
     try:
         return re.compile(s)
     except re.error as e:
-        raise Exception(f"failed compiling {s!r}:\n\nerror: {e}")
+        raise ValueError(f"failed compiling {s!r}:\n\nerror: {e}") from e
 
 
 FUNC_LEN = len("function")
@@ -219,8 +219,7 @@ def process_scope(
     if out is not None:
         if window_end is None:
             window_end = pos
-        if window_end > end:
-            window_end = end
+        window_end = min(window_end, end)
         out.write(buff[window_start:window_end].encode("utf-8"))
 
     return pos
@@ -406,9 +405,8 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
             if buff[pos] == "$":
                 # shouldn't this be passing disable_quote ?
                 return walk_dollar_expansion(buff, pos + 1, end, endchar)
-            if not buff[pos].isalnum():
-                if buff[pos] != "_":
-                    return pos
+            if not buff[pos].isalnum() and buff[pos] != "_":
+                return pos
             pos += 1
 
         if pos >= end:

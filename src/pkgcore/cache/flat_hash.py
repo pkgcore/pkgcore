@@ -41,7 +41,7 @@ class database(fs_template.FsBased):
             if data is None:
                 raise KeyError(cpv)
             return self._parse_data(data, data.mtime)
-        except (EnvironmentError, ValueError) as e:
+        except (OSError, ValueError) as e:
             raise errors.CacheCorruption(cpv, e) from e
 
     def _parse_data(self, data, mtime):
@@ -67,22 +67,21 @@ class database(fs_template.FsBased):
         s = cpv.rfind("/") + 1
         fp = pjoin(self.location, cpv[:s], f".update.{os.getpid()}.{cpv[s:]}")
         try:
-            myf = open(fp, "w", 32768)
+            myf = open(fp, "w", 32768)  # noqa: SIM115 (closed explicitly below, after a possible mkdir-and-retry)
         except FileNotFoundError:
             if not self._ensure_dirs(cpv):
                 raise errors.CacheCorruption(
                     cpv, f"error creating directory for {fp!r}"
                 )
             try:
-                myf = open(fp, "w", 32768)
-            except EnvironmentError as e:
+                myf = open(fp, "w", 32768)  # noqa: SIM115
+            except OSError as e:
                 raise errors.CacheCorruption(cpv, e) from e
         except OSError as e:
             raise errors.CacheCorruption(cpv, e) from e
 
-        if self._mtime_used:
-            if not self.mtime_in_entry:
-                mtime = values["_mtime_"]
+        if self._mtime_used and not self.mtime_in_entry:
+            mtime = values["_mtime_"]
         for k, v in sorted(values.items()):
             myf.writelines(f"{k}={v}\n")
 
@@ -96,7 +95,7 @@ class database(fs_template.FsBased):
         new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
-        except EnvironmentError as e:
+        except OSError as e:
             os.remove(fp)
             raise errors.CacheCorruption(cpv, e) from e
 
@@ -123,7 +122,7 @@ class database(fs_template.FsBased):
                 subdirs = os.listdir(d)
             except FileNotFoundError:
                 continue
-            except EnvironmentError as e:
+            except OSError as e:
                 raise KeyError(d, f"access failure: {e}") from e
             for l in subdirs:
                 if l.endswith(".cpickle"):
@@ -133,7 +132,7 @@ class database(fs_template.FsBased):
                     st = os.lstat(p)
                 except FileNotFoundError:
                     continue
-                except EnvironmentError as e:
+                except OSError as e:
                     raise KeyError(d, f"Unhandled IO error: {e}") from e
                 if stat.S_ISDIR(st.st_mode):
                     dirs.append(p)

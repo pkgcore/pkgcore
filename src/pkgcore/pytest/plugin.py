@@ -2,7 +2,7 @@ import os
 import subprocess
 import textwrap
 from collections.abc import MutableSet
-from datetime import datetime
+from datetime import UTC, datetime
 from os.path import join as pjoin
 
 import pytest
@@ -184,7 +184,7 @@ class EbuildRepo:
     def __init__(self, path, repo_id="fake", eapi="5", masters=(), arches=()):
         self.path = path
         self.arches = _FileSet(pjoin(self.path, "profiles", "arch.list"))
-        self._today = datetime.today()
+        self._today = datetime.now(UTC)
         try:
             os.makedirs(pjoin(path, "profiles"))
             with open(pjoin(path, "profiles", "repo_name"), "w") as f:

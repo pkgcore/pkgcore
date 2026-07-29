@@ -4,6 +4,7 @@ filesystem entry abstractions
 
 import fnmatch
 import stat
+import typing
 from functools import total_ordering
 from os.path import abspath, basename, dirname, normpath, realpath
 from os.path import join as pjoin
@@ -19,7 +20,7 @@ from snakeoil.mappings import LazyFullValLoadDict
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
-__all__ = ["fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo"]
+__all__ = ["fsDev", "fsDir", "fsFifo", "fsFile", "fsSymlink"]
 __all__.extend(f"is{x}" for x in ("dir", "reg", "sym", "fifo", "dev", "fs_obj"))
 
 # following are used to generate appropriate __init__, wiped from the
@@ -39,11 +40,13 @@ _fs_doc = {
 
 def gen_doc_additions(init, slots):
     if init.__doc__ is None:
-        d = """
-:param location: location (real or intended) for this entry
-:param strict: is this fully representative of the entry, or only partially
-:raise KeyError: if strict is enabled, and not all args are passed in
-""".split("\n")
+        d = [
+            "",
+            ":param location: location (real or intended) for this entry",
+            ":param strict: is this fully representative of the entry, or only partially",
+            ":raise KeyError: if strict is enabled, and not all args are passed in",
+            "",
+        ]
     else:
         d = init.__doc__.split("\n")
     init.__doc__ = "\n".join(k.lstrip() for k in d) + "\n".join(
@@ -55,9 +58,9 @@ def gen_doc_additions(init, slots):
 class fsBase(immutable.Simple):
     """base class, all extensions must derive from this class"""
 
-    __slots__ = ("location", "mtime", "mode", "uid", "gid")
+    __slots__ = ("gid", "location", "mode", "mtime", "uid")
     __attrs__ = __slots__
-    __default_attrs__ = {}
+    __default_attrs__: typing.ClassVar[dict] = {}
 
     locals().update(
         (x.replace("is", "is_"), False)
@@ -146,7 +149,7 @@ class fsFile(fsBase):
 
     __slots__ = ("chksums", "data", "dev", "inode")
     __attrs__ = fsBase.__attrs__ + __slots__
-    __default_attrs__ = {"mtime": 0, "dev": None, "inode": None}
+    __default_attrs__: typing.ClassVar[dict] = {"mtime": 0, "dev": None, "inode": None}
 
     is_reg = True
 
@@ -266,7 +269,7 @@ class fsDev(fsBase):
 
     __slots__ = ("major", "minor")
     __attrs__ = fsBase.__attrs__ + __slots__
-    __default_attrs__ = {"major": -1, "minor": -1}
+    __default_attrs__: typing.ClassVar[dict] = {"major": -1, "minor": -1}
     is_dev = True
 
     def __init__(self, path, major=-1, minor=-1, **kwds):
@@ -275,8 +278,7 @@ class fsDev(fsBase):
                 raise TypeError("major/minor must be specified and positive ints")
             if not stat.S_IFMT(kwds["mode"]):
                 raise TypeError(
-                    "mode %o: must specify the device type (got %o)"
-                    % (kwds["mode"], stat.S_IFMT(kwds["mode"]))
+                    f"mode {kwds['mode']:o}: must specify the device type (got {stat.S_IFMT(kwds['mode']):o})"
                 )
             kwds["major"] = major
             kwds["minor"] = minor
@@ -319,7 +321,7 @@ class fsFifo(fsBase):
 def mk_check(name):
     return pretty_docs(
         post_curry(getattr, "is_" + name, False),
-        extradocs=("return True if obj is an instance of :obj:`%s`, else False" % name),
+        extradocs=(f"return True if obj is an instance of :obj:`{name}`, else False"),
         name=("is" + name),
     )
 

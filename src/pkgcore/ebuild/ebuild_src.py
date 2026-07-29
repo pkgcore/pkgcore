@@ -5,6 +5,7 @@ package class for buildable ebuilds
 __all__ = ("base", "package", "package_factory")
 
 import os
+import typing
 from functools import partial
 from itertools import chain
 from sys import intern
@@ -37,7 +38,7 @@ class base(metadata.package):
         re-evaluating attributes dependent on configuration
     """
 
-    _config_wrappables = {
+    _config_wrappables: typing.ClassVar[dict] = {
         x: klass.alias_method("evaluate_depset")
         for x in (
             "bdepend",
@@ -168,10 +169,13 @@ class base(metadata.package):
 
             allow_mirror = pkg_allow_mirror or unrestrict_mirror
 
-            if preexisting is None:
-                if "primaryuri" not in self.restrict:
-                    if default_mirrors and allow_mirror:
-                        uris.add_mirror(default_mirrors)
+            if (
+                preexisting is None
+                and "primaryuri" not in self.restrict
+                and default_mirrors
+                and allow_mirror
+            ):
+                uris.add_mirror(default_mirrors)
 
             if uri.startswith("mirror://"):
                 # mirror:// is 9 chars.
@@ -181,9 +185,13 @@ class base(metadata.package):
 
             else:
                 uris.add_uri(uri)
-            if preexisting is None and "primaryuri" in self.restrict:
-                if default_mirrors and allow_mirror:
-                    uris.add_mirror(default_mirrors)
+            if (
+                preexisting is None
+                and "primaryuri" in self.restrict
+                and default_mirrors
+                and allow_mirror
+            ):
+                uris.add_mirror(default_mirrors)
 
         if preexisting is None:
             common_files[filename] = fetch.fetchable(
@@ -423,7 +431,7 @@ class base(metadata.package):
         return f"ebuild src: {self.cpvstr}"
 
     def __repr__(self):
-        return "<%s cpv=%r @%#8x>" % (self.__class__, self.cpvstr, id(self))
+        return f"<{self.__class__} cpv={self.cpvstr!r} @{id(self):#8x}>"
 
 
 class package(base):
@@ -458,8 +466,8 @@ class package(base):
         return data_source.data_source(data, mutable=False)
 
     def _get_ebuild_environment(self, ebp=None):
-        with processor.reuse_or_request(ebp) as ebp:
-            return ebp.get_ebuild_environment(self, self.repo.eclass_cache)
+        with processor.reuse_or_request(ebp) as active_ebp:
+            return active_ebp.get_ebuild_environment(self, self.repo.eclass_cache)
 
 
 class package_factory(metadata.factory):
@@ -545,7 +553,7 @@ class package_factory(metadata.factory):
         if mydata["DEFINED_PHASES"] != "-":
             phases = mydata["DEFINED_PHASES"].split()
             d = eapi.phases_rev
-            phases = set(d.get(x) for x in phases)
+            phases = {d.get(x) for x in phases}
             # Discard is required should we have gotten
             # a phase that isn't actually in this EAPI.
             phases.discard(None)

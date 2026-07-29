@@ -2,7 +2,7 @@
 core engine for livefs modifications
 """
 
-__all__ = ("alias_cset", "map_new_cset_livefs", "MergeEngine")
+__all__ = ("MergeEngine", "alias_cset", "map_new_cset_livefs")
 
 # need better documentation...
 
@@ -14,6 +14,7 @@ import io
 import operator
 import tempfile
 import traceback
+import typing
 from functools import partial
 from itertools import chain
 from multiprocessing import cpu_count
@@ -47,30 +48,30 @@ def map_new_cset_livefs(engine, csets, cset_name="new_cset"):
 
 
 class MergeEngine:
-    install_hooks = {
+    install_hooks: typing.ClassVar[dict] = {
         x: [] for x in ("sanity_check", "pre_merge", "merge", "post_merge", "final")
     }
-    uninstall_hooks = {
+    uninstall_hooks: typing.ClassVar[dict] = {
         x: []
         for x in ("sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final")
     }
-    replace_hooks = {
+    replace_hooks: typing.ClassVar[dict] = {
         x: [] for x in set(chain(install_hooks.keys(), uninstall_hooks.keys()))
     }
 
-    install_csets = {
+    install_csets: typing.ClassVar[dict] = {
         "install_existing": "get_install_livefs_intersect",
         "resolved_install": map_new_cset_livefs,
         "new_cset": partial(alias_cset, "raw_new_cset"),
         "install": partial(alias_cset, "new_cset"),
         "replace": partial(alias_cset, "new_cset"),
     }
-    uninstall_csets = {
+    uninstall_csets: typing.ClassVar[dict] = {
         "uninstall_existing": partial(alias_cset, "uninstall"),
         "uninstall": partial(alias_cset, "old_cset"),
         "old_cset": "get_uninstall_livefs_intersect",
     }
-    replace_csets = install_csets.copy()
+    replace_csets: typing.ClassVar[dict] = install_csets.copy()
     replace_csets.update(uninstall_csets)
     replace_csets["modifying"] = lambda e, c: c["resolved_install"].intersection(
         c["uninstall"]
@@ -79,9 +80,9 @@ class MergeEngine:
     replace_csets["replace"] = "get_replace_cset"
     replace_csets["install_existing"] = "get_install_livefs_intersect"
 
-    install_csets_preserve = ["new_cset"]
-    uninstall_csets_preserve = ["old_cset"]
-    replace_csets_preserve = ["new_cset", "old_cset"]
+    install_csets_preserve: typing.ClassVar[list] = ["new_cset"]
+    uninstall_csets_preserve: typing.ClassVar[list] = ["old_cset"]
+    replace_csets_preserve: typing.ClassVar[list] = ["new_cset", "old_cset"]
 
     allow_reuse = True
 
@@ -324,9 +325,8 @@ class MergeEngine:
 
         if required_csets is not None:
             for rcs in required_csets:
-                if rcs not in self.cset_sources:
-                    if isinstance(rcs, str):
-                        raise errors.TriggerUnknownCset(trigger, rcs)
+                if rcs not in self.cset_sources and isinstance(rcs, str):
+                    raise errors.TriggerUnknownCset(trigger, rcs)
 
         self.hooks[hook_name].append(trigger)
 
@@ -441,7 +441,7 @@ class MergeEngine:
 
         # clone it into tempspace; it's required we control the tempspace,
         # so this function is safe in our usage.
-        fd, path = tempfile.mkstemp(prefix="merge-engine-", dir=self.tempdir)
+        _fd, path = tempfile.mkstemp(prefix="merge-engine-", dir=self.tempdir)
 
         # XXX: annoying quirk of python, we don't want append mode, so 'a+'
         # isn't viable; wr will truncate the file, so data_source uses r+.

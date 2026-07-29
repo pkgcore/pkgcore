@@ -2,10 +2,11 @@
 Ebuild repository, specific to gentoo ebuild trees.
 """
 
-__all__ = ("UnconfiguredTree", "ConfiguredTree", "ProvidesRepo", "tree")
+__all__ = ("ConfiguredTree", "ProvidesRepo", "UnconfiguredTree", "tree")
 
 import locale
 import os
+import typing
 from functools import partial, wraps
 from itertools import chain, filterfalse
 from os.path import join as pjoin
@@ -105,7 +106,7 @@ class repo_operations(_repo_ops.operations):
                 if os.path.exists(manifest.path):
                     try:
                         os.remove(manifest.path)
-                    except EnvironmentError as exc:
+                    except OSError as exc:
                         observer.error(
                             "failed removing old manifest: "
                             f"{key}::{self.repo.repo_id}: {exc}"
@@ -514,7 +515,7 @@ class UnconfiguredTree(prototype.tree):
                     ),
                 )
             )
-        except EnvironmentError as e:
+        except OSError as e:
             logger.error(f"failed listing categories: {e}")
         return ()
 
@@ -534,7 +535,7 @@ class UnconfiguredTree(prototype.tree):
             if category in self.categories:
                 # ignore it, since it's PMS mandated that it be allowed.
                 return ()
-        except EnvironmentError as e:
+        except OSError as e:
             category = pjoin(self.base, category.lstrip(os.path.sep))
             raise KeyError(
                 f"failed fetching packages for category {category}: {e}"
@@ -556,10 +557,11 @@ class UnconfiguredTree(prototype.tree):
                 for x in listdir_files(cppath)
                 if x[ext_len:] == extension and x[:lp] == pkg
             )
-        except EnvironmentError as e:
+        except OSError as e:
             raise KeyError(
-                "failed fetching versions for package %s: %s"
-                % (pjoin(self.base, "/".join(catpkg)), str(e))
+                "failed fetching versions for package {}: {}".format(
+                    pjoin(self.base, "/".join(catpkg)), str(e)
+                )
             ) from e
 
     def _pkg_filter(self, raw, error_callback, pkgs):
@@ -592,9 +594,9 @@ class UnconfiguredTree(prototype.tree):
                             error_callback(exc)
                         continue
                     # TODO: add a generic metadata validation method to avoid slow metadata checks?
-                    pkg.data
-                    pkg.slot
-                    pkg.required_use
+                    _ = pkg.data
+                    _ = pkg.slot
+                    _ = pkg.required_use
                 except pkg_errors.MetadataException as e:
                     self._bad_masked[e.pkg.versioned_atom] = e
                     if error_callback is not None:
@@ -654,10 +656,8 @@ class UnconfiguredTree(prototype.tree):
             raise pkg_errors.MetadataException(pkg, "manifest", str(e))
 
     def __repr__(self):
-        return "<ebuild %s location=%r @%#8x>" % (
-            self.__class__.__name__,
-            self.base,
-            id(self),
+        return (
+            f"<ebuild {self.__class__.__name__} location={self.base!r} @{id(self):#8x}>"
         )
 
     @klass.jit_attr
@@ -816,7 +816,7 @@ class ConfiguredTree(configured.tree):
     """Wrapper around a :obj:`UnconfiguredTree` binding build/configuration data (USE)."""
 
     configurable = "use"
-    config_wrappables = {
+    config_wrappables: typing.ClassVar[dict] = {
         x: klass.alias_method("evaluate_depset")
         for x in (
             "bdepend",
@@ -856,10 +856,14 @@ class ConfiguredTree(configured.tree):
         )
         scope_update["operations_callback"] = self._generate_pkg_operations
 
-        # update wrapped attr funcs requiring access to the class instance
-        for k, v in self.config_wrappables.items():
-            if isinstance(v, str):
-                self.config_wrappables[k] = getattr(self, v)
+        # update wrapped attr funcs requiring access to the class instance;
+        # this must be an instance-level copy, not an in-place mutation of the
+        # shared class attribute, else the second ConfiguredTree instantiated
+        # would inherit the first instance's bound methods.
+        self.config_wrappables = {
+            k: getattr(self, v) if isinstance(v, str) else v
+            for k, v in self.config_wrappables.items()
+        }
 
         super().__init__(
             raw_repo, self.config_wrappables, pkg_kls_injections=scope_update

@@ -26,7 +26,10 @@ def _getattr_wrapped(attr, self):
 
 
 def make_wrapper(
-    wrapped_repo, configurable_attribute_name, attributes_to_wrap=(), kls_injections={}
+    wrapped_repo,
+    configurable_attribute_name,
+    attributes_to_wrap=(),
+    kls_injections=None,
 ):
     """
     :param configurable_attribute_name: attribute name to add,
@@ -36,22 +39,24 @@ def make_wrapper(
         instead of the wrapped pkgs attr.
     """
 
+    if kls_injections is None:
+        kls_injections = {}
     if configurable_attribute_name.find(".") != -1:
         raise ValueError(
             "can only wrap first level attributes, "
-            "'obj.dar' fex, not '%s'" % (configurable_attribute_name)
+            f"'obj.dar' fex, not '{configurable_attribute_name}'"
         )
 
     class PackageWrapper(wrapper):
         """Add a new attribute, and evaluate attributes of a wrapped pkg."""
 
         __slots__ = (
-            "_unchangable",
-            "_configurable",
-            "_reuse_pt",
             "_cached_wrapped",
+            "_configurable",
             "_disabled",
             "_domain",
+            "_reuse_pt",
+            "_unchangable",
             "repo",
         )
 
@@ -231,15 +236,10 @@ def make_wrapper(
             return True
 
         def __str__(self):
-            return "config wrapped(%s): %s" % (self._configurable_name, self._raw_pkg)
+            return f"config wrapped({self._configurable_name}): {self._raw_pkg}"
 
         def __repr__(self):
-            return "<%s pkg=%r wrapped=%r @%#8x>" % (
-                self.__class__.__name__,
-                self._raw_pkg,
-                self._configurable_name,
-                id(self),
-            )
+            return f"<{self.__class__.__name__} pkg={self._raw_pkg!r} wrapped={self._configurable_name!r} @{id(self):#8x}>"
 
         def freeze(self):
             o = copy(self)

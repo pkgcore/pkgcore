@@ -443,11 +443,12 @@ def unmerge(out, err, installed_repos, targets, options, formatter, world_set=No
             else:
                 unknown.add(token)
             continue
-        categories = set(pkg.category for pkg in installed)
+        categories = {pkg.category for pkg in installed}
         if len(categories) > 1:
             raise parserestrict.ParseError(
-                "%r is in multiple categories (%s)"
-                % (token, ", ".join(sorted(set(pkg.key for pkg in installed))))
+                "{!r} is in multiple categories ({})".format(
+                    token, ", ".join(sorted({pkg.key for pkg in installed}))
+                )
             )
         matches.update(installed)
 
@@ -461,8 +462,7 @@ def unmerge(out, err, installed_repos, targets, options, formatter, world_set=No
 
     if fake:
         err.write(
-            "Skipping virtual pkg%s: %s"
-            % (
+            "Skipping virtual pkg{}: {}".format(
                 pluralism(fake_pkgs),
                 ", ".join(f"{x.versioned_atom}::{x.repo_id}" for x in fake),
             )
@@ -544,20 +544,23 @@ def display_failures(out, sequence, first_level=True, debug=False, _color_index=
                 )
             elif step[0] == "reduce":
                 out.write(
-                    "removing choices involving %s" % ", ".join(str(x) for x in step[1])
+                    "removing choices involving {}".format(
+                        ", ".join(str(x) for x in step[1])
+                    )
                 )
             elif step[0] == "blocker":
                 out.write(
-                    "blocker %s failed due to %s existing"
-                    % (step[1], ", ".join(str(x) for x in step[2]))
+                    "blocker {} failed due to {} existing".format(
+                        step[1], ", ".join(str(x) for x in step[2])
+                    )
                 )
             elif step[0] == "cycle":
-                out.write("%s cycle on %s: %s" % (step[1].mode, step[1].atom, step[2]))
+                out.write(f"{step[1].mode} cycle on {step[1].atom}: {step[2]}")
             elif step[0] == "viable" and not step[1]:
-                out.write("%s: failed %s" % (step[3], step[4]))
+                out.write(f"{step[3]}: failed {step[4]}")
             elif step[0] == "choice":
                 if not step[2]:
-                    out.write("failed due to %s" % (step[3],))
+                    out.write(f"failed due to {step[3]}")
             elif step[0] == "debug":
                 if debug:
                     set_color("yellow")
@@ -639,8 +642,7 @@ def _validate(parser, namespace):
         unknown_sets = set(namespace.sets).difference(namespace.config.objects.pkgset)
         if unknown_sets:
             parser.error(
-                "unknown set%s: %s (available sets: %s)"
-                % (
+                "unknown set{}: {} (available sets: {})".format(
                     pluralism(unknown_sets),
                     ", ".join(sorted(map(repr, unknown_sets))),
                     ", ".join(sorted(namespace.config.pkgset)),
@@ -777,11 +779,10 @@ def main(options, out, err):
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
         # TODO: this logic should be updated to honor self.force_stable_ordering_of_targets
-        if not options.oneshot:
-            if world_set is None:
-                argparser.error(
-                    "disable world updating via --oneshot, or fix your configuration"
-                )
+        if not options.oneshot and world_set is None:
+            argparser.error(
+                "disable world updating via --oneshot, or fix your configuration"
+            )
         try:
             unmerge(
                 out,
@@ -857,11 +858,10 @@ def main(options, out, err):
     if options.force_stable_ordering_of_targets:
         atoms = sorted(atoms)
 
-    if options.clean and not options.oneshot:
-        if world_set is None:
-            argparser.error(
-                "disable world updating via --oneshot, or fix your configuration"
-            )
+    if options.clean and not options.oneshot and world_set is None:
+        argparser.error(
+            "disable world updating via --oneshot, or fix your configuration"
+        )
 
     extra_kwargs = {}
     if options.empty:
@@ -970,8 +970,8 @@ def main(options, out, err):
         out.write()
         if wipes:
             out.write(
-                "removing %i packages of %i installed, %0.2f%%."
-                % (len(wipes), len_vset, 100 * (len(wipes) / float(len_vset)))
+                f"removing {len(wipes)} packages of {len_vset} installed, "
+                f"{100 * (len(wipes) / float(len_vset)):0.2f}%."
             )
         else:
             out.write("no packages to remove")
@@ -1065,11 +1065,12 @@ def main(options, out, err):
         for x in atoms:
             matches = installed_repos.virtual.match(x)
             if matches:
-                virtual_pkgs.add(sorted(matches)[-1])
+                virtual_pkgs.add(max(matches))
         if virtual_pkgs:
             out.write(
-                "Skipping virtual pkgs:\n%s\n"
-                % "\n".join(str(x.versioned_atom) for x in virtual_pkgs)
+                "Skipping virtual pkgs:\n{}\n".format(
+                    "\n".join(str(x.versioned_atom) for x in virtual_pkgs)
+                )
             )
 
         out.write("Nothing to merge.")
@@ -1081,8 +1082,8 @@ def main(options, out, err):
                 out.bold,
                 " * ",
                 out.reset,
-                "resolver plan required %i ops (%.2f seconds)"
-                % (len(resolver_inst.state.plan), resolve_time),
+                f"resolver plan required {len(resolver_inst.state.plan)} ops "
+                f"({resolve_time:.2f} seconds)",
             )
         return
 

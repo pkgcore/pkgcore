@@ -1,5 +1,6 @@
+from collections.abc import Iterator
 from functools import lru_cache
-from typing import Iterator, Protocol
+from typing import Protocol
 
 from snakeoil.constraints import Constraint, Problem
 
@@ -77,7 +78,8 @@ def __to_single_constraint(restrict) -> tuple[_use_constraint, frozenset[str]]:
             restrict.negate, frozenset(restrict.vals)
         ), frozenset(restrict.vals)
     elif isinstance(restrict, packages.Conditional):
-        assert isinstance(x := restrict.restriction, values.ContainmentMatch)
+        x = restrict.restriction
+        assert isinstance(x, values.ContainmentMatch)
         children, variables = zip(
             *(__to_single_constraint(c) for c in restrict.payload)
         )
@@ -120,7 +122,8 @@ def __to_multiple_constraint(
     restrict,
 ) -> Iterator[tuple[_use_constraint, frozenset[str]]]:
     if isinstance(restrict, packages.Conditional):
-        assert isinstance(x := restrict.restriction, values.ContainmentMatch)
+        x = restrict.restriction
+        assert isinstance(x, values.ContainmentMatch)
         for rule in restrict.payload:
             for func, variables in __to_multiple_constraint(rule):
                 yield (

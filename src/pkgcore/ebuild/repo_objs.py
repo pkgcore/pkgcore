@@ -3,17 +3,17 @@ package class for buildable ebuilds
 """
 
 __all__ = (
+    "Licenses",
+    "LocalMetadataXml",
+    "LocalProjectsXml",
     "Maintainer",
     "MetadataXml",
-    "LocalMetadataXml",
-    "SharedPkgData",
-    "Licenses",
     "OverlayedProfiles",
     "Project",
     "ProjectMember",
-    "Subproject",
     "ProjectsXml",
-    "LocalProjectsXml",
+    "SharedPkgData",
+    "Subproject",
 )
 
 import contextlib
@@ -54,7 +54,7 @@ from .eapi import get_eapi
 class Maintainer(immutable.Simple):
     """Data on a single maintainer"""
 
-    __slots__ = ("email", "description", "name", "maint_type", "proxied")
+    __slots__ = ("description", "email", "maint_type", "name", "proxied")
 
     def __init__(
         self,
@@ -124,7 +124,7 @@ class UpstreamMetadata(NamedTuple):
 class FlagWithRestrict(immutable.Simple):
     """A metadata.xml boolean flag with an optional package restriction."""
 
-    __slots__ = ("value", "restrict")
+    __slots__ = ("restrict", "value")
 
     def __init__(self, value: bool, restrict: restriction.base | None):
         self.value = value
@@ -150,14 +150,14 @@ class MetadataXml:
 
     __slots__ = (
         "__weakref__",
-        "_maintainers",
-        "_upstream",
-        "_upstreams",
         "_local_use",
         "_longdescription",
+        "_maintainers",
         "_source",
         "_stabilize_allarches",
         "_straight_to_stable",
+        "_upstream",
+        "_upstreams",
     )
 
     def __init__(self, source):
@@ -324,7 +324,7 @@ class LocalMetadataXml(MetadataXml):
 
 
 class SharedPkgData:
-    __slots__ = ("__weakref__", "metadata_xml", "manifest")
+    __slots__ = ("__weakref__", "manifest", "metadata_xml")
 
     def __init__(self, metadata_xml: LocalMetadataXml, manifest: Manifest):
         self.metadata_xml = metadata_xml
@@ -344,7 +344,7 @@ class ProjectMember(klass.GenericEquality):
     :ivar is_lead: whether the member is a project lead.
     """
 
-    __slots__ = ("email", "name", "role", "is_lead")
+    __slots__ = ("email", "is_lead", "name", "role")
     __attr_comparison__ = ("email", "name", "role", "is_lead")
 
     def __init__(self, email, name=None, role=None, is_lead=None):
@@ -372,7 +372,7 @@ class Subproject:
     :ivar inherit_members: whether the parent project inherits members from this subproject
     """
 
-    __slots__ = ("_ref", "inherit_members", "_projects_xml", "_project")
+    __slots__ = ("_project", "_projects_xml", "_ref", "inherit_members")
 
     def __init__(self, ref, projects_xml, inherit_members=None):
         if ref is None:
@@ -410,7 +410,7 @@ class Project:
     :ivar subprojects: subprojects
     """
 
-    __slots__ = ("email", "name", "url", "description", "members", "subprojects")
+    __slots__ = ("description", "email", "members", "name", "subprojects", "url")
 
     def __init__(
         self, email, name=None, url=None, description=None, members=(), subprojects=()
@@ -441,12 +441,12 @@ class Project:
     @property
     def recursive_members(self):
         """All project members, including members inherited from subprojects."""
-        subprojects = list(
+        subprojects = [
             sp
             for sp in self.subprojects
             if sp.inherit_members and sp.project is not None
-        )
-        subproject_emails = set(sp.email for sp in subprojects)
+        ]
+        subproject_emails = {sp.email for sp in subprojects}
 
         # recursively collect all subprojects from which to inherit
         i = 0
@@ -553,12 +553,12 @@ class LocalProjectsXml(ProjectsXml):
 class Licenses(immutable.Simple):
     __slots__ = (
         "_base",
-        "_licenses",
         "_groups",
+        "_license_instances",
+        "_licenses",
+        "_repo_masters",
         "license_groups_path",
         "licenses_dir",
-        "_repo_masters",
-        "_license_instances",
     )
 
     def __init__(
@@ -587,7 +587,7 @@ class Licenses(immutable.Simple):
         """Return the set of all defined licenses in a repo."""
         try:
             content = listdir_files(self.licenses_dir)
-        except EnvironmentError:
+        except OSError:
             content = ()
         return frozenset(chain(content, *self._license_instances))
 
@@ -598,7 +598,7 @@ class Licenses(immutable.Simple):
             d = read_dict(self.license_groups_path, splitter=" ")
             for k, v in d.items():
                 d[k] = set(v.split())
-        except EnvironmentError as e:
+        except OSError as e:
             if e.errno != errno.ENOENT:
                 logger.error(f"failed reading parsing license_groups: {e}")
             d = {}
@@ -674,7 +674,7 @@ _KnownProfile = namedtuple(
 
 
 class Profiles(immutable.Simple):
-    __slots__ = ("config", "profiles_base", "_profiles")
+    __slots__ = ("_profiles", "config", "profiles_base")
 
     def __init__(self, repo_config, profiles_base=None):
         self.config = repo_config
@@ -932,7 +932,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
             if not v:
                 logger.warning("unknown cache format: falling back to md5-dict format")
                 v = ["md5-dict"]
-        sf(self, "cache_format", list(v)[0])
+        sf(self, "cache_format", next(iter(v)))
 
         profile_formats = set(data.get("profile-formats", "pms").lower().split())
         if not profile_formats:
@@ -1035,7 +1035,9 @@ class RepoConfig(syncable.tree, immutable.Strict):
             group = use_group.split(".", 1)[0]
             d[group] = tuple(
                 self._split_use_desc_file(
-                    f"desc/{use_group}", lambda k: f"{group}_{k}", matcher=False
+                    f"desc/{use_group}",
+                    lambda k, group=group: f"{group}_{k}",
+                    matcher=False,
                 )
             )
 
@@ -1216,7 +1218,7 @@ class SquashfsRepoConfig(RepoConfig):
     def _mount_archive(self):
         """Mount the squashfs archive onto the repo in a mount namespace."""
         # enable a user namespace if not running as root
-        unshare_kwds = {"mount": True, "user": not os.getuid() == 0}
+        unshare_kwds = {"mount": True, "user": os.getuid() != 0}
         try:
             simple_unshare(**unshare_kwds)
         except OSError as e:
@@ -1227,7 +1229,9 @@ class SquashfsRepoConfig(RepoConfig):
         # First try using mount binary to automatically handle setting up loop
         # device -- this only works with real root perms since loopback device
         # mounting (losetup) doesn't work in user namespaces.
-        p = subprocess.run(["mount", self._sqfs, self.location], capture_output=True)
+        p = subprocess.run(
+            ["mount", self._sqfs, self.location], capture_output=True, check=False
+        )
 
         if p.returncode == 0:
             return
@@ -1240,6 +1244,7 @@ class SquashfsRepoConfig(RepoConfig):
             p = subprocess.run(
                 ["squashfuse", "-o", "nonempty", self._sqfs, self.location],
                 capture_output=True,
+                check=False,
             )
         except FileNotFoundError as e:
             raise repo_errors.InitializationError(
@@ -1267,7 +1272,9 @@ class SquashfsRepoConfig(RepoConfig):
 
         # fallback to using fusermount
         try:
-            p = subprocess.run(["fusermount", "-u", self.location], capture_output=True)
+            p = subprocess.run(
+                ["fusermount", "-u", self.location], capture_output=True, check=False
+            )
         except FileNotFoundError as e:
             raise repo_errors.InitializationError(
                 f"failed unmounting squashfs archive: {e.filename} required"

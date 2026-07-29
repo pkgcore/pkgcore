@@ -9,7 +9,7 @@ modify a binpkg repository operation- changing how it installs, or changing how
 it uninstalls, or adding a new operation (cleaning/cache regen for example).
 """
 
-__all__ = ("install", "uninstall", "replace", "operations")
+__all__ = ("install", "operations", "replace", "uninstall")
 
 import os
 from os.path import join as pjoin
@@ -95,7 +95,7 @@ class install(repo_interfaces.install):
         except Exception:
             try:
                 unlink_if_exists(tmp_path)
-            except EnvironmentError as e:
+            except OSError as e:
                 logger.warning(f"failed removing {tmp_path!r}: {e}")
             raise
         return True

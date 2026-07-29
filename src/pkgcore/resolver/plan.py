@@ -1,4 +1,4 @@
-__all__ = ("resolver_frame", "resolver_stack", "merge_plan")
+__all__ = ("merge_plan", "resolver_frame", "resolver_stack")
 
 import operator
 import sys
@@ -16,7 +16,7 @@ from ..restrictions import packages, restriction, values
 from . import state
 from .choice_point import choice_point
 
-limiters = set(["cycle"])
+limiters = {"cycle"}
 
 
 def dprint(handle, fmt, args=None, label=None):
@@ -121,19 +121,19 @@ class MutableContainmentRestriction(values.base):
 
 class resolver_frame:
     __slots__ = (
-        "parent",
+        "__weakref__",
         "atom",
         "choices",
-        "mode",
-        "start_point",
         "dbs",
         "depth",
         "drop_cycles",
-        "__weakref__",
-        "ignored",
-        "vdb_limited",
         "events",
+        "ignored",
+        "mode",
+        "parent",
+        "start_point",
         "succeeded",
+        "vdb_limited",
     )
 
     def __init__(
@@ -185,7 +185,7 @@ class resolver_frame:
             result = ": %s" % (self.succeeded and "succeeded" or "failed")
         else:
             result = ""
-        return "frame%s: mode %r: atom %s: current %s%s%s%s" % (
+        return "frame{}: mode {!r}: atom {}: current {}{}{}{}".format(
             result,
             self.mode,
             self.atom,
@@ -217,10 +217,10 @@ class resolver_stack(deque):
         self.events = []
 
     def __str__(self):
-        return "resolver stack:\n  %s" % "\n  ".join(str(x) for x in self)
+        return "resolver stack:\n  {}".format("\n  ".join(str(x) for x in self))
 
     def __repr__(self):
-        return "<%s: %r>" % (self.__class__.__name__, tuple(repr(x) for x in self))
+        return f"<{self.__class__.__name__}: {tuple(repr(x) for x in self)!r}>"
 
     def add_frame(
         self, mode, atom, choices, dbs, start_point, drop_cycles, vdb_limited=False
@@ -406,7 +406,7 @@ class merge_plan:
         t_msg = msg and (" " + msg) or ""
         s = ""
         if stack:
-            s = " for %s " % (stack[-1].atom)
+            s = f" for {stack[-1].atom} "
         self._dprint(
             "%s%s%s%s%s", (t_viable.ljust(13), "  " * stack.depth, atom, s, t_msg)
         )
@@ -514,20 +514,9 @@ class merge_plan:
                 if last_state == new_state:
                     raise AssertionError(
                         "no state change detected, "
-                        "old %r != new %r\nchoices(%r)\ncurrent(%r)\n"
-                        "bdepend(%r)\ndepend(%r)\nrdepend(%r)\npdepend(%r)\n"
-                        "idepend(%r)"
-                        % (
-                            last_state,
-                            new_state,
-                            tuple(choices.matches),
-                            choices.current_pkg,
-                            choices.bdepend,
-                            choices.depend,
-                            choices.rdepend,
-                            choices.pdepend,
-                            choices.idepend,
-                        )
+                        f"old {last_state!r} != new {new_state!r}\nchoices({tuple(choices.matches)!r})\ncurrent({choices.current_pkg!r})\n"
+                        f"bdepend({choices.bdepend!r})\ndepend({choices.depend!r})\nrdepend({choices.rdepend!r})\npdepend({choices.pdepend!r})\n"
+                        f"idepend({choices.idepend!r})"
                     )
                 last_state = new_state
             additions = []
@@ -640,9 +629,9 @@ class merge_plan:
           :obj:`caching_iter` (not solved, but viable), :obj:`choice_point`
         """
         if self.pdb_intercept.match(atom):
-            import pdb
+            import pdb  # noqa: T100 (deliberate opt-in debug hook, off by default)
 
-            pdb.set_trace()
+            pdb.set_trace()  # noqa: T100
         choices = ret = None
         if atom in self.insoluble:
             ret = ((False, "globally insoluble"), {})
@@ -707,11 +696,13 @@ class merge_plan:
             ):
                 # exact same pkg.
                 if frame.mode in ("bdepend", "depend"):
-                    # ok, we *must* go vdb if not already.
-                    if frame.current_pkg.repo.livefs:
-                        if cur_frame.current_pkg.repo.livefs:
-                            return None
-                        # force it to vdb.
+                    # ok, we *must* go vdb if not already; if frame is livefs but
+                    # cur_frame isn't, fall through below to force it to vdb.
+                    if (
+                        frame.current_pkg.repo.livefs
+                        and cur_frame.current_pkg.repo.livefs
+                    ):
+                        return None
                     if cur_frame.current_pkg.repo.livefs:
                         return True
                     elif (
@@ -822,8 +813,7 @@ class merge_plan:
             else:  # didn't find any solutions to this or block.
                 cur_frame.reduce_solutions(potentials)
                 return [potentials]
-        else:  # all potentials were usable.
-            return additions, blocks
+        return additions, blocks
 
     def process_blocker(self, stack, choices, blocker, mode, atom):
         ret = self.insert_blockers(stack, choices, [blocker])
@@ -900,9 +890,9 @@ class merge_plan:
                         "internal weirdness spotted- vdb restrict matches, "
                         "but current doesn't, bailing"
                     )
-                    raise Exception(
-                        "internal weirdness- vdb restrict matches ",
-                        "but current doesn't. bailing- run w/ --debug",
+                    raise RuntimeError(
+                        "internal weirdness- vdb restrict matches "
+                        "but current doesn't. bailing- run w/ --debug"
                     )
                 conflicts = state.replace_op(choices, choices.current_pkg).apply(
                     self.state
@@ -998,9 +988,7 @@ class merge_plan:
             for atom in or_block:
                 if atom.blocks:
                     non_vdb.append(atom)
-                elif self.state.match_atom(atom):
-                    vdb.append(atom)
-                elif atom in self.livefs_dbs:
+                elif self.state.match_atom(atom) or atom in self.livefs_dbs:
                     vdb.append(atom)
                 else:
                     non_vdb.append(atom)

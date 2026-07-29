@@ -12,6 +12,7 @@ import configparser
 import errno
 import os
 import sys
+import typing
 from collections import OrderedDict
 from os.path import join as pjoin
 
@@ -94,8 +95,8 @@ class ParseConfig(configparser.ConfigParser):
 class PortageConfig(DictMixin):
     """Support for portage's config file layout."""
 
-    __slots__ = ("_config", "dir", "root", "features")
-    _supported_repo_types = {}
+    __slots__ = ("_config", "dir", "features", "root")
+    _supported_repo_types: typing.ClassVar[dict] = {}
 
     def __init__(self, location=None, profile_override=None, **kwargs):
         """
@@ -301,7 +302,7 @@ class PortageConfig(DictMixin):
                 )
             except PermissionError as e:
                 raise base_errors.PermissionDenied(fp, write=False) from e
-            except EnvironmentError as e:
+            except OSError as e:
                 if e.errno != errno.ENOENT or required:
                     raise config_errors.ParsingError(
                         f"parsing {fp!r}", exception=e
@@ -369,7 +370,7 @@ class PortageConfig(DictMixin):
                     defaults, repo_confs = parser.parse_file(f)
             except PermissionError as e:
                 raise base_errors.PermissionDenied(fp, write=False) from e
-            except EnvironmentError as e:
+            except OSError as e:
                 raise config_errors.ParsingError(f"parsing {fp!r}", exception=e) from e
             except configparser.Error as e:
                 raise config_errors.ParsingError(

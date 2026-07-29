@@ -28,11 +28,12 @@ class _base(arghparse.ArgparseCommand):
                 # default to the configured system profile if none is selected
                 path = namespace.config.get_default("domain").profile.profile
         else:
-            if namespace.repo is not None and getattr(
-                namespace.repo, "location", False
+            if (
+                namespace.repo is not None
+                and getattr(namespace.repo, "location", False)
+                and not path.startswith("/")
             ):
-                if not path.startswith("/"):
-                    path = pjoin(namespace.repo.location, "profiles", path)
+                path = pjoin(namespace.repo.location, "profiles", path)
         try:
             stack = profiles.ProfileStack(arghparse.existent_path(path))
         except argparse.ArgumentTypeError as e:
@@ -76,7 +77,7 @@ class eapi(_base, metaclass=_register_command):
     """output EAPI support required for reading this profile"""
 
     def __call__(self, namespace, out, err):
-        eapis = set(str(x.eapi) for x in namespace.profile.stack)
+        eapis = {str(x.eapi) for x in namespace.profile.stack}
         out.write("\n".join(sorted(eapis)))
 
 

@@ -1,4 +1,4 @@
-__all__ = ("install", "uninstall", "replace", "operations")
+__all__ = ("install", "operations", "replace", "uninstall")
 
 import os
 import shutil
@@ -24,7 +24,7 @@ def update_mtime(path, timestamp=None):
     logger.debug(f"updating vdb timestamp for {path!r}")
     try:
         os.utime(path, (timestamp, timestamp))
-    except EnvironmentError as e:
+    except OSError as e:
         logger.error(f"failed updated vdb timestamp for {path!r}: {e}")
 
 

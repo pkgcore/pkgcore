@@ -1,4 +1,4 @@
-__all__ = ("nodeps_repo", "caching_repo")
+__all__ = ("caching_repo", "nodeps_repo")
 
 from snakeoil.iterables import caching_iter, iter_sort
 from snakeoil.klass import DirProxy, GetAttrProxy

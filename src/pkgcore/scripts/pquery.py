@@ -16,7 +16,6 @@ running them on source repos makes no sense.
 import errno
 import os
 import sys
-import typing
 from functools import partial
 
 import snakeoil.formatters
@@ -41,7 +40,7 @@ class DataSourceRestriction(values.base):
 
     def __init__(
         self,
-        childrestriction: typing.Union[values.base, values.AnyMatch],
+        childrestriction: values.base | values.AnyMatch,
         negate=False,
         **kwargs,
     ):
@@ -228,9 +227,9 @@ def _internal_format_depends(out, node, func):
         children = node.restrictions
     elif isinstance(node, packages.Conditional):
         assert len(node.restriction.vals) == 1
-        prefix = "%s%s? (" % (
+        prefix = "{}{}? (".format(
             node.restriction.negate and "!" or "",
-            list(node.restriction.vals)[0],
+            next(iter(node.restriction.vals)),
         )
         children = node.payload
     if prefix:
@@ -852,7 +851,7 @@ def parse_revdep(value):
         atom.atom, values.AnyMatch(values.FunctionRestriction(targetatom.intersects))
     )
     return packages.OrRestriction(
-        *list(packages.PackageRestriction(dep, val_restrict) for dep in dep_attrs)
+        *[packages.PackageRestriction(dep, val_restrict) for dep in dep_attrs]
     )
 
 
@@ -883,7 +882,7 @@ def revdep_pkgs_finalize(sequence, namespace):
         values.FunctionRestriction(partial(_revdep_pkgs_match, tuple(l)))
     )
     r = values.FlatteningRestriction(atom.atom, any_restrict)
-    return list(packages.PackageRestriction(dep, r) for dep in dep_attrs)
+    return [packages.PackageRestriction(dep, r) for dep in dep_attrs]
 
 
 @bind_add_query(
@@ -896,10 +895,10 @@ def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
     matcher = values.StrRegex(value, case_sensitive=False)
     return packages.OrRestriction(
-        *list(
+        *[
             packages.PackageRestriction(attr, matcher)
             for attr in ("description", "longdescription")
-        )
+        ]
     )
 
 

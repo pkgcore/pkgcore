@@ -6,12 +6,13 @@ __all__ = (
     "Failure",
     "base",
     "install",
-    "uninstall",
-    "replace",
     "operations",
     "operations_proxy",
+    "replace",
+    "uninstall",
 )
 
+import typing
 from functools import partial
 
 from snakeoil import klass
@@ -41,16 +42,13 @@ class Failure(PkgcoreException):
 
 
 class base(metaclass=ForcedDepends):
-    stage_depends = {}
+    stage_depends: typing.ClassVar[dict] = {}
 
     def __init__(self, repo, observer):
         self.repo = repo
         self.underway = False
         self.observer = observer
-        try:
-            self.lock = getattr(repo, "lock")
-        except AttributeError:
-            raise
+        self.lock = repo.lock
         if self.lock is None:
             self.lock = fake_lock()
 
@@ -69,7 +67,7 @@ class base(metaclass=ForcedDepends):
 
 
 class install(base):
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "finish": "_notify_repo_add",
         "_notify_repo_add": "finalize_data",
         "finalize_data": "add_data",
@@ -94,7 +92,7 @@ class install(base):
 
 
 class uninstall(base):
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "finish": "_notify_repo_remove",
         "_notify_repo_remove": "finalize_data",
         "finalize_data": "remove_data",
@@ -116,7 +114,7 @@ class uninstall(base):
 
 
 class replace(install, uninstall):
-    stage_depends = {
+    stage_depends: typing.ClassVar[dict] = {
         "finish": "_notify_repo_add",
         "_notify_repo_add": "finalize_data",
         "finalize_data": ("add_data", "_notify_repo_remove"),
@@ -205,7 +203,7 @@ class operations(sync_operations):
         return self.replace(match[0], newpkg, observer=observer)
 
     for x in ("install", "uninstall", "replace", "install_or_replace"):
-        locals()["_cmd_check_support_%s" % x] = post_curry(_disabled_if_frozen, x)
+        locals()[f"_cmd_check_support_{x}"] = post_curry(_disabled_if_frozen, x)
 
     del x
 

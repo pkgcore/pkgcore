@@ -252,13 +252,13 @@ class CPV(base.base):
     """
 
     __slots__ = (
-        "cpvstr",
-        "key",
         "category",
-        "package",
-        "version",
-        "revision",
+        "cpvstr",
         "fullver",
+        "key",
+        "package",
+        "revision",
+        "version",
     )
 
     def __init__(self, *args, versioned=None):
@@ -455,11 +455,11 @@ class CPV(base.base):
 
     @classmethod
     def versioned(cls, *args):
-        return cls(versioned=True, *args)
+        return cls(*args, versioned=True)
 
     @classmethod
     def unversioned(cls, *args):
-        return cls(versioned=False, *args)
+        return cls(*args, versioned=False)
 
 
 class VersionedCPV(CPV):

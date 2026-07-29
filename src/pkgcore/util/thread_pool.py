@@ -21,7 +21,7 @@ def reclaim_threads(threads):
 
 def map_async(iterable, functor, *args, **kwds):
     per_thread_args = kwds.pop("per_thread_args", lambda: ())
-    per_thread_kwds = kwds.pop("per_thread_kwds", lambda: {})
+    per_thread_kwds = kwds.pop("per_thread_kwds", dict)
     parallelism = kwds.pop("threads", None)
     if parallelism is None:
         parallelism = cpu_count()

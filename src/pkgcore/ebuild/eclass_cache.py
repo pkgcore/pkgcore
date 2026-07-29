@@ -2,7 +2,7 @@
 in memory representation of on disk eclass stacking order
 """
 
-__all__ = ("base", "cache", "StackedCaches")
+__all__ = ("StackedCaches", "base", "cache")
 
 import os
 from os.path import join as pjoin
@@ -135,7 +135,7 @@ class StackedCaches(base):
             cache.
         """
         if len(caches) < 2:
-            raise TypeError("%s requires at least two eclass_caches" % self.__class__)
+            raise TypeError(f"{self.__class__} requires at least two eclass_caches")
 
         kwds.setdefault("eclassdir", caches[0].eclassdir)
         kwds.setdefault(

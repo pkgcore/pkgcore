@@ -39,7 +39,7 @@ class tar_syncer(http_syncer, base.ExternalSyncer):
 
     def _pre_download(self):
         # create temp file for downloading
-        self.tarball = tempfile.NamedTemporaryFile()
+        self.tarball = tempfile.NamedTemporaryFile()  # noqa: SIM115 (kept open across methods, closed via atexit below)
         # make sure temp file is deleted on exit
         atexit.register(partial(self.tarball.close))
 

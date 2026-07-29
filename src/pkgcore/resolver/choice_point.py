@@ -6,15 +6,15 @@ from snakeoil import klass
 class choice_point:
     __slots__ = (
         "__weakref__",
+        "_bdeps",
+        "_deps",
+        "_ideps",
+        "_prdeps",
+        "_rdeps",
         "atom",
         "matches",
         "matches_cur",
         "solution_filters",
-        "_prdeps",
-        "_rdeps",
-        "_deps",
-        "_bdeps",
-        "_ideps",
     )
 
     def __init__(self, a, matches):
@@ -62,7 +62,7 @@ class choice_point:
 
         :return: True if pkgs remain, False if no more remain
         """
-        for self.matches_cur in self.matches:
+        for self.matches_cur in self.matches:  # noqa: B020 (idiomatic "pull next from iterator")
             self._reset_iters()
             return True
         self.matches_cur = self.matches = None
@@ -84,16 +84,14 @@ class choice_point:
             self.solution_filters.add(atom)
 
         filterset = self.solution_filters
-        if self.matches_cur is None:
-            if not self._internal_force_next():
-                return True
+        if self.matches_cur is None and not self._internal_force_next():
+            return True
 
         round = -1
         while True:
             round += 1
-            if round:
-                if not self._internal_force_next():
-                    return True
+            if round and not self._internal_force_next():
+                return True
 
             for depset_name in ("_bdeps", "_deps", "_rdeps", "_prdeps"):
                 depset = getattr(self, depset_name)
@@ -125,7 +123,7 @@ class choice_point:
         if self.matches_cur is None:
             if self.matches is None:
                 raise IndexError("no packages remain")
-            for self.matches_cur in self.matches:
+            for self.matches_cur in self.matches:  # noqa: B020 (idiomatic "pull next from iterator")
                 break
             else:
                 self.matches = None
@@ -137,7 +135,7 @@ class choice_point:
         """Force next package to be selected from available matches."""
         if self.matches is None:
             return False
-        for self.matches_cur in self.matches:
+        for self.matches_cur in self.matches:  # noqa: B020 (idiomatic "pull next from iterator")
             break
         else:
             self.matches_cur = self.matches = None
@@ -183,7 +181,7 @@ class choice_point:
         if self.matches_cur is None:
             if self.matches is None:
                 return False
-            for self.matches_cur in self.matches:
+            for self.matches_cur in self.matches:  # noqa: B020 (idiomatic "pull next from iterator")
                 break
             else:
                 self.matches = None
@@ -192,4 +190,4 @@ class choice_point:
         return True
 
     def __str__(self):
-        return "%s: (%s, %s)" % (self.__class__.__name__, self.atom, self.matches_cur)
+        return f"{self.__class__.__name__}: ({self.atom}, {self.matches_cur})"

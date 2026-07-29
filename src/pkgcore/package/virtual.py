@@ -2,7 +2,7 @@
 virtual package
 """
 
-__all__ = ("package", "factory")
+__all__ = ("factory", "package")
 
 from ..restrictions.packages import OrRestriction
 from . import metadata

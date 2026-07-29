@@ -45,6 +45,5 @@ class file_identifier:
         out = "".join(out)
         if out.startswith(path):
             out = out[len(path) :]
-            if out.startswith(":"):
-                out = out[1:]
+            out = out.removeprefix(":")
         return out

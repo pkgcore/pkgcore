@@ -16,6 +16,8 @@ __all__ = (
     "VersionMatch",
 )
 
+import typing
+
 from snakeoil.klass import GenericEquality
 
 from ..restrictions import packages, restriction, values
@@ -32,14 +34,14 @@ class _VersionMatch(GenericEquality, restriction.base):
     self.vals, see intersect for reason why. vals also must be a tuple.
     """
 
-    __slots__ = ("ver", "rev", "vals", "droprev", "negate")
+    __slots__ = ("droprev", "negate", "rev", "vals", "ver")
 
     __attr_comparison__ = ("negate", "rev", "droprev", "vals")
 
     type = restriction.value_type
     attr = "fullver"
 
-    _convert_op2str = {
+    _convert_op2str: typing.ClassVar[dict[tuple[int, ...], str]] = {
         (-1,): "<",
         (-1, 0): "<=",
         (0,): "=",
@@ -47,7 +49,9 @@ class _VersionMatch(GenericEquality, restriction.base):
         (1,): ">",
     }
 
-    _convert_str2op = {v: k for k, v in _convert_op2str.items()}
+    _convert_str2op: typing.ClassVar[dict[str, tuple[int, ...]]] = {
+        v: k for k, v in _convert_op2str.items()
+    }
 
     # FIXME: remove the kwd since it is ignored.
     def __init__(
@@ -110,19 +114,14 @@ class _VersionMatch(GenericEquality, restriction.base):
         s += self.ver
         if self.rev:
             s += f"-r{self.rev}"
-        return "<%s %s negate=%s droprrev=%s @#x>" % (
-            self.__class__.__name__,
-            s,
-            self.negate,
-            self.droprev,
-        )
+        return f"<{self.__class__.__name__} {s} negate={self.negate} droprrev={self.droprev} @#x>"
 
     @staticmethod
     def _convert_ops(inst):
         if inst.negate:
             if inst.droprev:
                 return inst.vals
-            return tuple(sorted(set((-1, 0, 1)).difference(inst.vals)))
+            return tuple(sorted({-1, 0, 1}.difference(inst.vals)))
         return inst.vals
 
     def __eq__(self, other) -> bool:

@@ -2,10 +2,11 @@
 binpkg ebuild repository
 """
 
-__all__ = ("tree", "ConfiguredTree", "force_unpacking")
+__all__ = ("ConfiguredTree", "force_unpacking", "tree")
 
 import errno
 import os
+import typing
 from os.path import join as pjoin
 
 from snakeoil import chksum, compression
@@ -90,9 +91,9 @@ class BinPkg(ebuild_built.generate_new_factory):
 
 
 class StackedXpakDict(DictMixin):
-    __slots__ = ("_xpak", "_parent", "_pkg", "contents", "_wipes", "_chf_obj")
+    __slots__ = ("_chf_obj", "_parent", "_pkg", "_wipes", "_xpak", "contents")
 
-    _metadata_rewrites = {
+    _metadata_rewrites: typing.ClassVar[dict[str, str]] = {
         "bdepend": "BDEPEND",
         "depend": "DEPEND",
         "rdepend": "RDEPEND",
@@ -225,8 +226,8 @@ class tree(prototype.tree):
             if not os.path.exists(self.base):
                 raise errors.InitializationError(f"base {self.base!r} doesn't exist")
             raise errors.InitializationError(
-                "base directory %r with mode 0%03o isn't readable/executable"
-                " by this user" % (self.base, os.stat(self.base).st_mode & 0o4777)
+                f"base directory {self.base!r} with mode 0{os.stat(self.base).st_mode & 0o4777:03o}"
+                " isn't readable/executable by this user"
             )
 
         self.cache = remote.get_cache_kls(cache_version)(
@@ -243,7 +244,7 @@ class tree(prototype.tree):
     def _get_categories(self):
         try:
             return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
-        except EnvironmentError as e:
+        except OSError as e:
             raise KeyError(f"failed fetching categories: {e}") from e
 
     def _get_packages(self, category):
@@ -256,7 +257,7 @@ class tree(prototype.tree):
                 # don't use lstat; symlinks may exist
                 if (
                     x.endswith(".lockfile")
-                    or not x[-lext:].lower() == self.extension
+                    or x[-lext:].lower() != self.extension
                     or x.startswith(".tmp.")
                 ):
                     continue
@@ -264,10 +265,9 @@ class tree(prototype.tree):
                 pkg = VersionedCPV(f"{category}/{pv}")
                 l.add(pkg.package)
                 d.setdefault((category, pkg.package), []).append(pkg.fullver)
-        except EnvironmentError as e:
+        except OSError as e:
             raise KeyError(
-                "failed fetching packages for category %s: %s"
-                % (pjoin(self.base, category.lstrip(os.path.sep)), str(e))
+                f"failed fetching packages for category {pjoin(self.base, category.lstrip(os.path.sep))}: {e!s}"
             ) from e
 
         self._versions_tmp_cache.update(d)

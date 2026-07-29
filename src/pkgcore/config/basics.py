@@ -5,20 +5,20 @@ all callables can/may throw a :class:`pkgcore.config.errors.ConfigurationError`
 """
 
 __all__ = (
-    "ConfigType",
-    "LazySectionRef",
-    "LazyNamedSectionRef",
     "ConfigSection",
+    "ConfigType",
     "DictConfigSection",
-    "convert_string",
+    "LazyNamedSectionRef",
+    "LazySectionRef",
     "convert_asis",
     "convert_hybrid",
+    "convert_string",
+    "parse_config_file",
     "section_alias",
-    "str_to_list",
-    "str_to_str",
     "str_to_bool",
     "str_to_int",
-    "parse_config_file",
+    "str_to_list",
+    "str_to_str",
 )
 
 import typing
@@ -93,7 +93,7 @@ class ConfigType:
         # against the case where there is no Hint
         if not getattr(hint_overrides, "authorative", None):
             try:
-                code = getattr(func_obj, "__code__")
+                code = func_obj.__code__
             except AttributeError as e:
                 if func_obj != object.__init__:
                     raise TypeError(
@@ -146,11 +146,10 @@ class ConfigType:
             self.allow_unknowns = hint_overrides.allow_unknowns
             self.requires_config = hint_overrides.requires_config
             self.raw_class = hint_overrides.raw_class
-            if self.requires_config:
-                if self.requires_config in self.required:
-                    self.required = tuple(
-                        x for x in self.required if x != self.requires_config
-                    )
+            if self.requires_config and self.requires_config in self.required:
+                self.required = tuple(
+                    x for x in self.required if x != self.requires_config
+                )
         elif varargs or varkw:
             raise TypeError(
                 f"func {self.callable} accepts *args or **kwargs, "
@@ -271,7 +270,7 @@ class DictConfigSection(ConfigSection):
 
     def render_value(
         self, central, name: str, arg_type: str
-    ) -> typing.Union[typing.Any, tuple[str, typing.Any]]:
+    ) -> typing.Any | tuple[str, typing.Any]:
         try:
             return self.func(central, self.dict[name], arg_type)
         except IGNORED_EXCEPTIONS:
@@ -359,7 +358,7 @@ _str_converters = {
 def convert_string(central, value, arg_type: str):
     """Conversion func for a string-based DictConfigSection."""
     if not isinstance(value, str):
-        raise ValueError(
+        raise TypeError(
             "convert_string invoked with non str instance: "
             f"val({value!r}), arg_type({arg_type!r})"
         )
@@ -375,9 +374,9 @@ def convert_string(central, value, arg_type: str):
             raise errors.ConfigurationError(f"{value!r} is not callable")
         return func
     elif arg_type.startswith("refs:"):
-        return list(
+        return [
             LazyNamedSectionRef(central, arg_type, ref) for ref in str_to_list(value)
-        )
+        ]
     elif arg_type.startswith("ref:"):
         return LazyNamedSectionRef(central, arg_type, str_to_str(value))
     elif arg_type == "repr":
@@ -465,13 +464,10 @@ def section_alias(target, typename: str) -> AutoConfigSection:
 @configurable(types={"path": "str", "parser": "callable"}, typename="configsection")
 def parse_config_file(path: str, parser):
     try:
-        f = open(path, "r")
-    except (IOError, OSError) as e:
+        with open(path, "r") as f:
+            return parser(f)
+    except OSError as e:
         raise errors.InstantiationError(f"failed opening {path!r}") from e
-    try:
-        return parser(f)
-    finally:
-        f.close()
 
 
 class ConfigSource:

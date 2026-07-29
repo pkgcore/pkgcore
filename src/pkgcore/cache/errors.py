@@ -3,10 +3,10 @@ cache subsystem exceptions
 """
 
 __all__ = (
-    "CacheError",
-    "InitializationError",
     "CacheCorruption",
+    "CacheError",
     "GeneralCacheCorruption",
+    "InitializationError",
     "ReadOnly",
 )
 

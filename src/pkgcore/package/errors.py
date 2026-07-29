@@ -1,10 +1,10 @@
 __all__ = (
-    "PackageError",
+    "ChksumError",
+    "InvalidDependency",
     "InvalidPackageName",
     "MetadataException",
-    "InvalidDependency",
-    "ChksumError",
     "MissingChksum",
+    "PackageError",
     "ParseChksumError",
 )
 

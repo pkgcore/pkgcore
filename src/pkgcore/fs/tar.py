@@ -59,7 +59,7 @@ def add_contents_to_tarfile(contents_set, tar_fd, absolute_paths=False):
             if existing is not None:
                 if x._can_be_hardlinked(existing):
                     t.type = tarfile.LNKTYPE
-                    t.linkname = "./%s" % existing.location.lstrip("/")
+                    t.linkname = "./{}".format(existing.location.lstrip("/"))
                     t.size = 0
             else:
                 inodes[key] = x
@@ -97,10 +97,10 @@ def archive_to_fsobj(src_tar):
                 inode = inodes.get(target)
                 if inode is None:
                     raise AssertionError(
-                        "Tarfile file %r is a hardlink to %r, but we can't "
-                        "find the resolved hardlink target %r in the archive.  "
+                        f"Tarfile file {member.name!r} is a hardlink to {member.linkname!r}, but we can't "
+                        f"find the resolved hardlink target {target!r} in the archive.  "
                         "This means either a bug in pkgcore, or a malformed "
-                        "tarball." % (member.name, member.linkname, target)
+                        "tarball."
                     )
                 d["inode"] = inode
             else:
@@ -126,8 +126,7 @@ def archive_to_fsobj(src_tar):
             yield fsDev(location, **d)
         else:
             raise AssertionError(
-                "unknown type %r, %r was encounted walking tarmembers"
-                % (member, member.type)
+                f"unknown type {member!r}, {member.type!r} was encounted walking tarmembers"
             )
 
 
@@ -152,7 +151,7 @@ def fsobj_to_tarinfo(fsobj, absolute_path=True):
         t.devminor = fsobj.minor
     t.name = fsobj.location
     if not absolute_path:
-        t.name = "./%s" % (fsobj.location.lstrip("/"),)
+        t.name = f"./{fsobj.location.lstrip('/')}"
     t.mode = fsobj.mode
     t.uid = fsobj.uid
     t.gid = fsobj.gid

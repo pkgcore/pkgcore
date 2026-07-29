@@ -18,5 +18,4 @@ class SystemSet:
         self.system = frozenset(profile.system)
 
     def __iter__(self):
-        for pkg in self.system:
-            yield pkg
+        yield from self.system

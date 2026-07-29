@@ -37,7 +37,7 @@ elif ostype in ("FreeBSD", "OpenBSD", "NetBSD", "SunOS"):
     xargs = os.environ["XARGS"] = "xargs"
     lchown = os.lchown
 else:
-    raise Exception("Operating system unsupported, '%s'" % ostype)
+    raise RuntimeError(f"Operating system unsupported, '{ostype}'")
 
 uid = os.getuid()
 gid = os.getgid()

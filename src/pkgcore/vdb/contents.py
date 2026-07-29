@@ -1,4 +1,4 @@
-__all__ = ("LookupFsDev", "ContentsFile")
+__all__ = ("ContentsFile", "LookupFsDev")
 
 import os
 import stat
@@ -55,10 +55,9 @@ class ContentsFile(contentsSet):
         return cset
 
     def add(self, obj):
-        if obj.is_reg:
-            # strict checks
-            if obj.chksums is None or "md5" not in obj.chksums:
-                raise TypeError("fsFile objects need to be strict")
+        # strict checks
+        if obj.is_reg and (obj.chksums is None or "md5" not in obj.chksums):
+            raise TypeError("fsFile objects need to be strict")
 
         contentsSet.add(self, obj)
 
@@ -104,20 +103,16 @@ class ContentsFile(contentsSet):
                     strict=False,
                 )
             elif s[0] == "sym":
-                try:
-                    p = s.index("->")
-                    obj = fs.fsLink(
-                        " ".join(s[1:p]),
-                        " ".join(s[p + 1 : -1]),
-                        mtime=int(s[-1]),
-                        strict=False,
-                    )
-
-                except ValueError:
-                    # XXX throw a corruption error
-                    raise
+                # XXX: ValueError here (e.g. missing "->") should throw a corruption error
+                p = s.index("->")
+                obj = fs.fsLink(
+                    " ".join(s[1:p]),
+                    " ".join(s[p + 1 : -1]),
+                    mtime=int(s[-1]),
+                    strict=False,
+                )
             else:
-                raise Exception(f"unknown entry type {line!r}")
+                raise ValueError(f"unknown entry type {line!r}")
 
             yield obj
 
@@ -153,7 +148,7 @@ class ContentsFile(contentsSet):
                     s = "fif " + obj.location
 
                 else:
-                    raise Exception(f"unknown type {type(obj)}: {obj}")
+                    raise TypeError(f"unknown type {type(obj)}: {obj}")
                 outfile.write(s + "\n")
             outfile.close()
 

@@ -88,15 +88,16 @@ class base:
         else:
             f = self._wrap_exception
         for op in self.enabled_operations:
-            setattr(self, op, f(getattr(self, "_cmd_api_%s" % op), op))
+            setattr(self, op, f(getattr(self, f"_cmd_api_{op}"), op))
 
     def _filter_disabled_commands(self, sequence):
         for command in sequence:
-            obj = getattr(self, "_cmd_api_%s" % command, None)
-            if not getattr(obj, "_is_standalone", False):
-                if not hasattr(self, "_cmd_implementation_%s" % command):
-                    continue
-            check_f = getattr(self, "_cmd_check_support_%s" % command, None)
+            obj = getattr(self, f"_cmd_api_{command}", None)
+            if not getattr(obj, "_is_standalone", False) and not hasattr(
+                self, f"_cmd_implementation_{command}"
+            ):
+                continue
+            check_f = getattr(self, f"_cmd_check_support_{command}", None)
             if check_f is not None and not check_f():
                 continue
             yield command

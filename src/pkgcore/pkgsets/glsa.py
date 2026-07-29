@@ -5,6 +5,7 @@ Gentoo Linux Security Advisories (GLSA) support
 __all__ = ("GlsaDirSet", "SecurityUpgrades")
 
 import os
+import typing
 from os.path import join as pjoin
 
 from lxml import etree
@@ -29,7 +30,13 @@ class GlsaDirSet(GenericEquality):
     """
 
     pkgcore_config_type = ConfigHint(types={"src": "ref:repo"}, typename="pkgset")
-    op_translate = {"ge": ">=", "gt": ">", "lt": "<", "le": "<=", "eq": "="}
+    op_translate: typing.ClassVar[dict[str, str]] = {
+        "ge": ">=",
+        "gt": ">",
+        "lt": "<",
+        "le": "<=",
+        "eq": "=",
+    }
     __attr_comparison__ = ("paths",)
 
     METADATA_FILES = frozenset(
@@ -155,7 +162,7 @@ class GlsaDirSet(GenericEquality):
             if tag is None:
                 return packages.KeyedAndRestriction(vuln, tag=tag)
             return packages.KeyedAndRestriction(vuln, tag=tag)
-        return packages.KeyedAndRestriction(vuln, tag=tag, *invuln)
+        return packages.KeyedAndRestriction(vuln, *invuln, tag=tag)
 
     def generate_restrict_from_range(self, node, negate=False):
         op = str(node.get("range").strip())

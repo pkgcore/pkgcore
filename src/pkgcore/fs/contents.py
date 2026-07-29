@@ -372,7 +372,7 @@ class contentsSet(GenericEquality):
     def add_missing_directories(self, mode=0o775, uid=0, gid=0, mtime=None):
         """Ensure that a directory node exists for each path; add if missing."""
         missing = (x.dirname for x in self)
-        missing = set(x for x in missing if x not in self)
+        missing = {x for x in missing if x not in self}
         if mtime is None:
             mtime = time.time()
         # have to go recursive since many directories may be missing.

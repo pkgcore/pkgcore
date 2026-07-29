@@ -6,10 +6,10 @@ api, for example per phase methods.
 """
 
 __all__ = (
-    "install_op",
-    "uninstall_op",
-    "replace_op",
     "built_operations",
+    "install_op",
+    "replace_op",
+    "uninstall_op",
 )
 
 import errno
@@ -18,6 +18,7 @@ import re
 import shutil
 import sys
 import time
+import typing
 from collections import defaultdict
 from contextlib import chdir
 from functools import partial
@@ -107,7 +108,7 @@ class ebd:
             self.env[k] = " ".join(sorted(v))
 
         self.bashrc = self.env.pop("bashrc", ())
-        self.features = set(x.lower() for x in self.domain.features)
+        self.features = {x.lower() for x in self.domain.features}
         self.env["FEATURES"] = " ".join(sorted(self.features))
         self.set_path_vars(self.env, self.pkg, self.domain)
 
@@ -144,8 +145,7 @@ class ebd:
         if "PORT_LOGDIR" in self.env:
             self.logging = pjoin(
                 self.env["PORT_LOGDIR"],
-                "%s:%s:%s.log"
-                % (
+                "{}:{}:{}.log".format(
                     pkg.cpvstr,
                     self.__class__.__name__,
                     time.strftime("%Y%m%d-%H%M%S", time.localtime()),
@@ -288,8 +288,8 @@ class ebd:
         if not ensure_dirs(self.env["T"], mode=0o770, gid=portage_gid, minimal=True):
             raise format.FailedDirectory(
                 self.env["T"],
-                "%s doesn't fulfill minimum mode %o and gid %i"
-                % (self.env["T"], 0o770, portage_gid),
+                f"{self.env['T']} doesn't fulfill minimum mode {0o770:o} "
+                f"and gid {portage_gid}",
             )
 
         if self.env_data_source is not None:
@@ -323,7 +323,7 @@ class ebd:
 
         if (
             not self.eapi.phases.get(phase, "").startswith("pkg_")
-            and not phase == "setup-binpkg"
+            and phase != "setup-binpkg"
         ):
             return
 
@@ -344,7 +344,7 @@ class ebd:
         ):
             raise format.FailedDirectory(
                 os.path.dirname(self.logging),
-                "PORT_LOGDIR, desired mode 02770 and gid %i" % portage_gid,
+                f"PORT_LOGDIR, desired mode 02770 and gid {portage_gid}",
             )
 
     def setup_workdir(self):
@@ -353,8 +353,7 @@ class ebd:
             if not ensure_dirs(self.env[k], mode=0o4770, gid=portage_gid, minimal=True):
                 raise format.FailedDirectory(
                     self.env[k],
-                    "%s doesn't fulfill minimum mode %o and gid %i"
-                    % (k, 0o770, portage_gid),
+                    f"{k} doesn't fulfill minimum mode {0o770:o} and gid {portage_gid}",
                 )
             # XXX hack, just 'til pkgcore controls these directories
             if os.stat(self.env[k]).st_mode & 0o2000:
@@ -365,7 +364,7 @@ class ebd:
         phase,
         userpriv,
         sandbox,
-        extra_handlers={},
+        extra_handlers=None,
         failure_allowed=False,
         suppress_bashrc=False,
     ):
@@ -376,6 +375,8 @@ class ebd:
             :obj:`pkgcore.os_data.portage_gid` access for this phase?
         :param sandbox: should this phase be sandboxed?
         """
+        if extra_handlers is None:
+            extra_handlers = {}
         if phase not in self.pkg.mandatory_phases:
             # TODO(ferringb): Note the preinst hack; this will be removed once dyn_pkg_preinst
             # is dead in full (currently it has a selinux labelling and suidctl ran from there)
@@ -432,9 +433,8 @@ class ebd:
             self.env["REPLACED_BY_VERSION"] = pkg.PVR
 
     def cleanup(self, disable_observer=False, force=False):
-        if not force:
-            if not self.clean_needed:
-                return True
+        if not force and not self.clean_needed:
+            return True
         if not os.path.exists(self.builddir):
             return True
         if disable_observer:
@@ -448,13 +448,13 @@ class ebd:
             # try to wipe the cat dir; if not empty, ignore it
             try:
                 os.rmdir(os.path.dirname(self.builddir))
-            except EnvironmentError as e:
+            except OSError as e:
                 # POSIX specifies either ENOTEMPTY or EEXIST for non-empty dir
                 # in particular, Solaris uses EEXIST in that case.
                 # https://github.com/pkgcore/pkgcore/pull/181
                 if e.errno not in (errno.ENOTEMPTY, errno.EEXIST):
                     raise
-        except EnvironmentError as e:
+        except OSError as e:
             raise format.GenericBuildError(
                 f"clean: Caught exception while cleansing: {e}"
             ) from e
@@ -483,7 +483,7 @@ class ebd:
     def __stage_step_callback__(self, stage):
         try:
             touch(pjoin(self.builddir, f".{stage}"))
-        except EnvironmentError:
+        except OSError:
             # we really don't care...
             pass
 
@@ -492,7 +492,7 @@ class ebd:
             self.__set_stage_state__(
                 [x[1:] for x in listdir_files(self.builddir) if x.startswith(".")]
             )
-        except EnvironmentError as e:
+        except OSError as e:
             if e.errno not in (errno.ENOTDIR, errno.ENOENT):
                 raise
 
@@ -566,18 +566,20 @@ def run_generic_phase(
     sys.stdout.flush()
     sys.stderr.flush()
     try:
-        if not ebd.run_phase(
-            phase,
-            env,
-            tmpdir=tmpdir,
-            sandbox=sandbox,
-            logging=logging,
-            additional_commands=extra_handlers,
+        if (
+            not ebd.run_phase(
+                phase,
+                env,
+                tmpdir=tmpdir,
+                sandbox=sandbox,
+                logging=logging,
+                additional_commands=extra_handlers,
+            )
+            and not failure_allowed
         ):
-            if not failure_allowed:
-                raise format.GenericBuildError(
-                    phase + ": Failed building (False/0 return from handler)"
-                )
+            raise format.GenericBuildError(
+                phase + ": Failed building (False/0 return from handler)"
+            )
     except Exception as e:
         if isinstance(e, ebd_ipc.IpcError):
             # notify bash side of IPC error
@@ -595,7 +597,7 @@ def run_generic_phase(
         if isinstance(e, ProcessorError):
             # force verbose die output
             e._verbosity = 1
-            raise e
+            raise
         elif isinstance(e, IGNORED_EXCEPTIONS + (format.GenericBuildError,)):
             raise
         raise format.GenericBuildError(
@@ -781,7 +783,7 @@ class buildable(ebd, setup_mixin, format.build):
         if self.eapi.options.has_AA:
             pkg = self.pkg
             while hasattr(pkg, "_raw_pkg"):
-                pkg = getattr(pkg, "_raw_pkg")
+                pkg = pkg._raw_pkg
             self.env["AA"] = " ".join(set(iflatten_instance(pkg.distfiles)))
 
         if self.eapi.options.has_KV:
@@ -822,7 +824,7 @@ class buildable(ebd, setup_mixin, format.build):
                     else:
                         os.unlink(self.env["DISTDIR"])
 
-            except EnvironmentError as e:
+            except OSError as e:
                 raise format.FailedDirectory(
                     self.env["DISTDIR"], f"failed removing existing file/dir/link: {e}"
                 ) from e
@@ -839,7 +841,7 @@ class buildable(ebd, setup_mixin, format.build):
                 ]:
                     os.symlink(src, dest)
 
-            except EnvironmentError as e:
+            except OSError as e:
                 raise format.GenericBuildError(
                     f"Failed symlinking in distfiles for src {src} -> {dest}: {e}"
                 ) from e
@@ -894,8 +896,9 @@ class buildable(ebd, setup_mixin, format.build):
                                 "failed changing ownership for CCACHE_DIR",
                             )
                         if 0 != spawn_bash(
-                            "find '%s' -type d -print0 | %s --null chmod 02775"
-                            % (self.env["CCACHE_DIR"], xargs)
+                            "find '{}' -type d -print0 | {} --null chmod 02775".format(
+                                self.env["CCACHE_DIR"], xargs
+                            )
                         ):
                             raise format.FailedDirectory(
                                 self.env["CCACHE_DIR"],
@@ -903,8 +906,9 @@ class buildable(ebd, setup_mixin, format.build):
                             )
 
                         if 0 != spawn_bash(
-                            "find '%s' -type f -print0 | %s --null chmod 0775"
-                            % (self.env["CCACHE_DIR"], xargs)
+                            "find '{}' -type f -print0 | {} --null chmod 0775".format(
+                                self.env["CCACHE_DIR"], xargs
+                            )
                         ):
                             raise format.FailedDirectory(
                                 self.env["CCACHE_DIR"],
@@ -962,7 +966,7 @@ class buildable(ebd, setup_mixin, format.build):
                 os.chown(self.env["WORKDIR"], portage_uid, -1)
             except OSError as e:
                 raise format.GenericBuildError(
-                    "failed forcing %i uid for WORKDIR: %s" % (portage_uid, e)
+                    f"failed forcing {portage_uid} uid for WORKDIR: {e}"
                 ) from e
         return self._generic_phase("unpack", True, True)
 
@@ -1009,7 +1013,10 @@ class buildable(ebd, setup_mixin, format.build):
 
 
 class binpkg_localize(ebd, setup_mixin, format.build):
-    stage_depends = {"finalize": "setup", "setup": "start"}
+    stage_depends: typing.ClassVar[dict[str, str]] = {
+        "finalize": "setup",
+        "setup": "start",
+    }
     setup_is_for_src = False
 
     def __init__(self, domain, pkg, **kwargs):
@@ -1026,7 +1033,7 @@ class binpkg_localize(ebd, setup_mixin, format.build):
 
 
 class ebuild_operations:
-    _checks = []
+    _checks: typing.ClassVar[list] = []
 
     def _register_check(checks):
         """Decorator to register sanity checks that will be run."""
@@ -1055,11 +1062,12 @@ class ebuild_operations:
         Note that this assumes the REQUIRED_USE depset has been evaluated
         against a known set of enabled USE flags and is in collapsed form.
         """
-        if pkg.eapi.options.has_required_use:
-            if failures := tuple(
+        if pkg.eapi.options.has_required_use and (
+            failures := tuple(
                 node for node in pkg.required_use if not node.match(pkg.use)
-            ):
-                return errors.RequiredUseError(pkg, failures)
+            )
+        ):
+            return errors.RequiredUseError(pkg, failures)
 
     @_register_check(_checks)
     def _check_pkg_pretend(self, pkg, *, domain, **kwargs):
@@ -1166,9 +1174,7 @@ class built_operations(ebuild_operations, format.operations):
 
     def _cmd_check_support_configure(self):
         pkg = self.pkg
-        if "config" not in pkg.mandatory_phases:
-            return False
-        return True
+        return "config" in pkg.mandatory_phases
 
     def _cmd_implementation_configure(self, observer):
         misc = misc_operations(

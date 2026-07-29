@@ -2,7 +2,7 @@
 virtual repository, pkgs generated via callable
 """
 
-__all__ = ("tree", "RestrictionRepo")
+__all__ = ("RestrictionRepo", "tree")
 
 from snakeoil.compatibility import cmp
 
@@ -33,12 +33,11 @@ class tree(prototype.tree):
     def _internal_gen_candidates(self, candidates, sorter):
         pkls = self.package_class
         for cp in candidates:
-            for pkg in sorter(
+            yield from sorter(
                 pkls(provider, cp[0], cp[1], ver)
                 for ver in self.versions.get(cp, ())
                 for provider in self._expand_vers(cp, ver)
-            ):
-                yield pkg
+            )
 
     def _get_categories(self):
         return ("virtual",)
@@ -56,16 +55,16 @@ class tree(prototype.tree):
 class InjectedPkg(pkg_base.wrapper):
     __slots__ = (
         "bdepend",
+        "built",
+        "data",
         "depend",
-        "rdepend",
-        "pdepend",
         "idepend",
+        "pdepend",
+        "rdepend",
         "repo",
         "repo_id",
-        "built",
-        "versioned_atom",
         "unversioned_atom",
-        "data",
+        "versioned_atom",
     )
     default_bdepend = default_depend = default_rdepend = default_pdepend = (
         default_idepend
@@ -177,11 +176,15 @@ class RestrictionRepo(tree):
                 yield pkg
 
         # inject/yield any matching atoms into the repo that aren't blockers
-        if self._restrictions and isinstance(restrict, atom.atom):
-            if self.restriction.match(restrict) and not restrict.blocks:
-                p = pkg_cls(restrict, self)
-                self._injected_pkgs[p] = None
-                yield p
+        if (
+            self._restrictions
+            and isinstance(restrict, atom.atom)
+            and self.restriction.match(restrict)
+            and not restrict.blocks
+        ):
+            p = pkg_cls(restrict, self)
+            self._injected_pkgs[p] = None
+            yield p
 
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))

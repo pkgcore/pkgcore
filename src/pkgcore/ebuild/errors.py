@@ -5,7 +5,7 @@
 atom exceptions
 """
 
-__all__ = ("MalformedAtom", "InvalidVersion", "InvalidCPV", "DepsetParseError")
+__all__ = ("DepsetParseError", "InvalidCPV", "InvalidVersion", "MalformedAtom")
 
 import textwrap
 

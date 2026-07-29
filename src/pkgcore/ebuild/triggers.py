@@ -1,22 +1,23 @@
 """gentoo/ebuild specific triggers"""
 
 __all__ = (
-    "collapse_envd",
-    "string_collapse_envd",
-    "env_update",
+    "CollisionProtect",
     "ConfigProtectInstall",
     "ConfigProtectUninstall",
-    "preinst_contents_reset",
-    "CollisionProtect",
-    "ProtectOwned",
-    "InfoRegen",
-    "SFPerms",
     "FixImageSymlinks",
     "GenerateTriggers",
+    "InfoRegen",
+    "ProtectOwned",
+    "SFPerms",
+    "collapse_envd",
+    "env_update",
+    "preinst_contents_reset",
+    "string_collapse_envd",
 )
 
 import fnmatch
 import os
+import typing
 from os.path import join as pjoin
 from os.path import normpath
 
@@ -75,8 +76,7 @@ def collapse_envd(base):
     else:
         for x in env_d_files:
             if (
-                x.endswith(".bak")
-                or x.endswith("~")
+                x.endswith((".bak", "~"))
                 or x.startswith("._cfg")
                 or len(x) <= 2
                 or not x[0:2].isdigit()
@@ -200,7 +200,7 @@ def simple_chksum_compare(x, y):
 
 
 def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
-    collapsed_d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
+    collapsed_d, _inc, _colon = collapse_envd(pjoin(offset, "etc/env.d"))
     collapsed_d.setdefault("CONFIG_PROTECT", []).extend(extra_protects)
     collapsed_d.setdefault("CONFIG_PROTECT_MASK", []).extend(extra_disables)
 
@@ -218,15 +218,15 @@ def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
             r2 = values.StrGlobMatch(normpath(neg[0]).rstrip("/") + "/", negate=True)
         else:
             r2 = values.OrRestriction(
-                negate=True,
                 *[values.StrGlobMatch(normpath(x).rstrip("/") + "/") for x in set(neg)],
+                negate=True,
             )
         r = values.AndRestriction(r, r2)
     return r
 
 
 def gen_collision_ignore_filter(offset, extra_ignores=()):
-    collapsed_d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
+    collapsed_d, _inc, _colon = collapse_envd(pjoin(offset, "etc/env.d"))
     ignored = collapsed_d.setdefault("COLLISION_IGNORE", [])
     ignored.extend(extra_ignores)
     ignored.extend(["*/.keep", "*/.keep_*"])
@@ -315,7 +315,7 @@ class ConfigProtectInstall(triggers.base):
                 except KeyError:
                     # this shouldn't occur...
                     continue
-                new_fn = pjoin(dir_loc, "._cfg%04i_%s" % (count, fname))
+                new_fn = pjoin(dir_loc, f"._cfg{count:04d}_{fname}")
                 new_entry = entry.change_attributes(location=new_fn)
                 install_cset.add(new_entry)
                 self.renames[new_entry] = entry
@@ -366,7 +366,7 @@ class ConfigProtectUninstall(triggers.base):
 
 
 class UninstallIgnore(triggers.base):
-    required_csets = {
+    required_csets: typing.ClassVar[dict] = {
         const.REPLACE_MODE: ("uninstall_existing", "uninstall", "old_cset"),
         const.UNINSTALL_MODE: ("uninstall_existing", "uninstall"),
     }
@@ -378,7 +378,9 @@ class UninstallIgnore(triggers.base):
         super().__init__()
         self.uninstall_ignore = uninstall_ignore
 
-    def trigger(self, engine, existing_cset, uninstall_cset, old_cset={}):
+    def trigger(self, engine, existing_cset, uninstall_cset, old_cset=None):
+        if old_cset is None:
+            old_cset = {}
         ignore = [
             values.StrRegex(fnmatch.translate(x), match=True)
             for x in self.uninstall_ignore
@@ -415,7 +417,7 @@ class preinst_contents_reset(triggers.base):
 class FileCollision(triggers.base):
     """Generic livefs file collision trigger."""
 
-    required_csets = {
+    required_csets: typing.ClassVar[dict] = {
         const.INSTALL_MODE: ("install", "install_existing"),
         const.REPLACE_MODE: ("install", "install_existing", "old_cset"),
     }
@@ -474,10 +476,9 @@ class FileCollision(triggers.base):
 
 class CollisionProtect(FileCollision):
     def collision(self, colliding):
+        collisions = ", ".join(repr(x) for x in sorted(colliding))
         raise errors.BlockModification(
-            self,
-            "collision-protect: file(s) already exist: ( %s )"
-            % ", ".join(repr(x) for x in sorted(colliding)),
+            self, f"collision-protect: file(s) already exist: ( {collisions} )"
         )
 
 
@@ -497,17 +498,14 @@ class ProtectOwned(FileCollision):
                 collisions[pkg.cpvstr] = pkg_file_collisions
 
         if collisions:
-            pkg_collisions = [
-                "( %s ) owned by '%s'"
-                % (
+            pkg_collisions = ", ".join(
+                "( {} ) owned by '{}'".format(
                     ", ".join(repr(x) for x in sorted(collisions[pkg_cpvstr])),
                     pkg_cpvstr,
                 )
                 for pkg_cpvstr in sorted(collisions.keys())
-            ]
-            raise errors.BlockModification(
-                self, "protect-owned: %s" % (", ".join(pkg_collisions),)
             )
+            raise errors.BlockModification(self, f"protect-owned: {pkg_collisions}")
 
         # TODO: output a file override warning here
 
@@ -553,18 +551,16 @@ class SFPerms(triggers.base):
     def trigger(self, engine, cset):
         resets = []
         for x in cset.iterfiles():
-            if x.mode & 0o4000:
-                if x.mode & 0o044:
-                    engine.observer.warn(
-                        f"sfperms: dropping group/world read due to SetGID: {x!r}"
-                    )
-                    resets.append(x.change_attributes(mode=x.mode & ~0o44))
-            if x.mode & 0o2000:
-                if x.mode & 0o004:
-                    engine.observer.warn(
-                        f"sfperms: dropping world read due to SetUID: {x!r}"
-                    )
-                    resets.append(x.change_attributes(mode=x.mode & ~0o04))
+            if x.mode & 0o4000 and x.mode & 0o044:
+                engine.observer.warn(
+                    f"sfperms: dropping group/world read due to SetGID: {x!r}"
+                )
+                resets.append(x.change_attributes(mode=x.mode & ~0o44))
+            if x.mode & 0o2000 and x.mode & 0o004:
+                engine.observer.warn(
+                    f"sfperms: dropping world read due to SetUID: {x!r}"
+                )
+                resets.append(x.change_attributes(mode=x.mode & ~0o04))
         cset.update(resets)
 
 

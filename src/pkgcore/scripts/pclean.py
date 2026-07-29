@@ -8,6 +8,7 @@ import re
 import shutil
 import sys
 import time
+import typing
 from collections import defaultdict
 from functools import partial
 from itertools import chain
@@ -78,8 +79,7 @@ def _setup_shared_opts(namespace):
         unknown_sets = set(disabled + enabled).difference(namespace.config.pkgset)
         if unknown_sets:
             argparser.error(
-                "unknown set%s: %s (available sets: %s)"
-                % (
+                "unknown set{}: {} (available sets: {})".format(
                     pluralism(unknown_sets),
                     ", ".join(sorted(map(repr, unknown_sets))),
                     ", ".join(sorted(namespace.config.pkgset)),
@@ -101,7 +101,7 @@ def _setup_shared_opts(namespace):
 
     if exclude_restrictions:
         namespace.restrict.append(
-            boolean.OrRestriction(negate=True, *exclude_restrictions)
+            boolean.OrRestriction(*exclude_restrictions, negate=True)
         )
         namespace.exclude_restrict = boolean.OrRestriction(*exclude_restrictions)
 
@@ -116,7 +116,7 @@ def parse_time(s):
     units["m"] = units["d"] * 30
     units["y"] = units["d"] * 365
 
-    date = re.match(r"^(\d+)(%s)$" % "|".join(units.keys()), s)
+    date = re.match(r"^(\d+)({})$".format("|".join(units.keys())), s)
     if date:
         value = int(date.group(1))
         unit = date.group(2)
@@ -135,7 +135,7 @@ def parse_size(s):
         "G": 1024**3,
     }
 
-    size = re.match(r"^(\d+)([%s])$" % "".join(units.keys()), s)
+    size = re.match(r"^(\d+)([{}])$".format("".join(units.keys())), s)
     if size:
         value = int(size.group(1))
         unit = size.group(2)
@@ -261,7 +261,7 @@ class _UnfilteredRepos(DictMixin):
 
     __slots__ = ("domain", "unfiltered_repos")
 
-    _supported_attrs = {
+    _supported_attrs: typing.ClassVar[set[str]] = {
         "pkg_masks",
         "pkg_unmasks",
         "pkg_accept_keywords",
@@ -422,7 +422,7 @@ def _dist_validate_args(parser, namespace):
     if repo is None:
         repo = multiplex.tree(*get_virtual_repos(namespace.domain.source_repos, False))
 
-    all_dist_files = set(os.path.basename(f) for f in listdir_files(distdir))
+    all_dist_files = {os.path.basename(f) for f in listdir_files(distdir)}
     target_files = set()
     installed_dist = set()
     exists_dist = set()
@@ -469,7 +469,7 @@ def _dist_validate_args(parser, namespace):
         for catpn, pkgs in target_dist.items():
             pn_regex = r"\W".join(re.split(r"\W", catpn.package))
             pkg_regex = re.compile(
-                r"(%s)(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*" % pn_regex, re.IGNORECASE
+                rf"({pn_regex})(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*", re.IGNORECASE
             )
             pkg_regex_prefixes.add(pn_regex)
             for pkg, files in pkgs.items():
@@ -478,8 +478,9 @@ def _dist_validate_args(parser, namespace):
                     if pkg_regex.match(f) or (
                         extra_regex_prefixes
                         and re.match(
-                            r"(%s)([\W?(0-9)+])+(\W\w+)*(\.\w+)+"
-                            % "|".join(extra_regex_prefixes[catpn]),
+                            r"({})([\W?(0-9)+])+(\W\w+)*(\.\w+)+".format(
+                                "|".join(extra_regex_prefixes[catpn])
+                            ),
                             f,
                         )
                     ):
@@ -498,8 +499,7 @@ def _dist_validate_args(parser, namespace):
                 pkg_regex_prefixes_str = "|".join(sorted(pkg_regex_prefixes))
                 regexes.append(
                     re.compile(
-                        r"(%s)(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*"
-                        % (pkg_regex_prefixes_str,)
+                        rf"({pkg_regex_prefixes_str})(\W\w+)+([\W?(0-9)+])*(\W\w+)*(\.\w+)*"
                     )
                 )
             if extra_regex_prefixes:
@@ -510,8 +510,7 @@ def _dist_validate_args(parser, namespace):
                 )
                 regexes.append(
                     re.compile(
-                        r"(%s)([\W?(0-9)+])+(\W\w+)*(\.\w+)+"
-                        % (extra_regex_prefixes_str,)
+                        rf"({extra_regex_prefixes_str})([\W?(0-9)+])+(\W\w+)*(\.\w+)+"
                     )
                 )
 

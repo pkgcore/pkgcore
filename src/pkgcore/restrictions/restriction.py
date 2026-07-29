@@ -48,7 +48,7 @@ class base(klass.SlotsPicklingMixin, immutable.Simple, memoize.WeaklyCachedABC):
 class AlwaysBool(base):
     """restriction that always yields a specific boolean"""
 
-    __slots__ = ("type", "negate")
+    __slots__ = ("negate", "type")
     type: T_restriction
     negate: bool
 
@@ -78,7 +78,7 @@ class AlwaysBool(base):
         return f"always '{self.negate}'"
 
     def __repr__(self):
-        return "<%s always %r @%#8x>" % (self.__class__.__name__, self.negate, id(self))
+        return f"<{self.__class__.__name__} always {self.negate!r} @{id(self):#8x}>"
 
     def __getstate__(self):
         return self.negate, self.type
@@ -91,7 +91,7 @@ class AlwaysBool(base):
 class Negate(base, caching=False):
     """wrap and negate a restriction instance"""
 
-    __slots__ = ("type", "_restrict")
+    __slots__ = ("_restrict", "type")
     type: T_restriction
 
     def __init__(self, restrict: base):
@@ -106,13 +106,13 @@ class Negate(base, caching=False):
         return not self._restrict.match(*a, **kw)
 
     def __str__(self):
-        return "not (%s)" % self._restrict
+        return f"not ({self._restrict})"
 
 
 class FakeType(base, caching=False):
     """wrapper to wrap and fake a node_type"""
 
-    __slots__ = ("type", "_restrict")
+    __slots__ = ("_restrict", "type")
 
     def __init__(self, restrict: base, new_type: T_restriction):
         """
@@ -133,7 +133,7 @@ class FakeType(base, caching=False):
 class AnyMatch(base):
     """Apply a nested restriction to every item in a sequence."""
 
-    __slots__ = ("restriction", "type", "negate")
+    __slots__ = ("negate", "restriction", "type")
 
     def __init__(self, childrestriction: base, node_type: T_restriction, negate=False):
         """Initialize.

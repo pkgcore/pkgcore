@@ -264,11 +264,12 @@ class EAPI(immutable.Strict):
                         [pjoin(const.EBD_PATH, "generate_global_func_list")],
                         cwd=const.EBD_PATH,
                         stdout=f,
+                        check=True,
                     )
-            except (IOError, subprocess.CalledProcessError) as e:
-                raise Exception(
-                    f"failed to generate list of global EAPI '{self}' specific functions: {str(e)}"
-                )
+            except (OSError, subprocess.CalledProcessError) as e:
+                raise RuntimeError(
+                    f"failed to generate list of global EAPI '{self}' specific functions: {e!s}"
+                ) from e
 
         with open(funcs, "r") as f:
             return frozenset(line.strip() for line in f)
@@ -286,11 +287,12 @@ class EAPI(immutable.Strict):
                         [pjoin(const.EBD_PATH, "generate_eapi_func_list"), self.magic],
                         cwd=const.EBD_PATH,
                         stdout=f,
+                        check=True,
                     )
-            except (IOError, subprocess.CalledProcessError) as e:
-                raise Exception(
-                    f"failed to generate list of EAPI '{self}' specific functions: {str(e)}"
-                )
+            except (OSError, subprocess.CalledProcessError) as e:
+                raise RuntimeError(
+                    f"failed to generate list of EAPI '{self}' specific functions: {e!s}"
+                ) from e
 
         with open(funcs, "r") as f:
             return frozenset(line.strip() for line in f)
@@ -312,11 +314,12 @@ class EAPI(immutable.Strict):
                         ],
                         cwd=const.EBD_PATH,
                         stdout=f,
+                        check=True,
                     )
-            except (IOError, subprocess.CalledProcessError) as e:
-                raise Exception(
-                    f"failed to generate list of EAPI {self} internal commands: {str(e)}"
-                )
+            except (OSError, subprocess.CalledProcessError) as e:
+                raise RuntimeError(
+                    f"failed to generate list of EAPI {self} internal commands: {e!s}"
+                ) from e
 
         with open(cmds, "r") as f:
             return frozenset(line.strip() for line in f)
@@ -338,11 +341,12 @@ class EAPI(immutable.Strict):
                         ],
                         cwd=const.EBD_PATH,
                         stdout=f,
+                        check=True,
                     )
-            except (IOError, subprocess.CalledProcessError) as e:
-                raise Exception(
-                    f"failed to generate list of EAPI {self} deprecated commands: {str(e)}"
-                )
+            except (OSError, subprocess.CalledProcessError) as e:
+                raise RuntimeError(
+                    f"failed to generate list of EAPI {self} deprecated commands: {e!s}"
+                ) from e
 
         with open(cmds, "r") as f:
             return frozenset(line.strip() for line in f)
@@ -364,11 +368,12 @@ class EAPI(immutable.Strict):
                         ],
                         cwd=const.EBD_PATH,
                         stdout=f,
+                        check=True,
                     )
-            except (IOError, subprocess.CalledProcessError) as e:
-                raise Exception(
-                    f"failed to generate list of EAPI {self} banned commands: {str(e)}"
-                )
+            except (OSError, subprocess.CalledProcessError) as e:
+                raise RuntimeError(
+                    f"failed to generate list of EAPI {self} banned commands: {e!s}"
+                ) from e
 
         with open(cmds, "r") as f:
             return frozenset(line.strip() for line in f)
@@ -391,11 +396,12 @@ class EAPI(immutable.Strict):
                         [script, "-s", "global", self.magic],
                         cwd=const.EBD_PATH,
                         stdout=f,
+                        check=True,
                     )
-            except (IOError, subprocess.CalledProcessError) as e:
-                raise Exception(
-                    f"failed to generate EAPI '{self}' global lib: {str(e)}"
-                )
+            except (OSError, subprocess.CalledProcessError) as e:
+                raise RuntimeError(
+                    f"failed to generate EAPI '{self}' global lib: {e!s}"
+                ) from e
 
         for phase in self.phases.values():
             eapi_lib = pjoin(const.EBD_PATH, ".generated", "libs", self.magic, phase)
@@ -407,11 +413,12 @@ class EAPI(immutable.Strict):
                             [script, "-s", phase, self.magic],
                             cwd=const.EBD_PATH,
                             stdout=f,
+                            check=True,
                         )
-                except (IOError, subprocess.CalledProcessError) as e:
-                    raise Exception(
-                        f"failed to generate EAPI '{self}' phase {phase} lib: {str(e)}"
-                    )
+                except (OSError, subprocess.CalledProcessError) as e:
+                    raise RuntimeError(
+                        f"failed to generate EAPI '{self}' phase {phase} lib: {e!s}"
+                    ) from e
 
     @klass.jit_attr
     def archive_exts_regex_pattern(self):
@@ -440,11 +447,10 @@ class EAPI(immutable.Strict):
 
     def interpret_cache_defined_phases(self, sequence):
         phases = set(sequence)
-        if not self.options.trust_defined_phases_cache:
-            if not phases:
-                # run them all; cache was generated
-                # by a pm that didn't support DEFINED_PHASES
-                return frozenset(self.phases)
+        if not self.options.trust_defined_phases_cache and not phases:
+            # run them all; cache was generated
+            # by a pm that didn't support DEFINED_PHASES
+            return frozenset(self.phases)
 
         phases.discard("-")
         return frozenset(phases)
@@ -668,10 +674,10 @@ eapi1 = EAPI.register(
     archive_exts=eapi0.archive_exts,
     optionals=_combine_dicts(
         eapi0.options,
-        dict(
-            iuse_defaults=True,
-            has_slot_deps=True,
-        ),
+        {
+            "iuse_defaults": True,
+            "has_slot_deps": True,
+        },
     ),
     ebd_env_options=eapi0._ebd_env_options,
 )
@@ -693,13 +699,13 @@ eapi2 = EAPI.register(
     archive_exts=eapi1.archive_exts,
     optionals=_combine_dicts(
         eapi1.options,
-        dict(
-            has_use_deps=True,
-            strong_blockers=True,
-            doman_language_detect=True,
-            transitive_use_atoms=True,
-            src_uri_renames=True,
-        ),
+        {
+            "has_use_deps": True,
+            "strong_blockers": True,
+            "doman_language_detect": True,
+            "transitive_use_atoms": True,
+            "src_uri_renames": True,
+        },
     ),
     ebd_env_options=eapi1._ebd_env_options,
 )
@@ -717,9 +723,9 @@ eapi3 = EAPI.register(
     archive_exts=eapi2.archive_exts | frozenset([".tar.xz", ".xz"]),
     optionals=_combine_dicts(
         eapi2.options,
-        dict(
-            prefix_capable=True,
-        ),
+        {
+            "prefix_capable": True,
+        },
     ),
     ebd_env_options=eapi2._ebd_env_options,
 )
@@ -737,18 +743,18 @@ eapi4 = EAPI.register(
     archive_exts=eapi3.archive_exts,
     optionals=_combine_dicts(
         eapi3.options,
-        dict(
-            dodoc_allow_recursive=True,
-            doman_language_override=True,
-            nonfatal=False,
-            exports_replacing=True,
-            has_AA=False,
-            has_KV=False,
-            has_merge_type=True,
-            has_required_use=True,
-            has_use_dep_defaults=True,
-            trust_defined_phases_cache=True,
-        ),
+        {
+            "dodoc_allow_recursive": True,
+            "doman_language_override": True,
+            "nonfatal": False,
+            "exports_replacing": True,
+            "has_AA": False,
+            "has_KV": False,
+            "has_merge_type": True,
+            "has_required_use": True,
+            "has_use_dep_defaults": True,
+            "trust_defined_phases_cache": True,
+        },
     ),
     ebd_env_options=eapi3._ebd_env_options,
 )
@@ -766,15 +772,15 @@ eapi5 = EAPI.register(
     archive_exts=eapi4.archive_exts,
     optionals=_combine_dicts(
         eapi4.options,
-        dict(
-            ebuild_phase_func=True,
-            profile_iuse_injection=True,
-            profile_stable_use=True,
-            query_host_root=True,
-            new_reads_stdin=True,
-            required_use_one_of=True,
-            sub_slotting=True,
-        ),
+        {
+            "ebuild_phase_func": True,
+            "profile_iuse_injection": True,
+            "profile_stable_use": True,
+            "query_host_root": True,
+            "new_reads_stdin": True,
+            "required_use_one_of": True,
+            "sub_slotting": True,
+        },
     ),
     ebd_env_options=eapi4._ebd_env_options,
 )
@@ -792,14 +798,14 @@ eapi6 = EAPI.register(
     archive_exts=eapi5.archive_exts | frozenset([".txz"]),
     optionals=_combine_dicts(
         eapi5.options,
-        dict(
-            global_failglob=True,
-            nonfatal_die=True,
-            unpack_absolute_paths=True,
-            unpack_case_insensitive=True,
-            user_patches=True,
-            bash_compat="4.2",
-        ),
+        {
+            "global_failglob": True,
+            "nonfatal_die": True,
+            "unpack_absolute_paths": True,
+            "unpack_case_insensitive": True,
+            "user_patches": True,
+            "bash_compat": "4.2",
+        },
     ),
     ebd_env_options=eapi5._ebd_env_options,
 )
@@ -817,17 +823,17 @@ eapi7 = EAPI.register(
     archive_exts=eapi6.archive_exts,
     optionals=_combine_dicts(
         eapi6.options,
-        dict(
-            has_profile_data_dirs=True,
-            has_portdir=False,
-            has_desttree=False,
-            profile_pkg_provided=False,
-            query_host_root=False,
-            query_deps=True,
-            has_sysroot=True,
-            has_env_unset=True,
-            trailing_slash="",
-        ),
+        {
+            "has_profile_data_dirs": True,
+            "has_portdir": False,
+            "has_desttree": False,
+            "profile_pkg_provided": False,
+            "query_host_root": False,
+            "query_deps": True,
+            "has_sysroot": True,
+            "has_env_unset": True,
+            "trailing_slash": "",
+        },
     ),
     ebd_env_options=eapi6._ebd_env_options,
 )
@@ -857,13 +863,13 @@ eapi8 = EAPI.register(
     ),
     optionals=_combine_dicts(
         eapi7.options,
-        dict(
-            accumulate_properties_restrict=True,
-            bash_compat="5.0",
-            dosym_relative=True,
-            src_uri_unrestrict=True,
-            update_regex=re.compile(r"^[^.]"),
-        ),
+        {
+            "accumulate_properties_restrict": True,
+            "bash_compat": "5.0",
+            "dosym_relative": True,
+            "src_uri_unrestrict": True,
+            "update_regex": re.compile(r"^[^.]"),
+        },
     ),
     ebd_env_options=eapi7._ebd_env_options,
 )
@@ -881,13 +887,13 @@ eapi9 = EAPI.register(
     archive_exts=eapi8.archive_exts,
     optionals=_combine_dicts(
         eapi8.options,
-        dict(
-            bash_compat="5.3",
-            export_vars=False,
-            profile_eapi_default=True,
-            rewrite_image_symlinks=False,
-            profile_stable_use_defaults=True,
-        ),
+        {
+            "bash_compat": "5.3",
+            "export_vars": False,
+            "profile_eapi_default": True,
+            "rewrite_image_symlinks": False,
+            "profile_stable_use_defaults": True,
+        },
     ),
     ebd_env_options=eapi8._ebd_env_options,
 )

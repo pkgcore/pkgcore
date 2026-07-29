@@ -1,10 +1,10 @@
 __all__ = (
-    "null_output",
-    "formatter_output",
+    "decorate_build_method",
     "file_handle_output",
+    "formatter_output",
+    "null_output",
     "phase_observer",
     "repo_observer",
-    "decorate_build_method",
 )
 
 import threading
@@ -13,14 +13,16 @@ from snakeoil import klass
 from snakeoil.currying import pre_curry
 
 
-def _convert(msg, args=(), kwds={}):
+def _convert(msg, args=(), kwds=None):
     # Note for interpolation, ValueError can be thrown by '%2(s'
     # TypeError by "%i" % "2", and KeyError via what you would expect.
+    if kwds is None:
+        kwds = {}
     if args:
         if kwds:
             raise TypeError(
                 "both position and optional args cannot be "
-                "supplied: given msg(%r), args(%r), kwds(%r)" % (msg, args, kwds)
+                f"supplied: given msg({msg!r}), args({args!r}), kwds({kwds!r})"
             )
         try:
             return msg % args

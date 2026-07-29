@@ -28,7 +28,7 @@ argparser.add_argument(
 def main(options, out, err):
     if options.target.readonly:
         argparser.error(
-            "can't update cache label '%s', it's marked readonly." % (options.target,)
+            f"can't update cache label '{options.target}', it's marked readonly."
         )
 
     source, target = options.source, options.target
@@ -48,11 +48,11 @@ def main(options, out, err):
             target[k] = v
             valid.add(k)
 
-    for x in target.keys():
+    for x in target:
         if x not in valid:
             if options.verbosity > 0:
                 out.write(f"deleting {x}")
             del target[x]
 
     if options.verbosity > 0:
-        out.write("took %i seconds" % int(time.time() - start))
+        out.write(f"took {int(time.time() - start)} seconds")

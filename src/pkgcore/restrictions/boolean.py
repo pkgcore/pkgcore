@@ -21,7 +21,7 @@ class base(GenericEquality, restriction.base):
 
     # "type" is the node type, so without __class__ all subclasses compare equal
     __attr_comparison__ = ("__class__", "negate", "type", "restrictions")
-    __slots__ = ("restrictions", "type", "negate", "_hash")
+    __slots__ = ("_hash", "negate", "restrictions", "type")
 
     type: restriction.T_restriction
     negate: bool
@@ -77,12 +77,11 @@ class base(GenericEquality, restriction.base):
 
     def change_restrictions(self, *restrictions, **kwds):
         """return a new instance of self.__class__, using supplied restrictions"""
-        if self.type is not None:
-            if (
-                self.__class__.type not in restriction.valid_types
-                or self.__class__.type != self.type
-            ):
-                kwds["node_type"] = self.type
+        if self.type is not None and (
+            self.__class__.type not in restriction.valid_types
+            or self.__class__.type != self.type
+        ):
+            kwds["node_type"] = self.type
         kwds.setdefault("negate", self.negate)
         return self.__class__(*restrictions, **kwds)
 
@@ -110,19 +109,17 @@ class base(GenericEquality, restriction.base):
                 for r in new_restrictions:
                     if r.type is not None and r.type != self.type:
                         raise TypeError(
-                            "instance '%s' is restriction type '%s', "
-                            "must be '%s'" % (r, r.type, self.type)
+                            f"instance '{r}' is restriction type '{r.type}', must be '{self.type}'"
                         )
             except AttributeError:
                 raise TypeError(
-                    "type '%s' instance '%s' has no restriction type, "
-                    "'%s' required" % (r.__class__, r, getattr(self, "type", "unset"))
+                    f"type {r.__class__!r} instance {r!r} has no restriction type, {getattr(self, 'type', 'unset')!r} required"
                 )
 
         try:
             self.restrictions.extend(new_restrictions)
         except AttributeError:
-            raise TypeError("%r is finalized" % self)
+            raise TypeError(f"{self!r} is finalized")
 
     @immutable.Simple.__allow_mutation_wrapper__
     def finalize(self):
@@ -130,7 +127,7 @@ class base(GenericEquality, restriction.base):
         self.restrictions = tuple(self.restrictions)
 
     def __repr__(self):
-        return "<%s negate=%r type=%r finalized=%r restrictions=%r @%#8x>" % (
+        return "<{} negate={!r} type={!r} finalized={!r} restrictions={!r} @{:#8x}>".format(
             self.__class__.__name__,
             self.negate,
             getattr(self, "type", None),
@@ -224,9 +221,8 @@ def iterative_quad_toggling(
             return r.force_True(*a)
 
     reset = True
-    if starting == 0:
-        if filter_func(truths):
-            yield True
+    if starting == 0 and filter_func(truths):
+        yield True
     for index, rest in islice(enumerate(restrictions), starting, end):
         if reset:
             entry = pkg.changes_count()
@@ -377,11 +373,10 @@ class AndRestriction(base):
             #           raise NotImplementedError("negation for dnf_solutions on "
             #                 "AndRestriction isn't implemented yet")
             # hack- this is an experiment
-            for r in OrRestriction(
-                node_type=self.type,
+            yield from OrRestriction(
                 *[restriction.Negate(x) for x in self.restrictions],
-            ).iter_dnf_solutions():
-                yield r
+                node_type=self.type,
+            ).iter_dnf_solutions()
             return
         if not self.restrictions:
             yield []
@@ -433,8 +428,7 @@ class AndRestriction(base):
             if method is None:
                 yield [x]
             else:
-                for y in method(full_solution_expansion):
-                    yield y
+                yield from method(full_solution_expansion)
 
     def cnf_solutions(self, full_solution_expansion=False):
         """returns solutions in CNF (conjunctive normalized form) of this instance
@@ -510,7 +504,7 @@ class OrRestriction(base):
         # each and smash append to the dcnf.
         dcnf = [dcnf]
         for andreq in cnf:
-            dcnf = list(y + [x] for x in andreq for y in dcnf)
+            dcnf = [y + [x] for x in andreq for y in dcnf]
         return dcnf
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
@@ -522,8 +516,8 @@ class OrRestriction(base):
         if self.negate:
             # hack- this is an experiment
             for x in AndRestriction(
-                node_type=self.type,
                 *[restriction.Negate(x) for x in self.restrictions],
+                node_type=self.type,
             ).iter_dnf_solutions():
                 yield x
         if not self.restrictions:
@@ -534,8 +528,7 @@ class OrRestriction(base):
             if method is None:
                 yield [x]
             else:
-                for y in method(full_solution_expansion):
-                    yield y
+                yield from method(full_solution_expansion)
 
     def dnf_solutions(self, *args, **kwds):
         """see dnf_solutions, iterates yielding DNF solutions"""

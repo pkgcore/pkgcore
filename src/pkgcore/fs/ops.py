@@ -168,7 +168,7 @@ def do_link(src, trg):
         return True
     except FileExistsError:
         pass
-    except EnvironmentError as e:
+    except OSError as e:
         if e.errno == errno.EXDEV:
             # hardlink is impossible, force copyfile
             return False
@@ -178,7 +178,7 @@ def do_link(src, trg):
     unlink_if_exists(path)
     try:
         os.link(src.location, path)
-    except EnvironmentError as e:
+    except OSError as e:
         if e.errno != errno.EXDEV:
             # someone is screwing with us, or unlink_if_exists is broken.
             raise
@@ -186,7 +186,7 @@ def do_link(src, trg):
         return False
     try:
         os.rename(path, trg.location)
-    except EnvironmentError as e:
+    except OSError as e:
         unlink_if_exists(path)
         if e.errno != errno.EXDEV:
             # weird error, broken FS codes, perms, or someone is screwing with us.

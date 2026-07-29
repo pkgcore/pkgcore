@@ -18,7 +18,7 @@ def DeriveMetadataKls(original_kls):
     class package(original_kls, metaclass=base.DynamicGetattrSetter):
         _derived_metadata_kls = True
         built = False
-        __slots__ = ("_parent", "data", "_domain")
+        __slots__ = ("_domain", "_parent", "data")
         try:
             __doc__ = (
                 "package class with metadata bound to it for attribute "
@@ -38,17 +38,18 @@ def DeriveMetadataKls(original_kls):
         package_is_real = True
 
         def __init__(self, parent_repository, *args, **kwds):
-            f"""wrapper for {original_kls}.__init__
-
-            See {original_kls}.__init__ for allowed args/kwds, they're passed
-            directly to it.
-
-            :param parent_repository: parent repository this package belongs to
-            :type parent_repository: :obj:`pkgcore.repository.prototype.tree`
-                instance
-            """
             super().__init__(*args, **kwds)
             object.__setattr__(self, "_parent", parent_repository)
+
+        __init__.__doc__ = f"""wrapper for {original_kls}.__init__
+
+        See {original_kls}.__init__ for allowed args/kwds, they're passed
+        directly to it.
+
+        :param parent_repository: parent repository this package belongs to
+        :type parent_repository: :obj:`pkgcore.repository.prototype.tree`
+            instance
+        """
 
         @base.DynamicGetattrSetter.register
         def data(self):

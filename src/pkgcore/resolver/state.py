@@ -1,14 +1,14 @@
 __all__ = (
-    "plan_state",
-    "base_op_state",
-    "add_op",
-    "add_hardref_op",
     "add_backref_op",
+    "add_hardref_op",
+    "add_op",
+    "base_op_state",
+    "blocker_base_op",
+    "decref_forward_block_op",
+    "incref_forward_block_op",
+    "plan_state",
     "remove_op",
     "replace_op",
-    "blocker_base_op",
-    "incref_forward_block_op",
-    "decref_forward_block_op",
 )
 
 from snakeoil.containers import RefCountingSet
@@ -105,7 +105,7 @@ class ops_sequence:
 
 
 class base_op_state:
-    __slots__ = ("pkg", "force", "choices")
+    __slots__ = ("choices", "force", "pkg")
     internal = False
 
     def __init__(self, choices, pkg, force=False):
@@ -117,16 +117,10 @@ class base_op_state:
         s = ""
         if self.force:
             s = " forced"
-        return "%s: %s%s" % (self.desc, self.pkg, s)
+        return f"{self.desc}: {self.pkg}{s}"
 
     def __repr__(self):
-        return "<%s choices=%r pkg=%r force=%s @#%x>" % (
-            self.__class__.__name__,
-            self.choices,
-            self.pkg,
-            self.force,
-            id(self),
-        )
+        return f"<{self.__class__.__name__} choices={self.choices!r} pkg={self.pkg!r} force={self.force} @#{id(self):x}>"
 
     def apply(self, plan):
         raise NotImplementedError(self, "apply")
@@ -177,7 +171,6 @@ class add_backref_op(base_op_state):
 
     def apply(self, plan):
         plan.plan.append(self)
-        pass
 
     def revert(self, plan):
         pass
@@ -201,7 +194,7 @@ class remove_op(base_op_state):
 
 
 class replace_op(base_op_state):
-    __slots__ = ("old_pkg", "old_choices", "force_old")
+    __slots__ = ("force_old", "old_choices", "old_pkg")
     desc = "replace"
 
     def __init__(self, *args, **kwds):
@@ -245,8 +238,8 @@ class replace_op(base_op_state):
         l = plan.state.fill_slotting(self.old_pkg, force=self.force_old)
         if bool(l) != self.force_old:
             raise AssertionError(
-                "Internal error detected, unable to revert %s; got %s, "
-                "force_old=%s " % (self, l, self.force_old)
+                f"Internal error detected, unable to revert {self}; got {l}, "
+                f"force_old={self.force_old} "
             )
         del plan.pkg_choices[self.pkg]
         plan.pkg_choices[self.old_pkg] = self.old_choices
@@ -256,26 +249,17 @@ class replace_op(base_op_state):
         s = ""
         if self.force:
             s = " forced"
-        return "replace: %s with %s%s" % (self.old_pkg, self.pkg, s)
+        return f"replace: {self.old_pkg} with {self.pkg}{s}"
 
     def __repr__(self):
         return (
-            "<%s old choices=%r new choices=%r old_pkg=%r new_pkg=%r "
-            "force=%s @#%x>"
-            % (
-                self.__class__.__name__,
-                self.old_choices,
-                self.choices,
-                self.old_pkg,
-                self.pkg,
-                self.force,
-                id(self),
-            )
+            f"<{self.__class__.__name__} old choices={self.old_choices!r} new choices={self.choices!r} old_pkg={self.old_pkg!r} new_pkg={self.pkg!r} "
+            f"force={self.force} @#{id(self):x}>"
         )
 
 
 class blocker_base_op:
-    __slots__ = ("choices", "blocker", "key")
+    __slots__ = ("blocker", "choices", "key")
     desc = None
     internal = True
 
@@ -288,21 +272,10 @@ class blocker_base_op:
         self.blocker = blocker
 
     def __str__(self):
-        return "%s: key %s, %s from %s" % (
-            self.__class__.__name__,
-            self.key,
-            self.blocker,
-            self.choices,
-        )
+        return f"{self.__class__.__name__}: key {self.key}, {self.blocker} from {self.choices}"
 
     def __repr__(self):
-        return "<%s choices=%r blocker=%r key=%r @#%x>" % (
-            self.__class__.__name__,
-            self.choices,
-            self.blocker,
-            self.key,
-            id(self),
-        )
+        return f"<{self.__class__.__name__} choices={self.choices!r} blocker={self.blocker!r} key={self.key!r} @#{id(self):x}>"
 
     def apply(self, plan):
         raise NotImplementedError(self, "apply")

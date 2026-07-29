@@ -51,7 +51,7 @@ class base:
         if auxdbkeys is None:
             auxdbkeys = self.default_keys
         self._known_keys = frozenset(auxdbkeys)
-        self._chf_key = "_%s_" % self.chf_type
+        self._chf_key = f"_{self.chf_type}_"
         self._chf_serializer = self._get_chf_serializer(self.chf_type)
         self._chf_deserializer = self._get_chf_deserializer(self.chf_type)
         self._known_keys |= frozenset([self._chf_key])
@@ -66,7 +66,7 @@ class base:
 
     @staticmethod
     def _mtime_serializer(data):
-        return "%.0f" % math.floor(data.mtime)
+        return f"{math.floor(data.mtime):.0f}"
 
     @staticmethod
     def _default_serializer(chf, data):
@@ -83,7 +83,7 @@ class base:
 
     @staticmethod
     def _mtime_deserializer(data):
-        return int(math.floor(float(data)))
+        return math.floor(float(data))
 
     @staticmethod
     def _default_deserializer(data):
@@ -146,7 +146,7 @@ class base:
             raise errors.ReadOnly()
         d = ProtectedDict(values)
         if self.cleanse_keys:
-            for k in d.keys():
+            for k in d:
                 if not d[k]:
                     del d[k]
             if "_eclasses_" in values:

@@ -1,8 +1,8 @@
 __all__ = (
-    "ProfileError",
-    "ProfileNode",
     "EmptyRootNode",
     "OnDiskProfile",
+    "ProfileError",
+    "ProfileNode",
     "UserProfile",
 )
 
@@ -162,7 +162,7 @@ def _load_and_invoke(
         else:
             data = fallback
         return func(self, data)
-    except (ValueError, IndexError, EnvironmentError) as e:
+    except (OSError, ValueError, IndexError) as e:
         raise ProfileError(profile_path, filename, e) from e
     except IsADirectoryError as e:
         raise ProfileError(
@@ -191,7 +191,7 @@ class ProfileNode(WeaklyCached):
         return f"profile at {self.path!r}"
 
     def __repr__(self):
-        return "<%s path=%r, @%#8x>" % (self.__class__.__name__, self.path, id(self))
+        return f"<{self.__class__.__name__} path={self.path!r}, @{id(self):#8x}>"
 
     system = klass.alias_attr("packages.system")
     profile_set = klass.alias_attr("packages.profile")
@@ -603,7 +603,7 @@ class ProfileNode(WeaklyCached):
             return self._default_eapi()
 
         try:
-            line, lineno, relpath = next(data)
+            line, _lineno, relpath = next(data)
         except StopIteration:
             relpath = pjoin(self.name, "eapi")
             logger.error(f"{relpath!r}: empty file")
@@ -949,7 +949,7 @@ class OnDiskProfile(ProfileStack):
     def from_abspath(cls, path):
         vals = cls.split_abspath(path)
         if vals is not None:
-            vals = cls(load_profile_base=True, *vals)
+            vals = cls(*vals, load_profile_base=True)
         return vals
 
     @klass.jit_attr

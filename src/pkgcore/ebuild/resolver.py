@@ -2,7 +2,7 @@
 resolver configuration to match portage behaviour (misbehaviour in a few spots)
 """
 
-__all__ = ["upgrade_resolver", "min_install_resolver"]
+__all__ = ["min_install_resolver", "upgrade_resolver"]
 
 from functools import partial
 from itertools import chain
@@ -69,7 +69,7 @@ def downgrade_resolver(
     :return: :obj:`pkgcore.resolver.plan.merge_plan` instance
     """
     restrict = packages.OrRestriction(
-        *list(atom(f">={x.cpvstr}") for x in chain.from_iterable(vdbs))
+        *(atom(f">={x.cpvstr}") for x in chain.from_iterable(vdbs))
     )
     f = partial(plan.merge_plan.prefer_downgrade_version_strategy, restrict)
     dbs = list(map(partial(misc.restrict_repo, restrict), dbs))

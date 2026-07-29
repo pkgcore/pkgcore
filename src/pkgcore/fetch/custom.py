@@ -150,8 +150,7 @@ class fetcher(base.fetcher):
                     os.unlink(path)
                 except OSError:
                     pass
-        else:
-            raise last_exc
+        raise last_exc
 
     def get_path(self, fetchable):
         path = pjoin(self.distdir, fetchable.filename)

@@ -49,7 +49,7 @@ def main(options, out, err):
     pkg = max(pkgs)
     if len(pkgs) > 1:
         argparser.err.write(f"got multiple matches for {token!r}:")
-        if len(set((p.slot, p.repo) for p in pkgs)) != 1:
+        if len({(p.slot, p.repo) for p in pkgs}) != 1:
             for p in pkgs:
                 repo_id = getattr(p.repo, "repo_id", "unknown")
                 argparser.err.write(f"{p.cpvstr}:{p.slot}::{repo_id}", prefix="  ")
@@ -88,8 +88,9 @@ def main(options, out, err):
     unknown_phases = [p for p, func in phase_funcs if func is None]
     if unknown_phases:
         argparser.error(
-            "unknown phase%s: %s"
-            % (pluralism(unknown_phases), ", ".join(map(repr, unknown_phases)))
+            "unknown phase{}: {}".format(
+                pluralism(unknown_phases), ", ".join(map(repr, unknown_phases))
+            )
         )
 
     try:

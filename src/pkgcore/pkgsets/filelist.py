@@ -19,17 +19,28 @@ from ..package.errors import InvalidDependency
 
 
 class FileList:
-    pkgcore_config_type = ConfigHint(types={"location": "str"}, typename="pkgset")
+    pkgcore_config_type = ConfigHint(
+        types={"location": "str"}, typename="pkgset", requires_config="config"
+    )
     error_on_subsets = True
 
-    def __init__(self, location, gid=os_data.portage_gid, mode=0o644):
+    def __init__(self, location, config=None, gid=os_data.portage_gid, mode=0o644):
         self.path = location
+        self.config = config
         self.gid = gid
         self.mode = mode
         # note that _atoms is generated on the fly.
 
     @klass.jit_attr
     def _atoms(self):
+        return self._parse(frozenset())
+
+    def _parse(self, seen):
+        if self.path in seen:
+            raise errors.ParsingError(
+                f"pkgset {self.path!r} nests itself via nested set references"
+            )
+        seen = seen | {self.path}
         try:
             s = set()
             with contextlib.closing(readlines_ascii(self.path, True)) as lines:
@@ -37,19 +48,35 @@ class FileList:
                     if not x or x.startswith("#"):
                         continue
                     elif x.startswith("@"):
-                        if self.error_on_subsets:
-                            raise ValueError(
-                                f"set {x} isn't a valid atom in pkgset {self.path!r}"
-                            )
-                        logger.warning(
-                            f"set item {x[1:]!r} found in pkgset {self.path!r}: it will be wiped on update since portage/pkgcore store set items in a separate way"
-                        )
-                        continue
-                    s.add(atom(x))
+                        s.update(self._expand_subset(x[1:], seen))
+                    else:
+                        s.add(atom(x))
         except InvalidDependency as exc:
             raise errors.ParsingError(f"parsing {self.path!r}", exception=exc) from exc
 
         return s
+
+    def _expand_subset(self, name, seen):
+        pkgset = None
+        if self.config is not None:
+            try:
+                pkgset = self.config.objects.pkgset[name]
+            except KeyError:
+                pkgset = None
+
+        if pkgset is None:
+            if self.error_on_subsets:
+                raise errors.ParsingError(
+                    f"set {name!r} referenced in pkgset {self.path!r} isn't a known pkgset"
+                )
+            logger.warning(
+                f"set item {name!r} found in pkgset {self.path!r}: it will be wiped on update since portage/pkgcore store set items in a separate way"
+            )
+            return ()
+
+        if isinstance(pkgset, FileList):
+            return pkgset._parse(seen)
+        return iter(pkgset)
 
     def __iter__(self):
         return iter(self._atoms)
@@ -81,11 +108,17 @@ class FileList:
 class WorldFile(FileList):
     """Set of packages contained in the world file."""
 
-    pkgcore_config_type = ConfigHint(typename="pkgset")
+    pkgcore_config_type = ConfigHint(typename="pkgset", requires_config="config")
     error_on_subsets = False
 
-    def __init__(self, location=const.WORLD_FILE, gid=os_data.portage_gid, mode=0o644):
-        FileList.__init__(self, location, gid=gid, mode=mode)
+    def __init__(
+        self,
+        location=const.WORLD_FILE,
+        config=None,
+        gid=os_data.portage_gid,
+        mode=0o644,
+    ):
+        FileList.__init__(self, location, config=config, gid=gid, mode=mode)
 
     def add(self, atom_inst):
         self._modify(atom_inst, FileList.add)

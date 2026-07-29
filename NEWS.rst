@@ -13,6 +13,12 @@ Features
   in a REQUIRED_USE restriction, so callers can keep unconstrained flags out of
   the solver (Arthur Zamarin)
 
+- ``pkgcore.pkgsets.filelist``: file-based package sets (``FileList`` and
+  ``WorldFile``) now resolve ``@setname`` lines against the other package sets
+  known to the running config, nesting arbitrarily deep. A reference to an
+  unknown set, or a cycle between sets, raises a clear ``ParsingError``
+  instead of crashing or silently dropping members (Arthur Zamarin, #280)
+
 
 Changes
 ~~~~~~~

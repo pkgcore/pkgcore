@@ -1,8 +1,10 @@
 import os
+import types
 
 import pytest
 
 from pkgcore import os_data
+from pkgcore.config import errors
 from pkgcore.ebuild.atom import atom
 from pkgcore.pkgsets import filelist
 
@@ -64,12 +66,44 @@ class TestFileList:
 
     def test_subset_awareness(self, tmp_path):
         s = self.gen_pkgset(tmp_path, "@world\ndev-util/bsdiff")
-        with pytest.raises(ValueError):
+        with pytest.raises(errors.ParsingError):
             sorted(s)
 
     def test_ignore_comments(self, tmp_path):
         s = self.gen_pkgset(tmp_path, "#foon\ndev-util/bsdiff")
         assert [str(x) for x in s] == ["dev-util/bsdiff"]
+
+    def test_nested_set(self, tmp_path):
+        (tmp_path / "nested").write_text("dev-util/diffball")
+        nested = self.kls(tmp_path / "nested", gid=self.gid)
+        config = types.SimpleNamespace(
+            objects=types.SimpleNamespace(pkgset={"nested": nested})
+        )
+        (tmp_path / "file").write_text("@nested\ndev-util/bsdiff")
+        s = self.kls(tmp_path / "file", config=config, gid=self.gid)
+        assert set(s) == {atom("dev-util/diffball"), atom("dev-util/bsdiff")}
+
+    def test_nested_set_unknown(self, tmp_path):
+        config = types.SimpleNamespace(objects=types.SimpleNamespace(pkgset={}))
+        s = self.kls(tmp_path / "file", config=config, gid=self.gid)
+        (tmp_path / "file").write_text("@nested\ndev-util/bsdiff")
+        if self.kls.error_on_subsets:
+            with pytest.raises(errors.ParsingError):
+                sorted(s)
+        else:
+            assert [str(x) for x in s] == ["dev-util/bsdiff"]
+
+    def test_nested_set_cycle(self, tmp_path):
+        pkgsets = {}
+        config = types.SimpleNamespace(objects=types.SimpleNamespace(pkgset=pkgsets))
+        a = self.kls(tmp_path / "a", config=config, gid=self.gid)
+        b = self.kls(tmp_path / "b", config=config, gid=self.gid)
+        pkgsets["a"] = a
+        pkgsets["b"] = b
+        (tmp_path / "a").write_text("@b\n")
+        (tmp_path / "b").write_text("@a\n")
+        with pytest.raises(errors.ParsingError):
+            sorted(a)
 
 
 class TestWorldFile(TestFileList):

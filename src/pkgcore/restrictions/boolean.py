@@ -19,7 +19,8 @@ from . import restriction
 class base(GenericEquality, restriction.base):
     """base template for boolean restrictions"""
 
-    __attr_comparison__ = ("negate", "type", "restrictions")
+    # "type" is the node type, so without __class__ all subclasses compare equal
+    __attr_comparison__ = ("__class__", "negate", "type", "restrictions")
     __slots__ = ("restrictions", "type", "negate", "_hash")
 
     type: restriction.T_restriction

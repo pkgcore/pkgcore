@@ -3,6 +3,18 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.37 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- ``pkgcore.restrictions.boolean``: boolean restrictions now compare and hash
+  by their class, so ``||``, ``^^``, ``??`` and ``&&`` over the same children
+  are no longer treated as equal (Arthur Zamarin)
+
+
+----------------------------
 pkgcore 0.12.36 (2026-07-24)
 ----------------------------
 

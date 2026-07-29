@@ -174,3 +174,35 @@ class TestJustOneRestriction(base):
         assert not self.kls(false, false, node_type="foo").match(None)
         assert not self.kls(true, false, true, node_type="foo").match(None)
         assert not self.kls(true, true, true, node_type="foo").match(None)
+
+
+class TestOperatorIdentity:
+    """Distinct boolean operators must not compare or hash alike"""
+
+    classes = (
+        boolean.AndRestriction,
+        boolean.OrRestriction,
+        boolean.JustOneRestriction,
+        boolean.AtMostOneOfRestriction,
+    )
+
+    def test_operators_are_distinct(self):
+        built = [kls(true, false, node_type="foo") for kls in self.classes]
+        for index, first in enumerate(built):
+            for second in built[index + 1 :]:
+                assert first != second, f"{first!r} == {second!r}"
+                assert hash(first) != hash(second), f"{first!r} hashes as {second!r}"
+
+    def test_same_operator_still_matches(self):
+        for kls in self.classes:
+            a = kls(true, false, node_type="foo")
+            b = kls(true, false, node_type="foo")
+            assert a == b
+            assert hash(a) == hash(b)
+            assert len({a, b}) == 1
+
+    def test_negate_and_children_still_compared(self):
+        for kls in self.classes:
+            plain = kls(true, false, node_type="foo")
+            assert plain != kls(true, false, node_type="foo", negate=True)
+            assert plain != kls(false, true, node_type="foo")

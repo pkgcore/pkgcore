@@ -35,6 +35,12 @@ Fixes
   by their class, so ``||``, ``^^``, ``??`` and ``&&`` over the same children
   are no longer treated as equal (Arthur Zamarin)
 
+- ``pebuild``: matches from repos that share a repo_id but are separate repo
+  objects (e.g. an ebuild path resolved outside any configured repo location,
+  pointing at another checkout of the same tree) are no longer treated as
+  ambiguous; the copy being run from is now preferred over a system one
+  (Arthur Zamarin, #366)
+
 
 ----------------------------
 pkgcore 0.12.36 (2026-07-24)

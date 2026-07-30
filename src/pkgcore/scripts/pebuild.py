@@ -1,5 +1,6 @@
 """low-level ebuild utility"""
 
+import os
 import sys
 
 from snakeoil.cli.exceptions import ExitException
@@ -49,12 +50,24 @@ def main(options, out, err):
     pkg = max(pkgs)
     if len(pkgs) > 1:
         argparser.err.write(f"got multiple matches for {token!r}:")
-        if len({(p.slot, p.repo) for p in pkgs}) != 1:
+        # compare by repo_id rather than repo object identity, since separate
+        # repo objects can point at the same underlying repo
+        if len({(p.slot, getattr(p.repo, "repo_id", p.repo)) for p in pkgs}) != 1:
             for p in pkgs:
                 repo_id = getattr(p.repo, "repo_id", "unknown")
                 argparser.err.write(f"{p.cpvstr}:{p.slot}::{repo_id}", prefix="  ")
             argparser.err.write()
             argparser.error("please refine your restriction to one match")
+        # prefer the copy being run from over a system one
+        cwd = os.path.realpath(os.getcwd())
+        local_pkgs = [
+            p
+            for p in pkgs
+            if (location := getattr(p.repo, "location", None))
+            and cwd.startswith(os.path.realpath(location))
+        ]
+        if local_pkgs:
+            pkg = max(local_pkgs)
         repo_id = getattr(pkg.repo, "repo_id", "unknown")
         argparser.err.write(f"choosing {pkg.cpvstr}:{pkg.slot}::{repo_id}", prefix="  ")
         sys.stderr.flush()

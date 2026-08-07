@@ -3,6 +3,21 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.38 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- ``pkgcore.ebuild.conditionals``: the empty depset returned for packages
+  lacking ``REQUIRED_USE``, ``BDEPEND`` or ``IDEPEND`` is now finalized, and
+  thus hashable again. Since caching the compiled REQUIRED_USE constraints in
+  0.12.37 requires hashing the depset, this broke ``pkgdev tatt`` with a
+  ``TypeError`` for every package without ``REQUIRED_USE``
+  (Arthur Zamarin)
+
+
+----------------------------
 pkgcore 0.12.37 (2026-07-31)
 ----------------------------
 

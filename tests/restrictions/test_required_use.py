@@ -19,6 +19,15 @@ def test_simple():
     assert tuple(solver(required_use, {"bar", "foo"})) == ({"bar": True, "foo": True},)
 
 
+def test_empty():
+    # packages without REQUIRED_USE get an empty depset, which the constraint
+    # cache must still be able to key on
+    required_use = parse(required_use="")
+    solutions = tuple(solver(required_use, {"bar", "foo"}))
+    assert len(solutions) == 4
+    assert {"bar": True, "foo": True} in solutions
+
+
 def test_negative_simple():
     required_use = parse(required_use="!bar foo")
     assert tuple(solver(required_use, {"bar", "foo"})) == ({"bar": False, "foo": True},)

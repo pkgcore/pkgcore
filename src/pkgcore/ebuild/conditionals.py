@@ -30,7 +30,7 @@ class DepSet(boolean.AndRestriction, caching=False):
 
     def __init__(
         self,
-        restrictions="",
+        restrictions=(),
         element_class=atom,
         node_conds=True,
         known_conditionals=None,

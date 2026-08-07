@@ -220,6 +220,11 @@ class TestDepSetParsing(base):
     def test_atom_interaction(self):
         self.gen_depset("a/b[x(+)]", element_func=atom)
 
+    def test_empty_depset(self):
+        # an empty depset must be finalized, thus hashable
+        assert not conditionals.DepSet().restrictions
+        assert hash(conditionals.DepSet()) == hash(conditionals.DepSet())
+
 
 class TestDepSetConditionalsInspection(base):
     def test_sanity_has_conditionals(self):

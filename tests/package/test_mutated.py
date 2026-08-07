@@ -48,7 +48,7 @@ class TestMutatedPkg:
         for lpkg in (pkg1, mpkg1):
             assert lpkg < mpkg2
             assert mpkg2 > lpkg
-        assert mpkg1 == mpkg1
+        assert mpkg1 == mpkg1  # noqa: PLR0124
         assert pkg1 == mpkg1
 
     def test_getattr(self):
@@ -56,4 +56,4 @@ class TestMutatedPkg:
         assert MutatedPkg(pkg, {}).a == 1
         assert MutatedPkg(pkg, {"a": 2}).a == 2
         with pytest.raises(AttributeError):
-            getattr(MutatedPkg(pkg, {}), "b")
+            _ = MutatedPkg(pkg, {}).b

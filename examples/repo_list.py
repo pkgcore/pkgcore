@@ -41,14 +41,14 @@ def check_args(parser, namespace):
 @argparser.bind_main_func
 def main(options, out, err):
     for repo in options.repos:
-        out.write("Repo ID: %s" % repo.repo_id)
+        out.write(f"Repo ID: {repo.repo_id}")
         location = getattr(repo, "location", None)
         if location:
-            out.write("Repo location: %s" % location)
+            out.write(f"Repo location: {location}")
         else:
             out.write("Repo has no on-disk location")
-        out.write("%d packages" % len(repo.versions))
-        out.write("%d categories" % len(repo.packages))
+        out.write(f"{len(repo.versions)} packages")
+        out.write(f"{len(repo.packages)} categories")
         out.write()
 
 

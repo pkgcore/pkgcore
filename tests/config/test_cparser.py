@@ -8,17 +8,7 @@ from pkgcore.config import central, cparser, errors
 
 def test_case_sensitive_config_parser():
     cp = cparser.CaseSensitiveConfigParser()
-    config = StringIO(
-        "\n".join(
-            (
-                "[header]",
-                "foo=bar",
-                "FOO=BAR",
-                "[HEADER]",
-                "foo=notbar",
-            )
-        )
-    )
+    config = StringIO("[header]\nfoo=bar\nFOO=BAR\n[HEADER]\nfoo=notbar")
     cp.read_file(config)
     assert cp.get("header", "foo") == "bar"
     assert cp.get("header", "FOO") == "BAR"

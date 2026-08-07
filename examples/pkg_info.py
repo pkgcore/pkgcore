@@ -43,18 +43,13 @@ def main(options, out, err):
         out.write(t[0])
         out.first_prefix = "    "
         for pkg in pkgs:
-            out.write("%s::%s" % (pkg.cpvstr, pkg.repo.repo_id))
+            out.write(f"{pkg.cpvstr}::{pkg.repo.repo_id}")
         out.first_prefix = ""
         item = "maintainer"
         values = t[1]
         if values:
             out.write(
-                "%s%s: %s"
-                % (
-                    item.title(),
-                    "s"[len(values) == 1 :],
-                    ", ".join(str(x) for x in values),
-                )
+                f"{item.title()}{'s'[len(values) == 1 :]}: {', '.join(str(x) for x in values)}"
             )
         out.write()
 

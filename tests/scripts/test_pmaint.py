@@ -189,7 +189,7 @@ class TestCopy(ArgParseMixin):
         return ret, config, out
 
     def test_normal_function(self):
-        ret, config, out = self.execute_main(
+        ret, config, _out = self.execute_main(
             "fake_binpkg",
             "--source-repo",
             "fake_vdb",
@@ -206,7 +206,7 @@ class TestCopy(ArgParseMixin):
         )
 
         d = {"sys-apps": {"portage": ["2.1", "2.2"]}}
-        ret, config, out = self.execute_main(
+        ret, config, _out = self.execute_main(
             "fake_binpkg",
             "--source-repo",
             "fake_vdb",
@@ -222,7 +222,7 @@ class TestCopy(ArgParseMixin):
         )
 
     def test_ignore_existing(self):
-        ret, config, out = self.execute_main(
+        ret, config, _out = self.execute_main(
             "fake_binpkg",
             "--source-repo",
             "fake_vdb",
@@ -239,7 +239,7 @@ class TestCopy(ArgParseMixin):
             "uninstalled should be the same as replaced; empty"
         )
 
-        ret, config, out = self.execute_main(
+        ret, config, _out = self.execute_main(
             "fake_binpkg",
             "--source-repo",
             "fake_vdb",

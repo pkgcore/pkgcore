@@ -20,7 +20,7 @@ def _callback(chf):
 chksums = LazyValDict(frozenset(handlers.keys()), _callback)
 
 # get a non size based chksum
-known_chksum = [x for x in handlers.keys() if x != "size"][0]
+known_chksum = next(x for x in handlers if x != "size")
 
 
 class TestFetcher:
@@ -53,7 +53,7 @@ class TestFetcher:
 
     def test_verify_all_chksums(self):
         self.write_data()
-        subhandlers = dict([list(handlers.items())[0]])
+        subhandlers = dict([next(iter(handlers.items()))])
         with pytest.raises(errors.RequiredChksumDataMissing):
             self.fetcher._verify(self.fp, self.obj, handlers=subhandlers)
         self.fetcher._verify(self.fp, self.obj)

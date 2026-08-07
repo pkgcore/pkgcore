@@ -40,15 +40,15 @@ class TestSyncer:
     @mock.patch("snakeoil.process.spawn.spawn")
     def test_usersync_disabled(self, spawn):
         o = base.Syncer(self.repo_path, "http://foo/bar.git", usersync=False)
-        o.uid == os_data.uid
-        o.gid == os_data.gid
+        assert o.uid == os_data.uid
+        assert o.gid == os_data.gid
 
     @mock.patch("snakeoil.process.spawn.spawn")
     def test_usersync_portage_perms(self, spawn):
         # sync uses portage perms if repo dir doesn't exist
         o = base.Syncer(self.repo_path, "http://foo/bar.git", usersync=True)
-        o.uid == os_data.portage_uid
-        o.gid == os_data.portage_gid
+        assert o.uid == os_data.portage_uid
+        assert o.gid == os_data.portage_gid
 
     @mock.patch("snakeoil.process.spawn.spawn")
     def test_usersync_repo_dir_perms(self, spawn):
@@ -106,10 +106,9 @@ class TestExternalSyncer:
 class TestVcsSyncer:
     def test_basedir_perms_error(self, spawn, find_binary, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
-        with pytest.raises(base.PathError):
-            with mock.patch("os.stat") as stat:
-                stat.side_effect = EnvironmentError("fake exception")
-                syncer.sync()
+        with pytest.raises(base.PathError), mock.patch("os.stat") as stat:
+            stat.side_effect = OSError("fake exception")
+            syncer.sync()
 
     def test_basedir_is_file_error(self, spawn, find_binary, tmp_path):
         repo = tmp_path / "repo"

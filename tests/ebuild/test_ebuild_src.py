@@ -148,14 +148,14 @@ class TestBase:
             else:
                 o = self.get_pkg({"EAPI": eapi_str, "SLOT": "0/0"})
                 with pytest.raises(errors.MetadataException):
-                    o.fullslot
+                    _ = o.fullslot
 
         # unset SLOT variable
         with pytest.raises(errors.MetadataException):
-            self.get_pkg({}).fullslot
+            _ = self.get_pkg({}).fullslot
         # empty SLOT variable
         with pytest.raises(errors.MetadataException):
-            self.get_pkg({"SLOT": ""}).fullslot
+            _ = self.get_pkg({"SLOT": ""}).fullslot
 
     def test_slot(self):
         o = self.get_pkg({"SLOT": "0"})
@@ -171,14 +171,14 @@ class TestBase:
             else:
                 o = self.get_pkg({"EAPI": eapi_str, "SLOT": "1/2"})
                 with pytest.raises(errors.MetadataException):
-                    o.slot
+                    _ = o.slot
 
         # unset SLOT variable
         with pytest.raises(errors.MetadataException):
-            self.get_pkg({}).slot
+            _ = self.get_pkg({}).slot
         # empty SLOT variable
         with pytest.raises(errors.MetadataException):
-            self.get_pkg({"SLOT": ""}).slot
+            _ = self.get_pkg({"SLOT": ""}).slot
 
     def test_subslot(self):
         o = self.get_pkg({"SLOT": "0"})
@@ -196,14 +196,14 @@ class TestBase:
             else:
                 o = self.get_pkg({"EAPI": eapi_str, "SLOT": "1/2"})
                 with pytest.raises(errors.MetadataException):
-                    o.subslot
+                    _ = o.subslot
 
         # unset SLOT variable
         with pytest.raises(errors.MetadataException):
-            self.get_pkg({}).subslot
+            _ = self.get_pkg({}).subslot
         # empty SLOT variable
         with pytest.raises(errors.MetadataException):
-            self.get_pkg({"SLOT": ""}).subslot
+            _ = self.get_pkg({"SLOT": ""}).subslot
 
     def test_restrict(self):
         o = self.get_pkg({"RESTRICT": "strip fetch strip"})
@@ -212,7 +212,7 @@ class TestBase:
         assert sorted(o.restrict.evaluate_depset([])) == ["dar"]
         # ensure restrict doesn't have || () in it
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({"RESTRICT": "|| ( foon dar )"}), "restrict")
+            _ = self.get_pkg({"RESTRICT": "|| ( foon dar )"}).restrict
 
     def test_eapi(self):
         assert str(self.get_pkg({"EAPI": "0"}).eapi) == "0"
@@ -220,17 +220,17 @@ class TestBase:
         assert not self.get_pkg({"EAPI": "0.1"}).eapi.supported
         assert self.get_pkg({"EAPI": "foon"}, suppress_unsupported=False).eapi is None
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({"EAPI": 0, "DEPEND": "d/b:0"}), "depend")
+            _ = self.get_pkg({"EAPI": 0, "DEPEND": "d/b:0"}).depend
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({"EAPI": 0, "RDEPEND": "d/b:0"}), "rdepend")
+            _ = self.get_pkg({"EAPI": 0, "RDEPEND": "d/b:0"}).rdepend
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({"EAPI": 1, "DEPEND": "d/b[x,y]"}), "depend")
+            _ = self.get_pkg({"EAPI": 1, "DEPEND": "d/b[x,y]"}).depend
         with pytest.raises(errors.MetadataException):
-            getattr(self.get_pkg({"EAPI": 1, "DEPEND": "d/b::foon"}), "depend")
+            _ = self.get_pkg({"EAPI": 1, "DEPEND": "d/b::foon"}).depend
         assert self.get_pkg({"EAPI": 2, "DEPEND": "a/b[x=]"}).depend.node_conds
         pkg = self.get_pkg({"EAPI": 1, "DEPEND": "a/b[x=]"})
         with pytest.raises(errors.MetadataException):
-            getattr(pkg, "depend")
+            _ = pkg.depend
 
     def test_get_parsed_eapi(self, tmpdir):
         # ebuild has a real path on the fs
@@ -254,7 +254,7 @@ class TestBase:
 
         for func in (_path, _src):
             # verify parsing known EAPIs
-            for eapi_str in EAPI.known_eapis.keys():
+            for eapi_str in EAPI.known_eapis:
                 c = self.make_parent(get_ebuild_src=post_curry(func, eapi_str))
                 o = self.get_pkg({"EAPI": None}, repo=c)
                 assert str(o.eapi) == eapi_str
@@ -369,11 +369,11 @@ class TestBase:
         # verify it does digest lookups...
         o = self.get_pkg({"SRC_URI": "http://foo.com/bar.tgz"}, repo=parent)
         with pytest.raises(errors.MetadataException):
-            getattr(o, "fetchables")
+            _ = o.fetchables
         assert l == [o]
 
         # basic tests;
-        for x in range(0, 3):
+        for x in range(3):
             f = self.get_pkg(
                 {"SRC_URI": "http://foo.com/monkey.tgz", "EAPI": str(x)}, repo=parent
             ).fetchables
@@ -404,7 +404,7 @@ class TestBase:
             {"SRC_URI": "http://foo.com/monkey.tgz -> ", "EAPI": "2"}, repo=parent
         )
         with pytest.raises(errors.MetadataException):
-            getattr(o, "fetchables")
+            _ = o.fetchables
 
         # verify it collapses multiple basenames down to the same.
         f = self.get_pkg(
@@ -554,7 +554,7 @@ class TestBase:
                         {"EAPI": eapi_str, "REQUIRED_USE": "?? ( bar foo )"}
                     )
                     with pytest.raises(errors.MetadataException) as cm:
-                        getattr(pkg, "required_use")
+                        _ = pkg.required_use
                     assert (
                         f"EAPI '{eapi_str}' doesn't support '??' operator"
                         in cm.value.error

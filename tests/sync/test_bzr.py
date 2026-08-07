@@ -27,4 +27,4 @@ class TestBzrSyncer:
         with mock.patch("snakeoil.process.find_binary") as find_binary:
             find_binary.return_value = "bzr"
             o = bzr.bzr_syncer(str(self.repo_path), "bzr+http://dar")
-            o.uri == "http://dar"
+            assert o.uri == "http://dar"

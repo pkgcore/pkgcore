@@ -800,9 +800,9 @@ class TestPmsProfileNode(profile_mixin):
         self.write_file(tmp_path, "parent", "..", profile=profile2)
         self.write_file(tmp_path, "make.defaults", "USE=-foo", profile=profile3)
         self.write_file(tmp_path, "parent", "..", profile=profile3)
-        assert self.klass(profile1).default_env == dict(USE="foo")
-        assert self.klass(profile2).default_env == dict(USE="foo", x="dar")
-        assert self.klass(profile3).default_env == dict(USE="foo -foo", x="dar")
+        assert self.klass(profile1).default_env == {"USE": "foo"}
+        assert self.klass(profile2).default_env == {"USE": "foo", "x": "dar"}
+        assert self.klass(profile3).default_env == {"USE": "foo -foo", "x": "dar"}
 
     def test_bashrc(self, tmp_path):
         path = tmp_path / self.profile

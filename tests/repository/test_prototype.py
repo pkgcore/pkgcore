@@ -62,11 +62,11 @@ class TestPrototype:
         with pytest.raises(TypeError):
             self.repo.match("asdf")
         rc = packages.PackageRestriction("category", values.StrExactMatch("dev-util"))
-        assert sorted(set(x.package for x in self.repo.itermatch(rc))) == sorted(
+        assert sorted({x.package for x in self.repo.itermatch(rc)}) == sorted(
             ["diffball", "bsdiff"]
         )
         rp = packages.PackageRestriction("package", values.StrExactMatch("diffball"))
-        assert list(x.version for x in self.repo.itermatch(rp, sorter=sorted)) == [
+        assert [x.version for x in self.repo.itermatch(rp, sorter=sorted)] == [
             "0.7",
             "1.0",
         ]

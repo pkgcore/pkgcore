@@ -366,7 +366,7 @@ class TestFlatteningRestriction:
         inst = values.FlatteningRestriction(
             tuple, values.AnyMatch(values.EqualityMatch(None)), negate=negate
         )
-        assert not negate == inst.match([7, 8, [9, None]])
+        assert negate != inst.match([7, 8, [9, None]])
         assert negate == inst.match([7, 8, (9, None)])
         # Just check this does not raise
         assert str(inst)
@@ -384,7 +384,7 @@ class TestFunctionRestriction:
 
         yes_restrict = values.FunctionRestriction(yes, negate=negate)
         no_restrict = values.FunctionRestriction(no, negate=negate)
-        assert not negate == yes_restrict.match(7)
+        assert negate != yes_restrict.match(7)
         assert negate == no_restrict.match(7)
         for restrict in yes_restrict, no_restrict:
             # Just check this does not raise

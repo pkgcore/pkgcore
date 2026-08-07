@@ -381,7 +381,7 @@ class TestCPV:
 
     def test_attribute_errors(self):
         obj = cpv.VersionedCPV("foo/bar-0")
-        assert not obj == 0
+        assert not obj == 0  # noqa: SIM201
         assert obj != 0
         with pytest.raises(TypeError):
             assert obj < 0

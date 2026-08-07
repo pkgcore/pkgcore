@@ -81,7 +81,7 @@ class TestAtom(TestRestriction):
         pytest.raises(errors.MalformedAtom, self.kls, "!!dev-util/diffball", eapi="0")
         pytest.raises(errors.MalformedAtom, self.kls, "!!dev-util/diffball", eapi="1")
         pytest.raises(errors.MalformedAtom, self.kls, "!!!dev-util/diffball", eapi="2")
-        for x in range(0, 2):
+        for x in range(2):
             obj = self.kls("!dev-util/diffball", eapi=str(x))
             assert obj.blocks
             assert obj.blocks_temp_ignorable
@@ -371,7 +371,7 @@ class TestAtom(TestRestriction):
         # assert it explodes for bad attr access.
         obj = self.kls("dev-util/diffball")
         with pytest.raises(AttributeError):
-            obj.__foasdfawe
+            _ = obj.__foasdfawe
 
         # assert ordering
         def assertAttr(attr):
@@ -476,7 +476,7 @@ class TestAtom(TestRestriction):
             self.kls("dev-util/foon::-gentoo-x86")
         with pytest.raises(errors.MalformedAtom):
             self.kls("dev-util/foon:::")
-        for x in range(0, 3):
+        for x in range(3):
             with pytest.raises(errors.MalformedAtom):
                 self.kls("dev-util/foon::gentoo-x86", eapi=str(x))
 

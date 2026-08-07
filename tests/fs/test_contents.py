@@ -50,9 +50,7 @@ class TestContentsSet:
         for x in self.links:
             cs.add(x)
             assert x in cs
-        assert len(cs) == len(
-            set(x.location for x in self.files + self.dirs + self.links)
-        )
+        assert len(cs) == len({x.location for x in self.files + self.dirs + self.links})
         with pytest.raises(AttributeError):
             contents.contentsSet(mutable=False).add(self.devs[0])
         with pytest.raises(TypeError):
@@ -275,11 +273,6 @@ class TestContentsSet:
             (False, [mk_file("/foon")], [mk_file("/foon")]),
             (True, [mk_file("/foon")], [mk_file("/dev")]),
             (False, [mk_file("/dev"), mk_file("/dar")], [mk_file("/dev")]),
-            (
-                False,
-                [mk_file("/dev"), mk_file("/dar")],
-                [mk_file("/dev"), mk_file("/dar"), mk_file("/asdf")],
-            ),
             (
                 False,
                 [mk_file("/dev"), mk_file("/dar")],

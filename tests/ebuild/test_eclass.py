@@ -12,9 +12,9 @@ class FakeEclass:
 
 class FakeEclassCache:
     def __init__(self, temp_dir, eclasses):
-        self.eclasses = dict(
-            (name, FakeEclass(name, contents)) for name, contents in eclasses.items()
-        )
+        self.eclasses = {
+            name: FakeEclass(name, contents) for name, contents in eclasses.items()
+        }
 
     def get_eclass(self, name):
         return self.eclasses.get(name)

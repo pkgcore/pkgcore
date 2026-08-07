@@ -16,7 +16,7 @@ from pkgcore.pkgsets.filelist import WorldFile
 def main(target_repo, seen, moves):
     # could build the atom from categories/packages, but prefer this;
     # simpler.
-    new_seen = set(atom("%s/%s" % x) for x in target_repo.versions)
+    new_seen = {atom(f"{x[0]}/{x[1]}") for x in target_repo.versions}
 
     new_pkgs = new_seen.difference(seen)
     # this is simpler if pkgsets are... actually sets. ;)
@@ -38,18 +38,16 @@ def main(target_repo, seen, moves):
     for l, prefix in ((new_pkgs, "added pkgs"), (removed, "removed pkgs")):
         if l:
             sys.stdout.write(
-                "%s:\n  %s\n\n" % (prefix, "\n  ".join(str(x) for x in sorted(l)))
+                f"{prefix}:\n  {'\n  '.join(str(x) for x in sorted(l))}\n\n"
             )
 
     if finished_moves:
         sys.stdout.write(
-            "moved pkgs:\n  %s\n\n"
-            % "\n  ".join("%s -> %s" % (k, moves[k]) for k in sorted(finished_moves))
+            f"moved pkgs:\n  {'\n  '.join(f'{k} -> {moves[k]}' for k in sorted(finished_moves))}\n\n"
         )
     if in_transit:
         sys.stdout.write(
-            "pkg moves in transit:\n  %s\n\n"
-            % "\n  ".join("%s -> %s" % (k, in_transit[k]) for k in sorted(in_transit))
+            f"pkg moves in transit:\n  {'\n  '.join(f'{k} -> {in_transit[k]}' for k in sorted(in_transit))}\n\n"
         )
 
     # just flush the seen fully, simplest.
@@ -102,8 +100,7 @@ if __name__ == "__main__":
         repo = conf.repo[args[0]]
     except KeyError:
         sys.stderr.write(
-            "repository %r wasn't found- known repos\n%r\n"
-            % (args[0], list(conf.repo.keys()))
+            f"repository {args[0]!r} wasn't found- known repos\n{list(conf.repo.keys())}\n"
         )
         sys.exit(-2)
 

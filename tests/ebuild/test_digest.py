@@ -18,7 +18,7 @@ MD5 2fa54dd51b6a8f1c46e5baf741e90f7e python-2.4-patches-1.tar.bz2 7820
 RMD160 313c0f4f4dea59290c42a9b2c8de1db159f1ca1b python-2.4-patches-1.tar.bz2 7820
 SHA256 e22abe4394f1f0919aac429f155c00ec1b3fe94cdc302119059994d817cd30b5 python-2.4-patches-1.tar.bz2 7820"""
 digest_chksum = (
-    ("size", int(7853169)),
+    ("size", 7853169),
     ("md5", int("98db1465629693fc434d4dc52db93838", 16)),
     ("rmd160", int("c511d2b76b5394742d285e71570a2bcd3c1fa871", 16)),
     (

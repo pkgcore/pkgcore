@@ -25,7 +25,7 @@ def _render_msg(func, msg, *args, **kwargs):
 
 
 def make_fake_reporter(**kwargs):
-    kwargs = dict((key, partial(_render_msg, val)) for key, val in kwargs.items())
+    kwargs = {key: partial(_render_msg, val) for key, val in kwargs.items()}
     return fake_reporter(**kwargs)
 
 
@@ -260,9 +260,7 @@ class Test_ldconfig(trigger_mixin):
         assert (tmp_path / "etc/ld.so.conf").exists()
 
         # test normal functioning.
-        (tmp_path / "etc/ld.so.conf").write_text(
-            "\n".join(("/foon", "dar", "blarnsball", "#comment"))
-        )
+        (tmp_path / "etc/ld.so.conf").write_text("/foon\ndar\nblarnsball\n#comment")
         assert set(self.trigger.read_ld_so_conf(str(tmp_path))) == {
             str(tmp_path / x) for x in ("foon", "dar", "blarnsball")
         }

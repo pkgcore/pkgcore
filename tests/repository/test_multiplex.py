@@ -56,7 +56,7 @@ class TestMultiplex:
         ]
 
     def test_sorting(self):
-        assert list(
+        assert [
             x.cpvstr
             for x in self.ctree.itermatch(packages.AlwaysTrue, sorter=rev_sorted)
-        ) == rev_sorted(self.tree1_list + self.tree2_list)
+        ] == rev_sorted(self.tree1_list + self.tree2_list)

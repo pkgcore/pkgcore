@@ -65,18 +65,13 @@ def main(options, out, err):
                 changed_flags = (oldflags ^ newflags) | (current.iuse ^ built.iuse)
                 if options.verbosity > 0:
                     out.write(
-                        "package %s, %d flags have changed:\n\t%s"
-                        % (
-                            current.unversioned_atom,
-                            len(changed_flags),
-                            " ".join(changed_flags),
-                        )
+                        f"package {current.unversioned_atom}, {len(changed_flags)} flags have changed:\n\t{' '.join(changed_flags)}"
                     )
                 else:
                     out.write(options.outputter(current))
             else:
                 if options.verbosity > 0:
-                    out.write("%s is the same as it was before" % current.cpvstr)
+                    out.write(f"{current.cpvstr} is the same as it was before")
 
 
 if __name__ == "__main__":

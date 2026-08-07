@@ -64,7 +64,7 @@ class TestChoicePoint:
         assert c.pdepend == [["or3"]]
         c.reduce_atoms("or3")
         with pytest.raises(IndexError):
-            c.depend
+            _ = c.depend
 
     def test_current_pkg(self):
         c = self.gen_choice_point()
@@ -84,11 +84,11 @@ class TestChoicePoint:
         c = self.gen_choice_point()
         c.reduce_atoms("anddep1")
         with pytest.raises(IndexError):
-            c.depend
+            _ = c.depend
         with pytest.raises(IndexError):
-            c.rdepend
+            _ = c.rdepend
         with pytest.raises(IndexError):
-            c.pdepend
+            _ = c.pdepend
 
     def test_nonzero(self):
         c = self.gen_choice_point()

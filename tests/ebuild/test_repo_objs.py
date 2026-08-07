@@ -138,7 +138,7 @@ class TestMetadataXml:
 
     def test_local_use(self):
         # empty...
-        assert dict() == self.get_metadata_xml().local_use
+        assert {} == self.get_metadata_xml().local_use
 
         local_use = {
             "foo": "description for foo",
@@ -146,7 +146,7 @@ class TestMetadataXml:
         }
         metadata_xml = self.get_metadata_xml(local_use=local_use)
         pkg_tag_re = re.compile(r"</?pkg>")
-        local_use = dict((k, pkg_tag_re.sub("", v)) for k, v in local_use.items())
+        local_use = {k: pkg_tag_re.sub("", v) for k, v in local_use.items()}
         assert local_use == metadata_xml.local_use
 
     def test_longdesc(self):

@@ -22,7 +22,7 @@ class mixin:
 
     def test_setattr(self):
         with pytest.raises(AttributeError):
-            setattr(self.mk_inst(), "asdf", 1)
+            self.mk_inst().asdf = 1
 
     def test_delattr(self):
         with pytest.raises(AttributeError):

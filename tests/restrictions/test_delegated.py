@@ -21,12 +21,6 @@ class Test_delegate(TestRestriction):
             return y
 
         for negated in (False, True):
-
-            def assertIt(got, expected):
-                assert got == expected, (
-                    f"got={got!r}, expected={expected!r}, negate={negated!r}"
-                )
-
             y = True
             l[:] = []
             o = self.kls(f, negate=negated)
@@ -36,29 +30,23 @@ class Test_delegate(TestRestriction):
             self.assertNotMatches(o, [None], negated=negated)
 
             if negated:
-                assertIt(
-                    l,
-                    [
-                        "match",
-                        "force_False",
-                        "force_True",
-                        "match",
-                        "force_False",
-                        "force_True",
-                    ],
-                )
+                assert l == [
+                    "match",
+                    "force_False",
+                    "force_True",
+                    "match",
+                    "force_False",
+                    "force_True",
+                ]
             else:
-                assertIt(
-                    l,
-                    [
-                        "match",
-                        "force_True",
-                        "force_False",
-                        "match",
-                        "force_True",
-                        "force_False",
-                    ],
-                )
+                assert l == [
+                    "match",
+                    "force_True",
+                    "force_False",
+                    "match",
+                    "force_True",
+                    "force_False",
+                ]
 
     def test_caching(self):
         def f(*args):

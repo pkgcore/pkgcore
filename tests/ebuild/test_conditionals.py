@@ -265,7 +265,7 @@ class TestDepSetConditionalsInspection(base):
         d = {element_kls(k): v for k, v in r.items()}
         for k, v in d.items():
             if isinstance(v, str):
-                d[k] = set([frozenset(v.split())])
+                d[k] = {frozenset(v.split())}
             elif isinstance(v, (tuple, list)):
                 d[k] = set(map(frozenset, v))
 
@@ -304,7 +304,7 @@ class TestDepSetConditionalsInspection(base):
 
 class TestDepSetEvaluate(base):
     def test_evaluation(self):
-        flag_set = list(sorted(f"x{x}" for x in range(2000)))
+        flag_set = sorted(f"x{x}" for x in range(2000))
         for vals in (
             ("y", "x? ( y ) !x? ( z )", "x"),
             ("z", "x? ( y ) !x? ( z )"),
@@ -328,22 +328,22 @@ class TestDepSetEvaluate(base):
             # worst case (jython), we want to force a memory exhaustion.
             # we assert it in the tests to make sure some 'special' ebuild dev doesn't trigger
             # it on a user's machine, thus the abuse leveled here.
-            ("a/b", "a/b[!c?,%s]" % (",".join(x + "?" for x in flag_set)), "c"),
+            ("a/b", f"a/b[!c?,{','.join(x + '?' for x in flag_set)}]", "c"),
             (
                 "a/b",
-                "a/b[%s]" % (",".join("%s?" % (x,) for x in flag_set)),
+                f"a/b[{','.join(f'{x}?' for x in flag_set)}]",
                 "",
                 " ".join(flag_set),
             ),
             (
                 "a/b[c,x0]",
-                "a/b[c?,%s]" % (",".join(x + "?" for x in flag_set)),
+                f"a/b[c?,{','.join(x + '?' for x in flag_set)}]",
                 "c",
                 " ".join(flag_set[1:]),
             ),
             (
-                "a/b[c,%s]" % (",".join(flag_set),),
-                "a/b[c?,%s]" % (",".join(x + "?" for x in flag_set)),
+                f"a/b[c,{','.join(flag_set)}]",
+                f"a/b[c?,{','.join(x + '?' for x in flag_set)}]",
                 "c",
                 "",
             ),

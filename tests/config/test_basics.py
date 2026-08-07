@@ -42,7 +42,7 @@ def nonopt(one, two):
     """Function taking two non-optional args."""
 
 
-def alltypes(alist=(), astr="astr", abool=True, aref=object(), anint=3, along=int(3)):
+def alltypes(alist=(), astr="astr", abool=True, aref=object(), anint=3, along=3):
     """Function taking lots of kinds of args."""
 
 
@@ -269,9 +269,7 @@ class TestConvertString:
 
         # reprs
         for typename, value in source.items():
-            assert ("str", value) == basics.convert_string(
-                None, source[typename], "repr"
-            )
+            assert ("str", value) == basics.convert_string(None, value, "repr")
         # invalid gets
         # not callable
         with pytest.raises(errors.ConfigurationError):
@@ -317,10 +315,10 @@ class TestConvertString:
                 except KeyError:
                     raise errors.ConfigurationError(section)
 
-        assert [config1, config2] == list(
+        assert [config1, config2] == [
             ref.collapse()
             for ref in basics.convert_string(TestCentral(), "1 2", "refs:spoon")
-        )
+        ]
         lazy_refs = basics.convert_string(TestCentral(), "2 3", "refs:spoon")
         assert len(lazy_refs) == 2
         with pytest.raises(errors.ConfigurationError):

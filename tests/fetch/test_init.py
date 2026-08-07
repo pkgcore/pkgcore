@@ -19,7 +19,7 @@ class TestFetchable:
 
     def test_eq_ne(self):
         o1 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf": 1})
-        assert o1 == o1
+        assert o1 == o1  # noqa: PLR0124
         o2 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf": 1})
         assert o1 == o2
         assert o1 != fetch.fetchable("dar1", uri=["asdf"], chksums={"asdf": 1})

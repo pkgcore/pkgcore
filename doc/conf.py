@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # pkgcore documentation build configuration file, created by
 # sphinx-quickstart on Sun Aug  1 16:23:57 2010.

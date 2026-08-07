@@ -17,7 +17,7 @@ class TestUnconfiguredTree:
             eclasses = eclass_cache.cache(str(epath))
         (path / "profiles").mkdir(exist_ok=True)
         return repository.UnconfiguredTree(
-            str(path), eclass_cache=eclasses, *args, **kwds
+            str(path), *args, eclass_cache=eclasses, **kwds
         )
 
     @pytest.fixture
@@ -239,11 +239,11 @@ class TestSlavedTree(TestUnconfiguredTree):
             eclasses = eclass_cache.cache(str(epath))
 
         self.master_repo = repository.UnconfiguredTree(
-            str(self.dir_master), eclass_cache=eclasses, *args, **kwds
+            str(self.dir_master), *args, eclass_cache=eclasses, **kwds
         )
         masters = (self.master_repo,)
         return repository.UnconfiguredTree(
-            str(self.dir_slave), eclass_cache=eclasses, masters=masters, *args, **kwds
+            str(self.dir_slave), *args, eclass_cache=eclasses, masters=masters, **kwds
         )
 
     @pytest.fixture(autouse=True)

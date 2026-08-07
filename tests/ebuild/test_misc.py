@@ -16,8 +16,8 @@ class Test_collapsed_restrict_to_data:
         atoms_dict = {a[0].key: (a, a[1]) for a in atoms}
         assert set(obj.atoms) == set(atoms_dict)
         for k, v in obj.atoms.items():
-            l1 = set((x[0], list(x[1])) for x in v)
-            l2 = set((x[0], list(x[1])) for x, y in atoms_dict[k])
+            l1 = {(x[0], list(x[1])) for x in v}
+            l2 = {(x[0], list(x[1])) for x, y in atoms_dict[k]}
             assert l1 == l2, f"for {k!r} atom, got {l1!r}, expected {l2!r}"
 
     def test_defaults(self):
@@ -56,7 +56,7 @@ class TestIncrementalExpansion:
 
 
 def test_IncrementalsDict():
-    d = misc.IncrementalsDict(frozenset("i1 i2".split()), a1="1", i1="1")
+    d = misc.IncrementalsDict(frozenset({"i1", "i2"}), a1="1", i1="1")
     expected = {"a1": "1", "i1": "1"}
     assert d == expected
     d["a1"] = "2"

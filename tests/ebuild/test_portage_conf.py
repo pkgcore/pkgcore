@@ -106,7 +106,7 @@ class TestReposConf:
             location = /var/gentoo/repos/gentoo"""
             )
         )
-        defaults, repos = load_repos_conf(path)
+        _defaults, repos = load_repos_conf(path)
         assert repos["foo"]["priority"] == 0
         assert "'foo' repo has invalid priority setting" in caplog.text
 

@@ -914,7 +914,7 @@ class TestPortageFormatter(BaseFormatterTest):
         )
 
     def test_use_expand(self):
-        self.formatter = self.newFormatter(use_expand=set(["foo", "bar"]))
+        self.formatter = self.newFormatter(use_expand={"foo", "bar"})
         self.formatter.format(
             FakeOp(
                 FakeEbuildSrc(
@@ -959,7 +959,7 @@ class TestPortageFormatter(BaseFormatterTest):
         )
 
     def test_disabled_use(self):
-        self.formatter.pkg_get_use = lambda pkg: (set(), set(), set(["static"]))
+        self.formatter.pkg_get_use = lambda pkg: (set(), set(), {"static"})
 
         self.formatter.format(
             FakeOp(
@@ -995,7 +995,7 @@ class TestPortageFormatter(BaseFormatterTest):
         )
 
     def test_forced_use(self):
-        self.formatter.pkg_get_use = lambda pkg: (set(["static"]), set(), set())
+        self.formatter.pkg_get_use = lambda pkg: ({"static"}, set(), set())
 
         # new pkg: static use flag forced on
         self.formatter.format(
@@ -1090,8 +1090,8 @@ class TestPortageFormatter(BaseFormatterTest):
         )
 
     def test_forced_use_expand(self):
-        self.formatter = self.newFormatter(use_expand=set(["ABI_X86", "TARGETS"]))
-        self.formatter.pkg_get_use = lambda pkg: (set(["targets_X86"]), set(), set())
+        self.formatter = self.newFormatter(use_expand={"ABI_X86", "TARGETS"})
+        self.formatter.pkg_get_use = lambda pkg: ({"targets_X86"}, set(), set())
 
         # rebuilt pkg: new abi_x86_64 and targets_X86 USE flags,
         # with abi_x86_64 disabled and targets_X86 forced on
@@ -1645,7 +1645,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         )
 
     def test_forced_use_verbose(self):
-        self.formatter.pkg_get_use = lambda pkg: (set(["static"]), set(), set())
+        self.formatter.pkg_get_use = lambda pkg: ({"static"}, set(), set())
 
         # rebuilt pkg: unchanged static use flag forced on
         self.formatter.format(

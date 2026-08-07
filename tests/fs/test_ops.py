@@ -166,7 +166,7 @@ class TestMergeContents(ContentsMixin):
         "generic_merge_bits", ("entries_norm1", "entries_rec1"), indirect=True
     )
     def test_callback(self, generic_merge_bits):
-        src, dest, cset = generic_merge_bits
+        _src, dest, cset = generic_merge_bits
         new_cset = contents.contentsSet(contents.offset_rewriter(dest, cset))
         s = set(new_cset)
         ops.merge_contents(cset, offset=dest, callback=s.remove)
@@ -182,7 +182,7 @@ class TestMergeContents(ContentsMixin):
 
     @pytest.mark.parametrize("generic_merge_bits", ("entries_norm1",), indirect=True)
     def test_exact_overwrite(self, generic_merge_bits):
-        src, dest, cset = generic_merge_bits
+        _src, dest, cset = generic_merge_bits
         assert ops.merge_contents(cset, offset=dest)
 
     def test_sym_over_dir(self, tmp_path):
@@ -238,7 +238,7 @@ class TestUnmergeContents(ContentsMixin):
 
     @pytest.mark.parametrize("generic_unmerge_bits", ("entries_norm1",), indirect=True)
     def test_empty_removal(self, tmp_path, generic_unmerge_bits):
-        img, cset = generic_unmerge_bits
+        _img, cset = generic_unmerge_bits
         assert ops.unmerge_contents(cset, offset=str(tmp_path / "dest"))
 
     @pytest.mark.parametrize("generic_unmerge_bits", ("entries_norm1",), indirect=True)

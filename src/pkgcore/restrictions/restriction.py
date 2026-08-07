@@ -6,7 +6,6 @@ import abc
 import functools
 import typing
 
-from snakeoil import klass
 from snakeoil.currying import pretty_docs
 from snakeoil.klass import immutable, memoize
 
@@ -16,7 +15,7 @@ package_type = "package"
 valid_types = (value_type, package_type)
 
 
-class base(klass.SlotsPicklingMixin, immutable.Simple, memoize.WeaklyCachedABC):
+class base(immutable.Simple, memoize.WeaklyCachedABC):
     """base restriction matching object.
 
     all derivatives *should* be __slots__ based (lot of instances may
@@ -79,12 +78,6 @@ class AlwaysBool(base):
 
     def __repr__(self):
         return f"<{self.__class__.__name__} always {self.negate!r} @{id(self):#8x}>"
-
-    def __getstate__(self):
-        return self.negate, self.type
-
-    def __setstate__(self, state):
-        self.negate, self.type = state
 
 
 # TODO: fix this so it's cachable.  It *is* cachable.

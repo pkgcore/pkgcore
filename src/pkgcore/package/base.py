@@ -16,7 +16,7 @@ from ..operations import format
 from . import errors
 
 
-class base(klass.SlotsPicklingMixin, immutable.Strict):
+class base(immutable.Strict):
     built = False
     configurable = False
     _operations = format.operations

@@ -17,6 +17,16 @@ Fixes
   (Arthur Zamarin)
 
 
+Changes
+~~~~~~~
+
+- ``pkgcore.package.base`` and ``pkgcore.restrictions.restriction.base``: drop
+  the deprecated ``snakeoil.klass.SlotsPicklingMixin``.  Python pickles
+  ``__slots__`` natively, making pickling of restrictions ~4x faster.  Note
+  restrictions pickled by older pkgcore no longer load; regenerate any caches
+  holding them (Arthur Zamarin)
+
+
 ----------------------------
 pkgcore 0.12.37 (2026-07-31)
 ----------------------------

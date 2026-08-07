@@ -1,8 +1,10 @@
+import copy
+import pickle
 from functools import partial
 
 import pytest
 
-from pkgcore.restrictions import restriction
+from pkgcore.restrictions import packages, restriction, values
 
 from .utils import TestRestriction
 
@@ -96,3 +98,30 @@ class TestAnyMatch(TestRestriction):
             # just test these do not traceback
             assert repr(inst)
             assert str(inst)
+
+
+class TestPickling:
+    """Restrictions are pushed across the multiprocessing queues, thus must marshal"""
+
+    def test_always_bool(self):
+        for negate in (False, True):
+            obj = restriction.AlwaysBool("package", negate)
+            new = pickle.loads(pickle.dumps(obj))
+            assert (new.negate, new.type) == (negate, "package")
+
+    def test_slotted_restriction(self):
+        obj = SillyBool(negate=True)
+        assert pickle.loads(pickle.dumps(obj)).negate is True
+
+    @pytest.mark.parametrize("protocol", (2, pickle.HIGHEST_PROTOCOL))
+    def test_restriction_tree(self, protocol):
+        obj = packages.OrRestriction(
+            packages.PackageRestriction("category", values.StrExactMatch("dev-util")),
+            packages.PackageRestriction("package", values.StrRegex("diff.*")),
+        )
+        assert pickle.loads(pickle.dumps(obj, protocol)) == obj
+
+    def test_copy(self):
+        obj = packages.PackageRestriction("category", values.StrExactMatch("dev-util"))
+        assert copy.copy(obj) == obj
+        assert copy.deepcopy(obj) == obj

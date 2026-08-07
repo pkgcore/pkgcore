@@ -304,18 +304,43 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
         return iflatten_instance(l)
 
 
+class _interner:
+    """Collapse equal chunked_data, and their neg/pos tuples, onto one object.
+
+    Profiles inherit from shared parents, so the same chunk is rebuilt for every
+    profile that pulls it in.  Those are equal but distinct objects; pickle memoizes
+    on identity, so each is written out in full and read back as it's own object.
+    """
+
+    __slots__ = ("chunks", "tuples")
+
+    def __init__(self):
+        self.chunks = {}
+        self.tuples = {}
+
+    def __call__(self, key, neg, pos):
+        t = self.tuples
+        item = chunked_data(key, t.setdefault(neg, neg), t.setdefault(pos, pos))
+        return self.chunks.setdefault(item, item)
+
+
+_interner_cache_key = "__chunked_data_interner__"
+
+
 def _cached_build_cp_atom_payload(cache, sequence, restrict, payload_form=False):
     sequence = list(sequence)
     key = (payload_form, restrict, tuple(sequence))
     val = cache.get(key)
     if val is None:
+        if (interner := cache.get(_interner_cache_key)) is None:
+            interner = cache[_interner_cache_key] = _interner()
         val = cache[key] = _build_cp_atom_payload(
-            sequence, restrict, payload_form=payload_form
+            sequence, restrict, payload_form=payload_form, interner=interner
         )
     return val
 
 
-def _build_cp_atom_payload(sequence, restrict, payload_form=False):
+def _build_cp_atom_payload(sequence, restrict, payload_form=False, interner=None):
     locked = {}
     ldefault = locked.setdefault
 
@@ -327,7 +352,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
             return restrict_payload(r, tuple(chain(("-" + x for x in neg), pos)))
 
     else:
-        f = chunked_data
+        f = chunked_data if interner is None else interner
 
     i = list(sequence)
     if len(i) <= 1:
@@ -493,14 +518,17 @@ class ChunkedDataDict(GenericEquality):
 
     def optimize(self, cache=None):
         if cache is None:
+            # no cross instance cache, but the keys of this one still share chunks.
+            interner = _interner()
             d_stream = (
-                (k, _build_cp_atom_payload(v, atom.atom(k), False))
+                (k, _build_cp_atom_payload(v, atom.atom(k), False, interner))
                 for k, v in self._dict.items()
             )
             g_stream = _build_cp_atom_payload(
                 self._global_settings,
                 packages.AlwaysTrue,
                 payload_form=isinstance(self, PayloadDict),
+                interner=interner,
             )
         else:
             d_stream = (

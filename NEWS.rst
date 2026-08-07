@@ -20,6 +20,14 @@ Fixes
 Changes
 ~~~~~~~
 
+- ``pkgcore.ebuild.misc.ChunkedDataDict.optimize``: collapse equal
+  ``chunked_data``, and their neg/pos tuples, onto a single object.  Profiles
+  inherit from shared parents, so the same chunk was rebuilt per profile;
+  pickle memoizes on identity, so each copy was written out in full.  For the
+  ::gentoo tree this halves the pkgcheck profiles cache (226MB -> 115MB
+  serialized, 4.5MB -> 3.3MB on disk), loads it 2x faster, and drops 63k live
+  objects.  Cache generation time is unchanged (Arthur Zamarin)
+
 - ``pkgcore.package.base`` and ``pkgcore.restrictions.restriction.base``: drop
   the deprecated ``snakeoil.klass.SlotsPicklingMixin``.  Python pickles
   ``__slots__`` natively, making pickling of restrictions ~4x faster.  Note

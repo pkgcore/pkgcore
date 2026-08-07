@@ -1,6 +1,6 @@
 import pytest
 
-from pkgcore.ebuild import misc
+from pkgcore.ebuild import atom, misc
 from pkgcore.restrictions import packages
 
 AlwaysTrue = packages.AlwaysTrue
@@ -77,6 +77,57 @@ def test_IncrementalsDict():
     d.clear()
     assert not d
     assert len(d) == 0
+
+
+class TestChunkedDataInterning:
+    def mk_dict(self, *keys):
+        # via variables; a tuple literal is folded into a shared constant, which
+        # would hide whether interning did anything.
+        neg, pos = ["-x"], ["y", "z"]
+        d = misc.ChunkedDataDict()
+        for key in keys:
+            d.update_from_stream(
+                [misc.chunked_data(atom.atom(key), tuple(neg), tuple(pos))]
+            )
+        return d
+
+    @staticmethod
+    def chunks(d):
+        return [c for v in d.render_to_dict().values() for c in v]
+
+    def test_interner(self):
+        interner = misc._interner()
+        # via a variable; a tuple literal is folded into a shared constant.
+        values = ["y", "z"]
+        pos, same_pos = tuple(values), tuple(values)
+        assert pos is not same_pos
+        a = interner(atom.atom("dev-util/diffball"), (), pos)
+        b = interner(atom.atom("dev-util/diffball"), (), same_pos)
+        assert a is b
+        assert a.pos is pos
+
+    def test_shared_within_a_dict(self):
+        d = self.mk_dict("dev-util/diffball", "dev-util/foo")
+        assert len({id(c.pos) for c in self.chunks(d)}) == 2
+        d.optimize()
+        assert len({id(c.pos) for c in self.chunks(d)}) == 1
+
+    def test_shared_across_dicts_via_cache(self):
+        # distinct keys, so the existing whole sequence cache can't be what shares them
+        cache = {}
+        first, second = self.mk_dict("dev-util/diffball"), self.mk_dict("dev-util/foo")
+        first.optimize(cache=cache)
+        second.optimize(cache=cache)
+        assert len({id(c.pos) for c in self.chunks(first) + self.chunks(second)}) == 1
+
+    def test_interning_does_not_alter_values(self):
+        plain, interned = (
+            self.mk_dict("dev-util/diffball"),
+            self.mk_dict("dev-util/diffball"),
+        )
+        plain.optimize()
+        interned.optimize(cache={})
+        assert plain.render_to_dict() == interned.render_to_dict()
 
 
 @pytest.mark.parametrize(

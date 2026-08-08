@@ -6,6 +6,31 @@ Release Notes
 pkgcore 0.12.38 (unreleased)
 ----------------------------
 
+Features
+~~~~~~~~
+
+- ``pkgcore.bugzilla``: new fully annotated client for the bugs.gentoo.org REST
+  API, covering search, filing, updates and comments, on stdlib ``urllib``.
+  Searches compose (``BugQuery.category(...) & BugQuery.unresolved()``), with
+  Bugzilla's boolean-chart slots allocated at render time so any two queries
+  can be combined, and oversized queries split by measured URL length rather
+  than a guessed item count.  Searches also page explicitly, instead of
+  silently stopping at ``max_search_results``.  Updates are built from typed
+  ``ListChange`` objects, making the ``cc_add`` spelling that Bugzilla accepts
+  and ignores unwritable.  ``cf_stabilisation_atoms`` parses to real atoms and
+  rewrites in place, preserving comments and line endings.  The API key is
+  found via ``--api-key``, ``$BUGZ_API_KEY``, ``~/.bugzrc`` or
+  ``~/.bugz_token``, and is kept out of exception messages (Arthur Zamarin)
+
+- ``pkgcore.bugzilla.testing``: replay helpers for testing code that talks to
+  Bugzilla, also exposed as the ``bugzilla_cassette`` pytest fixture so
+  downstream projects get it without any conftest wiring.  A cassette answers
+  queued responses and records the requests they answered; used as a context
+  manager it takes over the opener every client builds, capturing a client
+  constructed deep inside a CLI command without patching ``urlopen``
+  (Arthur Zamarin)
+
+
 Fixes
 ~~~~~
 

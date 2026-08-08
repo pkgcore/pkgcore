@@ -100,5 +100,8 @@ ignore = [
 	"S110",  # try-except-pass
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["pkgcore.bugzilla.bug._field"]
+
 [tool.vulture]
 paths = ["src/pkgcore"]

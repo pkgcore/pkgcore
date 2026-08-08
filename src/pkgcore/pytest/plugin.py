@@ -289,6 +289,21 @@ class EbuildRepo:
 
 
 @pytest.fixture
+def bugzilla_cassette():
+    """Intercept Bugzilla REST traffic with canned responses.
+
+    Active for the whole test, so a client built anywhere, including inside a
+    CLI command, is captured. Queue replies with ``expect``/``expect_bugs``,
+    then assert against ``cassette.calls``.
+    """
+    from ..bugzilla.testing import Cassette
+
+    with Cassette() as cassette:
+        yield cassette
+        cassette.assert_drained()
+
+
+@pytest.fixture
 def repo(tmp_path_factory):
     """Create a generic ebuild repository."""
     return EbuildRepo(str(tmp_path_factory.mktemp("repo")))

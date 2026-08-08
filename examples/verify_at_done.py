@@ -2,118 +2,98 @@
 
 """Go over all open stabilization or keywording bugs, and check for done bugs."""
 
-import json
 import sys
-import urllib.request as urllib
-from typing import TypedDict
-from urllib.parse import urlencode
 
-from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.errors import MalformedAtom
+from pkgcore.bugzilla import (
+    BugCategory,
+    BugQuery,
+    BugzillaError,
+    Component,
+    FlagStatus,
+)
+from pkgcore.bugzilla.apikey import BugzillaClientArgs
+from pkgcore.bugzilla.pkglist import ALL_KEYWORDS, NO_KEYWORDS, SAME_KEYWORDS
 from pkgcore.util import commandline
 
 argparser = commandline.ArgumentParser(version=False, description=__doc__)
-argparser.add_argument(
-    "--api-key",
-    metavar="KEY",
-    required=True,
-    help="Bugzilla API key",
-    docs="""
-        The Bugzilla API key to use for authentication. Used mainly to overcome
-        rate limiting done by bugzilla server. This tool doesn't perform any
-        bug editing, just fetching info for the bug.
-    """,
+BugzillaClientArgs.mangle_argparser(argparser)
+
+QUERY = (
+    BugQuery.component(Component.STABILIZATION, Component.KEYWORDING)
+    & BugQuery.unresolved()
+    & BugQuery.flag("sanity-check", FlagStatus.GRANTED)
 )
 
-
-class BugInfo(TypedDict):
-    id: int
-    cf_stabilisation_atoms: str
-    component: str
-    cc: list[str]
+UNEXPANDED = frozenset((ALL_KEYWORDS, SAME_KEYWORDS))
 
 
 @argparser.bind_final_check
 def check_args(parser, namespace):
-    namespace.repo = namespace.domain.ebuild_repos
-
-
-def fetch_bugs(api_key: str) -> tuple[BugInfo, ...]:
-    params = urlencode(
-        (
-            ("Bugzilla_api_key", api_key),
-            ("component", "Stabilization"),
-            ("component", "Keywording"),
-            ("include_fields", ",".join(BugInfo.__annotations__)),
-            ("bug_status", "UNCONFIRMED"),
-            ("bug_status", "CONFIRMED"),
-            ("bug_status", "IN_PROGRESS"),
-            ("f1", "flagtypes.name"),
-            ("o1", "anywords"),
-            ("v1", "sanity-check+"),
-        )
+    namespace.repo = namespace.domain.ebuild_repos_raw
+    namespace.known_arches = frozenset().union(
+        *(repo.known_arches for repo in namespace.repo)
     )
-    with urllib.urlopen(
-        "https://bugs.gentoo.org/rest/bug?" + params, timeout=30
-    ) as response:
-        return tuple(json.loads(response.read().decode("utf-8")).get("bugs", []))
 
 
-def parse_atom(pkg: str):
-    try:
-        return atom(pkg)
-    except MalformedAtom as exc:
-        try:
-            return atom(f"={pkg}")
-        except MalformedAtom:
-            raise exc
+def requested_arches(entry, cc_arches):
+    """The arches a package list line asks for.
+
+    A line carrying no keywords of its own inherits the whole CC list, which is
+    how nattka reads it too.
+    """
+    keywords = frozenset(x.lstrip("~") for x in entry.keywords)
+    if NO_KEYWORDS in keywords:
+        return frozenset()
+    return keywords or frozenset(cc_arches)
 
 
-def collect_packages(repo, bug: BugInfo):
-    return tuple(
-        pkg
-        for a in bug["cf_stabilisation_atoms"].splitlines()
-        if (b := " ".join(a.split()))
-        for pkg in repo.itermatch(parse_atom(b.split(" ", 1)[0]))
-    )
+def pending_packages(repo, bug, cc_arches):
+    """Map each requested arch to the packages it still has to stabilize.
+
+    Returns None when the bug can't be judged, either because an atom matches
+    nothing in the repo or because the package list still holds unexpanded
+    keyword shorthands. Concluding from a partial view is how an arch gets told
+    it is done while a package the repo never matched is still waiting on it.
+    """
+    pending: dict[str, list] = {}
+    for entry in bug.package_list.entries:
+        if entry.pkg is None:
+            continue
+        if UNEXPANDED & frozenset(entry.keywords):
+            return None
+        if not (pkgs := tuple(repo.itermatch(entry.pkg))):
+            return None
+        for arch in requested_arches(entry, cc_arches):
+            pending.setdefault(arch, []).extend(pkgs)
+    return pending
 
 
 @argparser.bind_main_func
 def main(options, out, err):
-    for bug in fetch_bugs(options.api_key):
+    for bug in options.bugzilla.search(QUERY).values():
+        # the heuristic for keywording is wrong, skip those for now
+        if bug.category is BugCategory.KEYWORDREQ:
+            continue
+        cc_arches = bug.arches(options.known_arches)
         try:
-            pkgs = collect_packages(options.repo, bug)
-            if not pkgs:
+            pending = pending_packages(options.repo, bug, cc_arches)
+        except BugzillaError as exc:
+            err.write(err.fg("red"), f">>> {exc}", err.reset)
+            continue
+        if not pending:
+            continue
+
+        for arch in cc_arches:
+            if not (pkgs := pending.get(arch)):
                 continue
-            for cc in bug["cc"]:
-                cc = cc.removesuffix("@gentoo.org")
-                if bug["component"] == "Keywording":
-                    continue  # skip keywording for now, the heuristic is wrong
-                if all(cc in pkg.keywords for pkg in pkgs):
-                    out.write(
-                        out.fg("yellow"),
-                        f"https://bugs.gentoo.org/{bug['id']}, cc: {cc}, all packages are done",
-                        out.reset,
-                        " -> ",
-                        f"nattka resolve -a {cc} {bug['id']}",
-                    )
-                if bug["component"] == "Keywording" and all(
-                    f"~{cc}" in pkg.keywords for pkg in pkgs
-                ):
-                    out.write(
-                        out.fg("yellow"),
-                        f"https://bugs.gentoo.org/{bug['id']}, cc: ~{cc}, all packages are done",
-                        out.reset,
-                        " -> ",
-                        f"nattka resolve -a {cc} {bug['id']}",
-                    )
-        except MalformedAtom as exc:
-            err.write(
-                err.fg("red"),
-                f">>> Malformed bug {bug['id']} with atoms: {', '.join(bug['cf_stabilisation_atoms'].splitlines())}",
-                err.reset,
-                str(exc),
-            )
+            if all(arch in pkg.keywords for pkg in pkgs):
+                out.write(
+                    out.fg("yellow"),
+                    f"{bug.url}, cc: {arch}, all packages are done",
+                    out.reset,
+                    " -> ",
+                    f"nattka resolve -a {arch} {bug.id}",
+                )
 
 
 if __name__ == "__main__":

@@ -1,6 +1,8 @@
+import os
 from functools import partial
 from io import BytesIO
 
+import pytest
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.mappings import AttrAccessible
 
@@ -266,3 +268,44 @@ class TestRegen(ArgParseMixin):
         options = self.parse("fake", "--threads", "2", domain=make_domain())
         assert isinstance(options.repos[0], util.SimpleTree)
         assert options.threads == 2
+
+
+class TestUpdateDescFiles:
+    """Test the cache files written by ``pmaint regen``."""
+
+    class FakeObserver:
+        def __init__(self):
+            self.errors = []
+
+        def error(self, msg, *args, **kwds):
+            self.errors.append(msg)
+
+    class FakeRepo:
+        def __init__(self, location):
+            self.location = location
+            self.packages = {}
+
+    @pytest.mark.skipif(os.getuid() == 0, reason="need to be non root")
+    @pytest.mark.parametrize(
+        ("func", "dirname", "filename"),
+        (
+            (pmaint.update_use_local_desc, "profiles", "use.local.desc"),
+            (pmaint.update_pkg_desc_index, "metadata", "pkg_desc_index"),
+        ),
+    )
+    def test_unwritable_dir(self, tmp_path, func, dirname, filename):
+        """The temporary file that actually failed is named in the error."""
+        (target_dir := tmp_path / dirname).mkdir()
+        target_dir.chmod(0o555)
+        observer = self.FakeObserver()
+        try:
+            assert func(self.FakeRepo(str(tmp_path)), observer) == os.EX_IOERR
+        finally:
+            target_dir.chmod(0o755)
+
+        assert len(observer.errors) == 1
+        msg = observer.errors[0]
+        assert f"Unable to update {filename} file {str(target_dir / filename)!r}" in msg
+        # AtomicWriteFile resolves the target before deriving the temporary name
+        temp_file = target_dir.resolve() / f".update.{filename}"
+        assert f"Permission denied: {str(temp_file)!r}" in msg

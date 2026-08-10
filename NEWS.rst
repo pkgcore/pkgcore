@@ -3,6 +3,21 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.39 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- ``pmaint regen``: when writing ``profiles/use.local.desc`` or
+  ``metadata/pkg_desc_index`` fails, the error now also names the path that
+  actually failed.  Both go through ``AtomicWriteFile``, so an unwritable
+  directory reports "Permission denied" for a ``.update.``-prefixed temporary
+  file, which the message previously hid behind the name of the file being
+  updated (Arthur Zamarin, #474)
+
+
+----------------------------
 pkgcore 0.12.38 (2026-08-08)
 ----------------------------
 

@@ -226,6 +226,17 @@ def _get_default_jobs(namespace, attr):
     setattr(namespace, attr, val)
 
 
+def _write_error(e: OSError, target: str) -> str:
+    """Describe a failed write, naming the path it actually failed on.
+
+    Updates go through :py:class:`AtomicWriteFile`, so a failure usually
+    concerns its temporary file rather than the file being updated.
+    """
+    if e.filename and e.filename != target:
+        return f"{e.strerror}: {e.filename!r}"
+    return e.strerror
+
+
 def update_use_local_desc(repo, observer):
     """Update a repo's local USE flag description cache (profiles/use.local.desc)"""
     ret = 0
@@ -256,7 +267,7 @@ def update_use_local_desc(repo, observer):
         f.close()
     except OSError as e:
         observer.error(
-            f"Unable to update use.local.desc file {use_local_desc!r}: {e.strerror}"
+            f"Unable to update use.local.desc file {use_local_desc!r}: {_write_error(e, use_local_desc)}"
         )
         ret = os.EX_IOERR
     finally:
@@ -289,7 +300,7 @@ def update_pkg_desc_index(repo, observer):
         f.close()
     except OSError as e:
         observer.error(
-            f"Unable to update pkg_desc_index file {pkg_desc_index!r}: {e.strerror}"
+            f"Unable to update pkg_desc_index file {pkg_desc_index!r}: {_write_error(e, pkg_desc_index)}"
         )
         ret = os.EX_IOERR
     finally:

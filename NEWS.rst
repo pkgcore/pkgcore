@@ -9,6 +9,12 @@ pkgcore 0.12.39 (unreleased)
 Fixes
 ~~~~~
 
+- ``pkgcore.const``: fix the user config, cache and data paths being taken
+  verbatim from an XDG base dir variable set to an empty (or relative) value,
+  as is common in containers and root shells, leaving them relative to the
+  current directory.  Per the XDG basedir spec such values are now discarded in
+  favor of the default location (Arthur Zamarin)
+
 - ``pmaint regen``: when writing ``profiles/use.local.desc`` or
   ``metadata/pkg_desc_index`` fails, the error now also names the path that
   actually failed.  Both go through ``AtomicWriteFile``, so an unwritable

@@ -200,6 +200,12 @@ class TestNewBug:
         with pytest.raises(TypeError):
             NewBug(summary="s", description="d", component="x", ids=[1])
 
+    def test_rejects_overlong_description(self):
+        with pytest.raises(BugzillaUsageError, match="the limit is"):
+            NewBug(
+                summary="s", description="x" * (MAX_COMMENT_LENGTH + 1), component="x"
+            )
+
 
 class TestArchRequest:
     @pytest.fixture
@@ -247,6 +253,19 @@ class TestArchRequest:
             BugCategory.STABLEREQ, pkglist, depends_on=(7,)
         ).to_wire()
         assert wire["depends_on"] == [7]
+
+    def test_overlong_description_is_truncated(self, pkglist):
+        # one line per package outgrows the comment cap on a large list, and
+        # losing the tail of it beats losing the bug
+        description = "\n".join(
+            f"=dev-libs/p-{i}: no change for 30 days" for i in range(1000)
+        )
+        wire = NewBug.arch_request(
+            BugCategory.STABLEREQ, pkglist, description=description
+        ).to_wire()
+        assert len(wire["description"]) <= MAX_COMMENT_LENGTH
+        assert wire["description"].startswith("=dev-libs/p-0:")
+        assert wire["description"].endswith("\n...\n")
 
 
 class TestPackageMask:

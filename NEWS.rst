@@ -16,6 +16,14 @@ Fixes
   file, which the message previously hid behind the name of the file being
   updated (Arthur Zamarin, #474)
 
+- ``pkgcore.bugzilla``: ``MAX_COMMENT_LENGTH`` is now 16384, the limit
+  bugs.gentoo.org enforces, rather than upstream Bugzilla's 65535, which was
+  too high to reject anything it would.  A new bug's description is filed as
+  its first comment, so it shares that cap: ``NewBug`` rejects an overlong one,
+  and since ``arch_request`` and ``package_mask`` generate a line per package,
+  both now truncate on a line boundary through the new ``truncate_comment``
+  (Arthur Zamarin, pkgdev#213)
+
 
 ----------------------------
 pkgcore 0.12.38 (2026-08-08)

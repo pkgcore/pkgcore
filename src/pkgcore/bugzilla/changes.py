@@ -17,6 +17,7 @@ __all__ = (
     "NewBug",
     "NewComment",
     "summarise",
+    "truncate_comment",
 )
 
 import dataclasses
@@ -44,8 +45,8 @@ from .wire import (
     RawNewComment,
 )
 
-# bugzilla rejects longer comments with error 114
-MAX_COMMENT_LENGTH: typing.Final = 65535
+# bgo rejects longer comments with error 114, lowering upstream's 65535
+MAX_COMMENT_LENGTH: typing.Final = 16384
 
 # the length past which a package list summary is collapsed to "and friends"
 MAX_SUMMARY_LENGTH: typing.Final = 90
@@ -120,6 +121,15 @@ class FlagChange:
         return wire
 
 
+def truncate_comment(body: str, limit: int = MAX_COMMENT_LENGTH) -> str:
+    """Cut an overlong comment on a line boundary, marking where it stopped"""
+    if len(body) <= limit:
+        return body
+    marker = "\n...\n"
+    head = body[: limit - len(marker)]
+    return head[: head.rfind("\n") + 1 or len(head)].rstrip() + marker
+
+
 @dataclasses.dataclass(frozen=True, slots=True)
 class NewComment:
     """A comment to leave alongside an update"""
@@ -139,11 +149,7 @@ class NewComment:
         cls, body: str, limit: int = MAX_COMMENT_LENGTH, **kwargs: typing.Any
     ) -> "NewComment":
         """Build a comment, cutting an overlong body on a line boundary"""
-        if len(body) > limit:
-            marker = "\n...\n"
-            head = body[: limit - len(marker)]
-            body = head[: head.rfind("\n") + 1 or len(head)].rstrip() + marker
-        return cls(body, **kwargs)
+        return cls(truncate_comment(body, limit), **kwargs)
 
     def to_wire(self) -> RawNewComment:
         wire: RawNewComment = {"body": self.body}
@@ -188,6 +194,11 @@ class NewBug:
     def __post_init__(self) -> None:
         if not self.summary.strip():
             raise BugzillaUsageError("a new bug needs a summary")
+        if len(self.description) > MAX_COMMENT_LENGTH:
+            raise BugzillaUsageError(
+                f"description is {len(self.description)} characters, the limit "
+                f"is {MAX_COMMENT_LENGTH}; use truncate_comment()"
+            )
 
     @classmethod
     def arch_request(
@@ -208,7 +219,9 @@ class NewBug:
             component=category.component,
             severity=Severity.ENHANCEMENT,
             summary=summary or summarise(package_list, category),
-            description=description or f"Please {category.verb} the listed packages.",
+            description=truncate_comment(
+                description or f"Please {category.verb} the listed packages."
+            ),
             keywords=("CC-ARCHES",) if cc_arches else (),
             assigned_to=assignee,
             cc=tuple(cc),
@@ -233,7 +246,7 @@ class NewBug:
         return cls(
             component=Component.CURRENT_PACKAGES,
             summary=summary,
-            description=description,
+            description=truncate_comment(description),
             keywords=("PMASKED",),
             assigned_to=assignee,
             cc=(*cc, TREECLEANER),

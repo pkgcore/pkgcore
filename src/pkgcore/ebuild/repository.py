@@ -109,10 +109,13 @@ class repo_operations(_repo_ops.operations):
                         observer.info(f"removing manifest: {key}::{self.repo.repo_id}")
                     except OSError as exc:
                         observer.error(
-                            "failed removing old manifest: "
-                            f"{key}::{self.repo.repo_id}: {exc}"
+                            f"failed removing old manifest: {key}::{self.repo.repo_id}: {exc}"
                         )
                         ret.add(key)
+                elif observer.verbosity > 0:
+                    observer.info(
+                        f"manifest not needed, thin manifests and no distfiles: {key}::{self.repo.repo_id}"
+                    )
                 continue
 
             # Manifest file is current and not forcing a refresh; thick manifests
@@ -124,6 +127,8 @@ class repo_operations(_repo_ops.operations):
                 and manifest.distfiles.keys() == pkgdir_fetchables.keys()
                 and not (manifest.aux_files or manifest.ebuilds or manifest.misc)
             ):
+                if observer.verbosity > 0:
+                    observer.info(f"manifest is current: {key}::{self.repo.repo_id}")
                 continue
 
             # fetch distfiles
@@ -172,6 +177,8 @@ class repo_operations(_repo_ops.operations):
                 all_fetchables.update(fetchables)
                 if manifest.update(sorted(all_fetchables.values()), chfs=write_chksums):
                     observer.info(f"generating manifest: {key}::{self.repo.repo_id}")
+                elif observer.verbosity > 0:
+                    observer.info(f"manifest is current: {key}::{self.repo.repo_id}")
 
         # edge case: If all ebuilds for a package were masked bad,
         # then it was filtered out of the iterator for the above loop,

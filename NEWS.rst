@@ -23,6 +23,10 @@ Fixes
   distfiles matched and nothing else was looked at.  Such a file is now
   rewritten down to its ``DIST`` entries (Arthur Zamarin, pkgdev#78)
 
+- manifest generation: say why a package was passed over when verbose, rather
+  than leaving a run which had nothing to do indistinguishable from one which
+  did nothing at all (Arthur Zamarin, pkgdev#80)
+
 - ``pkgcore.const``: fix the user config, cache and data paths being taken
   verbatim from an XDG base dir variable set to an empty (or relative) value,
   as is common in containers and root shells, leaving them relative to the

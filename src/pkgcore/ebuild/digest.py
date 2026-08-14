@@ -17,15 +17,14 @@ from ..package import errors
 from . import cpv
 
 
-def _write_manifest(handle, chf, filename, chksums):
-    """Convenient, internal method for writing manifests"""
+def _manifest_line(chf: str, filename: str, chksums) -> str:
+    """Convenient, internal method for rendering a manifest entry"""
+    chksums = dict(chksums)
     size = chksums.pop("size")
-    handle.write(f"{chf.upper()} {filename} {size}")
+    line = f"{chf.upper()} {filename} {size}"
     for other_chf in sorted(chksums):
-        handle.write(
-            f" {other_chf.upper()} {get_handler(other_chf).long2str(chksums[other_chf])}"
-        )
-    handle.write("\n")
+        line += f" {other_chf.upper()} {get_handler(other_chf).long2str(chksums[other_chf])}"
+    return line + "\n"
 
 
 def convert_chksums(iterable):
@@ -117,15 +116,16 @@ class Manifest:
         self._dist, self._aux, self._ebuild, self._misc = data
         self._sourced = True
 
-    def update(self, fetchables, chfs=None):
+    def update(self, fetchables, chfs=None) -> bool:
         """Update the related Manifest file.
 
         :param fetchables: fetchables of the package
+        :return: True if the file was written, False if it was already current
         """
 
         if self.thin and not fetchables:
             # Manifest files aren't necessary with thin manifests and no distfiles
-            return
+            return False
 
         _key_sort = operator.itemgetter(0)
 
@@ -156,24 +156,39 @@ class Manifest:
                     )
                 d[pathname] = dict(obj.chksums)
 
+        # write it in alphabetical order; aux gets flushed now.
+        data = "".join(
+            _manifest_line("AUX", path, chksums)
+            for path, chksums in sorted(aux.items(), key=_key_sort)
+        )
+
+        # next dist...
+        data += "".join(
+            _manifest_line(
+                "DIST", os.path.basename(fetchable.filename), fetchable.chksums
+            )
+            for fetchable in sorted(fetchables, key=operator.attrgetter("filename"))
+        )
+
+        # then ebuild and misc
+        for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
+            data += "".join(
+                _manifest_line(mtype, path, chksum)
+                for path, chksum in sorted(inst.items(), key=_key_sort)
+            )
+
+        # leave an already correct Manifest alone
+        try:
+            with open(self.path) as handle:
+                if handle.read() == data:
+                    return False
+        except OSError:
+            pass
+
         with open(self.path, "w") as handle:
-            # write it in alphabetical order; aux gets flushed now.
-            for path, chksums in sorted(aux.items(), key=_key_sort):
-                _write_manifest(handle, "AUX", path, chksums)
-
-            # next dist...
-            for fetchable in sorted(fetchables, key=operator.attrgetter("filename")):
-                _write_manifest(
-                    handle,
-                    "DIST",
-                    os.path.basename(fetchable.filename),
-                    dict(fetchable.chksums),
-                )
-
-            # then ebuild and misc
-            for mtype, inst in (("EBUILD", ebuild), ("MISC", misc)):
-                for path, chksum in sorted(inst.items(), key=_key_sort):
-                    _write_manifest(handle, mtype, path, chksum)
+            handle.write(data)
+        self._sourced = False
+        return True
 
     @property
     def aux_files(self):

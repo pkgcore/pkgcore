@@ -9,6 +9,20 @@ pkgcore 0.12.39 (unreleased)
 Fixes
 ~~~~~
 
+- manifest generation: a thick Manifest never being written or refreshed
+  unless ``--force`` was passed.  Whether the file was current was decided by
+  comparing distfile names alone, but a thick Manifest also covers the package
+  directory, so a repo with no distfiles got no Manifest at all and an edited
+  ebuild left a Manifest silently recording the old size and hashes.  Thick
+  manifests are now always regenerated, and ``Manifest.update`` leaves an
+  already correct file untouched, so no work is reported when there is none
+  (Arthur Zamarin, pkgdev#108, pkgdev#194)
+
+- manifest generation: a thick Manifest copied into a repo using thin
+  manifests keeping its ``AUX``/``EBUILD``/``MISC`` entries forever, as the
+  distfiles matched and nothing else was looked at.  Such a file is now
+  rewritten down to its ``DIST`` entries (Arthur Zamarin, pkgdev#78)
+
 - ``pkgcore.const``: fix the user config, cache and data paths being taken
   verbatim from an XDG base dir variable set to an empty (or relative) value,
   as is common in containers and root shells, leaving them relative to the

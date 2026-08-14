@@ -100,3 +100,45 @@ class TestManifest:
 
 class TestManifestDataSource(TestManifest):
     convert_source = staticmethod(lambda x: local_source(x))
+
+
+class TestManifestUpdate:
+    chfs = ("size", "blake2b")
+
+    def mk_pkgdir(self, tmp_path):
+        (tmp_path / "pkg-1.ebuild").write_text("EAPI=8\n")
+        (tmp_path / "metadata.xml").write_text("<pkgmetadata/>\n")
+        (tmp_path / "files").mkdir()
+        (tmp_path / "files" / "a.patch").write_text("patch\n")
+        return digest.Manifest(
+            str(tmp_path / "Manifest"), thin=False, allow_missing=True
+        )
+
+    def test_thick_covers_pkgdir(self, tmp_path):
+        manifest = self.mk_pkgdir(tmp_path)
+        assert manifest.update((), chfs=self.chfs)
+        data = (tmp_path / "Manifest").read_text()
+        assert "EBUILD pkg-1.ebuild " in data
+        assert "MISC metadata.xml " in data
+        assert "AUX a.patch " in data
+
+    def test_current_manifest_left_alone(self, tmp_path):
+        manifest = self.mk_pkgdir(tmp_path)
+        assert manifest.update((), chfs=self.chfs)
+        # nothing changed, so nothing to write
+        assert not manifest.update((), chfs=self.chfs)
+
+    def test_stale_manifest_rewritten(self, tmp_path):
+        manifest = self.mk_pkgdir(tmp_path)
+        assert manifest.update((), chfs=self.chfs)
+        before = (tmp_path / "Manifest").read_text()
+        (tmp_path / "pkg-1.ebuild").write_text("EAPI=8\n# changed\n")
+        assert manifest.update((), chfs=self.chfs)
+        assert (tmp_path / "Manifest").read_text() != before
+
+    def test_thin_without_distfiles(self, tmp_path):
+        manifest = digest.Manifest(
+            str(tmp_path / "Manifest"), thin=True, allow_missing=True
+        )
+        assert not manifest.update((), chfs=self.chfs)
+        assert not (tmp_path / "Manifest").exists()

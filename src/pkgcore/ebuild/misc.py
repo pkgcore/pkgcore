@@ -19,6 +19,7 @@ __all__ = (
 
 import os.path
 from collections import defaultdict, namedtuple
+from collections.abc import Iterable, Reversible
 from functools import partial
 from itertools import chain
 
@@ -33,7 +34,7 @@ restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
 
 
-def sort_keywords(keywords):
+def sort_keywords(keywords: Iterable[str]):
     """Sort keywords in the proper order: i.e. glob-arches, arch, prefix-arches."""
 
     def _sort_kwds(kw):
@@ -43,7 +44,7 @@ def sort_keywords(keywords):
     return sorted(keywords, key=_sort_kwds)
 
 
-def optimize_incrementals(sequence):
+def optimize_incrementals(sequence: Reversible[str]):
     # roughly the algorithm walks sequences right->left,
     # identifying terminal points for incrementals; aka, -x x, 'x'
     # is the terminal point- no point in having -x.

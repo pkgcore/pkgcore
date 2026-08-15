@@ -33,6 +33,7 @@ __all__ = (
     "NewComment",
     "PackageList",
     "PackageListEntry",
+    "PackageListError",
     "Product",
     "Resolution",
     "RuntimeTesting",
@@ -54,7 +55,7 @@ from .enums import (
     Severity,
     Status,
 )
-from .errors import BugzillaError
+from .errors import BugzillaError, PackageListError
 from .pkglist import PackageList, PackageListEntry
 from .query import BugQuery, Criterion
 from .transport import AuthMode

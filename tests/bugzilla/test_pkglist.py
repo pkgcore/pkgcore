@@ -27,8 +27,13 @@ class TestParseAtom:
             "",
             "not-an-atom",
             "!dev-libs/foo",
+            "<>dev-libs/foo-1",
+            "dev-libs/foo-*",
             "dev-libs/foo[bar]",
             "dev-libs/foo:*",
+            "=dev-libs/foo-1:=",
+            "dev-libs/foo::gentoo",
+            "=dev-libs/foo-1::gentoo",
         ),
     )
     def test_invalid(self, token):
@@ -181,6 +186,31 @@ class TestExpand:
         pkglist = PackageList("dev-libs/a amd64\n")
         assert pkglist.expand(lambda pkg: ("arm",)) is pkglist
 
+    def test_keeps_the_spec_as_written(self):
+        # a bare cat/pkg-1 parses as =cat/pkg-1, but it has to go back the way the reporter wrote it
+        pkglist = PackageList("dev-libs/a-1.2.3 *\n")
+        assert str(pkglist.expand(lambda pkg: ("arm",))) == "dev-libs/a-1.2.3 arm\n"
+
+    def test_keeps_the_equals_prefix_when_it_was_written(self):
+        pkglist = PackageList("=dev-libs/a-1.2.3 *\n")
+        assert str(pkglist.expand(lambda pkg: ("arm",))) == "=dev-libs/a-1.2.3 arm\n"
+
+    def test_keeps_column_alignment(self):
+        pkglist = PackageList("dev-libs/a-1        *   # aligned\n")
+        assert str(pkglist.expand(lambda pkg: ("amd64", "x86"))) == (
+            "dev-libs/a-1        amd64 x86   # aligned\n"
+        )
+
+    def test_same_keywords_copying_an_empty_line(self):
+        pkglist = PackageList("dev-libs/a -\ndev-libs/b ^")
+        assert str(pkglist.expand(lambda pkg: ())) == "dev-libs/a -\ndev-libs/b -"
+
+    def test_same_keywords_copying_empty_onto_a_line_with_keywords(self):
+        # nothing to copy, yet the line asks for something: unanswerable
+        pkglist = PackageList("dev-libs/a\ndev-libs/b ^ amd64", bug_id=7)
+        with pytest.raises(PackageListError, match="copies an empty line"):
+            pkglist.expand(lambda pkg: ())
+
     def test_blank_lines_do_not_reset_previous(self):
         pkglist = PackageList("dev-libs/a amd64\n\n# note\ndev-libs/b ^")
         assert str(pkglist.expand(lambda pkg: ())) == (
@@ -195,6 +225,19 @@ class TestPackageListEntry:
         assert updated.raw == "   dev-libs/a arm ppc  # note"
         assert updated.keywords == ("arm", "ppc")
         assert updated.lineno == entry.lineno
+
+    def test_with_keywords_keeps_the_spec_verbatim(self):
+        (entry,) = PackageList("dev-libs/a-1.2.3 amd64").entries
+        assert entry.pkg is not None and str(entry.pkg) == "=dev-libs/a-1.2.3"
+        assert entry.with_keywords(("arm",)).raw == "dev-libs/a-1.2.3 arm"
+
+    def test_with_keywords_on_a_line_that_had_none(self):
+        (entry,) = PackageList("dev-libs/a-1  # note").entries
+        assert entry.with_keywords(("arm",)).raw == "dev-libs/a-1 arm  # note"
+
+    def test_with_keywords_emptied(self):
+        (entry,) = PackageList("dev-libs/a-1 amd64  # note").entries
+        assert entry.with_keywords(()).raw == "dev-libs/a-1   # note"
 
     def test_with_keywords_on_blank_is_a_noop(self):
         (entry,) = PackageList("# just a comment").entries

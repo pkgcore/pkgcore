@@ -6,6 +6,7 @@ one declaration and can't drift apart.
 """
 
 __all__ = (
+    "ALLARCHES_KEYWORD",
     "INCLUDE_FIELDS",
     "Bug",
     "BugChanges",
@@ -23,8 +24,10 @@ import dataclasses
 import datetime
 import typing
 
+from ..ebuild.keywording import KeywordRequest, PackageInvalid, match_packages
 from ..log import logger
 from .enums import BugCategory, FlagStatus, Product, RuntimeTesting
+from .errors import PackageListError
 from .pkglist import PackageList
 from .wire import (
     BugId,
@@ -37,6 +40,9 @@ from .wire import (
     RawFlag,
     RawWhoami,
 )
+
+# the Bugzilla keyword marking a stabilization the whole arch set may do at once
+ALLARCHES_KEYWORD: typing.Final = "ALLARCHES"
 
 _EPOCH: typing.Final = datetime.datetime.fromtimestamp(0, datetime.UTC)
 _NO_FLAG_ID: typing.Final = FlagId(0)
@@ -186,6 +192,46 @@ class Bug:
             for entry in self.cc
             if (entry.endswith("@gentoo.org") or "@" not in entry)
             and (name := entry.split("@", 1)[0]) in known_arches
+        )
+
+    def match_packages(
+        self,
+        repo: typing.Any,
+        *,
+        only_new: bool = False,
+        filter_arch: typing.Iterable[str] = (),
+        permit_allarches: bool = False,
+    ) -> typing.Iterator[KeywordRequest]:
+        """Resolve this bug's package list against ``repo``.
+
+        Bug's category decides stabilizing from keywording and CC decides
+        which arches the request is addressed to; see
+        :func:`pkgcore.ebuild.keywording.match_packages` for the rest.
+
+        :param repo: repo to resolve the package list against
+        :param only_new: drop the arches the package already carries
+        :param filter_arch: keep only the arches listed
+        :param permit_allarches: honour the ALLARCHES keyword when the bug
+            carries it
+        :return: the matched packages, each with the arches to request for it
+        :raises PackageInvalid: if the package list can't be parsed
+        """
+        try:
+            requested = [
+                (entry.pkg, entry.keywords)
+                for entry in self.package_list.entries
+                if entry.pkg is not None
+            ]
+        except PackageListError as exc:
+            raise PackageInvalid(str(exc)) from exc
+        return match_packages(
+            repo,
+            requested,
+            stable=self.category is BugCategory.STABLEREQ,
+            cc_arches=self.arches(repo.known_arches),
+            only_new=only_new,
+            filter_arch=filter_arch,
+            allarches=permit_allarches and ALLARCHES_KEYWORD in self.keywords,
         )
 
     @property

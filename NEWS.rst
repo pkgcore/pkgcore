@@ -3,6 +3,27 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.40 (unreleased)
+----------------------------
+
+Features
+~~~~~~~~
+
+- ``pkgcore.ebuild.keywording``: new module resolving a keywording or
+  stabilization request into concrete packages and arches, moved out of nattka
+  so that pkgcore, pkgdev and nattka share one implementation (Arthur Zamarin)
+
+Fixes
+~~~~~
+
+- ``pkgcore.bugzilla.pkglist``: expanding a package list no longer rewrites the
+  lines it touches (Arthur Zamarin)
+
+- ``pkgcore.bugzilla.pkglist.parse_atom`` now also rejects a repo id, as in
+  ``=cat/pkg-1::gentoo`` (Arthur Zamarin)
+
+
+----------------------------
 pkgcore 0.12.39 (2026-08-14)
 ----------------------------
 

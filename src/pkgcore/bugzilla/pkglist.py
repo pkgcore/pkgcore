@@ -27,14 +27,12 @@ from snakeoil.klass.properties import jit_attr_none
 
 from ..ebuild.atom import atom
 from ..ebuild.errors import MalformedAtom
+from ..ebuild.keywording import ALL_KEYWORDS, NO_KEYWORDS, SAME_KEYWORDS
 from .errors import PackageListError
 from .wire import BugId
 
-ALL_KEYWORDS: typing.Final = "*"
-SAME_KEYWORDS: typing.Final = "^"
-NO_KEYWORDS: typing.Final = "-"
-
 _COMMENT_RE: typing.Final = re.compile(r"(?:^|\s)#")
+_TOKEN_RE: typing.Final = re.compile(r"\S+")
 
 
 def parse_atom(token: str) -> atom:
@@ -43,6 +41,12 @@ def parse_atom(token: str) -> atom:
     Stabilization lines carry a bare ``cat/pkg-1.2.3`` rather than the
     ``=cat/pkg-1.2.3`` an atom needs, so the versioned form is tried first.
 
+    A package list names packages to act on, so the qualifiers that would make
+    that ambiguous are rejected: blockers, use deps, slot operators and repo
+    ids all mean something the list has no way to honour.
+
+    :param token: the first whitespace separated field of a list line
+    :return: the atom the token names
     :raises MalformedAtom: if the token isn't a usable package spec
     """
     for candidate in (f"={token}", token):
@@ -50,8 +54,10 @@ def parse_atom(token: str) -> atom:
             pkg = atom(candidate)
         except MalformedAtom:
             continue
-        if pkg.blocks or pkg.use or pkg.slot_operator:
-            raise MalformedAtom(token, "blockers, use deps and slot operators")
+        if pkg.blocks or pkg.use or pkg.slot_operator or pkg.repo_id:
+            raise MalformedAtom(
+                token, "blockers, use deps, slot operators and repo ids"
+            )
         return pkg
     raise MalformedAtom(token)
 
@@ -72,14 +78,36 @@ class PackageListEntry:
         return self.pkg is None
 
     def with_keywords(self, keywords: typing.Iterable[str]) -> "PackageListEntry":
-        """Return a copy with new keywords, keeping indentation and comment"""
+        """Return a copy with new keywords, rewriting only the keyword text.
+
+        The rest of the line survives as written: the spec in its original
+        spelling, the alignment around it, and the comment.
+
+        :param keywords: the keywords to write in place of the current ones
+        :return: the rewritten entry, or ``self`` if the line holds no spec
+        """
         if self.pkg is None:
             return self
         keywords = tuple(keywords)
-        indent = self.raw[: len(self.raw) - len(self.raw.lstrip())]
-        body = " ".join((str(self.pkg), *keywords))
-        tail = f"  {self.comment}" if self.comment else ""
-        return dataclasses.replace(self, keywords=keywords, raw=f"{indent}{body}{tail}")
+        comment_at = len(self.raw)
+        if match := _COMMENT_RE.search(self.raw):
+            comment_at = match.end() - 1
+        body = self.raw[:comment_at]
+        if not (tokens := list(_TOKEN_RE.finditer(body))):
+            return self
+        # anchoring on the tokens keeps the whitespace on either side of them
+        if len(tokens) > 1:
+            head = body[: tokens[1].start()]
+        else:
+            head = body[: tokens[0].end()] + (" " if keywords else "")
+        return dataclasses.replace(
+            self,
+            keywords=keywords,
+            raw=(
+                f"{head}{' '.join(keywords)}"
+                f"{body[tokens[-1].end() :]}{self.raw[comment_at:]}"
+            ),
+        )
 
 
 class PackageList(immutable.Simple):
@@ -146,11 +174,16 @@ class PackageList(immutable.Simple):
     ) -> "PackageList":
         """Resolve the ``*`` and ``^`` sentinels.
 
-        ``suggest`` returns the keywords a package should be requested for, in
-        the order they should be written; returning nothing collapses the line
-        to ``-``.
+        Only the lines that change are rewritten, and each keeps everything but
+        its keywords, so the result can go straight back onto the bug.
 
-        :raises PackageListError: on ``^`` with nothing above it to copy
+        :param suggest: returns the keywords a package should be requested
+            for, in the order they should be written; returning nothing
+            collapses the line to ``-``.  Which version to suggest for is the
+            caller's to decide
+        :return: the expanded list, or ``self`` if nothing needed rewriting
+        :raises PackageListError: on a ``^`` with nothing above it to copy, or
+            one that would copy nothing onto a line asking for keywords
         """
         expanded: list[PackageListEntry] = []
         previous: tuple[str, ...] | None = None
@@ -167,6 +200,16 @@ class PackageList(immutable.Simple):
                     if previous is None:
                         raise PackageListError(
                             f"{SAME_KEYWORDS!r} keyword with no line above it",
+                            bug_id=self.bug_id,
+                            lineno=entry.lineno,
+                            line=entry.raw,
+                        )
+                    # copying nothing onto a line that asks for something else
+                    # is a request no rewriting can satisfy
+                    if not previous and len(entry.keywords) > 1:
+                        raise PackageListError(
+                            f"{SAME_KEYWORDS!r} keyword copies an empty line, "
+                            "but the line has keywords of its own",
                             bug_id=self.bug_id,
                             lineno=entry.lineno,
                             line=entry.raw,

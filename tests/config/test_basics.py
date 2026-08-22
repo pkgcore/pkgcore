@@ -362,25 +362,6 @@ class TestConvertAsIs:
         assert ("refs", [ref]) == basics.convert_asis(None, [ref], "repr")
 
 
-def test_alias():
-    def spoon():
-        """Noop."""
-
-    foon = central.CollapsedConfig(basics.ConfigType(spoon), {}, None)
-
-    class MockManager:
-        def collapse_named_section(self, name):
-            if name == "foon":
-                return foon
-            return object()
-
-    manager = MockManager()
-    alias = basics.section_alias("foon", "spoon")
-    type_obj = basics.ConfigType(alias.render_value(manager, "class", "callable"))
-    assert "spoon" == type_obj.name
-    assert foon is alias.render_value(manager, "target", "ref:spoon").collapse()
-
-
 class TestParsers:
     def test_str_to_bool(self):
         # abuse assert is to make sure we get actual booleans, not some

@@ -566,19 +566,26 @@ def test_recursive_inherit():
     )
 
 
-def test_alias():
+def test_ref_is_cached():
     def myspork():
-        return object
+        # a fresh instance each call, so identity below means it was cached
+        return object()
+
+    @configurable(types={"target": "ref:myspork"}, typename="myspork")
+    def passthrough(target):
+        return target
 
     manager = central.ConfigManager(
         [
             {
                 "spork": basics.HardCodedConfigSection({"class": myspork}),
-                "foon": basics.section_alias("spork", "myspork"),
+                "foon": basics.AutoConfigSection(
+                    {"class": passthrough, "target": "spork"}
+                ),
             }
         ]
     )
-    # This tests both the detected typename of foon and the caching.
+    # a section which hands back its reference gets the very same instance
     assert manager.objects.myspork["spork"] is manager.objects.myspork["foon"]
 
 

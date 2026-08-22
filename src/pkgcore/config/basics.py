@@ -14,7 +14,6 @@ __all__ = (
     "convert_hybrid",
     "convert_string",
     "parse_config_file",
-    "section_alias",
     "str_to_bool",
     "str_to_int",
     "str_to_list",
@@ -442,20 +441,6 @@ def convert_hybrid(central, value, arg_type: str):
 HardCodedConfigSection = partial(DictConfigSection, convert_asis)
 ConfigSectionFromStringDict = partial(DictConfigSection, convert_string)
 AutoConfigSection = partial(DictConfigSection, convert_hybrid)
-
-
-def section_alias(target, typename: str) -> AutoConfigSection:
-    """Build a ConfigSection that instantiates a named reference.
-
-    Because of central's caching our instantiated value will be
-    identical to our target's.
-    """
-
-    @configurable(types={"target": "ref:" + typename}, typename=typename)
-    def section_alias(target):
-        return target
-
-    return AutoConfigSection({"class": section_alias, "target": target})
 
 
 @configurable(types={"path": "str", "parser": "callable"}, typename="configsection")

@@ -22,6 +22,7 @@ __all__ = (
 )
 
 import typing
+from abc import ABC, abstractmethod
 from functools import partial
 from importlib import import_module
 
@@ -219,34 +220,30 @@ class LazyUnnamedSectionRef(LazySectionRef):
         return self.central.collapse_section([self.section])
 
 
-class ConfigSection:
-    """Single Config section, returning typed values from a key.
+class ConfigSection(ABC):
+    """Single Config section, returning typed values from a key."""
 
-    Not much of an object this, if we were using zope.interface it'd
-    be an Interface.
-    """
-
+    @abstractmethod
     def __contains__(self, name: str) -> bool:
         """Check if a key is in this section."""
-        raise NotImplementedError(self.__contains__)
 
+    @abstractmethod
     def keys(self) -> list[str]:
         """Return a list of keys."""
-        raise NotImplementedError(self.keys)
 
+    @abstractmethod
     def render_value(self, central, name: str, arg_type):
         """Return a setting, converted to the requested type."""
-        raise NotImplementedError(self, "render_value")
 
 
 class DictConfigSection(ConfigSection):
     """Turns a dict and a conversion function into a ConfigSection."""
 
     func: typing.Callable
-    dict: dict[str, typing.Any]
+    dict: "dict[str, typing.Any]"
 
     def __init__(
-        self, conversion_func: typing.Callable, source_dict: dict[str, typing.Any]
+        self, conversion_func: typing.Callable, source_dict: "dict[str, typing.Any]"
     ) -> None:
         """Initialize.
 

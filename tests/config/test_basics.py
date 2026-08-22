@@ -222,10 +222,8 @@ class TestConfigSection:
         pytest.raises(NotImplementedError, ref.instantiate)
 
     def test_basics(self):
-        section = basics.ConfigSection()
-        pytest.raises(NotImplementedError, section.__contains__, 42)
-        pytest.raises(NotImplementedError, section.keys)
-        pytest.raises(NotImplementedError, section.render_value, None, "a", "str")
+        with pytest.raises(TypeError):
+            _ = basics.ConfigSection()
 
 
 class TestDictConfigSection:

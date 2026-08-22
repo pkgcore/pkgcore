@@ -18,6 +18,7 @@ __all__ = (
 import fnmatch
 import os
 import typing
+from abc import ABC, abstractmethod
 from os.path import join as pjoin
 from os.path import normpath
 
@@ -414,7 +415,7 @@ class preinst_contents_reset(triggers.base):
         cset.update(cs)
 
 
-class FileCollision(triggers.base):
+class FileCollision(triggers.base, ABC):
     """Generic livefs file collision trigger."""
 
     required_csets: typing.ClassVar[dict] = {
@@ -433,12 +434,9 @@ class FileCollision(triggers.base):
         self.extra_disables = extra_disables
         self.extra_ignores = extra_ignores
 
+    @abstractmethod
     def collision(self, colliding):
-        """Handle livefs file collisions.
-
-        Must be overridden in derived trigger classes.
-        """
-        raise NotImplementedError
+        """Handle livefs file collisions."""
 
     def trigger(self, engine, install, existing, old_cset=()):
         if not existing:

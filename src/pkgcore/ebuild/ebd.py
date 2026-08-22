@@ -385,6 +385,8 @@ class ebd:
             if "selinux" not in self.features and "suidctl" not in self.features:
                 return True
 
+        self.setup_logging()
+
         shutil.rmtree(self.env["PKGCORE_EMPTYDIR"], ignore_errors=True)
         os.mkdir(self.env["PKGCORE_EMPTYDIR"])
 
@@ -501,8 +503,6 @@ class setup_mixin:
     setup_is_for_src = True
 
     def setup(self, setup_phase_override=None):
-        self.setup_logging()
-
         additional_commands = {}
         phase_name = "setup-binpkg"
         if self.setup_is_for_src:

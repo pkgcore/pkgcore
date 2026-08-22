@@ -257,7 +257,7 @@ __ebd_process_ebuild_phases() {
 		exit ${cont}
 	fi
 
-	[[ -n ${PORTAGE_LOGFILE} ]] && addwrite "$(readlink -f "${PORTAGE_LOGFILE}")"
+	[[ -n ${PORTAGE_LOGFILE} ]] && addwrite "$(readlink -f "${PORTAGE_LOGFILE%/*}")"
 
 	[[ -n ${PORTAGE_TMPDIR} ]] && {
 		addpredict "${PORTAGE_TMPDIR}"

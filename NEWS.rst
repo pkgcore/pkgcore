@@ -3,6 +3,19 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.41 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- build logging: fix the sandbox denying every write to the build log. The log
+  name carries colons, which ``SANDBOX_WRITE`` uses as its separator, so its
+  directory is allowed instead, and is now created for any phase
+  (Arthur Zamarin)
+
+
+----------------------------
 pkgcore 0.12.40 (2026-08-17)
 ----------------------------
 

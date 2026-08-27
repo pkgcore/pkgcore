@@ -53,12 +53,12 @@ class DevBookTranslator(nodes.NodeVisitor):
         return self.tb.end(e.tag)
 
     def visit_document(self, node):
-        self.tb.start("guide", {"self": f"eclass-reference/{self.eclass}/"})
+        self.tb.start("devbook", {"self": f"eclass-reference/{self.eclass}/"})
         self.tb.start("chapter", {})
 
     def depart_document(self, node):
         self.tb.end("chapter")
-        self.tb.end("guide")
+        self.tb.end("devbook")
 
     def visit_Text(self, node):
         self.tb.data(str(node).replace("\x00", ""))

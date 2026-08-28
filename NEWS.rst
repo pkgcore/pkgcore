@@ -9,6 +9,10 @@ pkgcore 0.12.41 (unreleased)
 Fixes
 ~~~~~
 
+- ``pmaint eclass -f man``: fix ``AttributeError: type object
+  'datetime.datetime' has no attribute 'datetime'``, which broke the man page
+  writer, and thus plain ``pmaint eclass``, since 0.12.31 (Arthur Zamarin)
+
 - ``pmaint eclass``: ``--quiet`` now suppresses the per-eclass ``Compiling:``
   progress line, which was written unconditionally (Arthur Zamarin, #477)
 

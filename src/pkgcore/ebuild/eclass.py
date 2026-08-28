@@ -5,7 +5,7 @@ import re
 import shlex
 import subprocess
 import typing
-from datetime import datetime
+from datetime import UTC, datetime
 from functools import partial
 
 from snakeoil import klass
@@ -705,7 +705,7 @@ class EclassDoc(AttrDict):
         man_data = {
             "manual_section": "5",
             "manual_group": "eclass-manpages",
-            "date": datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%d"),
+            "date": datetime.now(UTC).strftime("%Y-%m-%d"),
             "version": "Gentoo Linux",
         }
         if self.blurb:

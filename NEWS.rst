@@ -16,6 +16,11 @@ Fixes
 - ``pmaint eclass``: ``--quiet`` now suppresses the per-eclass ``Compiling:``
   progress line, which was written unconditionally (Arthur Zamarin, #477)
 
+- ``pmaint eclass``: docutils' reST diagnostics no longer land in the generated
+  docs, in any format.  A stray ``*`` in eclassdoc prose reads as reST emphasis,
+  and the complaint was rendered in place of the author's text; it still reaches
+  stderr (Arthur Zamarin, #478)
+
 - ``pmaint eclass -f devbook``: the generated XML now validates against
   ``devbook.rng``, for every eclass in the gentoo repo.  Three things kept it
   from doing so: docutils' reST diagnostics were emitted as ``warning``

@@ -687,7 +687,33 @@ class EclassDoc(AttrDict):
 
     def _to_docutils(self, writer):
         """Convert eclassdoc object using docutils."""
+        from docutils import nodes
         from docutils.core import publish_string
+        from docutils.transforms import Transform
+
+        class RenderProblematicAsText(Transform):
+            """Restore markup docutils choked on to the text it was written as.
+
+            eclassdoc prose isn't written as reST, so a stray ``*`` is common;
+            without this every writer renders docutils' complaint instead.  The
+            complaints still reach stderr.
+            """
+
+            default_priority = 880  # after universal.FilterMessages
+
+            def apply(self):
+                for node in tuple(self.document.findall(nodes.section)):
+                    if "system-messages" in node["classes"]:
+                        node.parent.remove(node)
+                for node in tuple(self.document.findall(nodes.system_message)):
+                    node.parent.remove(node)
+                for node in tuple(self.document.findall(nodes.problematic)):
+                    for attr in node.basic_attributes:
+                        node[attr] = []
+                    node.replace_self(nodes.Text(node.astext()))
+
+        writer_transforms = writer.get_transforms
+        writer.get_transforms = lambda: writer_transforms() + [RenderProblematicAsText]
 
         return publish_string(
             source=self.to_rst(),

@@ -40,6 +40,8 @@ from configparser import ConfigParser
 from configparser import Error as ConfigParserError
 from pathlib import Path
 
+from snakeoil.cli import arghparse
+
 from ..log import logger
 from .client import DEFAULT_URL, Bugzilla
 from .errors import BugzillaUsageError
@@ -128,7 +130,7 @@ class BugzillaApiKey:
     """Adds ``--api-key``, defaulting through :func:`find_api_key`"""
 
     @classmethod
-    def mangle_argparser(cls, parser: typing.Any) -> None:
+    def mangle_argparser(cls, parser: arghparse.ArgumentParser) -> None:
         parser.add_argument(
             "--api-key", metavar="TOKEN", help="Bugzilla API key", docs=API_KEY_DOCS
         )
@@ -147,7 +149,7 @@ class BugzillaClientArgs(BugzillaApiKey):
     """
 
     @classmethod
-    def mangle_argparser(cls, parser: typing.Any) -> None:
+    def mangle_argparser(cls, parser: arghparse.ArgumentParser) -> None:
         super().mangle_argparser(parser)
         parser.add_argument(
             "--bugzilla-url",
@@ -159,11 +161,8 @@ class BugzillaClientArgs(BugzillaApiKey):
 
     @staticmethod
     def _default_client(namespace: typing.Any, attr: str) -> None:
-        setattr(
-            namespace,
-            attr,
-            Bugzilla(
-                namespace.api_key,
-                base_url=getattr(namespace, "bugzilla_url", DEFAULT_URL),
-            ),
+        client = Bugzilla(
+            namespace.api_key,
+            base_url=getattr(namespace, "bugzilla_url", DEFAULT_URL),
         )
+        setattr(namespace, attr, client)

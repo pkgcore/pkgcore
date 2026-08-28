@@ -955,7 +955,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         sf(self, "profile_formats", profile_formats)
 
     @klass.jit_attr
-    def known_arches(self):
+    def known_arches(self) -> frozenset[str]:
         """All valid KEYWORDS for the repo."""
         try:
             return frozenset(read_bash(pjoin(self.profiles_base, "arch.list")))
@@ -1065,7 +1065,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
 
         return mappings.ImmutableDict(d)
 
-    def _split_use_desc_file(self, name, converter, matcher=True):
+    def _split_use_desc_file(self, name: str, converter, matcher=True):
         line = None
         fp = pjoin(self.profiles_base, name)
         try:
@@ -1099,7 +1099,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         return result
 
     @klass.jit_attr
-    def pms_repo_name(self):
+    def pms_repo_name(self) -> str:
         """Repository name from profiles/repo_name (as defined by PMS).
 
         We're more lenient than the spec and don't verify it conforms to the
@@ -1111,7 +1111,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         return name
 
     @klass.jit_attr
-    def repo_id(self):
+    def repo_id(self) -> str:
         """Main identifier for the repo.
 
         The precedence order is as follows: repos.conf name, repo-name from
@@ -1123,8 +1123,8 @@ class RepoConfig(syncable.tree, immutable.Strict):
         # repo_name might not be parsed yet if failure occurs during init
         if repo_name := getattr(self, "repo_name", None):
             return repo_name
-        if self.pms_repo_name:
-            return self.pms_repo_name
+        if repo_name := self.pms_repo_name:
+            return repo_name
         if not self.is_empty:
             logger.warning(f"repo lacks a defined name: {self.location!r}")
         return self.location
@@ -1137,7 +1137,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         return mappings.ImmutableDict(d)
 
     @klass.jit_attr
-    def categories(self):
+    def categories(self) -> tuple[str, ...]:
         categories = readlines(
             pjoin(self.profiles_base, "categories"), True, True, True
         )

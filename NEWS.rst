@@ -28,6 +28,12 @@ Changes
 - ``pkgcore.ebuild.processor``: ``fd_pipes`` now only remaps
   stdin/stdout/stderr, and rejects anything else (Arthur Zamarin)
 
+- ``pkgcore.fs.tar``: use the stdlib ``tarfile`` directly.  ``pkgcore.fs._tar``,
+  the copy of ``snakeoil.tar`` taken so that module could be retired, is gone;
+  the ``ExFileObject`` monkey patch it carried never did anything, as
+  ``TarFile.extractfile`` reads the ``TarFile.fileobject`` class attribute
+  (Arthur Zamarin, snakeoil#102)
+
 
 ----------------------------
 pkgcore 0.12.40 (2026-08-17)

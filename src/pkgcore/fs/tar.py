@@ -4,6 +4,7 @@ binpkg tar utilities
 
 import os
 import stat
+import tarfile
 from functools import partial
 from itertools import count
 
@@ -12,7 +13,6 @@ from snakeoil.compatibility import cmp, sorted_cmp
 from snakeoil.data_source import invokable_data_source
 
 from . import contents
-from ._tar import tarfile
 from .fs import fsDev, fsDir, fsFifo, fsFile, fsSymlink
 
 _unique_inode = count(2**32).__next__

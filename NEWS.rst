@@ -9,6 +9,9 @@ pkgcore 0.12.41 (unreleased)
 Fixes
 ~~~~~
 
+- ``pmaint eclass``: ``--quiet`` now suppresses the per-eclass ``Compiling:``
+  progress line, which was written unconditionally (Arthur Zamarin, #477)
+
 - ``pkgcore.fs.tar.generate_contents``: fix ``AttributeError: 'ReadError' object
   has no attribute 'message'`` for any tarball that fails to open.  An empty
   binpkg raised that instead of yielding an empty contents set, and a corrupt one

@@ -570,7 +570,8 @@ def _eclass_main(options, out, err):
                     format=ext,
                 ),
             )
-            out.write("Compiling: ", path)
+            if options.verbosity >= 0:
+                out.write("Compiling: ", path)
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             with open(filename, "wt") as f:
                 obj = EclassDoc(path, sourced=True)

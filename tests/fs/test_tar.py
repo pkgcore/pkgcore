@@ -13,9 +13,7 @@ def mk_file(location, data=b"", **kwds):
     kwds.setdefault("uid", 0)
     kwds.setdefault("gid", 0)
     kwds.setdefault("mtime", 0)
-    return fsFile(
-        location, chksums={"size": len(data)}, data=data_source(data), **kwds
-    )
+    return fsFile(location, chksums={"size": len(data)}, data=data_source(data), **kwds)
 
 
 class TestGenerateContents:

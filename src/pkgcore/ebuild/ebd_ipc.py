@@ -471,7 +471,7 @@ class _InstallWrapper(IpcCommand):
                 sources = [path for path, _ in files_group]
                 command = ["install"] + self.opts.insoptions + sources + [dest]
                 ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
-                if not ret:
+                if ret:
                     raise IpcCommandError("\n".join(output), code=ret)
 
     @coroutine
@@ -507,7 +507,7 @@ class _InstallWrapper(IpcCommand):
             dirs = self._prefix_targets(dirs, files=False)
             command = ["install", "-d"] + self.opts.diroptions + list(dirs)
             ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
-            if not ret:
+            if ret:
                 raise IpcCommandError("\n".join(output), code=ret)
 
     @coroutine

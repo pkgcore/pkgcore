@@ -14,6 +14,10 @@ Fixes
   directory is allowed instead, and is now created for any phase
   (Arthur Zamarin)
 
+- ``doins``/``dodir``: fix a build hanging forever when ``insopts``/``diropts``
+  carry options pkgcore doesn't parse itself, such as ``--backup``
+  (Arthur Zamarin)
+
 
 ----------------------------
 pkgcore 0.12.40 (2026-08-17)

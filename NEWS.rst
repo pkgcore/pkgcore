@@ -12,6 +12,15 @@ Fixes
 - ``pmaint eclass``: ``--quiet`` now suppresses the per-eclass ``Compiling:``
   progress line, which was written unconditionally (Arthur Zamarin, #477)
 
+- ``pmaint eclass -f devbook``: the generated XML now validates against
+  ``devbook.rng``, for every eclass in the gentoo repo.  Three things kept it
+  from doing so: docutils' reST diagnostics were emitted as ``warning``
+  elements, which is a block element holding inline content, so they were
+  invalid in both directions at once; a reST block quote became a ``pre``,
+  which holds text and nothing else, so any list or paragraph inside it was
+  rejected; and dropping the diagnostics left docutils' trailing system
+  messages section with an empty ``body`` (Arthur Zamarin, #478)
+
 - ``pkgcore.fs.tar.generate_contents``: fix ``AttributeError: 'ReadError' object
   has no attribute 'message'`` for any tarball that fails to open.  An empty
   binpkg raised that instead of yielding an empty contents set, and a corrupt one

@@ -102,11 +102,30 @@ class DevBookTranslator(nodes.NodeVisitor):
     def depart_strong(self, node):
         self._pop_element()
 
+    @staticmethod
+    def _is_preformattable(node) -> bool:
+        """Whether a block quote can be rendered as `pre`, which holds bare text."""
+        return all(
+            isinstance(child, nodes.paragraph)
+            and all(isinstance(x, nodes.Text) for x in child.children)
+            for child in node.children
+        )
+
     def visit_block_quote(self, node):
+        # A reST block quote is just indented content, and DevBook has no element
+        # for that; `pre` is the closest, but it holds text and nothing else, so
+        # only a quote that is plain paragraphs can go in one.  Anything richer --
+        # a list, a definition list, a nested quote, inline markup -- is emitted
+        # into the enclosing block instead, unindented but intact.
+        if not self._is_preformattable(node):
+            return
         self._push_element("pre")
+        self.tb.data("\n\n".join(child.astext() for child in node.children))
+        self._pop_element()
+        raise nodes.SkipNode
 
     def depart_block_quote(self, node):
-        self._pop_element()
+        pass
 
     def visit_title(self, node):
         self._push_element("title")
@@ -117,6 +136,11 @@ class DevBookTranslator(nodes.NodeVisitor):
             self._push_element("body")
 
     def visit_section(self, node):
+        if "system-messages" in node["classes"]:
+            # docutils' own trailing diagnostics section; see the diagnostics
+            # block below.  Its content is dropped there, which would leave an
+            # empty `body`, and `body` must hold at least one element.
+            raise nodes.SkipNode
         if self.estack and self.estack[-1].tag == "body":
             self._pop_element()
         self._push_element(self.sections_tags[self.section_depth])
@@ -229,16 +253,20 @@ class DevBookTranslator(nodes.NodeVisitor):
     def depart_definition(self, node):
         self._pop_element()
 
-    ### Debugging blocks
+    ### docutils diagnostics
+    #
+    # These report that the eclassdoc isn't valid reST, they aren't eclass
+    # content, and docutils has already written them to stderr.  Emitting them
+    # also can't produce valid DevBook: `warning` is a block element holding
+    # inline content, so neither a `warning` within a `p` nor the `p` docutils
+    # wraps the message in validates.
 
     def visit_problematic(self, node):
-        self._push_element("warning")
+        """Render markup docutils choked on as the plain text it was written as."""
 
     def depart_problematic(self, node):
-        self._pop_element()
+        pass
 
     def visit_system_message(self, node):
-        self._push_element("warning")
-
-    def depart_system_message(self, node):
-        self._pop_element()
+        """Drop the diagnostic docutils attached to a `problematic` node."""
+        raise nodes.SkipNode

@@ -9,6 +9,11 @@ pkgcore 0.12.41 (unreleased)
 Fixes
 ~~~~~
 
+- ``pkgcore.fs.tar.generate_contents``: fix ``AttributeError: 'ReadError' object
+  has no attribute 'message'`` for any tarball that fails to open.  An empty
+  binpkg raised that instead of yielding an empty contents set, and a corrupt one
+  raised it in place of the underlying ``tarfile.ReadError`` (Arthur Zamarin)
+
 - build logging: fix the sandbox denying every write to the build log. The log
   name carries colons, which ``SANDBOX_WRITE`` uses as its separator, so its
   directory is allowed instead, and is now created for any phase

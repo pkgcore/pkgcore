@@ -179,7 +179,9 @@ def generate_contents(filepath, compressor="bz2", parallelize=True):
     try:
         tar_handle = tarfile.TarFile(name=filepath, fileobj=handle, mode="r")
     except tarfile.ReadError as e:
-        if not e.message.endswith("empty header"):
+        # an empty archive isn't an error, but tarfile has no distinct exception
+        # for that case, so its message is all we have to go on.
+        if str(e) != "empty file":
             raise
         tar_handle = []
     return convert_archive(tar_handle)

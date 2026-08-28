@@ -9,6 +9,7 @@ __all__ = ("domain",)
 import copy
 import os
 import re
+import subprocess
 import tempfile
 from collections import defaultdict
 from functools import partial
@@ -23,7 +24,6 @@ from snakeoil.cli.exceptions import find_user_exception
 from snakeoil.data_source import local_source
 from snakeoil.log import suppress_logging
 from snakeoil.mappings import ImmutableDict, ProtectedDict
-from snakeoil.process.spawn import spawn_get_output
 from snakeoil.sequences import predicate_split, split_negations, stable_unique
 
 from ..binpkg import repository as binary_repo
@@ -883,9 +883,11 @@ class domain(config_domain):
     @klass.jit_attr
     def KV(self):
         """The version of the running kernel."""
-        ret, version = spawn_get_output(["uname", "-r"])
-        if ret == 0:
-            return version[0].strip()
+        ret = subprocess.run(
+            ["uname", "-r"], capture_output=True, text=True, check=False
+        )
+        if ret.returncode == 0:
+            return ret.stdout.strip()
         raise ValueError("unknown kernel version")
 
     @klass.jit_attr_named("_jit_repo_source_repos_raw", uncached_val=None)

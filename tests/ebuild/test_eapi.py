@@ -2,11 +2,11 @@ import shutil
 from unittest import mock
 
 import pytest
-from snakeoil.process.spawn import bash_version
 
 from pkgcore.const import EBD_PATH
 from pkgcore.ebuild import eapi
 from pkgcore.ebuild.eapi import EAPI, eapi6, get_eapi, get_latest_PMS_eapi
+from pkgcore.spawn import bash_version
 
 
 def test_get_eapi():
@@ -57,7 +57,8 @@ class TestEAPI:
             assert "test1" in EAPI.known_eapis
 
     def test_system_bash_supports_bundled_eapis(self):
-        system_bash = bash_version(force=True)
+        bash_version.cache_clear()
+        system_bash = bash_version()
         for eapi_obj in get_latest_PMS_eapi().inherits:
             bash_compat = getattr(eapi_obj.options, "bash_compat", None)
             assert bash_compat, f"EAPI '{eapi_obj}' is missing bash_compat"

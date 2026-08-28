@@ -1,8 +1,7 @@
 __all__ = ("svn_syncer",)
 
 import os
-
-from snakeoil.process.spawn import spawn_get_output
+import subprocess
 
 from . import base
 
@@ -20,11 +19,13 @@ class svn_syncer(base.ExternalSyncer):
         svn_path = os.path.join(path, ".svn")
         if cls.disabled or not os.path.isdir(svn_path):
             return None
-        code, data = spawn_get_output([cls.binary, "info", path])
-        if code != 0:
+        ret = subprocess.run(
+            [cls.binary, "info", path], capture_output=True, text=True, check=False
+        )
+        if ret.returncode != 0:
             # should alert the user somehow
             return None
-        for line in data:
+        for line in ret.stdout.splitlines():
             line = line.strip().split(":", 1)
             if len(line) != 2:
                 continue

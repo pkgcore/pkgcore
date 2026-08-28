@@ -18,6 +18,16 @@ Fixes
   carry options pkgcore doesn't parse itself, such as ``--backup``
   (Arthur Zamarin)
 
+Changes
+~~~~~~~
+
+- ``pkgcore.spawn``: new module replacing ``snakeoil.process.spawn``, which is
+  being retired; spawning now goes through ``subprocess``
+  (Arthur Zamarin, snakeoil#119)
+
+- ``pkgcore.ebuild.processor``: ``fd_pipes`` now only remaps
+  stdin/stdout/stderr, and rejects anything else (Arthur Zamarin)
+
 
 ----------------------------
 pkgcore 0.12.40 (2026-08-17)

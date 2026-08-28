@@ -22,10 +22,14 @@ __all__ = (
     "request_ebuild_processor",
 )
 
+import atexit
 import contextlib
 import errno
+import fcntl
 import os
+import resource
 import signal
+import subprocess
 import threading
 import traceback
 from functools import partial, wraps
@@ -33,16 +37,31 @@ from itertools import chain
 from os.path import join as pjoin
 
 from snakeoil import bash, klass
-from snakeoil.process import spawn
 
 from .. import const, os_data
 from ..exceptions import PkgcoreException, PkgcoreUserException
 from ..log import logger
+from ..spawn import (
+    BASH_BINARY,
+    is_sandbox_capable,
+    is_userpriv_capable,
+    sandbox_command,
+)
 from . import const as e_const
 
 _global_ebp_lock = threading.Lock()
 inactive_ebp_list = []
 active_ebp_list = []
+
+_EBD_FD_FLOOR = min(resource.getrlimit(resource.RLIMIT_NOFILE)[0], 1024) - 4
+
+
+def _std_stream(fd_pipes, fd):
+    """Translate an ``fd_pipes`` entry for a std stream into a Popen argument."""
+    if not fd_pipes:
+        return None
+    target = fd_pipes.get(fd, fd)
+    return None if target == fd else target
 
 
 def _singled_threaded(functor):
@@ -79,7 +98,7 @@ def shutdown_all_processors():
         raise
 
 
-spawn.atexit_register(shutdown_all_processors)
+atexit.register(shutdown_all_processors)
 
 
 @_singled_threaded
@@ -93,7 +112,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fd_pipes=None):
     """
 
     if sandbox is None:
-        sandbox = spawn.is_sandbox_capable()
+        sandbox = is_sandbox_capable()
 
     for ebp in inactive_ebp_list:
         if ebp.userpriv == userpriv and (ebp.sandbox or not sandbox):
@@ -333,22 +352,28 @@ class EbuildProcessor:
         self._eclass_caching = False
         self._outstanding_expects = []
         self._metadata_paths = None
+        self._proc = None
         self.pid = None
+
+        if fd_pipes and (extra := set(fd_pipes).difference((0, 1, 2))):
+            raise ValueError(
+                f"fd_pipes may only remap stdin/stdout/stderr, got {sorted(extra)}"
+            )
 
         spawn_opts = {"umask": 0o002}
         if self.userpriv:
             spawn_opts.update(
                 {
-                    "uid": os_data.portage_uid,
-                    "gid": os_data.portage_gid,
-                    "groups": [os_data.portage_gid],
+                    "user": os_data.portage_uid,
+                    "group": os_data.portage_gid,
+                    "extra_groups": [os_data.portage_gid],
                 }
             )
-        elif spawn.is_userpriv_capable():
+        elif is_userpriv_capable():
             spawn_opts.update(
                 {
-                    "gid": os_data.portage_gid,
-                    "groups": [0, os_data.portage_gid],
+                    "group": os_data.portage_gid,
+                    "extra_groups": [0, os_data.portage_gid],
                 }
             )
 
@@ -366,51 +391,45 @@ class EbuildProcessor:
             list(const.PATH_FORCED_PREPEND) + [os.environ["PATH"]]
         )
 
+        args = [BASH_BINARY, self.ebd, "daemonize"]
         if self.sandbox:
-            if not spawn.is_sandbox_capable():
+            if not is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
-            spawn_func = spawn.spawn_sandbox
-        else:
-            spawn_func = spawn.spawn
+            args = sandbox_command(args)
 
         # force to a neutral dir so that sandbox won't explode if
         # ran from a nonexistent dir
         spawn_opts["cwd"] = e_const.EBD_PATH
 
-        # Use high numbered fds for pipes to avoid external usage collisions
-        # starting with max-3 to avoid a bug in older bash versions where it
-        # doesn't check if an fd is in use before claiming it.
-        max_fd = min(spawn.max_fd_limit, 1024)
-        env.update(
-            {
-                "PKGCORE_EBD_READ_FD": str(max_fd - 4),
-                "PKGCORE_EBD_WRITE_FD": str(max_fd - 3),
-            }
-        )
-
-        cread = cwrite = dread = dwrite = None
+        cread = cwrite = dread = dwrite = ebd_read = ebd_write = None
         # open pipes used for communication
         try:
             cread, cwrite = os.pipe()
             dread, dwrite = os.pipe()
 
-            # allow pipe overrides except ebd-related
-            ebd_pipes = {0: 0, 1: 1, 2: 2}
-            if fd_pipes:
-                ebd_pipes.update(fd_pipes)
-            ebd_pipes[max_fd - 4] = cread
-            ebd_pipes[max_fd - 3] = dwrite
+            # high up, out of the way of the fds ebuild code redirects by hand
+            ebd_read = fcntl.fcntl(cread, fcntl.F_DUPFD, _EBD_FD_FLOOR)
+            ebd_write = fcntl.fcntl(dwrite, fcntl.F_DUPFD, _EBD_FD_FLOOR)
+            env.update(
+                {
+                    "PKGCORE_EBD_READ_FD": str(ebd_read),
+                    "PKGCORE_EBD_WRITE_FD": str(ebd_write),
+                }
+            )
 
-            self.pid = spawn_func(
-                [spawn.BASH_BINARY, self.ebd, "daemonize"],
-                fd_pipes=ebd_pipes,
-                returnpid=True,
+            self._proc = subprocess.Popen(
+                args,
                 env=env,
+                stdin=_std_stream(fd_pipes, 0),
+                stdout=_std_stream(fd_pipes, 1),
+                stderr=_std_stream(fd_pipes, 2),
+                pass_fds=(ebd_read, ebd_write),
                 # force each ebd instance to be a process group leader so everything
                 # can be easily terminated
-                pgid=0,
+                process_group=0,
                 **spawn_opts,
-            )[0]
+            )
+            self.pid = self._proc.pid
         except:
             if cwrite is not None:
                 os.close(cwrite)
@@ -418,10 +437,9 @@ class EbuildProcessor:
                 os.close(dread)
             raise
         finally:
-            if cread is not None:
-                os.close(cread)
-            if dwrite is not None:
-                os.close(dwrite)
+            for fd in (cread, dwrite, ebd_read, ebd_write):
+                if fd is not None:
+                    os.close(fd)
         self.ebd_write = os.fdopen(cwrite, "w")
         # binary: receive_env's payload is prefixed by its byte count, so
         # read(n) must read n bytes rather than n characters
@@ -682,20 +700,9 @@ class EbuildProcessor:
     def is_alive(self):
         """Return whether the processor is alive."""
         # remember that this function may be invoked from a threaded context, don't
-        # assume self.pid won't be changed between under our feet.
-        current_pid = self.pid
-        if current_pid is not None:
-            try:
-                if (0, 0) == os.waitpid(current_pid, os.WNOHANG):
-                    # still alive.
-                    return True
-            except OSError as e:
-                if e.errno != errno.ECHILD:
-                    raise
-            # making it here means waitpid reaped, or the pid was already reaped by another thread (two
-            # # threads in is_alive() at the same time)  EIther way, the EBD is dead.
-            self.pid = False
-        return False
+        # assume self._proc won't be changed under our feet.
+        proc = self._proc
+        return proc is not None and proc.poll() is None
 
     @property
     def is_responsive(self):
@@ -708,7 +715,8 @@ class EbuildProcessor:
 
     def shutdown_processor(self, force=False, ignore_keyboard_interrupt=False):
         """Tell the daemon to shut itself down, and mark this instance as dead."""
-        if self.pid is None:
+        proc = self._proc
+        if proc is None:
             return
         kill = force
         if not force:
@@ -719,21 +727,21 @@ class EbuildProcessor:
                     self.ebd_read.close()
                     kill = False
             except (OSError, ValueError):
-                kill = self.pid is not None
+                kill = True
 
-        if self.pid:
-            if kill:
-                os.killpg(self.pid, signal.SIGKILL)
+        if kill:
+            with contextlib.suppress(ProcessLookupError):
+                os.killpg(proc.pid, signal.SIGKILL)
 
-            # wait for the process group
-            try:
-                os.waitpid(-self.pid, 0)
-            except KeyboardInterrupt:
-                if not ignore_keyboard_interrupt:
-                    raise
+        try:
+            proc.wait()
+        except KeyboardInterrupt:
+            if not ignore_keyboard_interrupt:
+                raise
 
         # currently, this assumes all went well.
         # which isn't always true.
+        self._proc = None
         self.pid = None
 
     def _generate_env_str(self, env_dict):

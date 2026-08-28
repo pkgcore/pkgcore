@@ -8,12 +8,12 @@ __all__ = (
 )
 
 import os
+import subprocess
 from os.path import join as pjoin
-
-from snakeoil.process.spawn import is_userpriv_capable, spawn_bash
 
 from ..config.hint import ConfigHint
 from ..os_data import portage_gid, portage_uid
+from ..spawn import bash_command, is_userpriv_capable
 from . import base, errors, fetchable
 
 
@@ -110,7 +110,7 @@ class fetcher(base.fetcher):
         last_exc = RuntimeError("fetching failed for an unknown reason")
         spawn_opts = {"umask": 0o002, "env": self.extra_env}
         if self.userpriv and is_userpriv_capable():
-            spawn_opts.update({"uid": portage_uid, "gid": portage_gid})
+            spawn_opts.update({"user": portage_uid, "group": portage_gid})
 
         for _attempt in range(self.attempts):
             try:
@@ -138,9 +138,13 @@ class fetcher(base.fetcher):
             # generation), _verify() cannot detect a partial download, so we
             # must rely on the fetcher's exit code and discard any incomplete file.
             try:
-                ret = spawn_bash(
-                    command % {"URI": next(uris), "FILE": target.filename}, **spawn_opts
-                )
+                ret = subprocess.run(
+                    bash_command(
+                        command % {"URI": next(uris), "FILE": target.filename}
+                    ),
+                    check=False,
+                    **spawn_opts,
+                ).returncode
             except StopIteration:
                 raise errors.FetchFailed(
                     target.filename, "ran out of urls to fetch from"

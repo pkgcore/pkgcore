@@ -31,20 +31,20 @@ class TestHgSyncer:
             o = hg.hg_syncer(str(self.repo_path), "hg+http://dar")
             assert o.uri == "http://dar"
 
-    @mock.patch("snakeoil.process.spawn.spawn")
-    def test_sync(self, spawn):
+    @mock.patch("pkgcore.sync.base.subprocess.run")
+    def test_sync(self, run):
         uri = "https://foo/bar"
         with mock.patch("snakeoil.process.find_binary", return_value="hg"):
             syncer = hg.hg_syncer(str(self.repo_path), f"hg+{uri}")
 
         # initial sync
         syncer.sync()
-        assert spawn.call_args[0] == (
+        assert run.call_args[0] == (
             ["hg", "clone", uri, str(self.repo_path) + os.path.sep],
         )
-        assert spawn.call_args[1]["cwd"] is None
+        assert run.call_args[1]["cwd"] is None
         # repo update
         self.repo_path.mkdir()
         syncer.sync()
-        assert spawn.call_args[0] == (["hg", "pull", "-u", uri],)
-        assert spawn.call_args[1]["cwd"] == syncer.basedir
+        assert run.call_args[0] == (["hg", "pull", "-u", uri],)
+        assert run.call_args[1]["cwd"] == syncer.basedir

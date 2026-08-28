@@ -15,7 +15,7 @@ def fake_ips(num):
 
 
 @mock.patch("socket.getaddrinfo", return_value=fake_ips(3))
-@mock.patch("snakeoil.process.spawn.spawn")
+@mock.patch("pkgcore.sync.base.subprocess.run")
 class TestRsyncSyncer:
     _syncer_class = rsync.rsync_syncer
 
@@ -28,13 +28,13 @@ class TestRsyncSyncer:
             )
 
     @mock.patch("snakeoil.process.find_binary")
-    def test_uri_parse_rsync_missing(self, find_binary, spawn, getaddrinfo):
+    def test_uri_parse_rsync_missing(self, find_binary, run, getaddrinfo):
         find_binary.side_effect = CommandNotFound("rsync")
         with pytest.raises(base.SyncError):
             self._syncer_class(self.repo_path, "rsync://foon.com/dar")
 
     @mock.patch("snakeoil.process.find_binary")
-    def test_uri_parse(self, find_binary, spawn, getaddrinfo):
+    def test_uri_parse(self, find_binary, run, getaddrinfo):
         find_binary.side_effect = lambda x: x
         o = self._syncer_class(self.repo_path, "rsync://dar/module")
         assert o.uri == "rsync://dar/module/"
@@ -44,48 +44,48 @@ class TestRsyncSyncer:
         assert o.uri == "rsync://dar/module/"
         assert o.rsh == "/bin/sh"
 
-    def test_successful_sync(self, spawn, getaddrinfo):
-        spawn.return_value = 0
+    def test_successful_sync(self, run, getaddrinfo):
+        run.return_value.returncode = 0
         assert self.syncer.sync()
-        spawn.assert_called_once()
+        run.assert_called_once()
 
-    def test_bad_syntax_sync(self, spawn, getaddrinfo):
-        spawn.return_value = 1
+    def test_bad_syntax_sync(self, run, getaddrinfo):
+        run.return_value.returncode = 1
         with pytest.raises(base.SyncError) as excinfo:
             assert self.syncer.sync()
         assert str(excinfo.value).startswith("rsync command syntax error:")
-        spawn.assert_called_once()
+        run.assert_called_once()
 
-    def test_failed_disk_space_sync(self, spawn, getaddrinfo):
-        spawn.return_value = 11
+    def test_failed_disk_space_sync(self, run, getaddrinfo):
+        run.return_value.returncode = 11
         with pytest.raises(base.SyncError) as excinfo:
             assert self.syncer.sync()
         assert str(excinfo.value) == "rsync ran out of disk space"
-        spawn.assert_called_once()
+        run.assert_called_once()
 
-    def test_retried_sync(self, spawn, getaddrinfo):
-        spawn.return_value = 99
+    def test_retried_sync(self, run, getaddrinfo):
+        run.return_value.returncode = 99
         with pytest.raises(base.SyncError) as excinfo:
             assert self.syncer.sync()
         assert str(excinfo.value) == "all attempts failed"
         # rsync should retry every resolved IP related to the sync URI
-        assert len(spawn.mock_calls) == 3
+        assert len(run.mock_calls) == 3
 
-    def test_retried_sync_max_retries(self, spawn, getaddrinfo):
-        spawn.return_value = 99
+    def test_retried_sync_max_retries(self, run, getaddrinfo):
+        run.return_value.returncode = 99
         # generate more IPs than retries
         getaddrinfo.return_value = fake_ips(self.syncer.retries + 1)
         with pytest.raises(base.SyncError) as excinfo:
             assert self.syncer.sync()
         assert str(excinfo.value) == "all attempts failed"
-        assert len(spawn.mock_calls) == self.syncer.retries
+        assert len(run.mock_calls) == self.syncer.retries
 
-    def test_failed_dns_sync(self, spawn, getaddrinfo):
+    def test_failed_dns_sync(self, run, getaddrinfo):
         getaddrinfo.side_effect = OSError()
         with pytest.raises(base.SyncError) as excinfo:
             assert self.syncer.sync()
         assert str(excinfo.value).startswith("DNS resolution failed")
-        spawn.assert_not_called()
+        run.assert_not_called()
 
 
 class TestRsyncTimestampSyncer(TestRsyncSyncer):

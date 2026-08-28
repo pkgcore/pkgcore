@@ -14,6 +14,7 @@ __all__ = (
 import os
 import pwd
 import stat
+import subprocess
 import sys
 from importlib import import_module
 
@@ -192,21 +193,27 @@ class ExternalSyncer(Syncer):
     def _spawn(self, command, **kwargs):
         # Note: stderr is explicitly forced to stdout since that's how it was originally done.
         # This can be changed w/ a discussion.
-        kwargs.setdefault("fd_pipes", {1: 1, 2: 1})
+        kwargs.setdefault("stdin", subprocess.DEVNULL)
         logger.debug("sync invoking command %r, kwargs %r", command, kwargs)
         # since we're intermixing two processes writing to stdout/stderr- us, and what we're invoking-
         # force a flush to keep output from being interlaced.  This is not hugely optimal, but
         # the CLI/observability integration needs refactoring anyways.
         sys.stdout.flush()
         sys.stderr.flush()
-        return process.spawn.spawn(
-            command, uid=self.uid, gid=self.gid, env=self.env, **kwargs
-        )
+        return subprocess.run(
+            command,
+            user=self.uid,
+            group=self.gid,
+            env=self.env,
+            stderr=subprocess.STDOUT,
+            check=False,
+            **kwargs,
+        ).returncode
 
     def _spawn_interactive(self, command, **kwargs):
         # Note: stderr is explicitly forced to stdout since that's how it was originally done.
         # This can be changed w/ a discussion.
-        return self._spawn(command, fd_pipes={0: 0, 1: 1, 2: 1}, **kwargs)
+        return self._spawn(command, stdin=None, **kwargs)
 
     @staticmethod
     def _rewrite_uri_from_stat(path, uri):

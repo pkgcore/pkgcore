@@ -1,8 +1,9 @@
 __all__ = ("file_identifier",)
 
+import subprocess
+
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.klass import jit_attr
-from snakeoil.process.spawn import spawn_get_output
 
 
 class file_identifier:
@@ -39,10 +40,14 @@ class file_identifier:
 
     @staticmethod
     def _fallback_file(path):
-        ret, out = spawn_get_output(["file", path])
-        if ret != 0:
-            raise ValueError(f"file output was non zero- ret:{ret!r} out:{out!r}")
-        out = "".join(out)
+        ret = subprocess.run(
+            ["file", path], capture_output=True, text=True, check=False
+        )
+        if ret.returncode != 0:
+            raise ValueError(
+                f"file output was non zero- ret:{ret.returncode!r} out:{ret.stdout!r}"
+            )
+        out = ret.stdout
         if out.startswith(path):
             out = out[len(path) :]
             out = out.removeprefix(":")

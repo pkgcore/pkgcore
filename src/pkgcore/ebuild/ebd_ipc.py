@@ -8,6 +8,7 @@ import re
 import shlex
 import shutil
 import stat
+import subprocess
 from contextlib import chdir
 from operator import itemgetter
 from os.path import join as pjoin
@@ -16,7 +17,6 @@ from snakeoil.cli import arghparse
 from snakeoil.compression import ArComp, ArCompError
 from snakeoil.decorators import coroutine
 from snakeoil.iterables import partition
-from snakeoil.process import spawn
 
 from .. import os_data
 from ..exceptions import PkgcoreException, PkgcoreUserException
@@ -61,6 +61,13 @@ class UnknownArguments(IpcCommandError):
 
     def __init__(self, args):
         super().__init__(f"unknown arguments: {', '.join(map(repr, args))}")
+
+
+def _run_install(command):
+    """Run an ``install`` invocation, raising :py:class:`IpcCommandError` on failure."""
+    ret = subprocess.run(command, stderr=subprocess.PIPE, text=True, check=False)
+    if ret.returncode:
+        raise IpcCommandError(ret.stderr.strip(), code=ret.returncode)
 
 
 class IpcArgumentParser(arghparse.ArgumentParser):
@@ -470,9 +477,7 @@ class _InstallWrapper(IpcCommand):
             for dest, files_group in itertools.groupby(files, itemgetter(1)):
                 sources = [path for path, _ in files_group]
                 command = ["install"] + self.opts.insoptions + sources + [dest]
-                ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
-                if ret:
-                    raise IpcCommandError("\n".join(output), code=ret)
+                _run_install(command)
 
     @coroutine
     def _install_dirs(self):
@@ -506,9 +511,7 @@ class _InstallWrapper(IpcCommand):
             dirs = yield
             dirs = self._prefix_targets(dirs, files=False)
             command = ["install", "-d"] + self.opts.diroptions + list(dirs)
-            ret, output = spawn.spawn_get_output(command, collect_fds=(2,))
-            if ret:
-                raise IpcCommandError("\n".join(output), code=ret)
+            _run_install(command)
 
     @coroutine
     def _install_symlinks(self):
@@ -1018,10 +1021,10 @@ class Eapply(IpcCommand):
             patch_type = "patches"
             output_func = self.observer.info
 
-        spawn_kwargs = {"collect_fds": (1, 2)}
+        spawn_kwargs = {}
         if self.op.userpriv:
-            spawn_kwargs["uid"] = os_data.portage_uid
-            spawn_kwargs["gid"] = os_data.portage_gid
+            spawn_kwargs["user"] = os_data.portage_uid
+            spawn_kwargs["group"] = os_data.portage_gid
 
         for path, patches in args:
             prefix = ""
@@ -1036,15 +1039,20 @@ class Eapply(IpcCommand):
                 self.observer.flush()
                 try:
                     with open(patch) as f:
-                        ret, output = spawn.spawn_get_output(
+                        ret = subprocess.run(
                             self.patch_cmd + self.patch_opts,
-                            fd_pipes={0: f.fileno()},
+                            stdin=f,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.STDOUT,
+                            text=True,
+                            check=False,
                             **spawn_kwargs,
                         )
-                    if ret:
+                    if ret.returncode:
                         filename = os.path.basename(patch)
-                        msg = f"applying {filename!r} failed: {output[0]}"
-                        raise IpcCommandError(msg, code=ret)
+                        output = ret.stdout.splitlines()
+                        msg = f"applying {filename!r} failed: {output[0] if output else ''}"
+                        raise IpcCommandError(msg, code=ret.returncode)
                 except OSError as e:
                     raise IpcCommandError(
                         f"failed reading patch file: {patch!r}: {e.strerror}"
@@ -1134,8 +1142,8 @@ class Unpack(IpcCommand):
     def run(self, args):
         spawn_kwargs = {}
         if self.op.userpriv and self.phase == "unpack":
-            spawn_kwargs["uid"] = os_data.portage_uid
-            spawn_kwargs["gid"] = os_data.portage_gid
+            spawn_kwargs["user"] = os_data.portage_uid
+            spawn_kwargs["group"] = os_data.portage_gid
 
         for filename, ext, source in self._filter_targets(args.targets):
             self.observer.write(

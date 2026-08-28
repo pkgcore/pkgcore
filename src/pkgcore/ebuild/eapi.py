@@ -12,10 +12,10 @@ from snakeoil import klass
 from snakeoil.delayed import regexp
 from snakeoil.klass import immutable
 from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
-from snakeoil.process.spawn import bash_version
 from snakeoil.sequences import stable_unique
 
 from ..log import logger
+from ..spawn import bash_version
 from . import atom, const
 
 LATEST_PMS_EAPI_VER = "9"

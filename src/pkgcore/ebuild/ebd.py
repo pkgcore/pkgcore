@@ -16,6 +16,7 @@ import errno
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 import typing
@@ -32,12 +33,6 @@ from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, listdir_files
-from snakeoil.process.spawn import (
-    is_sandbox_capable,
-    is_userpriv_capable,
-    spawn,
-    spawn_bash,
-)
 from snakeoil.sequences import iflatten_instance, unique_stable
 
 from .. import const
@@ -45,6 +40,7 @@ from ..log import logger
 from ..operations import format, observer
 from ..os_data import portage_gid, portage_uid, xargs
 from ..package.mutated import MutatedPkg
+from ..spawn import bash_command, is_sandbox_capable, is_userpriv_capable
 from . import const as e_const
 from . import ebd_ipc, ebuild_built, errors
 from .processor import (
@@ -55,6 +51,11 @@ from .processor import (
     release_ebuild_processor,
     request_ebuild_processor,
 )
+
+
+def _run(argv) -> int:
+    """Run a helper, returning its exit code."""
+    return subprocess.run(argv, env={}, check=False).returncode
 
 
 class ebd:
@@ -888,16 +889,18 @@ class buildable(ebd, setup_mixin, format.build):
                         # crap.
                         os.chmod(self.env["CCACHE_DIR"], 0o2775)
                         os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
-                        if 0 != spawn(
+                        if 0 != _run(
                             ["chgrp", "-R", str(portage_gid), self.env["CCACHE_DIR"]]
                         ):
                             raise format.FailedDirectory(
                                 self.env["CCACHE_DIR"],
                                 "failed changing ownership for CCACHE_DIR",
                             )
-                        if 0 != spawn_bash(
-                            "find '{}' -type d -print0 | {} --null chmod 02775".format(
-                                self.env["CCACHE_DIR"], xargs
+                        if 0 != _run(
+                            bash_command(
+                                "find '{}' -type d -print0 | {} --null chmod 02775".format(
+                                    self.env["CCACHE_DIR"], xargs
+                                )
                             )
                         ):
                             raise format.FailedDirectory(
@@ -905,9 +908,11 @@ class buildable(ebd, setup_mixin, format.build):
                                 "failed correcting perms for CCACHE_DIR",
                             )
 
-                        if 0 != spawn_bash(
-                            "find '{}' -type f -print0 | {} --null chmod 0775".format(
-                                self.env["CCACHE_DIR"], xargs
+                        if 0 != _run(
+                            bash_command(
+                                "find '{}' -type f -print0 | {} --null chmod 0775".format(
+                                    self.env["CCACHE_DIR"], xargs
+                                )
                             )
                         ):
                             raise format.FailedDirectory(

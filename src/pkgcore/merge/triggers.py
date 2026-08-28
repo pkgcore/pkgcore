@@ -25,6 +25,7 @@ __all__ = (
 import os
 import platform
 import re
+import subprocess
 import time
 import typing
 from math import floor
@@ -36,7 +37,6 @@ from snakeoil.bash import read_bash
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, listdir_files
-from snakeoil.process import spawn
 
 from .. import os_data
 from ..fs import contents, fs
@@ -273,8 +273,13 @@ class mtime_watcher:
                 yield x
 
 
+def _run(argv, **kwargs) -> int:
+    """Run a build helper, returning its exit code."""
+    return subprocess.run(argv, env={}, check=False, **kwargs).returncode
+
+
 def update_elf_hints(root):
-    return spawn.spawn(["/sbin/ldconfig", "-X", "-r", root], fd_pipes={1: 1, 2: 2})
+    return _run(["/sbin/ldconfig", "-X", "-r", root], stdin=subprocess.DEVNULL)
 
 
 class ldconfig(base):
@@ -413,11 +418,13 @@ class InfoRegen(base):
             if x in ignores or x.startswith("."):
                 continue
 
-            _ret, data = spawn.spawn_get_output(
+            data = subprocess.run(
                 [binary, "--quiet", pjoin(basepath, x), "--dir-file", index],
-                collect_fds=(1, 2),
-                split_lines=False,
-            )
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                check=False,
+            ).stdout
 
             if (
                 not data
@@ -765,7 +772,7 @@ class BinaryDebug(ThreadedTrigger):
             args = ["-g"]
         if not quiet:
             reporter.info(f"stripping: {fs_obj} {' '.join(args)}")
-        ret = spawn.spawn([self.strip_binary] + args + [fs_obj.data.path])
+        ret = _run([self.strip_binary] + args + [fs_obj.data.path])
         if ret != 0:
             reporter.warn(f"stripping {fs_obj}, type {ftype} failed")
         # need to update chksums here...
@@ -856,7 +863,7 @@ class BinaryDebug(ThreadedTrigger):
             # note that we tell the UI the final pathway- not the intermediate one.
             observer.info(f"splitdebug'ing {fs_obj.location} into {debug_loc}")
 
-            ret = spawn.spawn(objcopy_args + [fpath, debug_ondisk])
+            ret = _run(objcopy_args + [fpath, debug_ondisk])
             if ret != 0:
                 observer.warn(
                     f"splitdebug'ing {fs_obj.location} failed w/ exitcode {ret}"
@@ -865,7 +872,7 @@ class BinaryDebug(ThreadedTrigger):
 
             # note that the given pathway to the debug file /must/ be relative to ${D};
             # it must exist at the time of invocation.
-            ret = spawn.spawn(
+            ret = _run(
                 [self.objcopy_binary, "--add-gnu-debuglink", debug_ondisk, fpath]
             )
             if ret != 0:

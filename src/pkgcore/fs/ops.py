@@ -7,11 +7,11 @@ Shouldn't be accessed directly for the most part, use
 
 import errno
 import os
+import subprocess
 from functools import partial
 from os.path import join as pjoin
 
 from snakeoil.osutils import ensure_dirs, unlink_if_exists
-from snakeoil.process.spawn import spawn
 
 from . import contents, fs
 from .livefs import gen_obj
@@ -151,7 +151,9 @@ def copyfile(obj, mkdirs=False):
         dev = os.makedev(obj.major, obj.minor)
         os.mknod(fp, obj.mode, dev)
     else:
-        ret = spawn(["cp", "-Rp", obj.location, fp])
+        ret = subprocess.run(
+            ["cp", "-Rp", obj.location, fp], env={}, check=False
+        ).returncode
         if ret != 0:
             raise FailedCopy(obj, f"got {ret} from cp -Rp")
 

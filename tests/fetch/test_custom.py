@@ -1,4 +1,5 @@
 import os
+import subprocess
 from unittest import mock
 
 import pytest
@@ -28,7 +29,8 @@ def partial_content(path: str):
 class TestFetch:
     """Tests for fetch() when the fetchable has no checksums (new manifest generation)."""
 
-    def test_failed_fetch_deletes_partial_file(self, distdir: str):
+    @mock.patch("pkgcore.fetch.custom.subprocess.run")
+    def test_failed_fetch_deletes_partial_file(self, run, distdir: str):
         """Non-zero fetcher exit with no checksums must clean up the partial file."""
         target = fetchable(
             "testfile.tar.gz",
@@ -38,13 +40,13 @@ class TestFetch:
         fetcher = make_fetcher(distdir)
         partial_path = os.path.join(distdir, "testfile.tar.gz")
 
-        def fake_spawn(cmd, **kwargs):
+        def fake_run(cmd, **kwargs):
             partial_content(partial_path)
-            return 92  # HTTP/2 stream error
+            return subprocess.CompletedProcess(cmd, 92)  # HTTP/2 stream error
 
-        with mock.patch("pkgcore.fetch.custom.spawn_bash", side_effect=fake_spawn):
-            with pytest.raises(errors.FetchFailed):
-                fetcher.fetch(target)
+        run.side_effect = fake_run
+        with pytest.raises(errors.FetchFailed):
+            fetcher.fetch(target)
 
         assert not os.path.exists(partial_path)
 
@@ -58,17 +60,21 @@ class TestFetch:
         fetcher = make_fetcher(distdir)
         expected_path = os.path.join(distdir, "testfile.tar.gz")
 
-        def fake_spawn(cmd, **kwargs):
+        def fake_run(cmd, **kwargs):
             partial_content(expected_path)
-            return 0
+            return subprocess.CompletedProcess(cmd, 0)
 
-        with mock.patch("pkgcore.fetch.custom.spawn_bash", side_effect=fake_spawn):
+        with mock.patch("pkgcore.fetch.custom.subprocess.run", side_effect=fake_run):
             result = fetcher.fetch(target)
 
         assert result == expected_path
         assert os.path.exists(expected_path)
 
-    def test_failed_fetch_no_partial_file_left(self, distdir: str):
+    @mock.patch(
+        "pkgcore.fetch.custom.subprocess.run",
+        return_value=subprocess.CompletedProcess([], 92),
+    )
+    def test_failed_fetch_no_partial_file_left(self, run, distdir: str):
         """Non-zero exit when no file was written should not raise OSError."""
         target = fetchable(
             "testfile.tar.gz",
@@ -77,11 +83,11 @@ class TestFetch:
         )
         fetcher = make_fetcher(distdir)
 
-        with mock.patch("pkgcore.fetch.custom.spawn_bash", return_value=92):
-            with pytest.raises(errors.FetchFailed):
-                fetcher.fetch(target)
+        with pytest.raises(errors.FetchFailed):
+            fetcher.fetch(target)
 
-    def test_failed_fetch_keeps_partial_for_resume(self, distdir: str):
+    @mock.patch("pkgcore.fetch.custom.subprocess.run")
+    def test_failed_fetch_keeps_partial_for_resume(self, run, distdir: str):
         """With checksums, a partial file is kept so the resume command can continue it."""
         from snakeoil import data_source
         from snakeoil.chksum import get_handlers
@@ -100,15 +106,16 @@ class TestFetch:
         fetcher = make_fetcher(distdir)
         partial_path = os.path.join(distdir, "testfile.tar.gz")
 
-        def fake_spawn(cmd, **kwargs):
+        def fake_run(cmd, **kwargs):
             # Write partial data (smaller than expected)
             with open(partial_path, "wb") as f:
                 f.write(full_data[: len(full_data) // 2])
-            return 92
+            return subprocess.CompletedProcess(cmd, 92)
 
-        with mock.patch("pkgcore.fetch.custom.spawn_bash", side_effect=fake_spawn):
-            with pytest.raises((errors.FetchFailed, errors.ChksumFailure)):
-                fetcher.fetch(target)
+        run.side_effect = fake_run
+
+        with pytest.raises((errors.FetchFailed, errors.ChksumFailure)):
+            fetcher.fetch(target)
 
         # Partial file should still be present — our fix must not touch it
         assert os.path.exists(partial_path)

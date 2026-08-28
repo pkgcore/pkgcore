@@ -37,21 +37,21 @@ class TestSyncer:
         with pytest.raises(base.MissingLocalUser):
             base.Syncer(self.repo_path, "foo_nonexistent_user::foon@site")
 
-    @mock.patch("snakeoil.process.spawn.spawn")
-    def test_usersync_disabled(self, spawn):
+    @mock.patch("pkgcore.sync.base.subprocess.run")
+    def test_usersync_disabled(self, run):
         o = base.Syncer(self.repo_path, "http://foo/bar.git", usersync=False)
         assert o.uid == os_data.uid
         assert o.gid == os_data.gid
 
-    @mock.patch("snakeoil.process.spawn.spawn")
-    def test_usersync_portage_perms(self, spawn):
+    @mock.patch("pkgcore.sync.base.subprocess.run")
+    def test_usersync_portage_perms(self, run):
         # sync uses portage perms if repo dir doesn't exist
         o = base.Syncer(self.repo_path, "http://foo/bar.git", usersync=True)
         assert o.uid == os_data.portage_uid
         assert o.gid == os_data.portage_gid
 
-    @mock.patch("snakeoil.process.spawn.spawn")
-    def test_usersync_repo_dir_perms(self, spawn):
+    @mock.patch("pkgcore.sync.base.subprocess.run")
+    def test_usersync_repo_dir_perms(self, run):
         # and repo dir perms if it does exist
         with mock.patch("os.stat") as stat:
             stat.return_value = mock.Mock(st_uid=1234, st_gid=5678)
@@ -84,8 +84,8 @@ class TestExternalSyncer:
         assert o.uri == "http://dar"
         assert o.binary == "foo"
 
-    @mock.patch("snakeoil.process.spawn.spawn")
-    def test_usersync(self, spawn, find_binary):
+    @mock.patch("pkgcore.sync.base.subprocess.run")
+    def test_usersync(self, run, find_binary):
         # fake external syncer
         class FooSyncer(base.ExternalSyncer):
             binary = "foo"
@@ -96,21 +96,21 @@ class TestExternalSyncer:
         o = FooSyncer(self.repo_path, "http://dar")
         o.uid = 1234
         o.gid = 2345
-        o._spawn("cmd", pipes={})
-        assert spawn.call_args[1]["uid"] == o.uid
-        assert spawn.call_args[1]["gid"] == o.gid
+        o._spawn("cmd")
+        assert run.call_args[1]["user"] == o.uid
+        assert run.call_args[1]["group"] == o.gid
 
 
 @mock.patch("snakeoil.process.find_binary", return_value="git")
-@mock.patch("snakeoil.process.spawn.spawn")
+@mock.patch("pkgcore.sync.base.subprocess.run")
 class TestVcsSyncer:
-    def test_basedir_perms_error(self, spawn, find_binary, tmp_path):
+    def test_basedir_perms_error(self, run, find_binary, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
         with pytest.raises(base.PathError), mock.patch("os.stat") as stat:
             stat.side_effect = OSError("fake exception")
             syncer.sync()
 
-    def test_basedir_is_file_error(self, spawn, find_binary, tmp_path):
+    def test_basedir_is_file_error(self, run, find_binary, tmp_path):
         repo = tmp_path / "repo"
         repo.touch()
         syncer = git.git_syncer(str(repo), "git://blah.git")
@@ -125,17 +125,17 @@ class TestVcsSyncer:
             syncer.sync()
         assert "isn't a directory" in str(excinfo.value)
 
-    def test_verbose_sync(self, spawn, find_binary, tmp_path):
+    def test_verbose_sync(self, run, find_binary, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
         syncer.sync(verbosity=1)
-        assert "-v" == spawn.call_args[0][0][-1]
+        assert "-v" == run.call_args[0][0][-1]
         syncer.sync(verbosity=2)
-        assert "-vv" == spawn.call_args[0][0][-1]
+        assert "-vv" == run.call_args[0][0][-1]
 
-    def test_quiet_sync(self, spawn, find_binary, tmp_path):
+    def test_quiet_sync(self, run, find_binary, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
         syncer.sync(verbosity=-1)
-        assert "-q" == spawn.call_args[0][0][-1]
+        assert "-q" == run.call_args[0][0][-1]
 
 
 class TestGenericSyncer:

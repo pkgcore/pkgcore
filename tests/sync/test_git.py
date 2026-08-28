@@ -32,22 +32,22 @@ class TestGitSyncer:
                     o = git.git_syncer(str(self.repo_path), uri)
                     assert o.uri == f"{proto}://repo.git"
 
-    @mock.patch("snakeoil.process.spawn.spawn")
-    def test_sync(self, spawn):
+    @mock.patch("pkgcore.sync.base.subprocess.run")
+    def test_sync(self, run):
         uri = "git://foo.git"
         with mock.patch("snakeoil.process.find_binary", return_value="git"):
             syncer = git.git_syncer(str(self.repo_path), uri)
         # initial sync
         syncer.sync()
-        assert spawn.call_args[0] == (
+        assert run.call_args[0] == (
             ["git", "clone", uri, str(self.repo_path) + os.path.sep],
         )
-        assert spawn.call_args[1]["cwd"] is None
+        assert run.call_args[1]["cwd"] is None
         # repo update
         self.repo_path.mkdir()
         syncer.sync()
-        assert spawn.call_args[0] == (["git", "pull"],)
-        assert spawn.call_args[1]["cwd"] == syncer.basedir
+        assert run.call_args[0] == (["git", "pull"],)
+        assert run.call_args[1]["cwd"] == syncer.basedir
 
 
 @pytest.mark_network

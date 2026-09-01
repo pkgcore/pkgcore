@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.42 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- ``pmaint eclass -f man``: eclassdoc writes its own angle brackets around
+  maintainer and author addresses, and docutils wrapped the recognized address
+  in another pair, rendering ``<<gnu-emacs@gentoo.org>>`` (Arthur Zamarin, #479)
+
+- ``pmaint eclass``: fix escaping of variable values (Arthur Zamarin)
+
+- ``pmaint eclass -f man``: fix ``to_man()`` dropping the eclass blurb from the
+  object rather than from the document (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.41 (2026-08-30)
 ----------------------------
 

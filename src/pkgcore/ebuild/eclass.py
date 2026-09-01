@@ -35,6 +35,11 @@ class AttrDict(ImmutableDict):
         return sorted(dir(self._dict) + list(self._dict))
 
 
+def _rst_escape(text):
+    """Escape reST inline markup in text that should render verbatim."""
+    return re.sub(r"([*`_|\\])", r"\\\1", text)
+
+
 def _rst_header(char, text, leading=False, newline=False):
     """Create rST header data from a given character and header text."""
     sep = char * len(text)
@@ -568,7 +573,7 @@ class EclassDoc(AttrDict):
 
         return data
 
-    def to_rst(self):
+    def to_rst(self, *, name_section=True):
         """Convert eclassdoc object to reStructuredText."""
         if self.name is None:
             raise ValueError("eclass lacking doc support")
@@ -576,7 +581,7 @@ class EclassDoc(AttrDict):
         _header_only = partial(_rst_header, newline=True)
 
         rst = _header_only("=", self.name, leading=True)
-        if self.blurb:
+        if name_section and self.blurb:
             rst.extend(_rst_header("-", "Name"))
             rst.append(f"``{self.name}`` -- {self.blurb}")
             rst.append("")
@@ -639,9 +644,9 @@ class EclassDoc(AttrDict):
                 vartype = ""
                 var_value = ""
                 if default_value := getattr(var, "default_value", None):
-                    var_value = f" ?= *{default_value}*"
+                    var_value = f" ?= *{_rst_escape(default_value)}*"
                 elif initial_value := getattr(var, "initial_value", None):
-                    var_value = f" = *{initial_value}*"
+                    var_value = f" = *{_rst_escape(initial_value)}*"
                 if var.required:
                     vartype += " (REQUIRED)"
                 if var.pre_inherit:
@@ -685,7 +690,7 @@ class EclassDoc(AttrDict):
 
         return "\n".join(rst)
 
-    def _to_docutils(self, writer):
+    def _to_docutils(self, writer, **kwargs):
         """Convert eclassdoc object using docutils."""
         from docutils import nodes
         from docutils.core import publish_string
@@ -716,7 +721,7 @@ class EclassDoc(AttrDict):
         writer.get_transforms = lambda: writer_transforms() + [RenderProblematicAsText]
 
         return publish_string(
-            source=self.to_rst(),
+            source=self.to_rst(**kwargs),
             writer=writer,
             settings_overrides={
                 "input_encoding": "unicode",
@@ -750,10 +755,39 @@ class EclassDoc(AttrDict):
                 super().__init__(*args, **kwargs)
                 self._docinfo.update(man_data)
 
-        self.blurb = None  # skip addition of blurb as man page header already holds it
+            @staticmethod
+            def _is_bracketed(node):
+                """Check if the surrounding text already wraps the node in ``<>``."""
+                siblings = node.parent.children
+                idx = siblings.index(node)
+                before = siblings[idx - 1].astext()[-1:] if idx else ""
+                after = (
+                    siblings[idx + 1].astext()[:1] if idx + 1 < len(siblings) else ""
+                )
+                return before == "<" and after == ">"
+
+            def visit_reference(self, node):
+                # docutils pads bare URIs and emails with " <" and "> ", which
+                # duplicates the brackets eclass docs write around addresses
+                if "refuri" not in node:
+                    return
+                if node["refuri"].endswith(node.astext()) and not self._is_bracketed(
+                    node
+                ):
+                    self.body.append("<")
+
+            def depart_reference(self, node):
+                if "refuri" not in node:
+                    return
+                if not node["refuri"].endswith(node.astext()):
+                    self.body.append(f" <{node['refuri']}>")
+                elif not self._is_bracketed(node):
+                    self.body.append(">")
+
+        # the man page header already holds the blurb, skip the Name section
         writer = manpage.Writer()
         writer.translator_class = Translator
-        return self._to_docutils(writer)
+        return self._to_docutils(writer, name_section=False)
 
     def to_html(self):
         """Convert eclassdoc object to an HTML 5 document."""

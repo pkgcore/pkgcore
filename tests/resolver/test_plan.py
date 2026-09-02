@@ -1,7 +1,7 @@
 import pytest
 
 from pkgcore.resolver import plan
-from pkgcore.test.misc import FakePkg
+from pkgcore.test.misc import FakePkg, FakeRepo
 
 
 @pytest.mark.parametrize(
@@ -29,3 +29,24 @@ def test_pkg_sorting(sorter, vers, expected, iter_sort_target):
     if iter_sort_target:
         pkgs = [x[0] for x in pkgs]
     assert [int(x.fullver) for x in pkgs] == expected
+
+
+class TestMutableContainmentRestriction:
+    def test_not_instance_cached(self):
+        blacklist = set()
+        first = plan.MutableContainmentRestriction(blacklist)
+        assert first is not plan.MutableContainmentRestriction(blacklist)
+
+    def test_tracks_mutation(self):
+        blacklist = set()
+        restrict = plan.MutableContainmentRestriction(blacklist)
+        assert not restrict.match("d-b/a-1")
+        blacklist.add("d-b/a-1")
+        assert restrict.match("d-b/a-1")
+
+
+def test_merge_plan_construction():
+    repo = FakeRepo(pkgs=[FakePkg("d-b/a-1")], livefs=False)
+    plan.merge_plan(
+        [repo], plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy
+    )

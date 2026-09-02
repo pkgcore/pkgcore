@@ -110,7 +110,7 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
     return l
 
 
-class MutableContainmentRestriction(values.base):
+class MutableContainmentRestriction(values.base, caching=False):
     __slots__ = ("_blacklist", "match")
 
     def __init__(self, blacklist):

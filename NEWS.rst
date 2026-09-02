@@ -9,6 +9,10 @@ pkgcore 0.12.42 (unreleased)
 Fixes
 ~~~~~
 
+- resolver: fix ``pmerge`` dying with ``TypeError: It's prohibited to pass
+  unhashable arguments to the WeaklyCached class MutableContainmentRestriction``
+  before it could resolve anything (Arthur Zamarin)
+
 - ``pmaint eclass -f man``: eclassdoc writes its own angle brackets around
   maintainer and author addresses, and docutils wrapped the recognized address
   in another pair, rendering ``<<gnu-emacs@gentoo.org>>`` (Arthur Zamarin, #479)

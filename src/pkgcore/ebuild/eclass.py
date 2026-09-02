@@ -583,7 +583,7 @@ class EclassDoc(AttrDict):
         rst = _header_only("=", self.name, leading=True)
         if name_section and self.blurb:
             rst.extend(_rst_header("-", "Name"))
-            rst.append(f"``{self.name}`` -- {self.blurb}")
+            rst.append(f"``{self.name}`` — {self.blurb}")
             rst.append("")
 
         if self.description:

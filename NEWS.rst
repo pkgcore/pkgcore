@@ -22,6 +22,8 @@ Fixes
 - ``pmaint eclass -f man``: fix ``to_man()`` dropping the eclass blurb from the
   object rather than from the document (Arthur Zamarin)
 
+- eclass: don't use all-caps for variable types (Ulrich Müller, #481)
+
 - eclass: fix regex for initial var="val" extraction (Ulrich Müller, #483)
 
 - eclass: remove backwards-compat code for ``@ECLASS-VARIABLE`` (Ulrich Müller,

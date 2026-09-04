@@ -40,6 +40,8 @@ FOO_ECLASS = """
 # @AUTHOR:
 # Another Person <another@random.email>
 # Random Person <maintainer@random.email>
+# @BUGREPORTS:
+# Report bugs to the Foo project, not to Gentoo.
 # @VCSURL: https://example.com/foo.eclass
 # @SUPPORTED_EAPIS: 0 1 2 3 4 5 6 7
 # @PROVIDES: bar
@@ -126,6 +128,7 @@ class TestEclassDoc:
         assert doc.deprecated == "bar or frobnicate"
         assert doc.dead is False
         assert doc.raw_provides == ("bar",)
+        assert doc.bugreports == "\n\nReport bugs to the Foo project, not to Gentoo."
         assert doc.maintainers == ("Random Person <maintainer@random.email>",)
         assert doc.authors == (
             "Another Person <another@random.email>",
@@ -283,6 +286,29 @@ class TestEclassDoc:
         assert caplog.records[0].levelno == logging.WARNING
         assert caplog.records[0].message.startswith("<bad.eclass.rst>, line ")
         assert "Inline emphasis start-string" in caplog.records[0].message
+
+    def test_bugreports_replaces_the_default(self, tmp_path):
+        (tmp_path / "foo.eclass").write_text(FOO_ECLASS)
+        rst = eclass.EclassDoc(str(tmp_path / "foo.eclass")).to_rst()
+        assert rst.endswith(
+            "Reporting Bugs\n--------------\n\n\n"
+            "Report bugs to the Foo project, not to Gentoo.\n"
+        )
+        assert "https://bugs.gentoo.org/" not in rst
+
+    def test_bugreports_default(self, tmp_path):
+        (tmp_path / "bare.eclass").write_text(
+            "# @ECLASS: bare.eclass\n"
+            "# @MAINTAINER:\n"
+            "# Random Person <maintainer@random.email>\n"
+            "# @BLURB: Test eclass.\n"
+        )
+        doc = eclass.EclassDoc(str(tmp_path / "bare.eclass"))
+        assert doc.bugreports is None
+        assert doc.to_rst().endswith(
+            "Reporting Bugs\n--------------\n"
+            "Please report bugs via https://bugs.gentoo.org/\n"
+        )
 
     def test_recursive_provides(self, tmp_path):
         with chdir(tmp_path):

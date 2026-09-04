@@ -12,6 +12,9 @@ Features
 - eclass: support the ``@DEAD`` tag, rendering a warning box in the eclass docs
   (Arthur Zamarin)
 
+- eclass: support the ``@BUGREPORTS:`` tag, replacing the default bug reporting
+  instructions (Arthur Zamarin)
+
 - ``pmaint eclass``: report docutils' complaints about eclassdoc through
   pkgcore's logger, so they name the eclass and are shown only with ``-v``
   (Arthur Zamarin)

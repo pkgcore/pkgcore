@@ -24,6 +24,9 @@ Fixes
 
 - eclass: fix regex for initial var="val" extraction (Ulrich Müller, #483)
 
+- eclass: remove backwards-compat code for ``@ECLASS-VARIABLE`` (Ulrich Müller,
+  #484)
+
 ----------------------------
 pkgcore 0.12.41 (2026-08-30)
 ----------------------------

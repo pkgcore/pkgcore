@@ -272,10 +272,11 @@ class EclassVarBlock(ParseEclassDoc):
     def parse(self, lines, line_ind, next_line):
         data = dict(super().parse(lines, line_ind, next_line))
         var_name = data["name"]
-        if mo := re.search(rf"{var_name}=(?P<value>.*)", next_line):
-            data["initial_value"] = mo.group("value")
-        if mo := re.search(rf": \${{{var_name}:?=(?P<value>.*)}}", next_line):
+        # Test : "${var=val}" first, since the second regex also matches it
+        if mo := re.search(rf": \"?\${{{var_name}:?=(?P<value>.*)}}", next_line):
             data["default_value"] = mo.group("value")
+        elif mo := re.search(rf"{var_name}=(?P<value>.*)", next_line):
+            data["initial_value"] = mo.group("value")
         return AttrDict(data)
 
 

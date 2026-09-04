@@ -376,6 +376,7 @@ class EclassFuncVarBlock(ParseEclassDoc):
             "@DEFAULT_UNSET": ("default_unset", False, self._tag_bool, False),
             "@INTERNAL": ("internal", False, self._tag_bool, False),
             "@REQUIRED": ("required", False, self._tag_bool, False),
+            "@USER_VARIABLE": ("user_variable", False, self._tag_bool, False),
             "@DESCRIPTION:": ("description", True, self._tag_multiline_str, None),
         }
         super().__init__(tags)
@@ -684,6 +685,8 @@ class EclassDoc(AttrDict):
                 vartype = ""
                 if var.required:
                     vartype += " (required)"
+                if var.user_variable:
+                    vartype += " (user variable)"
 
                 rst.append(f"**{var.name}**{vartype}")
                 if var.description:

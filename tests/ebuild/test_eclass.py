@@ -106,6 +106,7 @@ _foo_internal_func() { :; }
 
 # @VARIABLE: FOO_PUBLIC_VAR
 # @REQUIRED
+# @USER_VARIABLE
 # @DEPRECATED: BAR_PUBLIC_VAR
 # @DESCRIPTION:
 # Public variable for foo_public_func.
@@ -195,6 +196,7 @@ class TestEclassDoc:
             "default_unset": True,
             "internal": True,
             "required": False,
+            "user_variable": False,
             "description": "\n\nInternal variable for foo_public_func.",
         }
         assert doc.function_variables[1] == {
@@ -203,6 +205,7 @@ class TestEclassDoc:
             "default_unset": False,
             "internal": False,
             "required": True,
+            "user_variable": True,
             "description": "\n\nPublic variable for foo_public_func.",
         }
 
@@ -286,6 +289,11 @@ class TestEclassDoc:
         assert caplog.records[0].levelno == logging.WARNING
         assert caplog.records[0].message.startswith("<bad.eclass.rst>, line ")
         assert "Inline emphasis start-string" in caplog.records[0].message
+
+    def test_function_variable_types_rendered(self, tmp_path):
+        (tmp_path / "foo.eclass").write_text(FOO_ECLASS)
+        rst = eclass.EclassDoc(str(tmp_path / "foo.eclass")).to_rst()
+        assert "**FOO_PUBLIC_VAR** (required) (user variable)" in rst
 
     def test_bugreports_replaces_the_default(self, tmp_path):
         (tmp_path / "foo.eclass").write_text(FOO_ECLASS)

@@ -15,6 +15,9 @@ Features
 - eclass: support the ``@BUGREPORTS:`` tag, replacing the default bug reporting
   instructions (Arthur Zamarin)
 
+- eclass: support the ``@USER_VARIABLE`` tag on ``@VARIABLE:`` blocks, and
+  label such function variables in the docs (Arthur Zamarin)
+
 - ``pmaint eclass``: report docutils' complaints about eclassdoc through
   pkgcore's logger, so they name the eclass and are shown only with ``-v``
   (Arthur Zamarin)

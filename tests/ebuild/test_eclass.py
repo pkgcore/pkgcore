@@ -1,3 +1,4 @@
+import logging
 from contextlib import chdir
 
 from pkgcore.ebuild import eclass
@@ -266,6 +267,23 @@ class TestEclassDoc:
         assert '<aside class="admonition warning">' in doc.to_html()
         assert "<warning>This eclass is dead:" in doc.to_devbook()
 
+    def test_docutils_diagnostics_logged(self, tmp_path, caplog):
+        (tmp_path / "bad.eclass").write_text(
+            "# @ECLASS: bad.eclass\n"
+            "# @MAINTAINER:\n"
+            "# Random Person <maintainer@random.email>\n"
+            "# @BLURB: Test eclass.\n"
+            "# @DESCRIPTION:\n"
+            "# Use the *-fromfile variant.\n"
+        )
+        doc = eclass.EclassDoc(str(tmp_path / "bad.eclass"))
+        with caplog.at_level(logging.WARNING, logger="pkgcore"):
+            doc.to_man()
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelno == logging.WARNING
+        assert caplog.records[0].message.startswith("<bad.eclass.rst>, line ")
+        assert "Inline emphasis start-string" in caplog.records[0].message
+
     def test_recursive_provides(self, tmp_path):
         with chdir(tmp_path):
             repo = FakeEclassRepo(
@@ -282,3 +300,16 @@ class TestEclassDoc:
                     repo.eclass_cache.get_eclass("foo").path, repo=repo
                 ).provides
             ) == ["bar", "deep1", "deep2"]
+
+
+def test_docutils_warnings_sink(caplog):
+    sink = eclass._DocutilsWarnings()
+    with caplog.at_level(logging.DEBUG, logger="pkgcore"):
+        sink.write("<foo.eclass.rst>:3: (ERROR/3) Unexpected indentation.\n")
+        sink.write("<foo.eclass.rst>:: (WARNING/2) Nothing to pin it to.\n")
+        sink.write("output docutils never explained\n")
+    assert [(x.levelno, x.message) for x in caplog.records] == [
+        (logging.ERROR, "<foo.eclass.rst>, line 3: Unexpected indentation."),
+        (logging.WARNING, "<foo.eclass.rst>: Nothing to pin it to."),
+        (logging.WARNING, "output docutils never explained"),
+    ]

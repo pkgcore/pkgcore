@@ -1,5 +1,6 @@
 """Eclass parsing support."""
 
+import logging
 import os
 import re
 import shlex
@@ -58,6 +59,37 @@ _DEAD_NOTICE = (
     "   not be inherited by any new ebuild or eclass.",
     "",
 )
+
+
+class _DocutilsWarnings:
+    """Sink reporting docutils' diagnostics through pkgcore's logger."""
+
+    _levels: typing.ClassVar[dict] = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARNING": logging.WARNING,
+        "ERROR": logging.ERROR,
+        "SEVERE": logging.CRITICAL,
+    }
+
+    def __init__(self):
+        self._diagnostic = re.compile(
+            r"(?P<source>.*?):(?P<line>\d*): \((?P<level>[A-Z]+)/\d\) (?P<msg>.*)",
+            re.DOTALL,
+        )
+
+    def write(self, data):
+        """Report one diagnostic; docutils writes each in a single call."""
+        if not (data := data.strip()):
+            return
+        if mo := self._diagnostic.fullmatch(data):
+            loc = mo.group("source")
+            if line := mo.group("line"):
+                loc += f", line {line}"
+            level = self._levels.get(mo.group("level"), logging.WARNING)
+            logger.log(level, f"{loc}: {mo.group('msg')}")
+        else:
+            logger.warning(data)
 
 
 class ParseEclassDoc:
@@ -711,6 +743,7 @@ class EclassDoc(AttrDict):
             settings_overrides={
                 "input_encoding": "unicode",
                 "output_encoding": "unicode",
+                "warning_stream": _DocutilsWarnings(),
             },
         )
 

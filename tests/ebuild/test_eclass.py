@@ -75,6 +75,16 @@ FOO_ECLASS = """
 # @DESCRIPTION:
 # Public variable.
 
+# @ECLASS_VARIABLE: FOO_SECOND_ECLASS_VAR
+# @DESCRIPTION:
+# Variable number two.
+FOO_SECOND_ECLASS_VAR="funny !#\$%&'()*+,-./:;<=>?@[\\]^_\`{|}~ value"
+
+# @ECLASS_VARIABLE: FOO_THIRD_ECLASS_VAR
+# @DESCRIPTION:
+# Variable number three.
+: "${FOO_THIRD_ECLASS_VAR:="default value"}"
+
 # @ECLASS-VARIABLE: FOO_ANOTHER_ECLASS_VAR
 # @DESCRIPTION:
 # Yet another variable.
@@ -150,6 +160,8 @@ class TestEclassDoc:
             (
                 "FOO_PUBLIC_ECLASS_VAR",
                 "_FOO_INTERNAL_ECLASS_VAR",
+                "FOO_SECOND_ECLASS_VAR",
+                "FOO_THIRD_ECLASS_VAR",
                 "FOO_ANOTHER_ECLASS_VAR",
             )
         )
@@ -194,7 +206,7 @@ class TestEclassDoc:
             "description": "\n\nPublic variable for foo_public_func.",
         }
 
-        assert len(doc.variables) == 3
+        assert len(doc.variables) == 5
         assert doc.variables[0] == {
             "name": "_FOO_INTERNAL_ECLASS_VAR",
             "deprecated": False,
@@ -218,6 +230,31 @@ class TestEclassDoc:
             "description": "\n\nPublic variable.",
         }
         assert doc.variables[2] == {
+            "name": "FOO_SECOND_ECLASS_VAR",
+            "deprecated": False,
+            "default_unset": False,
+            "internal": False,
+            "required": False,
+            "pre_inherit": False,
+            "user_variable": False,
+            "output_variable": False,
+            "description": "\n\nVariable number two.",
+            # This misses the double quote because \" is not properly handled
+            "initial_value": '"funny !#\\$%&\'()*+,-./:;<=>?@[\\]^_\\`{|}~ value"',
+        }
+        assert doc.variables[3] == {
+            "name": "FOO_THIRD_ECLASS_VAR",
+            "deprecated": False,
+            "default_unset": False,
+            "internal": False,
+            "required": False,
+            "pre_inherit": False,
+            "user_variable": False,
+            "output_variable": False,
+            "description": "\n\nVariable number three.",
+            "default_value": '"default value"',
+        }
+        assert doc.variables[4] == {
             "name": "FOO_ANOTHER_ECLASS_VAR",
             "deprecated": False,
             "default_unset": False,

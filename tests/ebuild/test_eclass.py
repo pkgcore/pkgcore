@@ -75,10 +75,6 @@ FOO_ECLASS = """
 # @DESCRIPTION:
 # Public variable.
 
-# @ECLASS-VARIABLE: FOO_ANOTHER_ECLASS_VAR
-# @DESCRIPTION:
-# Yet another variable.
-
 # @FUNCTION: _foo_internal_func
 # @USAGE: <bar> [<baz>]
 # @RETURN: nothing special
@@ -150,7 +146,6 @@ class TestEclassDoc:
             (
                 "FOO_PUBLIC_ECLASS_VAR",
                 "_FOO_INTERNAL_ECLASS_VAR",
-                "FOO_ANOTHER_ECLASS_VAR",
             )
         )
         assert doc.internal_variable_names == frozenset(("_FOO_INTERNAL_ECLASS_VAR",))
@@ -194,7 +189,7 @@ class TestEclassDoc:
             "description": "\n\nPublic variable for foo_public_func.",
         }
 
-        assert len(doc.variables) == 3
+        assert len(doc.variables) == 2
         assert doc.variables[0] == {
             "name": "_FOO_INTERNAL_ECLASS_VAR",
             "deprecated": False,
@@ -216,17 +211,6 @@ class TestEclassDoc:
             "user_variable": False,
             "output_variable": False,
             "description": "\n\nPublic variable.",
-        }
-        assert doc.variables[2] == {
-            "name": "FOO_ANOTHER_ECLASS_VAR",
-            "deprecated": False,
-            "default_unset": False,
-            "internal": False,
-            "required": False,
-            "pre_inherit": False,
-            "user_variable": False,
-            "output_variable": False,
-            "description": "\n\nYet another variable.",
         }
 
     def test_recursive_provides(self, tmp_path):

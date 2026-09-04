@@ -279,36 +279,6 @@ class EclassVarBlock(ParseEclassDoc):
         return AttrDict(data)
 
 
-# For backwards compatibility, can be removed after 2022-12-31
-class EclassVarBlockCompat(ParseEclassDoc):
-    """ECLASS-VARIABLE doc block."""
-
-    tag = "@ECLASS-VARIABLE:"
-    key = "variables"
-    default = True
-
-    def __init__(self):
-        tags = {
-            "@ECLASS-VARIABLE:": ("name", True, self._eclass_variable, None),
-            "@DEPRECATED:": ("deprecated", False, self._tag_deprecated, False),
-            "@DEFAULT_UNSET": ("default_unset", False, self._tag_bool, False),
-            "@INTERNAL": ("internal", False, self._tag_bool, False),
-            "@REQUIRED": ("required", False, self._tag_bool, False),
-            "@PRE_INHERIT": ("pre_inherit", False, self._tag_bool, False),
-            "@USER_VARIABLE": ("user_variable", False, self._tag_bool, False),
-            "@OUTPUT_VARIABLE": ("output_variable", False, self._tag_bool, False),
-            "@DESCRIPTION:": ("description", True, self._tag_multiline_str, None),
-        }
-        super().__init__(tags)
-
-    def _eclass_variable(self, block, tag, lineno):
-        """Parse @ECLASS-VARIABLE tag."""
-        logger.warning(
-            f"{tag!r}, line {lineno}: deprecated, use '@ECLASS_VARIABLE' instead"
-        )
-        return self._tag_inline_arg(block, tag, lineno)
-
-
 class EclassFuncBlock(ParseEclassDoc):
     """FUNCTION doc block."""
 

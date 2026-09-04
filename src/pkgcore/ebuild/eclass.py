@@ -706,6 +706,7 @@ class EclassDoc(AttrDict):
 
         return publish_string(
             source=self.to_rst(**kwargs),
+            source_path=f"<{self.name}.rst>",
             writer=writer,
             settings_overrides={
                 "input_encoding": "unicode",

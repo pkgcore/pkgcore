@@ -6,6 +6,12 @@ Release Notes
 pkgcore 0.12.42 (unreleased)
 ----------------------------
 
+Features
+~~~~~~~~
+
+- eclass: support the ``@DEAD`` tag, rendering a warning box in the eclass docs
+  (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

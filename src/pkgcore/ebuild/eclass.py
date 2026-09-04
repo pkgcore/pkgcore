@@ -51,6 +51,15 @@ def _rst_header(char, text, leading=False, newline=False):
     return data
 
 
+_DEAD_NOTICE = (
+    ".. warning::",
+    "",
+    "   This eclass is dead: it is slated for removal from the tree and must",
+    "   not be inherited by any new ebuild or eclass.",
+    "",
+)
+
+
 class ParseEclassDoc:
     """Generic block for eclass docs.
 
@@ -226,6 +235,7 @@ class EclassBlock(ParseEclassDoc):
             "@VCSURL:": ("vcsurl", False, self._tag_inline_arg, None),
             "@BLURB:": ("blurb", True, self._tag_inline_arg, None),
             "@DEPRECATED:": ("deprecated", False, self._tag_deprecated, False),
+            "@DEAD": ("dead", False, self._tag_bool, False),
             "@PROVIDES:": ("raw_provides", False, self._tag_inline_list, ()),
             "@MAINTAINER:": ("maintainers", True, self._tag_multiline_args, None),
             "@AUTHOR:": ("authors", False, self._tag_multiline_args, None),
@@ -346,7 +356,7 @@ _eclass_blocks_re = re.compile(
 class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
-    ABI_VERSION = 5
+    ABI_VERSION = 6
 
     def __init__(self, path, /, *, sourced=False, repo=None):
         self.mtime = os.path.getmtime(path)
@@ -552,6 +562,9 @@ class EclassDoc(AttrDict):
         _header_only = partial(_rst_header, newline=True)
 
         rst = _header_only("=", self.name, leading=True)
+        if self.dead:
+            rst.extend(_rst_header("-", "Dead"))
+            rst.extend(_DEAD_NOTICE)
         if name_section and self.blurb:
             rst.extend(_rst_header("-", "Name"))
             rst.append(f"``{self.name}`` — {self.blurb}")

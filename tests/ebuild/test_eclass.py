@@ -123,6 +123,7 @@ class TestEclassDoc:
         assert doc.vcsurl == "https://example.com/foo.eclass"
         assert doc.blurb == "Test eclass."
         assert doc.deprecated == "bar or frobnicate"
+        assert doc.dead is False
         assert doc.raw_provides == ("bar",)
         assert doc.maintainers == ("Random Person <maintainer@random.email>",)
         assert doc.authors == (
@@ -249,6 +250,21 @@ class TestEclassDoc:
             "description": "\n\nVariable number three.",
             "default_value": '"default value"',
         }
+
+    def test_dead_eclass(self, tmp_path):
+        (tmp_path / "dead.eclass").write_text(
+            "# @ECLASS: dead.eclass\n"
+            "# @MAINTAINER:\n"
+            "# Random Person <maintainer@random.email>\n"
+            "# @BLURB: Test eclass.\n"
+            "# @DEAD\n"
+        )
+        doc = eclass.EclassDoc(str(tmp_path / "dead.eclass"))
+        assert doc.dead is True
+        assert "Dead\n----\n.. warning::" in doc.to_rst()
+        assert "\\fBWARNING:\\fP" in doc.to_man()
+        assert '<aside class="admonition warning">' in doc.to_html()
+        assert "<warning>This eclass is dead:" in doc.to_devbook()
 
     def test_recursive_provides(self, tmp_path):
         with chdir(tmp_path):

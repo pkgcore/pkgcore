@@ -152,6 +152,15 @@ class DevBookTranslator(nodes.NodeVisitor):
             self._pop_element()
         self._pop_element()
 
+    def visit_warning(self, node):
+        self._push_element("warning")
+        self.tb.data("\n\n".join(child.astext() for child in node.children))
+        self._pop_element()
+        raise nodes.SkipNode
+
+    def depart_warning(self, node):
+        pass
+
     def visit_title_reference(self, node):
         pass
 

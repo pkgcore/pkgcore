@@ -1,4 +1,5 @@
 import logging
+import re
 from contextlib import chdir
 
 import pytest
@@ -282,7 +283,7 @@ class TestEclassDoc:
             "# @DEAD\n"
         )
         doc = eclass.EclassDoc(str(tmp_path / "dead.eclass"))
-        assert "\\fBWARNING:\\fP" in doc.to_man()
+        assert re.search(r"\\fBwarning:\\fP", doc.to_man(), re.IGNORECASE)
         assert '<aside class="admonition warning">' in doc.to_html()
         assert "<warning>This eclass is dead:" in doc.to_devbook()
 

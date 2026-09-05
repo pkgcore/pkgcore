@@ -600,11 +600,11 @@ def _eclass_main(options, out, err):
             )
             if options.verbosity > 0:
                 out.write("Compiling: ", path)
+            obj = EclassDoc(path, sourced=True)
+            data = getattr(obj, f"to_{options.format}")()
             os.makedirs(os.path.dirname(filename), exist_ok=True)
             with open(filename, "wt") as f:
-                obj = EclassDoc(path, sourced=True)
-                convert_func = getattr(obj, f"to_{options.format}")
-                f.write(convert_func())
+                f.write(data)
         except NotImplementedError as e:
             err.write(f"{eclass.prog}: failed {path!r}: {e}")
             raise

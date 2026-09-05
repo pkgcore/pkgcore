@@ -15,6 +15,9 @@ Fixes
 - ``pmaint eclass``: ``-q`` no longer swallows errors along with the warnings
   (Arthur Zamarin)
 
+- ``pmaint eclass``: render an eclass before opening its output file, so only
+  valid results are written (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.42 (2026-09-05)
 ----------------------------

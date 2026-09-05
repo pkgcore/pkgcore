@@ -13,6 +13,7 @@ from snakeoil.cli import arghparse
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.sequences import unique_stable
 
+from .. import landlock
 from ..cache.flat_hash import md5_cache
 from ..ebuild import repository as ebuild_repo
 from ..ebuild import triggers
@@ -359,6 +360,17 @@ regen_opts.add_argument(
     help="use separate directory to store repository caches",
 )
 regen_opts.add_argument(
+    "--sandbox",
+    action=arghparse.StoreBool,
+    help="confine filesystem writes and network access while regenerating",
+    docs="""
+        Confine the run with Landlock where the kernel supports it: writes are
+        limited to the caches being regenerated, and outgoing TCP is denied.
+        Enabled by default; 'y' turns an unsupported kernel into an error
+        instead of continuing unconfined, and 'n' disables it.
+    """,
+)
+regen_opts.add_argument(
     "--rsync",
     action="store_true",
     default=False,
@@ -378,9 +390,28 @@ regen_opts.add_argument(
 )
 
 
+def _regen_writable_paths(options):
+    """Everything a regen of the selected repos legitimately writes."""
+    for repo in unique_stable(options.repos):
+        if options.cache_dir is not None:
+            # the per-repo subdirectory is created on demand
+            yield options.cache_dir
+        else:
+            yield from landlock.writable_cache_paths(repo)
+        if options.rsync or options.pkg_desc_index:
+            yield pjoin(repo.location, "metadata")
+        if options.use_local_desc:
+            yield pjoin(repo.location, "profiles")
+
+
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
+    if options.sandbox is not False:
+        landlock.confine(
+            *_regen_writable_paths(options), required=options.sandbox is True
+        )
+
     ret = []
 
     observer = observer_mod.formatter_output(out)

@@ -26,6 +26,10 @@ Features
   paths, with outgoing TCP denied, for use around ebuild sourcing.  Requires
   ``py-landlock`` and a kernel with Landlock enabled (Arthur Zamarin)
 
+- ``pmaint regen`` now confines itself while regenerating, so a sourced ebuild
+  can only write to the caches being regenerated.  Disable it with
+  ``--sandbox=n``, or require it with ``--sandbox=y`` (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

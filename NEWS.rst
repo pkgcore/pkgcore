@@ -22,6 +22,10 @@ Features
   pkgcore's logger, so they name the eclass and are shown only with ``-v``
   (Arthur Zamarin)
 
+- ``pkgcore.landlock``: new module confining a process to a set of writable
+  paths, with outgoing TCP denied, for use around ebuild sourcing.  Requires
+  ``py-landlock`` and a kernel with Landlock enabled (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

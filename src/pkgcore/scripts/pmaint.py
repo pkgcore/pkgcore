@@ -1,7 +1,6 @@
 """system/repository maintenance utility"""
 
 import argparse
-import logging
 import os
 import textwrap
 import time
@@ -584,8 +583,6 @@ def _eclass_default_output_dir(namespace, attr):
 
 @eclass.bind_main_func
 def _eclass_main(options, out, err):
-    if options.verbosity < 0:
-        logging.getLogger("pkgcore").setLevel(100)
     failed = []
 
     # determine output file extension

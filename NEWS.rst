@@ -12,6 +12,9 @@ Fixes
 - ``pmaint eclass -f devbook``: don't wrap a list item's only paragraph in
   ``<p>`` (Arthur Zamarin, #485)
 
+- ``pmaint eclass``: ``-q`` no longer swallows errors along with the warnings
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.42 (2026-09-05)
 ----------------------------

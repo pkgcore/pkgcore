@@ -19,7 +19,7 @@ Features
   label such function variables in the docs (Arthur Zamarin)
 
 - ``pmaint eclass``: report docutils' complaints about eclassdoc through
-  pkgcore's logger, so they name the eclass and are shown only with ``-v``
+  pkgcore's logger, so they name the eclass and are silenced by ``-q``
   (Arthur Zamarin)
 
 - ``pkgcore.landlock``: new module confining a process to a set of writable

@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.43 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- ``pmaint eclass -f devbook``: don't wrap a list item's only paragraph in
+  ``<p>`` (Arthur Zamarin, #485)
+
+----------------------------
 pkgcore 0.12.42 (2026-09-05)
 ----------------------------
 

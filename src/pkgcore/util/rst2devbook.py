@@ -66,10 +66,23 @@ class DevBookTranslator(nodes.NodeVisitor):
     def depart_Text(self, node):
         pass
 
+    @staticmethod
+    def _is_compact_list_item(node: nodes.Node) -> bool:
+        if not isinstance(item := node.parent, nodes.list_item):
+            return False
+        return all(
+            len(x.children) == 1 and isinstance(x.children[0], nodes.paragraph)
+            for x in item.parent.children
+        )
+
     def visit_paragraph(self, node):
+        if self._is_compact_list_item(node):
+            return
         self._push_element("p")
 
     def depart_paragraph(self, node):
+        if self._is_compact_list_item(node):
+            return
         self._pop_element()
 
     def visit_attribution(self, node):
@@ -103,7 +116,7 @@ class DevBookTranslator(nodes.NodeVisitor):
         self._pop_element()
 
     @staticmethod
-    def _is_preformattable(node) -> bool:
+    def _is_preformattable(node: nodes.Node) -> bool:
         """Whether a block quote can be rendered as `pre`, which holds bare text."""
         return all(
             isinstance(child, nodes.paragraph)

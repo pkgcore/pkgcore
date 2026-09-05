@@ -1,7 +1,7 @@
 [build-system]
 requires = [
 	"flit_core >=3.8,<4",
-	"snakeoil >= 0.11.4",
+	"snakeoil >= 0.11.6",
 ]
 build-backend = "py_build"
 backend-path = ["."]
@@ -32,7 +32,7 @@ classifiers = [
 dynamic = ["version"]
 
 dependencies = [
-	"snakeoil >= 0.11.5",
+	"snakeoil >= 0.11.6",
 	"lxml",
 	"py-landlock",
 ]

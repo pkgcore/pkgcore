@@ -41,6 +41,7 @@ dependencies = [
 test = [
 	"pytest >= 9.0",
 	"pytest-cov",
+	"docutils",
 ]
 doc = [
 	"sphinx",

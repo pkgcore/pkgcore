@@ -1,6 +1,8 @@
 import logging
 from contextlib import chdir
 
+import pytest
+
 from pkgcore.ebuild import eclass
 
 
@@ -269,11 +271,23 @@ class TestEclassDoc:
         doc = eclass.EclassDoc(str(tmp_path / "dead.eclass"))
         assert doc.dead is True
         assert "Dead\n----\n.. warning::" in doc.to_rst()
+
+    def test_dead_eclass_rendering(self, tmp_path):
+        pytest.importorskip("docutils")
+        (tmp_path / "dead.eclass").write_text(
+            "# @ECLASS: dead.eclass\n"
+            "# @MAINTAINER:\n"
+            "# Random Person <maintainer@random.email>\n"
+            "# @BLURB: Test eclass.\n"
+            "# @DEAD\n"
+        )
+        doc = eclass.EclassDoc(str(tmp_path / "dead.eclass"))
         assert "\\fBWARNING:\\fP" in doc.to_man()
         assert '<aside class="admonition warning">' in doc.to_html()
         assert "<warning>This eclass is dead:" in doc.to_devbook()
 
     def test_docutils_diagnostics_logged(self, tmp_path, caplog):
+        pytest.importorskip("docutils")
         (tmp_path / "bad.eclass").write_text(
             "# @ECLASS: bad.eclass\n"
             "# @MAINTAINER:\n"

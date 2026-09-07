@@ -362,3 +362,61 @@ def test_docutils_warnings_sink(caplog):
         (logging.WARNING, "<foo.eclass.rst>: Nothing to pin it to."),
         (logging.WARNING, "output docutils never explained"),
     ]
+
+
+class TestRewriteQuoting:
+    """eclassdoc prose quotes by hand; reST has to be told what was meant."""
+
+    @pytest.mark.parametrize(
+        ("prose", "expected"),
+        (
+            # markdown-style code spans, which is what prose overwhelmingly writes
+            ("run `emake`", "run ``emake``"),
+            ("pass `-DFOO=BAR` along", "pass ``-DFOO=BAR`` along"),
+            # GNU-style quoting, which quotes code just the same
+            ("`target' is one of", "``target`` is one of"),
+            ("set `a' and `b'", "set ``a`` and ``b``"),
+            ("runs `emake install' now", "runs ``emake install`` now"),
+            # ... but only where the apostrophe closes a word, so a quoted
+            # command ending in punctuation is left alone
+            ('id `x="y"\'', 'id \\`x="y"\''),
+            # already written as reST, left alone
+            ("keep ``libc++`` as is", "keep ``libc++`` as is"),
+            ("``gcc``'s libstdc++", "``gcc``'s libstdc++"),
+            # a span followed by an unrelated apostrophe
+            ("like `unpack` does, if you don't", "like ``unpack`` does, if you don't"),
+            # a span whose own content holds apostrophes
+            ("via `paths = ['/to/crate']` here", "via ``paths = ['/to/crate']`` here"),
+            # closes nothing, so it is not markup
+            ("a lone ` backtick", "a lone \\` backtick"),
+            ("nothing to do here", "nothing to do here"),
+        ),
+    )
+    def test_rewrite(self, prose, expected):
+        assert eclass._rewrite_quoting(prose) == expected
+
+    def test_applied_to_prose(self, tmp_path):
+        (tmp_path / "foo.eclass").write_text(
+            "# @ECLASS: foo.eclass\n"
+            "# @MAINTAINER:\n"
+            "# P <p@e.com>\n"
+            "# @BLURB: b\n"
+            "# @DESCRIPTION:\n"
+            "# Call `emake` first.\n"
+        )
+        doc = eclass.EclassDoc(str(tmp_path / "foo.eclass"))
+        assert "Call ``emake`` first." in doc.description
+
+    def test_not_applied_to_code_samples(self, tmp_path):
+        (tmp_path / "foo.eclass").write_text(
+            "# @ECLASS: foo.eclass\n"
+            "# @MAINTAINER:\n"
+            "# P <p@e.com>\n"
+            "# @BLURB: b\n"
+            "# @DESCRIPTION:\n"
+            "# @CODE\n"
+            "# echo `date`\n"
+            "# @CODE\n"
+        )
+        doc = eclass.EclassDoc(str(tmp_path / "foo.eclass"))
+        assert "echo `date`" in doc.description

@@ -23,6 +23,9 @@ Fixes
   can't express as its content alone.  A single eclass reaching for reST beyond
   DevBook used to abort the whole run (Arthur Zamarin)
 
+- eclass: read eclassdoc prose's hand-written inline code: both
+  ``\`markdown\``` style and GNU ``\`style'`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.42 (2026-09-05)
 ----------------------------

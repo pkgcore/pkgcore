@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from functools import partial
 
 from snakeoil import klass
+from snakeoil.delayed import regexp
 from snakeoil.mappings import ImmutableDict, OrderedSet
 from snakeoil.strings import pluralism
 from snakeoil.version import get_version
@@ -36,9 +37,44 @@ class AttrDict(ImmutableDict):
         return sorted(dir(self._dict) + list(self._dict))
 
 
+_rst_markup = regexp(r"([*`_|\\])")
+
+
 def _rst_escape(text):
     """Escape reST inline markup in text that should render verbatim."""
-    return re.sub(r"([*`_|\\])", r"\\\1", text)
+    return _rst_markup.sub(r"\\\1", text)
+
+
+_rst_literal = regexp(r"``[^`\n]+``")  # text already written as a reST literal
+_gnu_quote = regexp(r"[^'`\n]*\w'(?!\w)")  # a GNU-style quote's content
+
+
+def _rewrite_quoting(text):
+    """Turn eclassdoc's hand-written quoting into the reST it means."""
+    out = []
+    i = 0
+    while i < len(text):
+        if mo := _rst_literal.match(text, i):
+            out.append(mo.group())
+            i = mo.end()
+            continue
+        if text[i] != "`":
+            out.append(text[i])
+            i += 1
+            continue
+        rest = text[i + 1 :]
+        # a GNU quote crosses no backtick, so a match settles which came first
+        if gnu := _gnu_quote.match(rest):
+            out.append(f"``{gnu.group()[:-1]}``")
+            i += gnu.end() + 1
+        elif (backtick := rest.find("`")) != -1:
+            out.append(f"``{rest[:backtick]}``")
+            i += backtick + 2
+        else:
+            # closes nothing, so it is not markup
+            out.append(r"\`")
+            i += 1
+    return "".join(out)
 
 
 def _rst_header(char, text, leading=False, newline=False):
@@ -72,11 +108,10 @@ class _DocutilsWarnings:
         "SEVERE": logging.CRITICAL,
     }
 
-    def __init__(self):
-        self._diagnostic = re.compile(
-            r"(?P<source>.*?):(?P<line>\d*): \((?P<level>[A-Z]+)/\d\) (?P<msg>.*)",
-            re.DOTALL,
-        )
+    _diagnostic = regexp(
+        r"(?P<source>.*?):(?P<line>\d*): \((?P<level>[A-Z]+)/\d\) (?P<msg>.*)",
+        re.DOTALL,
+    )
 
     def write(self, data):
         """Report one diagnostic; docutils writes each in a single call."""
@@ -115,16 +150,15 @@ class ParseEclassDoc:
         super().__init_subclass__(**kwargs)
         cls.blocks[cls.tag] = cls()
 
+    # regex matching @CODE tags
+    _code_tag = regexp(r"^\s*@CODE\s*$")
+    # regex matching @SUBSECTION tags
+    _subsection_tag = regexp(r"^\s*@SUBSECTION (?P<title>.+)$")
+
     def __init__(self, tags):
         self.tags = tags
         # regex matching all known tags for the eclass doc block
-        self._block_tags_re = re.compile(
-            rf"^(?P<tag>{'|'.join(self.tags)})(?P<value>.*)"
-        )
-        # regex matching @CODE tags
-        self._code_tag = re.compile(r"^\s*@CODE\s*$")
-        # regex matching @SUBSECTION tags
-        self._subsection_tag = re.compile(r"^\s*@SUBSECTION (?P<title>.+)$")
+        self._block_tags_re = regexp(rf"^(?P<tag>{'|'.join(self.tags)})(?P<value>.*)")
 
     def _tag_bool(self, block, tag, lineno):
         """Parse boolean tags."""
@@ -178,7 +212,7 @@ class ParseEclassDoc:
                 data.extend(["\n\n"])
             elif line:
                 indent = "  " if inside_code else ""
-                formatted_line = line
+                formatted_line = line if inside_code else _rewrite_quoting(line)
                 data.append(f"{indent}{formatted_line}\n")
             else:
                 data.append("\n")
@@ -382,7 +416,7 @@ class EclassFuncVarBlock(ParseEclassDoc):
         super().__init__(tags)
 
 
-_eclass_blocks_re = re.compile(
+_eclass_blocks_re = regexp(
     rf"^(?P<prefix>\s*#) (?P<tag>{'|'.join(ParseEclassDoc.blocks)})(?P<value>.*)"
 )
 

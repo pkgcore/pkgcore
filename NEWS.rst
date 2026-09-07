@@ -18,6 +18,11 @@ Fixes
 - ``pmaint eclass``: render an eclass before opening its output file, so only
   valid results are written (Arthur Zamarin)
 
+- ``pmaint eclass -f devbook``: map reST's admonitions, tables and field lists
+  onto the DevBook elements that match them, and render anything else DevBook
+  can't express as its content alone.  A single eclass reaching for reST beyond
+  DevBook used to abort the whole run (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.42 (2026-09-05)
 ----------------------------

@@ -5,6 +5,22 @@
 
 from docutils import nodes, writers
 from lxml import etree
+from snakeoil.klass import alias_method
+
+# docutils admonitions DevBook can express, mapped onto its elements below
+_ADMONITIONS = frozenset(
+    (
+        "note",
+        "tip",
+        "hint",
+        "important",
+        "attention",
+        "caution",
+        "warning",
+        "danger",
+        "error",
+    )
+)
 
 
 class DevBookWriter(writers.Writer):
@@ -67,23 +83,33 @@ class DevBookTranslator(nodes.NodeVisitor):
         pass
 
     @staticmethod
-    def _is_compact_list_item(node: nodes.Node) -> bool:
-        if not isinstance(item := node.parent, nodes.list_item):
-            return False
-        return all(
-            len(x.children) == 1 and isinstance(x.children[0], nodes.paragraph)
-            for x in item.parent.children
-        )
+    def _is_bare_paragraph(node: nodes.Node) -> bool:
+        """Whether a paragraph's content goes straight into its parent."""
+        match parent := node.parent:
+            case nodes.list_item():
+                # DevBook has no compact list, so a `p` breaks up the item.  Every item has to agree,
+                # or they'd be spaced unevenly.
+                return all(
+                    len(x.children) == 1 and isinstance(x.children[0], nodes.paragraph)
+                    for x in parent.parent.children
+                )
+            case nodes.entry():
+                # `th` takes inline content only; in `ti` a lone paragraph would just add a break
+                return isinstance(parent.parent.parent, nodes.thead) or (
+                    len(parent.children) == 1
+                )
+        return parent.tagname in _ADMONITIONS
 
     def visit_paragraph(self, node):
-        if self._is_compact_list_item(node):
-            return
-        self._push_element("p")
+        if not self._is_bare_paragraph(node):
+            self._push_element("p")
+        elif node is not node.parent.children[0]:
+            # keep consecutive paragraphs from running together
+            self.tb.data("\n\n")
 
     def depart_paragraph(self, node):
-        if self._is_compact_list_item(node):
-            return
-        self._pop_element()
+        if not self._is_bare_paragraph(node):
+            self._pop_element()
 
     def visit_attribution(self, node):
         self._push_element("p")
@@ -140,12 +166,26 @@ class DevBookTranslator(nodes.NodeVisitor):
     def depart_block_quote(self, node):
         pass
 
+    @staticmethod
+    def _is_section_title(node: nodes.Node) -> bool:
+        """Whether a title names a chapter or section, as DevBook's does."""
+        return isinstance(node.parent, nodes.section | nodes.document)
+
     def visit_title(self, node):
+        if isinstance(node.parent, nodes.table):
+            raise nodes.SkipNode  # already taken as the table's caption
+        if not self._is_section_title(node):
+            # a topic, sidebar or generic admonition heading
+            self._push_element("p")
+            self._push_element("b")
+            return
         self._push_element("title")
 
     def depart_title(self, node):
         self._pop_element()
-        if self.section_depth > 0:
+        if not self._is_section_title(node):
+            self._pop_element()
+        elif self.section_depth > 0:
             self._push_element("body")
 
     def visit_section(self, node):
@@ -161,17 +201,179 @@ class DevBookTranslator(nodes.NodeVisitor):
 
     def depart_section(self, node):
         self.section_depth -= 1
+        body = None
         if self.estack[-1].tag == "body":
-            self._pop_element()
+            body = self._pop_element()
+        section = self._pop_element()
+        # a section whose content was all unrenderable -- comments, foreign
+        # markup -- would leave an empty `body`, and `body` holds at least one
+        # element, so drop the section along with it
+        if body is not None and not len(body) and not (body.text or "").strip():
+            section.getparent().remove(section)
+
+    #
+    # Admonitions.  docutils has more flavors than DevBook, so each maps onto
+    # the DevBook element carrying the same weight.
+    #
+
+    def visit_note(self, node):
+        self._push_element("note")
+
+    def depart_note(self, node):
         self._pop_element()
+
+    visit_tip = alias_method("visit_note")
+    depart_tip = alias_method("depart_note")
+    visit_hint = alias_method("visit_note")
+    depart_hint = alias_method("depart_note")
+
+    def visit_important(self, node):
+        self._push_element("important")
+
+    def depart_important(self, node):
+        self._pop_element()
+
+    visit_attention = alias_method("visit_important")
+    depart_attention = alias_method("depart_important")
+    visit_caution = alias_method("visit_important")
+    depart_caution = alias_method("depart_important")
 
     def visit_warning(self, node):
         self._push_element("warning")
-        self.tb.data("\n\n".join(child.astext() for child in node.children))
+
+    def depart_warning(self, node):
+        self._pop_element()
+
+    visit_danger = alias_method("visit_warning")
+    depart_danger = alias_method("depart_warning")
+    visit_error = alias_method("visit_warning")
+    depart_error = alias_method("depart_warning")
+
+    #
+    # Tables
+    #
+
+    def visit_table(self, node):
+        # docutils keeps the caption in a `title` child, DevBook in an
+        # attribute, so it has to be read before the element is opened
+        caption = [x.astext() for x in node.children if isinstance(x, nodes.title)]
+        self._push_element("table", **({"caption": caption[0]} if caption else {}))
+
+    def depart_table(self, node):
+        self._pop_element()
+
+    def visit_row(self, node):
+        self._push_element("tr")
+
+    def depart_row(self, node):
+        self._pop_element()
+
+    def visit_entry(self, node):
+        self._push_element(
+            "th" if isinstance(node.parent.parent, nodes.thead) else "ti"
+        )
+
+    def depart_entry(self, node):
+        self._pop_element()
+
+    # DevBook tables have no column specs, and mark header cells individually
+    # rather than grouping the rows
+    def visit_colspec(self, node):
+        raise nodes.SkipNode
+
+    def visit_tgroup(self, node):
+        pass
+
+    def depart_tgroup(self, node):
+        pass
+
+    def visit_thead(self, node):
+        pass
+
+    def depart_thead(self, node):
+        pass
+
+    def visit_tbody(self, node):
+        pass
+
+    def depart_tbody(self, node):
+        pass
+
+    #
+    # Field lists, which are definition lists by another name
+    #
+
+    def visit_field_list(self, node):
+        self._push_element("dl")
+
+    def depart_field_list(self, node):
+        self._pop_element()
+
+    def visit_field(self, node):
+        pass
+
+    def depart_field(self, node):
+        pass
+
+    def visit_field_name(self, node):
+        self._push_element("dt")
+
+    def depart_field_name(self, node):
+        self._pop_element()
+
+    def visit_field_body(self, node):
+        self._push_element("dd")
+
+    def depart_field_body(self, node):
+        self._pop_element()
+
+    def visit_doctest_block(self, node):
+        self._push_element("pre")
+        self.tb.data(node.astext())
         self._pop_element()
         raise nodes.SkipNode
 
-    def depart_warning(self, node):
+    def visit_rubric(self, node):
+        self._push_element("p")
+        self._push_element("b")
+
+    def depart_rubric(self, node):
+        self._pop_element()
+        self._pop_element()
+
+    ### nodes carrying no rendered content
+    #
+    # Left to the fallback below these would leak their text -- a comment's
+    # prose, a substitution's replacement, foreign markup -- into the docs.
+
+    def visit_comment(self, node):
+        raise nodes.SkipNode
+
+    def visit_substitution_definition(self, node):
+        raise nodes.SkipNode
+
+    def visit_raw(self, node):
+        raise nodes.SkipNode
+
+    def unknown_visit(self, node):
+        """Render a node DevBook has no element for, rather than failing.
+
+        eclassdoc prose is written by hand, and one eclass reaching for reST
+        that doesn't map onto DevBook shouldn't cost the whole run.  A node
+        holding blocks of its own gives way to them; a leaf's text needs a `p`
+        to live in, since `body` holds block elements only.
+        """
+        if isinstance(node, nodes.Inline):
+            return
+        if any(isinstance(x, nodes.Body) for x in node.children):
+            return
+        if text := node.astext():
+            self._push_element("p")
+            self.tb.data(text)
+            self._pop_element()
+        raise nodes.SkipNode
+
+    def unknown_departure(self, node):
         pass
 
     def visit_title_reference(self, node):
@@ -180,41 +382,23 @@ class DevBookTranslator(nodes.NodeVisitor):
     def depart_title_reference(self, node):
         pass
 
+    @staticmethod
+    def _reference_uri(node: nodes.reference) -> str | None:
+        """The URI to link to, or None for a reference DevBook can't express."""
+        uri = node.get("refuri")
+        # an internal reference wearing an external one's clothes
+        if uri and node.get("anonymous") and uri.startswith("_"):
+            return None
+        return uri
+
     def visit_reference(self, node):
-        internal_ref = False
-
-        # internal ref style #1: it declares itself internal
-        if node.hasattr("internal"):
-            internal_ref = node["internal"]
-
-        # internal ref style #2: it hides as an external ref, with strange
-        # qualities.
-        if (
-            node.hasattr("anonymous")
-            and (node["anonymous"] == 1)
-            and node.hasattr("refuri")
-            and (node["refuri"][0] == "_")
-        ):
-            internal_ref = True
-            node["refuri"] = node["refuri"][1:]
-
-        assert not internal_ref
-
-        if node.hasattr("refid"):
-            assert False
-            self._push_element("link", {"linkend": node["refid"]})
-        elif node.hasattr("refuri"):
-            if internal_ref:
-                pass
-                # ref_name = os.path.splitext(node['refuri'])[0]
-                # self._push_element('link', {'linkend': ref_name})
-            else:
-                self._push_element("uri", link=node["refuri"])
-        else:
-            assert False
+        # DevBook has no element for a reference to elsewhere in the same
+        # document, so those render as their text alone
+        if uri := self._reference_uri(node):
+            self._push_element("uri", link=uri)
 
     def depart_reference(self, node):
-        if node.hasattr("refid") or node.hasattr("refuri"):
+        if self._reference_uri(node):
             self._pop_element()
 
     def visit_bullet_list(self, node):

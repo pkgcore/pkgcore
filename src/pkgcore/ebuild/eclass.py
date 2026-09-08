@@ -207,6 +207,8 @@ class ParseEclassDoc:
                 data.append("\n\n")
                 inside_code = not inside_code
             elif mo := self._subsection_tag.match(line):
+                if not "".join(data).endswith("\n\n"):
+                    data.append("\n")
                 header = _rst_header("~", mo.group("title"))
                 data.extend(f"{x}\n" for x in header)
                 data.extend(["\n\n"])

@@ -26,6 +26,9 @@ Fixes
 - eclass: read eclassdoc prose's hand-written inline code: both
   ``\`markdown\``` style and GNU ``\`style'`` (Arthur Zamarin)
 
+- eclass: separate an ``@SUBSECTION`` heading from the prose above it, so it
+  renders as a heading (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.42 (2026-09-05)
 ----------------------------

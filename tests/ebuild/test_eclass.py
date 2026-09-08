@@ -310,6 +310,23 @@ class TestEclassDoc:
         rst = eclass.EclassDoc(str(tmp_path / "foo.eclass")).to_rst()
         assert "**FOO_PUBLIC_VAR** (required) (user variable)" in rst
 
+    @pytest.mark.parametrize("blank_line", ("", "#\n"))
+    def test_subsection_is_separated_from_the_prose_above(self, tmp_path, blank_line):
+        """Without a blank line reST reads the underline as more of the paragraph."""
+        (tmp_path / "foo.eclass").write_text(
+            "# @ECLASS: foo.eclass\n"
+            "# @MAINTAINER:\n"
+            "# P <p@e.com>\n"
+            "# @BLURB: b\n"
+            "# @DESCRIPTION:\n"
+            "# intro\n"
+            f"{blank_line}"
+            "# @SUBSECTION How to use\n"
+            "# details\n"
+        )
+        doc = eclass.EclassDoc(str(tmp_path / "foo.eclass"))
+        assert doc.description == "\n\nintro\n\nHow to use\n~~~~~~~~~~\n\n\ndetails"
+
     def test_bugreports_replaces_the_default(self, tmp_path):
         (tmp_path / "foo.eclass").write_text(FOO_ECLASS)
         rst = eclass.EclassDoc(str(tmp_path / "foo.eclass")).to_rst()

@@ -483,7 +483,7 @@ class ContainmentMatch(_HashedGenericEquality, base):
         return string % (self.__class__.__name__, tuple(self.vals), self.all, id(self))
 
     def __str__(self):
-        restricts_str = ", ".join(map(str, self.vals))
+        restricts_str = ", ".join(sorted(map(str, self.vals)))
         negate = "!" if self.negate else ""
         return f"{negate}{restricts_str}"
 

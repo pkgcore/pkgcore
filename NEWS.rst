@@ -62,6 +62,10 @@ Fixes
 - eclass: separate an ``@SUBSECTION`` heading from the prose above it, so it
   renders as a heading (Arthur Zamarin)
 
+- ``ContainmentMatch``: render its values in sorted order, so the string form of
+  a restriction is stable across runs rather than following set iteration order
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.42 (2026-09-05)
 ----------------------------

@@ -11,6 +11,13 @@ from snakeoil.cli.arghparse import Namespace
 from pkgcore import landlock
 from pkgcore.exceptions import PkgcoreUserException
 
+# these tests have to fork: confinement can't be undone, and the callables under
+# test are lambdas a spawned interpreter couldn't receive.  A threaded runner
+# (pytest -n) makes py3.12+ warn about that.
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:This process .* is multi-threaded:DeprecationWarning"
+)
+
 
 def run_confined(func, *writable, **kwargs):
     """Run *func* in a forked child confined to *writable*.

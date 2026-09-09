@@ -335,6 +335,7 @@ class EbuildProcessor:
     """
 
     pid = None
+    _proc = None
 
     def __init__(self, userpriv, sandbox, fd_pipes=None):
         """

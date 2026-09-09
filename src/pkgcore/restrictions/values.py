@@ -92,7 +92,7 @@ class _HashedGenericEquality(klass.GenericEquality, abc.ABC):
 class StrRegex(_HashedGenericEquality, base):
     """regex based matching"""
 
-    ___slots__ = ("flags", "regex", "_matchfunc", "ismatch", "negate")
+    __slots__ = ("_matchfunc", "flags", "ismatch", "negate", "regex")
     __attr_comparison__ = ("regex", "negate", "flags", "ismatch")
 
     def __init__(self, regex, case_sensitive=True, match=False, negate=False):

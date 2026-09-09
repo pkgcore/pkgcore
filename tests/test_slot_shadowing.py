@@ -1,9 +1,8 @@
-from snakeoil.test.slot_shadowing import SlotShadowing
+from snakeoil.test import code_quality
 
 
-class Test_slot_shadowing(SlotShadowing):
-    target_namespace = "pkgcore"
-    ignore_all_import_failures = True
-
-    def _default_module_blacklister(self, target):
-        return target in self.module_blacklist or target.startswith("pkgcore.test.")
+class TestSlots(code_quality.Slots):
+    namespaces = ("pkgcore",)
+    # pkgcore has plenty of classes still lacking slots, so test_slots_mandatory
+    # stays non-strict; shadowing is clean and stays that way.
+    strict = ("test_shadowing",)

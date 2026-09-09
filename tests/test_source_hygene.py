@@ -1,6 +1,5 @@
-from snakeoil.test.modules import ExportedModules
+from snakeoil.test import code_quality
 
 
-class Test_modules(ExportedModules):
-    target_namespace = "pkgcore"
-    ignore_all_import_failures = True
+class TestModules(code_quality.Modules):
+    namespaces = ("pkgcore",)

@@ -75,11 +75,6 @@ class atom(boolean.AndRestriction):
         "repo_id",
     )
 
-    klass.inject_richcmp_methods_from_cmp(locals())
-    # hack; combine these 2 metaclasses at some point...
-    locals().pop("__eq__", None)
-    locals().pop("__ne__", None)
-
     # overrided in child class if it's supported
     evaluate_depset = None
 
@@ -429,7 +424,13 @@ class atom(boolean.AndRestriction):
     def __getitem__(self, index):
         return self.restrictions[index]
 
-    def __cmp__(self, other):
+    def _cmp(self, other) -> int:
+        """three way comparison of two atoms
+
+        Covers every attribute of :py:attr:`__attr_comparison__`, so atoms that
+        differ only in subslot or slot operator get a stable order rather than
+        comparing as equal.
+        """
         if not isinstance(other, atom):
             raise TypeError(f"other isn't of {atom!r} type, is {other.__class__}")
 
@@ -464,10 +465,15 @@ class atom(boolean.AndRestriction):
         if c:
             return c
 
-        def f(v):
-            return "" if v is None else v
+        c = cmp(self.slot, other.slot)
+        if c:
+            return c
 
-        c = cmp(f(self.slot), f(other.slot))
+        c = cmp(self.subslot, other.subslot)
+        if c:
+            return c
+
+        c = cmp(self.slot_operator, other.slot_operator)
         if c:
             return c
 
@@ -476,6 +482,18 @@ class atom(boolean.AndRestriction):
             return c
 
         return cmp(self.repo_id, other.repo_id)
+
+    def __lt__(self, other) -> bool:
+        return self._cmp(other) < 0
+
+    def __le__(self, other) -> bool:
+        return self._cmp(other) <= 0
+
+    def __gt__(self, other) -> bool:
+        return self._cmp(other) > 0
+
+    def __ge__(self, other) -> bool:
+        return self._cmp(other) >= 0
 
     no_usedeps = klass.alias_attr("get_atom_without_use_deps")
 

@@ -12,7 +12,7 @@ from snakeoil import klass
 from snakeoil.delayed import regexp
 from snakeoil.klass import immutable
 from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, inject_getitem_as_getattr
-from snakeoil.sequences import stable_unique
+from snakeoil.sequences import unique_stable
 
 from ..log import logger
 from ..spawn import bash_version
@@ -488,7 +488,7 @@ class EAPI(immutable.Strict):
                         paths[phase].append(dirpath)
                     else:
                         raise ValueError(f"unknown phase: {phase!r}")
-        return ImmutableDict((k, tuple(stable_unique(v))) for k, v in paths.items())
+        return ImmutableDict((k, tuple(unique_stable(v))) for k, v in paths.items())
 
     @klass.jit_attr
     def ebd_env(self):

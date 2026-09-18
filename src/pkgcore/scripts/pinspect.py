@@ -23,10 +23,11 @@ import snakeoil.formatters
 from snakeoil.cli import arghparse
 from snakeoil.sequences import iflatten_instance
 
-from .. import fetch
+from .. import fetch, landlock
 from ..ebuild import inspect_profile
 from ..ebuild import portageq as _portageq
 from ..package import errors
+from ..repository.util import get_raw_repos
 from ..restrictions import packages
 from ..util import commandline
 
@@ -101,6 +102,17 @@ def print_simple_histogram(
         )
 
 
+def confine(options) -> None:
+    """Confine a run that walks repos.
+
+    Anything reading a package attribute has the metadata generated on demand
+    for a repo that lacks it, which sources the ebuild; the only thing that
+    writes is the cache being filled in.
+    """
+    repos = get_raw_repos([repo for _name, repo in options.repos])
+    landlock.confine_from(options, *landlock.writable_cache_paths(*repos))
+
+
 class histo_data(arghparse.ArgparseCommand):
     per_repo_summary = None
     allow_no_detail = False
@@ -167,6 +179,8 @@ class histo_data(arghparse.ArgparseCommand):
             help="repo(s) to inspect",
         )
 
+        landlock.add_sandbox_arg(parser, "inspecting")
+
         arghparse.ArgparseCommand.bind_to_parser(self, parser)
 
     def get_data(self, repo, options):
@@ -179,6 +193,7 @@ class histo_data(arghparse.ArgparseCommand):
         return data
 
     def __call__(self, opts, out, err):
+        confine(opts)
         global_stats = {}
         position = 0
         total_pkgs = 0
@@ -424,10 +439,12 @@ digests.add_argument(
     allow_external_repos=True,
     store_name=True,
 )
+landlock.add_sandbox_arg(digests, "inspecting")
 
 
 @digests.bind_main_func
 def digest_manifest(options, out: snakeoil.formatters.PlainTextFormatter, _err):
+    confine(options)
     for name, repo in options.repos:
         count = 0
         broken = []

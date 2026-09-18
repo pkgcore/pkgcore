@@ -14,6 +14,9 @@ Features
 
 - ``pquery`` now confines itself while querying with landlock (Arthur Zamarin)
 
+- ``pinspect``: the usage reports and ``digests`` now confine themselves with
+  landlock (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

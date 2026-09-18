@@ -522,6 +522,7 @@ eclass_opts = eclass.add_argument_group("subcommand options")
 eclass_opts.add_argument(
     "--dir", dest="output_dir", type=arghparse.create_dir, help="output directory"
 )
+landlock.add_sandbox_arg(eclass_opts, "generating eclass docs")
 eclass_opts.add_argument(
     "-o",
     "--output",
@@ -570,6 +571,8 @@ def _eclass_default_output_dir(namespace, attr):
 
 @eclass.bind_main_func
 def _eclass_main(options, out, err):
+    landlock.confine_from(options, options.output_dir)
+
     failed = []
 
     # determine output file extension

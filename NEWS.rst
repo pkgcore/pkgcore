@@ -17,6 +17,8 @@ Features
 - ``pinspect``: the usage reports and ``digests`` now confine themselves with
   landlock (Arthur Zamarin)
 
+- ``pmaint eclass`` now confines itself with landlock (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

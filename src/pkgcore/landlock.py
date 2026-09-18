@@ -11,6 +11,11 @@ process meant to stay confined for the rest of its life.  In particular, never
 call it from library code whose caller carries on working once the ebuilds have
 been sourced.
 
+Only processes started afterwards are covered, so an ebuild daemon left over
+from anything that ran earlier would keep the access it was spawned with;
+:py:func:`confine` shuts those down rather than leave the confinement to look
+tighter than it is.
+
 Landlock mediates TCP bind and connect only, leaving UDP, ICMP and unix sockets
 untouched, so this is not an exfiltration boundary.  Access through an already
 open descriptor is unaffected as well, since rights are checked when a path is
@@ -99,6 +104,15 @@ def writable_cache_paths(*repos) -> Iterator[str]:
             yield path
 
 
+def _shutdown_stale_processors() -> None:
+    """Kill ebuild daemons spawned before the restrictions go on."""
+    from .ebuild import processor
+
+    if stale := len(processor.active_ebp_list) + len(processor.inactive_ebp_list):
+        logger.debug("landlock: dropping %s ebuild processor(s) started earlier", stale)
+        processor.shutdown_all_processors()
+
+
 def _unavailable(required: bool, msg: str) -> bool:
     """Fail or note that confinement couldn't be set up."""
     if required:
@@ -123,6 +137,7 @@ def confine(*writable: str, allow_net: bool = False, required: bool = False) -> 
     if Landlock is None:
         return _unavailable(required, "py-landlock is not installed")
 
+    _shutdown_stale_processors()
     try:
         sandbox = Landlock(strict=False)
         # scoping signals and abstract sockets isn't what this is for

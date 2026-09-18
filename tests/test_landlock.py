@@ -75,6 +75,18 @@ def tcp_denied():
     return False
 
 
+class FakeLandlock:
+    """Stand-in for the real thing, to exercise confine() without confining."""
+
+    abi_version = 0
+
+    def __init__(self, **kwargs):
+        pass
+
+    def __getattr__(self, attr):
+        return lambda *args, **kwargs: None
+
+
 def repo(**kwargs):
     """A stand-in carrying just the cache attribute confine() reads."""
     return Namespace(**kwargs)
@@ -234,3 +246,40 @@ class TestConfineFrom:
     def test_required(self, calls):
         assert landlock.confine_from(Namespace(sandbox=True), "/var", allow_net=True)
         assert calls == [(("/var",), {"allow_net": True, "required": True})]
+
+
+class TestStaleProcessors:
+    """Confinement never reaches an ebd spawned before it, so it drops them."""
+
+    @pytest.fixture
+    def shutdowns(self, monkeypatch):
+        from pkgcore.ebuild import processor
+
+        monkeypatch.setattr(processor, "active_ebp_list", [])
+        monkeypatch.setattr(processor, "inactive_ebp_list", [])
+        calls = []
+        monkeypatch.setattr(
+            processor, "shutdown_all_processors", partial(calls.append, True)
+        )
+        return calls
+
+    def test_nothing_to_drop(self, shutdowns):
+        landlock._shutdown_stale_processors()
+        assert not shutdowns
+
+    @pytest.mark.parametrize("pool", ("active_ebp_list", "inactive_ebp_list"))
+    def test_dropped(self, shutdowns, monkeypatch, pool):
+        from pkgcore.ebuild import processor
+
+        monkeypatch.setattr(processor, pool, ["stale ebp"])
+        landlock._shutdown_stale_processors()
+        assert shutdowns == [True]
+
+    def test_confine_drops_them(self, shutdowns, monkeypatch):
+        """confine() drops them itself, so no caller can forget to."""
+        from pkgcore.ebuild import processor
+
+        monkeypatch.setattr(processor, "inactive_ebp_list", ["stale ebp"])
+        monkeypatch.setattr(landlock, "Landlock", FakeLandlock)
+        assert landlock.confine(required=True)
+        assert shutdowns == [True]

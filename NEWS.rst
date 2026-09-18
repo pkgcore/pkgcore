@@ -12,6 +12,13 @@ Features
 - ``--sandbox`` is now shared machinery rather than something ``pmaint regen``
   owns, so any command that sources ebuilds can offer it (Arthur Zamarin)
 
+Fixes
+~~~~~
+
+- landlock: shut down ebuild daemons started before the restrictions go on.
+  Landlock only reaches processes started afterwards, so one left over from
+  earlier kept the access it was spawned with (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.43 (2029-09-12)
 ----------------------------

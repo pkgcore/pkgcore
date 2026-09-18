@@ -19,6 +19,8 @@ Features
 
 - ``pmaint eclass`` now confines itself with landlock (Arthur Zamarin)
 
+- ``pmaint copy`` now confines itself with landlock (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

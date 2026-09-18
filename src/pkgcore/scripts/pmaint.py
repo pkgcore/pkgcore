@@ -25,6 +25,7 @@ from ..operations import OperationError
 from ..operations import observer as observer_mod
 from ..package import mutated
 from ..package.errors import MetadataException
+from ..repository.util import get_raw_repos
 from ..util import commandline
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
@@ -166,6 +167,13 @@ copy_opts.add_argument(
     action="store_true",
     help="if a matching pkg already exists in the target, don't update it",
 )
+landlock.add_sandbox_arg(copy_opts, "copying")
+
+
+def _copy_writable_paths(source_repo, target_repo):
+    """Everything copying pkgs into *target_repo* legitimately writes."""
+    yield target_repo.location
+    yield from landlock.writable_cache_paths(*get_raw_repos(source_repo))
 
 
 @copy.bind_main_func
@@ -175,6 +183,8 @@ def copy_main(options, out, err):
     if source_repo is None:
         source_repo = options.domain.all_source_repos
     target_repo = options.target_repo
+
+    landlock.confine_from(options, *_copy_writable_paths(source_repo, target_repo))
 
     failures = False
 

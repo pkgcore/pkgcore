@@ -24,6 +24,7 @@ from snakeoil.formatters import decorate_forced_wrapping
 from snakeoil.osutils import sizeof_fmt
 from snakeoil.sequences import unique_stable
 
+from .. import landlock
 from ..ebuild import atom, conditionals
 from ..fs import fs as fs_module
 from ..repository import multiplex
@@ -536,6 +537,8 @@ def print_packages_noversion(options, out, err, pkgs):
 argparser = commandline.ArgumentParser(
     domain=True, description=__doc__, script=(__file__, __name__)
 )
+
+landlock.add_sandbox_arg(argparser, "querying")
 
 repo_group = argparser.add_argument_group(
     "repository matching options",
@@ -1243,6 +1246,10 @@ def main(
     options, out: snakeoil.formatters.Formatter, err: snakeoil.formatters.Formatter
 ):
     """Run a query."""
+    landlock.confine_from(
+        options, *landlock.writable_cache_paths(*get_raw_repos(options.repos))
+    )
+
     if options.debug:
         for repo in options.repos:
             out.write(f"repo: {repo.repo_id}")

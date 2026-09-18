@@ -51,6 +51,10 @@ class ArgParseMixin(argparse_helpers.ArgParseMixin):
                 kwargs["default_domain"] = default_domain
             namespace.config = self._mk_config([kwargs], debug=True)
         namespace = self.parser.parse_args(list(args), namespace=namespace)
+        if "sandbox" in vars(namespace):
+            # main() runs in the test process here, and confinement cannot be
+            # undone, so it would outlive the test that triggered it
+            namespace.sandbox = False
         return namespace
 
     def assertOutAndErr(self, *args, **kwargs):

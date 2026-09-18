@@ -12,6 +12,8 @@ Features
 - ``--sandbox`` is now shared machinery rather than something ``pmaint regen``
   owns, so any command that sources ebuilds can offer it (Arthur Zamarin)
 
+- ``pquery`` now confines itself while querying with landlock (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

@@ -644,7 +644,7 @@ repo_mux.add_argument(
 @argparser.bind_delayed_default(30, "repos")
 def setup_repos(namespace, attr):
     # Get repo(s) to operate on.
-    if namespace.repo:
+    if namespace.repo is not None:
         # The store repo machinery handles --raw and --unfiltered for
         # us, thus it being the first check.
         repos = [namespace.repo]

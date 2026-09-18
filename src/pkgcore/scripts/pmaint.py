@@ -358,17 +358,7 @@ regen_opts.add_argument(
     type=arghparse.create_dir,
     help="use separate directory to store repository caches",
 )
-regen_opts.add_argument(
-    "--sandbox",
-    action=arghparse.StoreBool,
-    help="confine filesystem writes and network access while regenerating",
-    docs="""
-        Confine the run with Landlock where the kernel supports it: writes are
-        limited to the caches being regenerated, and outgoing TCP is denied.
-        Enabled by default; 'y' turns an unsupported kernel into an error
-        instead of continuing unconfined, and 'n' disables it.
-    """,
-)
+landlock.add_sandbox_arg(regen_opts, "regenerating")
 regen_opts.add_argument(
     "--rsync",
     action="store_true",
@@ -406,10 +396,7 @@ def _regen_writable_paths(options):
 @regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
-    if options.sandbox is not False:
-        landlock.confine(
-            *_regen_writable_paths(options), required=options.sandbox is True
-        )
+    landlock.confine_from(options, *_regen_writable_paths(options))
 
     ret = []
 

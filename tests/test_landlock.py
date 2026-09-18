@@ -6,7 +6,7 @@ import tempfile
 from functools import partial
 
 import pytest
-from snakeoil.cli.arghparse import Namespace
+from snakeoil.cli.arghparse import ArgumentParser, Namespace
 
 from pkgcore import landlock
 from pkgcore.exceptions import PkgcoreUserException
@@ -194,3 +194,43 @@ class TestNetworkConfinement:
 
     def test_tcp_allowed(self, landlock_kernel, tmpdir):
         assert run_confined(tcp_denied, allow_net=True) == "False"
+
+
+class TestSandboxArg:
+    @pytest.fixture
+    def parser(self):
+        parser = ArgumentParser(suppress=True, color=False, debug=False)
+        landlock.add_sandbox_arg(parser, "testing")
+        return parser
+
+    def test_tristate(self, parser):
+        assert parser.parse_args([]).sandbox is None
+        assert parser.parse_args(["--sandbox=y"]).sandbox is True
+        assert parser.parse_args(["--sandbox=n"]).sandbox is False
+
+    def test_help(self, parser):
+        assert "while testing" in " ".join(parser.format_help().split())
+
+
+class TestConfineFrom:
+    @pytest.fixture
+    def calls(self, monkeypatch):
+        recorded = []
+        monkeypatch.setattr(
+            landlock,
+            "confine",
+            lambda *writable, **kwargs: recorded.append((writable, kwargs)) or True,
+        )
+        return recorded
+
+    def test_disabled(self, calls):
+        assert not landlock.confine_from(Namespace(sandbox=False), "/nonexistent")
+        assert not calls
+
+    def test_best_effort(self, calls):
+        assert landlock.confine_from(Namespace(sandbox=None), "/var")
+        assert calls == [(("/var",), {"allow_net": False, "required": False})]
+
+    def test_required(self, calls):
+        assert landlock.confine_from(Namespace(sandbox=True), "/var", allow_net=True)
+        assert calls == [(("/var",), {"allow_net": True, "required": True})]

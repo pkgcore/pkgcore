@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.44 (unreleased)
+----------------------------
+
+Features
+~~~~~~~~
+
+- ``--sandbox`` is now shared machinery rather than something ``pmaint regen``
+  owns, so any command that sources ebuilds can offer it (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.43 (2029-09-12)
 ----------------------------
 

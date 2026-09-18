@@ -17,11 +17,13 @@ open descriptor is unaffected as well, since rights are checked when a path is
 resolved rather than on the descriptor.
 """
 
-__all__ = ("confine", "writable_cache_paths")
+__all__ = ("add_sandbox_arg", "confine", "confine_from", "writable_cache_paths")
 
 import os
 import tempfile
 from collections.abc import Iterator
+
+from snakeoil.cli import arghparse
 
 from .exceptions import PkgcoreUserException
 from .log import logger
@@ -145,3 +147,33 @@ def confine(*writable: str, allow_net: bool = False, required: bool = False) -> 
 
     logger.debug("landlock confinement applied, ABI %s", sandbox.abi_version)
     return True
+
+
+def add_sandbox_arg(parser, action: str):
+    """Add the standard ``--sandbox`` option to *parser*.
+
+    :param action: gerund phrase naming what the command does, used in the help
+        text, e.g. ``"regenerating"``.
+    """
+    return parser.add_argument(
+        "--sandbox",
+        action=arghparse.StoreBool,
+        help=f"confine filesystem writes and network access while {action}",
+        docs="""
+            Confine the run with Landlock where the kernel supports it: writes
+            are limited to the paths the command legitimately needs, and
+            outgoing TCP is denied. Enabled by default; 'y' turns an
+            unsupported kernel into an error instead of continuing unconfined,
+            and 'n' disables it.
+        """,
+    )
+
+
+def confine_from(options, *writable: str, allow_net: bool = False) -> bool:
+    """Confine the run as the ``--sandbox`` option in *options* asks.
+
+    :return: whether the restrictions were applied.
+    """
+    if options.sandbox is False:
+        return False
+    return confine(*writable, allow_net=allow_net, required=options.sandbox is True)

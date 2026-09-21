@@ -79,6 +79,8 @@ class Syncer:
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
         uri = self.parse_uri(uri)
         self.uid, self.gid, self.uri = self.split_users(uri)
+        if self.uri.startswith("-"):
+            raise UriError(self.uri, "uri must not start with a hyphen")
         self.opts = opts.split()
 
     @staticmethod

@@ -104,6 +104,11 @@ class TestExternalSyncer:
 @mock.patch("snakeoil.process.find_binary", return_value="git")
 @mock.patch("pkgcore.sync.base.subprocess.run")
 class TestVcsSyncer:
+    def test_hyphen_uri(self, run, find_binary, tmp_path):
+        with pytest.raises(base.UriError) as excinfo:
+            git.git_syncer(str(tmp_path), "git+--upload-pack=whatever")
+        assert "must not start with a hyphen" in str(excinfo.value)
+
     def test_basedir_perms_error(self, run, find_binary, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
         with pytest.raises(base.PathError), mock.patch("os.stat") as stat:

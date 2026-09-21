@@ -37,7 +37,9 @@ class fake_operations(operations):
 class FakeRepo(util.SimpleTree):
     operations_kls = fake_operations
 
-    def __init__(self, data, frozen=False, livefs=False, repo_id=None, location="/fake"):
+    def __init__(
+        self, data, frozen=False, livefs=False, repo_id=None, location="/fake"
+    ):
         self.installed = []
         self.replaced = []
         self.uninstalled = []

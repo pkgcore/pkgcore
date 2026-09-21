@@ -4,8 +4,10 @@ Converts portage config files into :obj:`pkgcore.config` form.
 """
 
 __all__ = (
+    "STUB_CONFIG_DIR",
     "PortageConfig",
     "SecurityUpgradesViaProfile",
+    "find_config_dir",
 )
 
 import configparser
@@ -33,6 +35,9 @@ from . import const as econst
 from . import profiles, repo_objs
 from .misc import optimize_incrementals
 from .repository import errors as repo_errors
+
+# config pkgcore falls back to where the system has no portage config of its own
+STUB_CONFIG_DIR = pjoin(const.DATA_PATH, "stubconfig")
 
 
 def my_convert_hybrid(manager, val, arg_type):
@@ -62,6 +67,16 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     if arch is None:
         raise config_errors.ComplexInstantiationError("arch wasn't set in profiles")
     return SecurityUpgrades(ebuild_repo, vdb, arch)
+
+
+def find_config_dir() -> str:
+    """Locate the portage config directory in use."""
+    path = os.path.abspath(sys.prefix)
+    while (parent := os.path.dirname(path)) != path:
+        if os.path.exists(config_root := pjoin(parent, "etc/portage")):
+            return config_root
+        path = parent
+    return STUB_CONFIG_DIR
 
 
 class ParseConfig(configparser.ConfigParser):
@@ -113,22 +128,12 @@ class PortageConfig(DictMixin):
             dict: config settings
         """
         self._config = {}
-        stubconfig = pjoin(const.DATA_PATH, "stubconfig")
 
         if location is None:
-            path = os.path.abspath(sys.prefix)
-            while (parent := os.path.dirname(path)) != path:
-                config_root = pjoin(parent, "etc/portage")
-                if os.path.exists(config_root):
-                    location = config_root
-                    break
-                path = parent
-            else:
-                # fallback to stub config non-Gentoo systems
-                location = stubconfig
+            location = find_config_dir()
 
         # override profile when using stub config
-        if location == stubconfig:
+        if location == STUB_CONFIG_DIR:
             profile_override = pjoin(const.DATA_PATH, "stubrepo/profiles/default")
 
         self.dir = location

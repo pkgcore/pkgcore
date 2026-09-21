@@ -21,6 +21,13 @@ Features
 
 - ``pmaint copy`` now confines itself with landlock (Arthur Zamarin)
 
+- ``pmaint sync --import`` adds a repo from Gentoo's published repository list
+  and syncs it, so a new overlay no longer needs a hand-written repos.conf
+  entry first (Arthur Zamarin)
+
+- ``pmaint sync --import-masters`` does the same for everything a repo inherits
+  from, following masters of masters (Arthur Zamarin)
+
 Fixes
 ~~~~~
 

@@ -14,8 +14,9 @@ from snakeoil.sequences import unique_stable
 
 from .. import landlock
 from ..cache.flat_hash import md5_cache
+from ..config import load_config
+from ..ebuild import overlays, portage_conf, triggers
 from ..ebuild import repository as ebuild_repo
-from ..ebuild import triggers
 from ..ebuild.cpv import CPV
 from ..ebuild.eclass import EclassDoc
 from ..exceptions import PkgcoreUserException
@@ -64,12 +65,27 @@ sync = subparsers.add_parser(
     parents=shared_options,
     description="synchronize a local repository with its defined remote",
 )
+
+
+class _StoreSyncRepos(commandline.StoreRepoObject):
+    """Store the repos to sync, defaulting to every configured one.
+
+    An import already names what to sync, so it turns that default off.
+    """
+
+    def _real_call(self, parser, namespace, values, option_string=None):
+        if not values and (namespace.import_repos or namespace.masters_of):
+            setattr(namespace, self.dest, [])
+            return
+        super()._real_call(parser, namespace, values, option_string)
+
+
 sync.add_argument(
     "repos",
     metavar="repo",
     nargs="*",
     help="repo(s) to sync",
-    action=commandline.StoreRepoObject,
+    action=_StoreSyncRepos,
     store_name=True,
     repo_type="config",
 )
@@ -80,6 +96,143 @@ sync.add_argument(
     default=False,
     help="force syncing to occur regardless of staleness checks",
 )
+sync.add_argument(
+    "--import",
+    dest="import_repos",
+    metavar="REPO",
+    action="append",
+    default=[],
+    help="add a repo from Gentoo's repository list, then sync it",
+    docs="""
+        Look a repository up by name in Gentoo's published repository list,
+        write a ``repos.conf`` entry for it, and sync it. Pass the option
+        again to add more than one repo.
+
+        New repos land beside the repos already being synced, which is
+        ``/var/db/repos`` on an ordinary install, and get a file of their own
+        when ``repos.conf`` is a directory. The list is fetched from
+        https://api.gentoo.org/overlays/repositories.xml and cached locally.
+
+        A repo that's already configured is simply synced, so an import can be
+        repeated without failing.
+
+        Importing leaves the rest of the configured repos alone; name them as
+        arguments to sync those as well.
+    """,
+)
+sync.add_argument(
+    "--import-masters",
+    dest="masters_of",
+    metavar="PATH",
+    type=arghparse.existent_dir,
+    help="add and sync the repos a given repo inherits from",
+    docs="""
+        Read the masters of the repo at the given path, add the ones that
+        aren't configured yet, and sync them all.
+
+        Masters of masters are followed as each repo is synced and its own
+        ``layout.conf`` becomes readable, so the repo ends up with everything
+        it inherits from present and current. That makes it the one command a
+        CI run needs before checking a repo it doesn't own the parents of.
+    """,
+)
+
+
+def _sync_repo(options, out, err, repo_name, sync_func) -> bool:
+    """Run one sync, reporting how it went."""
+    out.write(f"*** syncing {repo_name}")
+    ret = False
+    err_msg = ""
+    # repo operations don't yet take an observer, thus flush
+    # output to keep lines consistent.
+    out.flush()
+    err.flush()
+    try:
+        ret = sync_func(force=options.force, verbosity=options.verbosity)
+    except OperationError as e:
+        exc = getattr(e, "__cause__", e)
+        if not isinstance(exc, PkgcoreUserException):
+            raise
+        err_msg = f": {exc}"
+    except PkgcoreUserException as e:
+        # syncers reached directly raise on their own behalf
+        err_msg = f": {e}"
+    if ret:
+        out.write(f"*** synced {repo_name}")
+    else:
+        out.write(f"!!! failed syncing {repo_name}{err_msg}")
+    return bool(ret)
+
+
+def _import_repos(options, out, err):
+    """Add the requested repos to repos.conf and sync them.
+
+    Returns:
+        list: names of the repos synced
+        list: names of the repos that couldn't be imported or synced
+    """
+    config_dir = options.config_path or portage_conf.find_config_dir()
+    if not os.path.isdir(config_dir):
+        raise PkgcoreUserException(f"not a portage config dir: {config_dir!r}")
+    conf_path = pjoin(config_dir, "repos.conf")
+
+    pending = list(options.import_repos)
+    if follow_masters := options.masters_of is not None:
+        if not os.path.isdir(pjoin(options.masters_of, "profiles")):
+            raise PkgcoreUserException(f"not an ebuild repo: {options.masters_of!r}")
+        pending.extend(overlays.repo_masters(options.masters_of))
+
+    # only worth fetching once something actually has to be looked up
+    available = None
+    succeeded, failed, seen = [], [], set()
+
+    while pending:
+        configured = overlays.configured_repos(conf_path)
+        wave = []
+        for repo_name in unique_stable(pending):
+            if repo_name in seen:
+                continue
+            seen.add(repo_name)
+            if repo_name in configured:
+                # nothing to add, but it was asked for, so sync it like any other
+                wave.append(repo_name)
+                continue
+            if available is None:
+                available = overlays.remote_repos()
+            if (repo := available.get(repo_name)) is None:
+                out.write(f"!!! {repo_name} isn't in the repository list")
+                failed.append(repo_name)
+            elif not repo.sources:
+                out.write(f"!!! {repo_name} has no source pkgcore can sync from")
+                failed.append(repo_name)
+            else:
+                sync_type, sync_uri = repo.sources[0]
+                dest = overlays.add_repos_conf_entry(
+                    conf_path,
+                    repo_name,
+                    pjoin(overlays.repos_base(configured), repo_name),
+                    sync_type,
+                    sync_uri,
+                )
+                out.write(f"*** added {repo_name} to {dest}")
+                wave.append(repo_name)
+
+        pending = []
+        if not wave:
+            break
+        # the new repos only reach the config once it's been reparsed
+        config = load_config(location=options.config_path, debug=options.debug)
+        configured = overlays.configured_repos(conf_path)
+        for repo_name in wave:
+            syncer = config.objects.syncer[f"sync:{repo_name}"]
+            if not _sync_repo(options, out, err, repo_name, syncer.sync):
+                failed.append(repo_name)
+                continue
+            succeeded.append(repo_name)
+            if follow_masters:
+                # now that it's synced, its own masters can be read
+                pending.extend(overlays.repo_masters(configured[repo_name]["location"]))
+    return succeeded, failed
 
 
 @sync.bind_main_func
@@ -87,32 +240,22 @@ def sync_main(options, out, err):
     """Update local repos to match their remotes."""
     succeeded, failed = [], []
 
+    if options.import_repos or options.masters_of is not None:
+        succeeded, failed = _import_repos(options, out, err)
+
     for repo_name, repo in unique_stable(options.repos):
         # rewrite the name if it has the usual prefix
         repo_name = repo_name.removeprefix("conf:")
 
         if not repo.operations.supports("sync"):
             continue
-        out.write(f"*** syncing {repo_name}")
-        ret = False
-        err_msg = ""
-        # repo operations don't yet take an observer, thus flush
-        # output to keep lines consistent.
-        out.flush()
-        err.flush()
-        try:
-            ret = repo.operations.sync(force=options.force, verbosity=options.verbosity)
-        except OperationError as e:
-            exc = getattr(e, "__cause__", e)
-            if not isinstance(exc, PkgcoreUserException):
-                raise
-            err_msg = f": {exc}"
-        if not ret:
-            out.write(f"!!! failed syncing {repo_name}{err_msg}")
-            failed.append(repo_name)
-        else:
+        elif repo_name in succeeded or repo_name in failed:
+            # an import already dealt with this one
+            continue
+        if _sync_repo(options, out, err, repo_name, repo.operations.sync):
             succeeded.append(repo_name)
-            out.write(f"*** synced {repo_name}")
+        else:
+            failed.append(repo_name)
 
     out.flush()
     err.flush()

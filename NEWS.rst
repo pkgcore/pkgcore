@@ -78,6 +78,9 @@ Fixes
   logged and skipped instead of making every USE description unavailable
   (Arthur Zamarin)
 
+- ``FEATURES=unmerge-backup`` saves a binpkg of the package being removed again
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

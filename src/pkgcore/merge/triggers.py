@@ -707,13 +707,14 @@ class SavePkgUnmerging(SavePkg):
     _engine_types = UNINSTALLING_MODES
     _copy_source = "old"
 
-    def __init__(self, target_repo):
+    def __init__(self, target_repo, skip_if_source=True):
+        self.skip_if_source = skip_if_source
         self.target_repo = target_repo
 
 
 class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
-    def __init__(self, target_repo, pkgset, pristine=True):
-        super().__init__(target_repo, pristine=pristine)
+    def __init__(self, target_repo, pkgset, skip_if_source=True):
+        super().__init__(target_repo, skip_if_source=skip_if_source)
         self.pkgset = pkgset
 
     def trigger(self, engine, cset):

@@ -620,3 +620,46 @@ class TestPruneFiles:
         assert "/sporks-suck" not in " ".join(info)
         assert "/foons-rule" in " ".join(info)
         assert "/mango" in " ".join(info)
+
+
+class TestSavePkgUnmerging:
+    class FakeRepo:
+        repo_id = "binpkgs"
+        location = "/var/cache/binpkgs"
+
+        def __init__(self):
+            self.installed = []
+            self.operations = self
+
+        def match(self, atom):
+            return []
+
+        def install(self, pkg):
+            self.installed.append(pkg)
+            return self
+
+        def finish(self):
+            return True
+
+    class FakeObserver:
+        def info(self, msg):
+            pass
+
+    def run(self, trigger, pkg):
+        cset = contentsSet([fs.fsFile("/usr/bin/foo", strict=False)])
+        trigger.trigger(fake_engine(old=pkg, observer=self.FakeObserver()), cset)
+        return [x.contents for x in trigger.target_repo.installed]
+
+    def test_saves_old_pkg(self):
+        pkg = fake_reporter(repo="vdb", versioned_atom="cat/pkg-1")
+        trigger = triggers.SavePkgUnmerging(self.FakeRepo())
+        (contents,) = self.run(trigger, pkg)
+        assert [x.location for x in contents] == ["/usr/bin/foo"]
+
+    def test_in_pkgset(self):
+        pkg = fake_reporter(repo="vdb", versioned_atom="cat/pkg-1")
+        pkgset = [fake_reporter(match=lambda x: x is pkg)]
+        trigger = triggers.SavePkgUnmergingIfInPkgset(self.FakeRepo(), pkgset)
+        assert len(self.run(trigger, pkg)) == 1
+        other = fake_reporter(repo="vdb", versioned_atom="cat/other-1")
+        assert len(self.run(trigger, other)) == 1

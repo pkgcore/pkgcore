@@ -594,7 +594,7 @@ class EbuildProcessor:
         if not move_log:
             move_log = self.__sandbox_log
         elif move_log != self.__sandbox_log:
-            with open(move_log) as myf:
+            with open(move_log, "w") as myf:
                 myf.writelines(x + "\n" for x in violations)
 
         # XXX this is fugly, use a colorizer or something

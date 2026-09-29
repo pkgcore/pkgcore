@@ -60,3 +60,17 @@ class TestGenerateEnvStr:
         # when nothing is exported there is no export line
         out = self._gen({"PKGCORE_NONEXPORTED_VARS": "P", "P": "foo-1"})
         assert out == "P='foo-1'"
+
+
+class TestSandboxSummary:
+    def test_move_log(self, tmp_path):
+        log = tmp_path / "sandbox.log"
+        log.write_text("open_wr: /etc/passwd\n")
+        moved = tmp_path / "moved.log"
+        proc = object.__new__(EbuildProcessor)
+        proc._EbuildProcessor__sandbox_log = str(log)
+        written = []
+        proc.write = written.append
+        assert proc.sandbox_summary(move_log=str(moved)) == 1
+        assert moved.read_text() == "open_wr: /etc/passwd\n"
+        assert written[-1] == "end_sandbox_summary"

@@ -81,7 +81,7 @@ class install(repo_ops.install):
                 "but source package doesn't provide the actual ebuild data.  "
                 "Creating an empty file"
             )
-            o = ""
+            o = b""
         else:
             o = o.bytes_fileobj().read()
         # XXX lil hackish accessing PF

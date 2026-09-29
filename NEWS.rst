@@ -59,6 +59,9 @@ Fixes
 
 - binpkgs containing device nodes can be read (Arthur Zamarin)
 
+- vdb: installing a package that has no ebuild no longer crashes and leaves a
+  half-written entry behind (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

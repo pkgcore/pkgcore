@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.45 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- resolver: resolve a package's IDEPEND instead of resolving its PDEPEND
+  twice (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------
 

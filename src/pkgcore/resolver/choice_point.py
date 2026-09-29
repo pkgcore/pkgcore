@@ -27,6 +27,7 @@ class choice_point:
         self._deps = None
         self._rdeps = None
         self._prdeps = None
+        self._ideps = None
 
     @property
     def state(self):
@@ -35,7 +36,7 @@ class choice_point:
         :return: A tuple consisting of the number of possible choices,
             current matches' repo, current package match, all possible
             matches, cbuild build deps, chost build deps, runtime deps,
-            and post merge deps.
+            post merge deps, and install time deps.
         """
         m = self.matches_cur
         return (
@@ -47,6 +48,7 @@ class choice_point:
             self._deps,
             self._rdeps,
             self._prdeps,
+            self._ideps,
         )
 
     @staticmethod
@@ -93,7 +95,7 @@ class choice_point:
             if round and not self._internal_force_next():
                 return True
 
-            for depset_name in ("_bdeps", "_deps", "_rdeps", "_prdeps"):
+            for depset_name in ("_bdeps", "_deps", "_rdeps", "_prdeps", "_ideps"):
                 depset = getattr(self, depset_name)
                 reqs = list(self._filter_choices(depset, filterset))
                 if len(reqs) != len(depset):
@@ -112,7 +114,7 @@ class choice_point:
         self._deps = cur.depend.cnf_solutions()
         self._rdeps = cur.rdepend.cnf_solutions()
         self._prdeps = cur.pdepend.cnf_solutions()
-        self._ideps = cur.pdepend.cnf_solutions()
+        self._ideps = cur.idepend.cnf_solutions()
 
     slot = klass.alias_attr("current_pkg.slot")
     key = klass.alias_attr("current_pkg.key")

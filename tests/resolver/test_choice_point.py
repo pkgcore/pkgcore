@@ -96,3 +96,22 @@ class TestChoicePoint:
         assert c.current_pkg.marker == 1
         c.reduce_atoms("anddep1")
         assert not bool(c)
+
+    def test_idepend(self):
+        c = choice_point(
+            "asdf",
+            (
+                fake_package(
+                    marker=1,
+                    pdepend=OrRestriction("prdep1"),
+                    idepend=OrRestriction("idep1", "idep2"),
+                ),
+                fake_package(marker=2),
+            ),
+        )
+        assert c.idepend == [["idep1", "idep2"]]
+        assert c.pdepend == [["prdep1"]]
+        assert not c.reduce_atoms("idep1")
+        assert c.idepend == [["idep2"]]
+        assert c.reduce_atoms("idep2")
+        assert c.current_pkg.marker == 2

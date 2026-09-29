@@ -43,8 +43,8 @@ for xdg_var, var_name, fallback_dir in (
     ("XDG_DATA_HOME", "USER_DATA_PATH", "~/.local/share"),
 ):
     if not osp.isabs(base_dir := os.environ.get(xdg_var, "")):
-        base_dir = osp.join(osp.expanduser(fallback_dir), __title__)
-    setattr(_module, var_name, base_dir)
+        base_dir = osp.expanduser(fallback_dir)
+    setattr(_module, var_name, osp.join(base_dir, __title__))
 
 USER_CONF_FILE = osp.join(_module.USER_CONFIG_PATH, "pkgcore.conf")
 SYSTEM_CONF_FILE = "/etc/pkgcore/pkgcore.conf"

@@ -65,6 +65,11 @@ Fixes
 - ebd: ``eapply`` on a directory applies only the patches directly inside it,
   as PMS says, instead of descending into subdirectories (Arthur Zamarin)
 
+- with ``XDG_CONFIG_HOME``, ``XDG_CACHE_HOME`` or ``XDG_DATA_HOME`` set, pkgcore
+  now uses a ``pkgcore`` subdirectory of it, as it does for the defaults. A
+  config at ``$XDG_CONFIG_HOME/pkgcore.conf`` has to move to
+  ``$XDG_CONFIG_HOME/pkgcore/pkgcore.conf`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

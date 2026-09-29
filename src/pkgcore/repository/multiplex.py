@@ -186,7 +186,9 @@ class tree(prototype.tree):
                     repo_path = os.path.realpath(repo.location)
                 except AttributeError:
                     continue
-                if path.startswith(repo_path):
+                if path == repo_path or path.startswith(
+                    repo_path.rstrip(os.sep) + os.sep
+                ):
                     return True
             return False
         elif isinstance(obj, prototype.tree):

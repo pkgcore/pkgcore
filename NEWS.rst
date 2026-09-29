@@ -111,6 +111,9 @@ Fixes
 - a configured binpkg repo passes install, uninstall and replace through to the
   underlying repo again (Arthur Zamarin)
 
+- looking a repo up by path no longer matches a sibling whose name starts the
+  same, such as ``gentoo-extra`` for ``gentoo`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

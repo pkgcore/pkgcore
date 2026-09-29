@@ -728,21 +728,26 @@ class Profiles(immutable.Simple):
     def __iter__(self):
         yield from self.profiles
 
+    def _find(self, path):
+        """Find a profile by its path, relative to its profiles dir or absolute."""
+        if path.startswith(os.sep):
+            path = os.path.normpath(path)
+            for p in self.profiles:
+                if os.path.abspath(pjoin(p.base, p.path)) == path:
+                    return p
+        else:
+            for p in self.profiles:
+                if p.path == path:
+                    return p
+        return None
+
     def __getitem__(self, path):
-        if path[0] == "/":
-            path = path.lstrip(self.profiles_base).lstrip(os.sep)
-        for p in self.profiles:
-            if p.path == path:
-                return p
-        raise KeyError(path)
+        if (p := self._find(path)) is None:
+            raise KeyError(path)
+        return p
 
     def __contains__(self, path):
-        if path[0] == "/":
-            path = path.lstrip(self.profiles_base).lstrip(os.sep)
-        for p in self.profiles:
-            if p.path == path:
-                return True
-        return False
+        return self._find(path) is not None
 
     def refresh(self):
         self._profiles = None

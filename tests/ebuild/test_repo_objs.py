@@ -1146,3 +1146,35 @@ class TestRepoConfig:
             f.write("move cat1/pkg2 cat1/pkg3\n")
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert repo_config.updates == expected_updates
+
+
+class TestProfiles:
+    @staticmethod
+    def mk_repo(path, *profiles):
+        base = os.path.join(path, "profiles")
+        os.makedirs(base)
+        with open(os.path.join(base, "profiles.desc"), "w") as f:
+            for profile in profiles:
+                os.makedirs(os.path.join(base, profile))
+                f.write(f"amd64 {profile} stable\n")
+        return repo_objs.Profiles(repo_objs.RepoConfig(path))
+
+    def test_lookup(self, tmp_path):
+        profiles = self.mk_repo(str(tmp_path), "default/linux/amd64")
+        abspath = str(tmp_path / "profiles/default/linux/amd64")
+        for path in ("default/linux/amd64", abspath, abspath + "/"):
+            assert path in profiles
+            assert profiles[path].path == "default/linux/amd64"
+        for path in ("default/linux", str(tmp_path / "other/default/linux/amd64")):
+            assert path not in profiles
+            with pytest.raises(KeyError):
+                profiles[path]
+
+    def test_overlayed_lookup(self, tmp_path):
+        master = self.mk_repo(str(tmp_path / "master"), "default/linux/amd64")
+        overlay = self.mk_repo(str(tmp_path / "overlay"), "overlay/amd64")
+        profiles = repo_objs.OverlayedProfiles(master, overlay)
+        assert str(tmp_path / "master/profiles/default/linux/amd64") in profiles
+        assert profiles[str(tmp_path / "overlay/profiles/overlay/amd64")].path == (
+            "overlay/amd64"
+        )

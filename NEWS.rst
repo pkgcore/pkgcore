@@ -40,6 +40,9 @@ Fixes
 
 - EAPI 9: ``ver_replacing`` can be called (Arthur Zamarin)
 
+- profiles can be looked up by absolute path, which also fixes
+  ``pkgcheck --profiles /path/to/profile`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

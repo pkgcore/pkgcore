@@ -84,6 +84,10 @@ Fixes
 - ``pkgcore.bugzilla``: searching an empty list of bug ids or packages
   returns nothing instead of every bug on the server (Arthur Zamarin)
 
+- ``pkgcore.bugzilla``: ``limit`` and ``offset`` apply to a whole search even
+  when a long one is split into several requests, rather than to each request
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

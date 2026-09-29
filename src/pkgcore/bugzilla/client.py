@@ -2,9 +2,11 @@
 
 __all__ = ("DEFAULT_URL", "EVERYTHING", "PAGE_SIZE", "Bugzilla")
 
+import dataclasses
 import typing
 import urllib.parse
 import urllib.request
+from itertools import chain
 
 from ..log import logger
 from .bug import (
@@ -119,13 +121,33 @@ class Bugzilla:
 
         Use this for the narrow projections a full :class:`Bug` doesn't need;
         anything left out of ``fields`` is simply absent from the results.
+
+        A query too long for one request is split into batches. ``limit`` and
+        ``offset`` still apply to the whole search, over the batches' results
+        in order; with ``order`` set as well that can't be honoured, so it's
+        refused.
         """
         base = [("include_fields", ",".join(fields))]
         overhead = len(f"{self.base_url}/rest/bug?") + len(urllib.parse.urlencode(base))
+        batches = list(query.batches(base_length=overhead))
+        offset = query.offset or 0
+        if len(batches) <= 1 or (query.limit is None and not offset):
+            return tuple(
+                chain.from_iterable(self._paged_search(b, base) for b in batches)
+            )
+        if query.order is not None:
+            raise BugzillaUsageError(
+                "limit or offset with order can't be applied to a search "
+                f"split into {len(batches)} batches"
+            )
+        end = None if query.limit is None else offset + query.limit
         results: list[RawBug] = []
-        for batch in query.batches(base_length=overhead):
+        for batch in batches:
+            batch = dataclasses.replace(batch, limit=None, offset=None)
             results.extend(self._paged_search(batch, base))
-        return tuple(results)
+            if end is not None and len(results) >= end:
+                break
+        return tuple(results[offset:end])
 
     def _paged_search(
         self, query: BugQuery, base: list[tuple[str, str]]

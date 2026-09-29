@@ -140,6 +140,49 @@ class TestSearch:
         seen = [v for call in handler.calls for k, v in call.query if k == "id"]
         assert sorted(map(int, seen)) == ids
 
+    @staticmethod
+    def split_ids(bz):
+        """Ids long enough to need several batches, and those batches' ids"""
+        ids = list(range(900000, 903000))
+        overhead = len(f"{bz.base_url}/rest/bug?include_fields=") + 500
+        batches = [
+            [int(v) for k, v in b.params() if k == "id"]
+            for b in BugQuery.ids(ids).batches(base_length=overhead)
+        ]
+        assert len(batches) > 1
+        return ids, batches
+
+    def test_limit_spans_batches(self, client):
+        handler, bz = client()
+        ids, batches = self.split_ids(bz)
+        handler.expect(response({"bugs": [raw_bug(i) for i in batches[0][:20]]}))
+        found = bz.raw_search(BugQuery.ids(ids) & BugQuery().paged(10), fields=("id",))
+        assert [x["id"] for x in found] == batches[0][:10]
+        # the first batch was enough, and was sent without a limit
+        assert len(handler.calls) == 1
+        assert ("limit", "10") not in handler.calls[0].query
+
+    def test_offset_spans_batches(self, client):
+        handler, bz = client()
+        ids, batches = self.split_ids(bz)
+        # short pages, so each batch is a single request
+        handler.expect(
+            response({"bugs": [raw_bug(i) for i in batches[0][:20]]}),
+            response({"bugs": [raw_bug(i) for i in batches[1][:20]]}),
+        )
+        skip = 20 + 2
+        found = bz.raw_search(
+            BugQuery.ids(ids) & BugQuery().paged(3, skip), fields=("id",)
+        )
+        assert [x["id"] for x in found] == batches[1][2:5]
+
+    def test_limit_with_order_across_batches_is_refused(self, client):
+        _, bz = client()
+        ids, _ = self.split_ids(bz)
+        query = BugQuery.ids(ids) & BugQuery(order="bug_id").paged(10)
+        with pytest.raises(errors.BugzillaUsageError, match="batches"):
+            bz.raw_search(query)
+
     def test_raw_search_narrow_projection(self, client):
         handler, bz = client(response({"bugs": [{"id": 1, "summary": "s"}]}))
         raw = bz.raw_search(BugQuery.unresolved(), fields=("id", "summary"))

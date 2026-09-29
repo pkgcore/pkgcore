@@ -95,6 +95,9 @@ Fixes
   retried and raised as ``BugzillaConnectionError``, instead of escaping as a
   bare ``OSError`` (Arthur Zamarin)
 
+- ``pkgcore.bugzilla``: redirects are refused with a caller supplied opener
+  too, so the api key isn't sent on to another host (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

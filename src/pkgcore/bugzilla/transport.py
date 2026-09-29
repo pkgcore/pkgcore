@@ -82,10 +82,24 @@ def redact(url: str) -> str:
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    """Refuse redirects, which would leak the key to another host"""
+    """Refuse redirects, which would leak the key to another host.
 
-    def redirect_request(self, req: typing.Any, *args: typing.Any) -> None:
-        return None
+    It raises rather than declining, and runs ahead of the stock redirect
+    handler, so it also holds for an opener that already has one.
+    """
+
+    handler_order = urllib.request.HTTPRedirectHandler.handler_order - 100
+
+    def redirect_request(
+        self,
+        req: typing.Any,
+        fp: typing.Any,
+        code: int,
+        msg: str,
+        headers: typing.Any,
+        newurl: str,
+    ) -> typing.NoReturn:
+        raise urllib.error.HTTPError(req.full_url, code, msg, headers, fp)
 
 
 def build_opener() -> urllib.request.OpenerDirector:
@@ -136,6 +150,8 @@ class UrllibTransport:
         self._auth_mode = auth_mode
         self._retry_writes = retry_writes
         self._opener = opener or build_opener()
+        if not any(isinstance(x, _NoRedirect) for x in self._opener.handlers):
+            self._opener.add_handler(_NoRedirect())
 
     @property
     def authenticated(self) -> bool:

@@ -4,6 +4,7 @@ import urllib.request
 import pytest
 
 from pkgcore.bugzilla import errors
+from pkgcore.bugzilla import transport as transport_mod
 from pkgcore.bugzilla.testing import API_KEY, Cassette, response
 from pkgcore.bugzilla.transport import (
     USER_AGENT,
@@ -302,6 +303,28 @@ class TestRetries:
         )
         with pytest.raises(errors.BugzillaConnectionError, match="reset by peer"):
             transport.request("GET", "bug")
+
+
+class TestRedirects:
+    def test_custom_opener_refuses_redirects(self, cassette):
+        handler, transport = cassette(
+            response(
+                raw=b"moved",
+                status=302,
+                reason="Found",
+                headers={"Location": "https://elsewhere.example.org/rest/bug"},
+            )
+        )
+        with pytest.raises(errors.BugzillaProtocolError, match="HTTP 302"):
+            transport.request("GET", "bug")
+        assert len(handler.calls) == 1
+
+    def test_refusal_is_added_once(self, cassette):
+        handler, _ = cassette()
+        transport = handler.transport()
+        handler.transport()
+        handlers = transport._opener.handlers
+        assert sum(isinstance(x, transport_mod._NoRedirect) for x in handlers) == 1
 
 
 class TestShapeGuards:

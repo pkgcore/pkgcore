@@ -114,6 +114,20 @@ class TestBugzillaApiKey:
         monkeypatch.setenv(API_KEY_ENV, "from-env")
         assert parser.parse_args([]).api_key == "from-env"
 
+    def test_explicit_option_is_stripped(self, parser, tmp_path, monkeypatch):
+        monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+        assert parser.parse_args(["--api-key", " cli-key\n"]).api_key == "cli-key"
+
+    @pytest.mark.parametrize("value", ("", "  "))
+    def test_blank_option_falls_back_to_discovery(self, parser, monkeypatch, value):
+        monkeypatch.setenv(API_KEY_ENV, "from-env")
+        assert parser.parse_args(["--api-key", value]).api_key == "from-env"
+
+    def test_blank_option_is_anonymous(self, parser, tmp_path, monkeypatch):
+        monkeypatch.delenv(API_KEY_ENV, raising=False)
+        monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
+        assert parser.parse_args(["--api-key", ""]).api_key is None
+
     def test_anonymous(self, parser, tmp_path, monkeypatch):
         monkeypatch.setattr("pathlib.Path.home", lambda: tmp_path)
         assert parser.parse_args([]).api_key is None

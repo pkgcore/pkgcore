@@ -33,6 +33,7 @@ __all__ = (
     "find_api_key",
 )
 
+import argparse
 import os
 import stat
 import typing
@@ -126,13 +127,30 @@ def find_api_key(
     return None
 
 
+class _StoreApiKey(argparse.Action):
+    """Store ``--api-key`` through :func:`find_api_key`, so a blank one is absent"""
+
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: typing.Any,
+        option_string: str | None = None,
+    ) -> None:
+        setattr(namespace, self.dest, find_api_key(values))
+
+
 class BugzillaApiKey:
     """Adds ``--api-key``, defaulting through :func:`find_api_key`"""
 
     @classmethod
     def mangle_argparser(cls, parser: arghparse.ArgumentParser) -> None:
         parser.add_argument(
-            "--api-key", metavar="TOKEN", help="Bugzilla API key", docs=API_KEY_DOCS
+            "--api-key",
+            metavar="TOKEN",
+            action=_StoreApiKey,
+            help="Bugzilla API key",
+            docs=API_KEY_DOCS,
         )
         parser.bind_delayed_default(1000, "api_key")(cls._default_api_key)
 

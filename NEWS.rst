@@ -105,6 +105,9 @@ Fixes
 - ``pkgcore.bugzilla.BugUpdate``: an update that clears a field, such as
   ``whiteboard=""``, is no longer falsy (Arthur Zamarin)
 
+- ``--api-key`` is stripped, and a blank one falls back to the environment and
+  dotfiles like an unset one, instead of being sent as the key (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

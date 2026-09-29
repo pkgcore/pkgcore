@@ -107,7 +107,6 @@ class fetcher(base.fetcher):
 
         path = pjoin(self.distdir, target.filename)
         uris = iter(target.uri)
-        last_exc = RuntimeError("fetching failed for an unknown reason")
         spawn_opts = {"umask": 0o002, "env": self.extra_env}
         if self.userpriv and is_userpriv_capable():
             spawn_opts.update({"user": portage_uid, "group": portage_gid})
@@ -116,13 +115,11 @@ class fetcher(base.fetcher):
             try:
                 self._verify(path, target)
                 return path
-            except errors.MissingDistfile as exc:
+            except errors.MissingDistfile:
                 command = self.command
-                last_exc = exc
             except errors.ChksumFailure:
                 raise
             except errors.FetchFailed as exc:
-                last_exc = exc
                 if not exc.resumable:
                     try:
                         os.unlink(path)
@@ -154,7 +151,8 @@ class fetcher(base.fetcher):
                     os.unlink(path)
                 except OSError:
                     pass
-        raise last_exc
+        self._verify(path, target)
+        return path
 
     def get_path(self, fetchable):
         path = pjoin(self.distdir, fetchable.filename)

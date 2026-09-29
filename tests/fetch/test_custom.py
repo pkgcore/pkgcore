@@ -119,3 +119,26 @@ class TestFetch:
 
         # Partial file should still be present — our fix must not touch it
         assert os.path.exists(partial_path)
+
+    @pytest.mark.parametrize("attempts", (1, 2))
+    def test_last_attempt_is_verified(self, distdir: str, attempts):
+        """A download that only succeeds on the final attempt still counts."""
+        target = fetchable(
+            "testfile.tar.gz",
+            uri=[f"http://example.com/{i}" for i in range(attempts)],
+            chksums={},
+        )
+        fetcher = make_fetcher(distdir, attempts=attempts)
+        expected_path = os.path.join(distdir, "testfile.tar.gz")
+        calls = []
+
+        def fake_run(cmd, **kwargs):
+            calls.append(cmd)
+            if len(calls) < attempts:
+                return subprocess.CompletedProcess(cmd, 1)
+            partial_content(expected_path)
+            return subprocess.CompletedProcess(cmd, 0)
+
+        with mock.patch("pkgcore.fetch.custom.subprocess.run", side_effect=fake_run):
+            assert fetcher.fetch(target) == expected_path
+        assert len(calls) == attempts

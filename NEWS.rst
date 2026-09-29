@@ -21,6 +21,9 @@ Fixes
 - unmerging a package with files matching ``UNINSTALL_IGNORE`` no longer
   crashes (Arthur Zamarin)
 
+- fetch: a download that succeeds on the last allowed attempt is no longer
+  reported as failed, so ``attempts=1`` works (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

@@ -84,7 +84,7 @@ class BinPkg(ebuild_built.generate_new_factory):
             t = force_unpacking(op_inst.format_op)
             t.register(engine_inst)
 
-        super()._add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst)
+        super()._add_format_triggers(pkg, op_inst, format_op_inst, engine_inst)
 
     def scan_contents(self, location):
         return scan(location, offset=location)

@@ -15,6 +15,9 @@ Fixes
 - resolver: when a candidate fails to insert, check the next one against its
   own dependencies rather than the previous candidate's (Arthur Zamarin)
 
+- binpkg: installing or replacing from a binpkg repo no longer fails with a
+  TypeError (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

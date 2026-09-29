@@ -51,6 +51,10 @@ Fixes
   package.use, and ``USE`` from the environment overrides package.use
   (Arthur Zamarin)
 
+- ebd: environments saved by pkgcore or portage are filtered again before
+  the ``pkg_*`` phases load them, so stale internal variables no longer leak
+  in (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

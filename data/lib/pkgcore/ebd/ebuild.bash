@@ -86,13 +86,13 @@ alias __load_environ='{
 	PKGCORE_EXISTING_PATH=${PATH};
 	__timed_call __environ_sanitize_saved_env "${PKGCORE_TARGET_ENV}"
 	if [[ -n ${PKGCORE_PERF_DEBUG} ]]; then
-		echo "timing source ${PKGCORE_TARGET_ENV}" >&2
-		time source "${PKGCORE_TARGET_ENV}" >&2
-		echo "timed source ${PKGCORE_TARGET_ENV}" >&2
+		echo "timing source ${T}/.scrubbed-env" >&2
+		time source "${T}"/.scrubbed-env >&2
+		echo "timed source ${T}/.scrubbed-env" >&2
 	else
-		source "${PKGCORE_TARGET_ENV}" >&2
+		source "${T}"/.scrubbed-env >&2
 	fi
-	[[ $? == 0 ]] || die "sourcing saved env failed";
+	[[ $? == 0 ]] || die "sourcing scrubbed env failed";
 	__ensure_PATH "${PKGCORE_EXISTING_PATH}";
 	__timed_call __load_eapi_libs
 	__timed_call __source_bashrcs

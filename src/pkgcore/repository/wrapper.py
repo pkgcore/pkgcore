@@ -16,7 +16,7 @@ from . import errors, prototype
 class tree(prototype.tree):
     """Repository wrapper binding configuration data to contained packages."""
 
-    operation_kls = repo.operations_proxy
+    operations_kls = repo.operations_proxy
 
     def __init__(self, repo, package_class):
         """

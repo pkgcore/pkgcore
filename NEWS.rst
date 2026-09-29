@@ -108,6 +108,9 @@ Fixes
 - ``--api-key`` is stripped, and a blank one falls back to the environment and
   dotfiles like an unset one, instead of being sent as the key (Arthur Zamarin)
 
+- a configured binpkg repo passes install, uninstall and replace through to the
+  underlying repo again (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

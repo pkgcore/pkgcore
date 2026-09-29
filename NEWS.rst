@@ -29,6 +29,9 @@ Fixes
 - ebd: a sandbox violation shows its access summary again instead of hanging
   the build (Arthur Zamarin)
 
+- ebd: ``nonfatal`` works again for ``newins`` and the other ``new*`` helpers
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

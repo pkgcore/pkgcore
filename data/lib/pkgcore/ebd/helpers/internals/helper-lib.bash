@@ -75,6 +75,5 @@ __helper_failed() {
 
 __helper_check_exit() {
 	[[ $1 == 0 ]] && return
-	shift
 	__helper_exit "$@"
 }

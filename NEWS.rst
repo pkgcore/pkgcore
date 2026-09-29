@@ -35,6 +35,9 @@ Fixes
 - ebd: a failed ``nonfatal doins`` (and other install helpers) no longer breaks
   every later call in the same phase (Arthur Zamarin)
 
+- ebd: ``eapply_user`` no longer reuses the options of the last ``eapply``
+  call, such as ``-p0`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

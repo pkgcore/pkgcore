@@ -1025,9 +1025,11 @@ class Eapply(IpcCommand):
         if user:
             patch_type = "user patches"
             output_func = self.observer.warn
+            patch_opts = []
         else:
             patch_type = "patches"
             output_func = self.observer.info
+            patch_opts = self.patch_opts
 
         spawn_kwargs = {}
         if self.op.userpriv:
@@ -1048,7 +1050,7 @@ class Eapply(IpcCommand):
                 try:
                     with open(patch) as f:
                         ret = subprocess.run(
-                            self.patch_cmd + self.patch_opts,
+                            self.patch_cmd + patch_opts,
                             stdin=f,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,

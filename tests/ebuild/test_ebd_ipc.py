@@ -97,3 +97,30 @@ class TestDoins:
             self.run(cmd, tmp_path, "foo")
         self.run(cmd, tmp_path, "bar")
         assert (dest / "bar").read_text() == "bar"
+
+
+class FakeObserver:
+    def __getattr__(self, name):
+        return lambda *args, **kwargs: None
+
+
+class TestEapplyUser:
+    def test_ignores_eapply_options(self, tmp_path, monkeypatch):
+        calls = []
+
+        def fake_run(cmd, **kwargs):
+            calls.append(cmd)
+            return ebd_ipc.subprocess.CompletedProcess(cmd, 0, stdout="")
+
+        monkeypatch.setattr(ebd_ipc.subprocess, "run", fake_run)
+        patch = tmp_path / "user.patch"
+        patch.write_text("")
+        op = FakeOp(FakePkg("cat/pkg-1", eapi="8"), FakeDomain([]))
+        op.observer = FakeObserver()
+        op.userpriv = False
+        eapply = ebd_ipc.Eapply(op)
+        eapply.opts = ebd_ipc.arghparse.Namespace()
+        eapply.run(eapply.parse_args([], ["-p0", str(patch)]))
+        eapply.run([(None, [str(patch)])], user=True)
+        assert "-p0" in calls[0]
+        assert "-p0" not in calls[1]

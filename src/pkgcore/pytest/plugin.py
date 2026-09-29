@@ -288,19 +288,32 @@ class EbuildRepo:
     __dir__ = klass.DirProxy("_repo")
 
 
+_call_failed = pytest.StashKey[bool]()
+
+
+@pytest.hookimpl(wrapper=True, tryfirst=True)
+def pytest_runtest_makereport(item, call):
+    report = yield
+    if report.when == "call":
+        item.stash[_call_failed] = report.failed
+    return report
+
+
 @pytest.fixture
-def bugzilla_cassette():
+def bugzilla_cassette(request):
     """Intercept Bugzilla REST traffic with canned responses.
 
     Active for the whole test, so a client built anywhere, including inside a
     CLI command, is captured. Queue replies with ``expect``/``expect_bugs``,
-    then assert against ``cassette.calls``.
+    then assert against ``cassette.calls``. Unused replies fail the test,
+    unless it already failed.
     """
     from ..bugzilla.testing import Cassette
 
     with Cassette() as cassette:
         yield cassette
-        cassette.assert_drained()
+        if not request.node.stash.get(_call_failed, False):
+            cassette.assert_drained()
 
 
 @pytest.fixture

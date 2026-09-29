@@ -139,3 +139,28 @@ class TestGlobalInstall:
         # the plugin fixture is already active, so no opener needs passing
         bugzilla_cassette.expect_created(7)
         assert self.build_a_client_somewhere_unreachable().create(new_bug()) == 7
+
+
+class TestCassetteFixture:
+    def test_unused_recordings_fail_a_passing_test(self, pytester):
+        pytester.makepyfile(
+            """
+            from pkgcore.bugzilla.testing import response
+
+            def test_it(bugzilla_cassette):
+                bugzilla_cassette.expect(response({}))
+            """
+        )
+        pytester.runpytest("-p", "no:cacheprovider").assert_outcomes(passed=1, errors=1)
+
+    def test_failing_test_gets_no_extra_error(self, pytester):
+        pytester.makepyfile(
+            """
+            from pkgcore.bugzilla.testing import response
+
+            def test_it(bugzilla_cassette):
+                bugzilla_cassette.expect(response({}))
+                assert False
+            """
+        )
+        pytester.runpytest("-p", "no:cacheprovider").assert_outcomes(failed=1)

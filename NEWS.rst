@@ -114,6 +114,9 @@ Fixes
 - looking a repo up by path no longer matches a sibling whose name starts the
   same, such as ``gentoo-extra`` for ``gentoo`` (Arthur Zamarin)
 
+- ``bugzilla_cassette`` fixture: a test that fails no longer gets an extra
+  "unused recordings" error on top (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

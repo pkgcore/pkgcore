@@ -137,7 +137,11 @@ class _FileSet(MutableSet):
 
     def __init__(self, path):
         self._path = path
-        self._set = set()
+        try:
+            with open(path) as f:
+                self._set = {x for x in map(str.strip, f) if x and x[0] != "#"}
+        except FileNotFoundError:
+            self._set = set()
 
     def _sync(self):
         with open(self._path, "w") as f:

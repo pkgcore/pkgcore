@@ -55,6 +55,8 @@ Fixes
   the ``pkg_*`` phases load them, so stale internal variables no longer leak
   in (Arthur Zamarin)
 
+- an unquoted ``EAPI=8 # comment`` line is accepted again (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

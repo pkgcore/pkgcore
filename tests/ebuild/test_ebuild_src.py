@@ -263,6 +263,15 @@ class TestBase:
                 c = self.make_parent(get_ebuild_src=post_curry(func, eapi_str))
                 o = self.get_pkg({"EAPI": None}, repo=c)
                 assert str(o.eapi) == "0"
+            # trailing comments are allowed after whitespace
+            for eapi_str in ("8 # comment", '"8" # comment', "'8'\t# comment", "8  "):
+                c = self.make_parent(get_ebuild_src=post_curry(func, eapi_str))
+                o = self.get_pkg({"EAPI": None}, repo=c)
+                assert str(o.eapi) == "8", eapi_str
+            # but not glued onto the value
+            c = self.make_parent(get_ebuild_src=post_curry(func, "8#comment"))
+            with pytest.raises(errors.MetadataException):
+                _ = self.get_pkg({"EAPI": None}, repo=c).eapi
 
     def test_keywords(self):
         assert list(self.get_pkg({"KEYWORDS": ""}).keywords) == []

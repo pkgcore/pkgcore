@@ -27,7 +27,7 @@ from .atom import atom
 from .eapi import get_eapi
 from .misc import sort_keywords
 
-_EAPI_regex = regexp(r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:#.*)?")
+_EAPI_regex = regexp(r"^EAPI=(['\"]?)(?P<EAPI>[A-Za-z0-9+_.-]*)\1[\t ]*(?:[\t ]#.*)?$")
 _EAPI_str_regex = regexp(r"^EAPI=(['\"]?)(?P<EAPI>.*)\1")
 
 
@@ -297,7 +297,9 @@ class base(metadata.package):
         for line in i:
             if line[0:1] in ("", "#"):
                 continue
-            if (mo := _EAPI_str_regex.match(line)) and (eapi_str := mo.group("EAPI")):
+            # fall back to the loose match so an invalid value gets reported
+            mo = _EAPI_regex.match(line) or _EAPI_str_regex.match(line)
+            if mo and (eapi_str := mo.group("EAPI")):
                 eapi = eapi_str
             break
         i.close()

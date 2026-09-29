@@ -76,8 +76,7 @@ class GitRepo:
 
     def commit(self, msg: str | list[str], signoff=False):
         """Make a commit to the repo."""
-        if isinstance(msg, str):
-            msg = msg.splitlines()
+        msg = msg.splitlines() if isinstance(msg, str) else list(msg)
         if signoff:
             msg.extend(["", "Signed-off-by: First Last <first.last@email.com>"])
         self.run(["git", "commit", "-m", "\n".join(msg)])

@@ -326,9 +326,19 @@ class BugUpdate:
             raise BugzillaUsageError("DUPLICATE and dupe_of must be used together")
 
     def __bool__(self) -> bool:
-        return any(
-            bool(getattr(self, field.name)) for field in dataclasses.fields(self)
-        )
+        """Whether :meth:`to_wire` sends any change.
+
+        A scalar counts once it isn't None, so ``whiteboard=""`` clearing the
+        whiteboard is a change; list fields count when they change anything.
+        """
+        for field in dataclasses.fields(self):
+            value = getattr(self, field.name)
+            if isinstance(value, ListChange | tuple):
+                if value:
+                    return True
+            elif value is not None:
+                return True
+        return False
 
     @classmethod
     def sanity_check(

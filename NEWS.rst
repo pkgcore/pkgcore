@@ -102,6 +102,9 @@ Fixes
   removes keeps it a set of the resulting list, instead of dropping the set
   (Arthur Zamarin)
 
+- ``pkgcore.bugzilla.BugUpdate``: an update that clears a field, such as
+  ``whiteboard=""``, is no longer falsy (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

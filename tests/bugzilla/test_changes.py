@@ -300,6 +300,23 @@ class TestBugUpdate:
     def test_empty_is_falsy(self):
         assert not BugUpdate()
 
+    @pytest.mark.parametrize(
+        "update",
+        (
+            BugUpdate(whiteboard=""),
+            BugUpdate(summary=""),
+            BugUpdate(package_list=PackageList("")),
+            BugUpdate(cc=ListChange.setting()),
+        ),
+    )
+    def test_clearing_a_field_is_truthy(self, update):
+        # anything to_wire sends beyond the ids counts as a change
+        assert len(update.to_wire([1])) > 1
+        assert update
+
+    def test_empty_list_changes_are_falsy(self):
+        assert not BugUpdate(cc=ListChange(), flags=())
+
     def test_empty_still_carries_ids(self):
         assert BugUpdate().to_wire([1]) == {"ids": [1]}
 

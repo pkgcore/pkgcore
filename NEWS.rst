@@ -70,6 +70,10 @@ Fixes
   config at ``$XDG_CONFIG_HOME/pkgcore.conf`` has to move to
   ``$XDG_CONFIG_HOME/pkgcore/pkgcore.conf`` (Arthur Zamarin)
 
+- rsync sync: the timestamp check uses the repo's ssh, proxy and rsync
+  settings, and a failed check falls back to a full sync instead of aborting
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

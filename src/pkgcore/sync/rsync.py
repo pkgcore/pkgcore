@@ -3,6 +3,7 @@ __all__ = (
     "rsync_timestamp_syncer",
 )
 
+import copy
 import os
 import socket
 import tempfile
@@ -162,16 +163,6 @@ class rsync_syncer(base.ExternalSyncer):
         raise base.SyncError("all attempts failed")
 
 
-class _RsyncFileSyncer(rsync_syncer):
-    """Support syncing a single file over rsync."""
-
-    def __init__(self, path, uri):
-        super().__init__(basedir=path, uri=uri)
-        # override parent classes that always assume directory syncing
-        self.basedir = path
-        self.uri = uri
-
-
 class rsync_timestamp_syncer(rsync_syncer):
     forcable = True
     forward_sync_delay = 25 * 60  # 25 minutes
@@ -201,6 +192,21 @@ class rsync_timestamp_syncer(rsync_syncer):
             # malformed timestamp
             return None
 
+    def _sync_timestamp(self, path, verbosity):
+        """Fetch the remote timestamp file to ``path``.
+
+        The same connection settings (rsh, proxy, options, user) are used as
+        for the full sync.
+        """
+        syncer = copy.copy(self)
+        syncer.basedir = path
+        syncer.uri = pjoin(self.uri, "metadata", "timestamp.chk")
+        syncer.excludes = syncer.includes = []
+        try:
+            return rsync_syncer._sync(syncer, verbosity)
+        except base.SyncError:
+            return False
+
     def _sync(self, verbosity, force=False):
         doit = force or self.last_timestamp is None
         ret = None
@@ -208,16 +214,13 @@ class rsync_timestamp_syncer(rsync_syncer):
             if not doit:
                 # try to sync the timestamp file to check the delta
                 with tempfile.NamedTemporaryFile() as new_timestamp:
-                    timestamp_uri = pjoin(self.uri, "metadata", "timestamp.chk")
                     timestamp_path = new_timestamp.name
-                    timestamp_syncer = _RsyncFileSyncer(timestamp_path, timestamp_uri)
-                    ret = timestamp_syncer._sync(verbosity)
-                    if not ret:
+                    ret = self._sync_timestamp(timestamp_path, verbosity)
+                    remote = self.current_timestamp(timestamp_path) if ret else None
+                    if remote is None:
                         doit = True
                     else:
-                        delta = (
-                            self.current_timestamp(timestamp_path) - self.last_timestamp
-                        )
+                        delta = remote - self.last_timestamp
                         if delta >= 0:
                             doit = delta > self.forward_sync_delay
                         else:

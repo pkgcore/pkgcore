@@ -114,3 +114,45 @@ class TestRsyncSyncerReal:
         )
         assert syncer.sync()
         assert stat != os.stat(timestamp)
+
+
+@mock.patch("socket.getaddrinfo", return_value=fake_ips(1))
+@mock.patch("pkgcore.sync.base.subprocess.run")
+class TestRsyncTimestampCheck:
+    stamp = "Mon, 28 Sep 2026 00:00:00 +0300\n"
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path):
+        self.repo_path = tmp_path / "repo"
+        (self.repo_path / "metadata").mkdir(parents=True)
+        (self.repo_path / "metadata" / "timestamp.chk").write_text(self.stamp)
+        with mock.patch(
+            "snakeoil.process.find_binary", side_effect=lambda x: f"/bin/{x}"
+        ):
+            self.syncer = rsync.rsync_timestamp_syncer(
+                str(self.repo_path),
+                "rsync+ssh://user@example.org/gentoo",
+                proxy="proxy:3128",
+            )
+
+    def test_check_uses_sync_settings(self, run, getaddrinfo):
+        def fake_run(cmd, **kwargs):
+            with open(cmd[2], "w") as f:
+                f.write(self.stamp)
+            return mock.Mock(returncode=0)
+
+        run.side_effect = fake_run
+        assert self.syncer.sync()
+        # timestamp unchanged: only the timestamp was fetched
+        assert run.call_count == 1
+        cmd = run.call_args.args[0]
+        assert cmd[1].endswith("/gentoo/metadata/timestamp.chk")
+        assert cmd[cmd.index("-e") + 1] == "/bin/ssh"
+        assert run.call_args.kwargs["env"]["RSYNC_PROXY"] == "proxy:3128"
+
+    def test_failed_check_falls_back_to_full_sync(self, run, getaddrinfo):
+        run.side_effect = [mock.Mock(returncode=5), mock.Mock(returncode=0)]
+        assert self.syncer.sync()
+        assert run.call_count == 2
+        cmd = run.call_args.args[0]
+        assert cmd[2].rstrip("/") == str(self.repo_path)

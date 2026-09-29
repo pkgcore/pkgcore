@@ -33,3 +33,29 @@ class TestCheckCommandOrStop:
         proc = run_helper("check_command_or_stop true; echo ok", "false")
         assert proc.returncode == 0
         assert proc.stdout == "ok\n"
+
+
+class TestVerReplacing:
+    helpers = os.path.join(const.EBD_PATH, "helpers")
+
+    def run(self, replacing, *args):
+        path = os.pathsep.join(
+            (
+                os.path.join(self.helpers, "common"),
+                os.path.join(self.helpers, "9", "pkg_postinst"),
+                os.environ["PATH"],
+            )
+        )
+        env = {
+            "PATH": path,
+            "PKGCORE_EBD_PATH": const.EBD_PATH,
+            "REPLACING_VERSIONS": replacing,
+        }
+        return subprocess.run(["ver_replacing", *args], env=env, capture_output=True)
+
+    def test_match(self):
+        assert self.run("1.0 3.0", "-ge", "2").returncode == 0
+
+    def test_no_match(self):
+        assert self.run("1.0", "-ge", "2").returncode == 1
+        assert self.run("", "-ge", "2").returncode == 1

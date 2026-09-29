@@ -38,6 +38,8 @@ Fixes
 - ebd: ``eapply_user`` no longer reuses the options of the last ``eapply``
   call, such as ``-p0`` (Arthur Zamarin)
 
+- EAPI 9: ``ver_replacing`` can be called (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

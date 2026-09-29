@@ -1,6 +1,10 @@
+#!/usr/bin/env pkgcore-ebuild-helper
+
+source "${PKGCORE_EBD_PATH}"/eapi/7/global.bash || die "failed sourcing eapi/7/global.bash"
+
 [[ $# -eq 2 ]] || die "Usage: ver_replacing <op> <ver>"
 
 for v in ${REPLACING_VERSIONS}; do
-    ver_test "${v}" "$@" && exit 0
+	ver_test "${v}" "$@" && exit 0
 done
 exit 1

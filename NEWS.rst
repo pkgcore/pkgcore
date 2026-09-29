@@ -74,6 +74,10 @@ Fixes
   settings, and a failed check falls back to a full sync instead of aborting
   (Arthur Zamarin)
 
+- a malformed line in ``use.desc``, ``use.local.desc`` or ``desc/*.desc`` is
+  logged and skipped instead of making every USE description unavailable
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

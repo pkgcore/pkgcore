@@ -1021,8 +1021,10 @@ class RepoConfig(syncable.tree, immutable.Strict):
         def converter(key):
             # todo: convert this to using a common exception base, with
             # conversion of ValueErrors/atom exceptions...
-            chunks = key.split(":", 1)
-            return (atom.atom(chunks[0]), chunks[1])
+            pkg, sep, flag = key.partition(":")
+            if not sep:
+                raise ValueError("missing ':' between package and flag")
+            return (atom.atom(pkg), flag)
 
         return tuple(self._split_use_desc_file("use.local.desc", converter))
 
@@ -1078,10 +1080,13 @@ class RepoConfig(syncable.tree, immutable.Strict):
                 try:
                     key, val = line.split(None, 1)
                     key = converter(key)
+                    _, sep, desc = val.partition("-")
+                    if not sep:
+                        raise ValueError("missing ' - ' before the description")
                     if matcher:
-                        yield key[0], (key[1], val.split("-", 1)[1].strip())
+                        yield key[0], (key[1], desc.strip())
                     else:
-                        yield key, val.split("-", 1)[1].strip()
+                        yield key, desc.strip()
                 except ValueError as e:
                     logger.error(f"failed parsing {fp!r}, line {line!r}: {e}")
         except FileNotFoundError:

@@ -1089,6 +1089,20 @@ class TestRepoConfig:
         repo_config = repo_objs.RepoConfig(self.repo_path)
         assert 3 == len(repo_config.use_local_desc)
 
+    def test_malformed_use_desc_lines(self, caplog):
+        os.mkdir(self.profiles_base)
+        with open(os.path.join(self.profiles_base, "use.desc"), "w") as f:
+            f.write("foo1 - enable foo1\nbroken no separator\nfoo2 - enable foo2\n")
+        with open(os.path.join(self.profiles_base, "use.local.desc"), "w") as f:
+            f.write("cat/pkg1:foo1 - enable foo1\ncat/pkg2 - no flag\n")
+        repo_config = repo_objs.RepoConfig(self.repo_path)
+        assert [flag for _, (flag, _) in repo_config.use_desc] == ["foo1", "foo2"]
+        assert [(str(a), flag) for a, (flag, _) in repo_config.use_local_desc] == [
+            ("cat/pkg1", "foo1")
+        ]
+        assert "missing ' - ' before the description" in caplog.text
+        assert "missing ':' between package and flag" in caplog.text
+
     def test_updates(self):
         # nonexistent repo
         repo_config = repo_objs.RepoConfig("nonexistent")

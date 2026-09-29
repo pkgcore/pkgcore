@@ -91,6 +91,10 @@ Fixes
 - ``pkgcore.bugzilla``: a 429 response is retried whatever its body
   (Arthur Zamarin)
 
+- ``pkgcore.bugzilla``: a connection reset while reading the response is
+  retried and raised as ``BugzillaConnectionError``, instead of escaping as a
+  bare ``OSError`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

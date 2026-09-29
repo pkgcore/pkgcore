@@ -276,6 +276,33 @@ class TestRetries:
         assert transport.request("GET", "bug") == {"bugs": []}
         assert len(handler.calls) == 2
 
+    def test_raw_connection_resets_are_retried(self):
+        attempts = []
+
+        class Resetting(urllib.request.HTTPSHandler):
+            # a reset after the request went out isn't wrapped in URLError
+            def https_open(self, req):
+                attempts.append(req)
+                if len(attempts) < 3:
+                    raise ConnectionResetError(104, "Connection reset by peer")
+                return Cassette().expect_bugs().opener.open(req)
+
+            http_open = https_open
+
+        opener = urllib.request.build_opener(Resetting())
+        transport = UrllibTransport(
+            "https://bugs.example.org", API_KEY, retries=3, opener=opener
+        )
+        assert transport.request("GET", "bug") == {"bugs": []}
+        assert len(attempts) == 3
+
+        attempts.clear()
+        transport = UrllibTransport(
+            "https://bugs.example.org", API_KEY, retries=1, opener=opener
+        )
+        with pytest.raises(errors.BugzillaConnectionError, match="reset by peer"):
+            transport.request("GET", "bug")
+
 
 class TestShapeGuards:
     def test_expect_object(self):

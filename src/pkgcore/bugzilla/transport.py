@@ -204,7 +204,9 @@ class UrllibTransport:
                 exc.code,
                 exc.headers.get("Retry-After"),
             )
-        except (urllib.error.URLError, TimeoutError, http.client.HTTPException) as exc:
+        except (OSError, http.client.HTTPException) as exc:
+            # URLError only wraps failures while sending; a reset or TLS error
+            # in getresponse() or while reading the body is a bare OSError
             reason = getattr(exc, "reason", exc)
             raise errors.BugzillaConnectionError(
                 f"{method} {redact(url)}: {reason}"

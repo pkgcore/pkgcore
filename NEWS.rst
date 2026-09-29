@@ -62,6 +62,9 @@ Fixes
 - vdb: installing a package that has no ebuild no longer crashes and leaves a
   half-written entry behind (Arthur Zamarin)
 
+- ebd: ``eapply`` on a directory applies only the patches directly inside it,
+  as PMS says, instead of descending into subdirectories (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

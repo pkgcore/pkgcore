@@ -1004,15 +1004,15 @@ class Eapply(IpcCommand):
     def _find_patches(self, args):
         for path in args:
             if os.path.isdir(path):
-                for root, _dirs, files in os.walk(path):
-                    patches = [
-                        pjoin(root, f)
-                        for f in sorted(files, key=locale.strxfrm)
-                        if f.endswith((".diff", ".patch"))
+                with os.scandir(path) as it:
+                    files = [
+                        entry.name
+                        for entry in it
+                        if entry.name.endswith((".diff", ".patch")) and entry.is_file()
                     ]
-                    if not patches:
-                        raise IpcCommandError(f"no patches in directory: {path!r}")
-                    yield path, patches
+                if not files:
+                    raise IpcCommandError(f"no patches in directory: {path!r}")
+                yield path, [pjoin(path, f) for f in sorted(files, key=locale.strxfrm)]
             else:
                 yield None, [path]
 

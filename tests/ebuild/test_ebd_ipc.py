@@ -124,3 +124,27 @@ class TestEapplyUser:
         eapply.run([(None, [str(patch)])], user=True)
         assert "-p0" in calls[0]
         assert "-p0" not in calls[1]
+
+
+class TestEapply:
+    def test_directory_is_not_recursed(self, tmp_path):
+        patches = tmp_path / "patches"
+        (patches / "sub").mkdir(parents=True)
+        (patches / "nested.patch").mkdir()
+        for name in ("b.diff", "a.patch", "README", "sub/c.patch"):
+            (patches / name).write_text("")
+        op = FakeOp(FakePkg("cat/pkg-1", eapi="8"), FakeDomain([]))
+        eapply = ebd_ipc.Eapply(op)
+        eapply.opts = ebd_ipc.arghparse.Namespace()
+        assert list(eapply.parse_args([], [str(patches)])) == [
+            (str(patches), [str(patches / "a.patch"), str(patches / "b.diff")])
+        ]
+
+    def test_directory_without_patches(self, tmp_path):
+        (tmp_path / "sub").mkdir()
+        (tmp_path / "sub" / "c.patch").write_text("")
+        op = FakeOp(FakePkg("cat/pkg-1", eapi="8"), FakeDomain([]))
+        eapply = ebd_ipc.Eapply(op)
+        eapply.opts = ebd_ipc.arghparse.Namespace()
+        with pytest.raises(ebd_ipc.IpcCommandError, match="no patches in directory"):
+            list(eapply.parse_args([], [str(tmp_path)]))

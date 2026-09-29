@@ -250,7 +250,14 @@ class _InstallWrapper(IpcCommand):
             insoptions=self.insoptions_default, diroptions=self.diroptions_default
         )
 
-        # initialize file/dir creation coroutines
+        self._init_coroutines()
+
+    def _init_coroutines(self):
+        """Initialize file/dir creation coroutines.
+
+        An error raised inside a coroutine finishes it, so they're recreated
+        for every command run.
+        """
         self.install = self._install().send
         self.install_dirs = self._install_dirs().send
         self.install_symlinks = self._install_symlinks().send
@@ -263,6 +270,7 @@ class _InstallWrapper(IpcCommand):
 
     def parse_install_options(self):
         """Parse install command options."""
+        self._init_coroutines()
         self.insoptions = arghparse.Namespace()
         self.diroptions = arghparse.Namespace()
         if self.opts.insoptions and not self._parse_install_options(

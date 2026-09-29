@@ -1,3 +1,7 @@
+from contextlib import chdir
+
+import pytest
+
 from pkgcore.ebuild import ebd_ipc
 from pkgcore.test.misc import FakePkg, FakeRepo
 
@@ -71,3 +75,25 @@ class TestQueryCmdConditionalUseDeps:
         installed = (FakePkg("dev-lang/rust-bin-1.84.1-r1", slot="1.84.1"),)
         assert _has_version(querying, installed, "dev-lang/rust-bin") == 0
         assert _has_version(querying, installed, "dev-lang/nonexistent") == 1
+
+
+class TestDoins:
+    def run(self, cmd, tmp_path, *targets):
+        cmd.opts = ebd_ipc.arghparse.Namespace()
+        with chdir(tmp_path):
+            args = cmd.parse_args(["--dest=/usr/share/foo"], list(targets))
+            return cmd.run(args)
+
+    def test_failure_leaves_later_calls_working(self, tmp_path):
+        image = tmp_path / "image"
+        dest = image / "usr/share/foo"
+        (dest / "foo").mkdir(parents=True)
+        (tmp_path / "foo").write_text("foo")
+        (tmp_path / "bar").write_text("bar")
+        op = FakeOp(FakePkg("cat/pkg-1", eapi="8"), FakeDomain([]))
+        op.ED = str(image)
+        cmd = ebd_ipc.Doins(op)
+        with pytest.raises(ebd_ipc.IpcCommandError, match="failed removing file"):
+            self.run(cmd, tmp_path, "foo")
+        self.run(cmd, tmp_path, "bar")
+        assert (dest / "bar").read_text() == "bar"

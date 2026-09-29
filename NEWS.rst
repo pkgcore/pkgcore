@@ -32,6 +32,9 @@ Fixes
 - ebd: ``nonfatal`` works again for ``newins`` and the other ``new*`` helpers
   (Arthur Zamarin)
 
+- ebd: a failed ``nonfatal doins`` (and other install helpers) no longer breaks
+  every later call in the same phase (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

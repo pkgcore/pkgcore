@@ -26,6 +26,9 @@ Fixes
 
 - GPG signed Manifests can be read again (Arthur Zamarin)
 
+- ebd: a sandbox violation shows its access summary again instead of hanging
+  the build (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

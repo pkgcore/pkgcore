@@ -94,7 +94,7 @@ __ebd_ipc_cmd() {
 # ask the python side to display sandbox complaints
 __request_sandbox_summary() {
 	local line
-	__ebd_write_line "__request_sandbox_summary ${SANDBOX_LOG}"
+	__ebd_write_line "request_sandbox_summary ${SANDBOX_LOG}"
 	__ebd_read_line line
 	while [[ ${line} != "end_sandbox_summary" ]]; do
 		echo "${line}"

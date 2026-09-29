@@ -1,3 +1,4 @@
+from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.processor import EbuildProcessor
 
@@ -74,3 +75,14 @@ class TestSandboxSummary:
         assert proc.sandbox_summary(move_log=str(moved)) == 1
         assert moved.read_text() == "open_wr: /etc/passwd\n"
         assert written[-1] == "end_sandbox_summary"
+
+
+class TestClearPreloadedEclasses:
+    def test_processor_survives(self):
+        ebp = processor.request_ebuild_processor()
+        try:
+            assert ebp.clear_preloaded_eclasses()
+            assert ebp.is_alive
+        finally:
+            processor.drop_ebuild_processor(ebp)
+            ebp.shutdown_processor()

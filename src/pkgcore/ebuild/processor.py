@@ -629,7 +629,7 @@ class EbuildProcessor:
     def clear_preloaded_eclasses(self):
         if self.is_responsive:
             self.write("clear_preloaded_eclasses")
-            if not self.expect("clear_preload_eclasses succeeded", flush=True):
+            if not self.expect("clear_preloaded_eclasses succeeded", flush=True):
                 self.shutdown_processor()
                 return False
         self._preloaded_eclasses.clear()

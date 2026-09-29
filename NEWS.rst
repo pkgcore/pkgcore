@@ -24,6 +24,8 @@ Fixes
 - fetch: a download that succeeds on the last allowed attempt is no longer
   reported as failed, so ``attempts=1`` works (Arthur Zamarin)
 
+- GPG signed Manifests can be read again (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

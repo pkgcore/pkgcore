@@ -103,7 +103,7 @@ class Manifest:
         if self._sourced:
             return
         try:
-            data = parse_manifest(self.path, ignore_gpg=self._gpg)
+            data = parse_manifest(self.path)
         except OSError as e:
             if not (self.thin or self.allow_missing) or e.errno != errno.ENOENT:
                 raise errors.ParseChksumError(self.path, e) from e

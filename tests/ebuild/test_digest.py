@@ -102,6 +102,18 @@ class TestManifestDataSource(TestManifest):
     convert_source = staticmethod(lambda x: local_source(x))
 
 
+class TestSignedManifest:
+    @pytest.mark.parametrize("enforce_gpg", (False, True))
+    def test_signed(self, tmp_path, enforce_gpg):
+        path = tmp_path / "Manifest"
+        path.write_text(
+            f"{gpg.msg_header}Hash: SHA512\n\n{pure_manifest2}"
+            f"{gpg.sig_header}asdf\n{gpg.sig_footer}"
+        )
+        manifest = digest.Manifest(str(path), enforce_gpg=enforce_gpg)
+        assert set(manifest.distfiles) == set(pure_manifest2_chksums["DIST"])
+
+
 class TestManifestUpdate:
     chfs = ("size", "blake2b")
 

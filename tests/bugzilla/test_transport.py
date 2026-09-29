@@ -267,6 +267,15 @@ class TestRetries:
         assert transport.request("GET", "bug") == {"bugs": []}
         assert len(attempts) == 3
 
+    def test_429_with_a_json_body_is_retried(self, cassette):
+        handler, transport = cassette(
+            response({"message": "slow down"}, status=429),
+            response({"bugs": []}),
+            retries=3,
+        )
+        assert transport.request("GET", "bug") == {"bugs": []}
+        assert len(handler.calls) == 2
+
 
 class TestShapeGuards:
     def test_expect_object(self):

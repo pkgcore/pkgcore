@@ -88,6 +88,9 @@ Fixes
   when a long one is split into several requests, rather than to each request
   (Arthur Zamarin)
 
+- ``pkgcore.bugzilla``: a 429 response is retried whatever its body
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

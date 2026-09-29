@@ -92,7 +92,7 @@ class BugzillaInvalidField(BugzillaResponseError):
 
 
 class BugzillaServerError(BugzillaResponseError):
-    """A 5xx from the web tier in front of Bugzilla"""
+    """A 5xx from the web tier in front of Bugzilla, or a 429 asking to back off"""
 
     def __init__(
         self, message: str, *, retry_after: float | None = None, **kwargs: typing.Any
@@ -139,6 +139,11 @@ _CODE_MAP: typing.Final[dict[int, type[BugzillaResponseError]]] = {
 }
 
 
+def _retryable(status: int) -> bool:
+    """Server errors, and 429 which asks the client to come back later"""
+    return status >= 500 or status == 429
+
+
 def from_response(
     error: typing.Mapping[str, typing.Any],
     status: int,
@@ -150,7 +155,7 @@ def from_response(
     code = code if isinstance(code, int) else 0
     message = str(error.get("message") or "unknown Bugzilla error")
     if (kls := _CODE_MAP.get(code)) is None:
-        kls = BugzillaServerError if status >= 500 else BugzillaResponseError
+        kls = BugzillaServerError if _retryable(status) else BugzillaResponseError
     if kls is BugzillaServerError:
         return BugzillaServerError(
             message, code=code, status=status, url=url, retry_after=retry_after
@@ -165,7 +170,7 @@ def from_status(
     message = f"HTTP {status} from {url}"
     if snippet := payload[:200].decode("utf-8", "replace").strip():
         message = f"{message}: {snippet}"
-    if status >= 500:
+    if _retryable(status):
         return BugzillaServerError(
             message, status=status, url=url, retry_after=retry_after
         )

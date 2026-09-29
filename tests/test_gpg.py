@@ -45,3 +45,35 @@ class TestSkipSignatures:
             "asdf\n",
         ]
         assert list(gpg.skip_signatures(d)) == ["blah\n", "foon\n", "asdf\n"]
+
+    def test_trailing_signature(self):
+        d = [
+            "-----BEGIN PGP SIGNED MESSAGE-----\n",
+            "Hash: SHA512\n",
+            "\n",
+            "DIST foo 1 SIZE 1\n",
+            "-----BEGIN PGP SIGNATURE-----\n",
+            "not valid...\n",
+            "-----END PGP SIGNATURE-----\n",
+        ]
+        assert list(gpg.skip_signatures(d)) == ["DIST foo 1 SIZE 1\n"]
+
+    def test_no_hash_header(self):
+        d = [
+            "-----BEGIN PGP SIGNED MESSAGE-----\n",
+            "\n",
+            "DIST foo 1 SIZE 1\n",
+            "-----BEGIN PGP SIGNATURE-----\n",
+            "-----END PGP SIGNATURE-----\n",
+        ]
+        assert list(gpg.skip_signatures(d)) == ["DIST foo 1 SIZE 1\n"]
+
+    def test_multiple_hash_headers(self):
+        d = [
+            "-----BEGIN PGP SIGNED MESSAGE-----\n",
+            "Hash: SHA256\n",
+            "Hash: SHA512\n",
+            "\n",
+            "DIST foo 1 SIZE 1\n",
+        ]
+        assert list(gpg.skip_signatures(d)) == ["DIST foo 1 SIZE 1\n"]

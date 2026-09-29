@@ -18,6 +18,9 @@ Fixes
 - binpkg: installing or replacing from a binpkg repo no longer fails with a
   TypeError (Arthur Zamarin)
 
+- unmerging a package with files matching ``UNINSTALL_IGNORE`` no longer
+  crashes (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

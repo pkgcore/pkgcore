@@ -379,8 +379,6 @@ class UninstallIgnore(triggers.base):
         self.uninstall_ignore = uninstall_ignore
 
     def trigger(self, engine, existing_cset, uninstall_cset, old_cset=None):
-        if old_cset is None:
-            old_cset = {}
         ignore = [
             values.StrRegex(fnmatch.translate(x), match=True)
             for x in self.uninstall_ignore
@@ -392,7 +390,8 @@ class UninstallIgnore(triggers.base):
             # don't remove matching files being uninstalled
             del uninstall_cset[x]
             # don't remove matching files being replaced
-            old_cset.discard(x)
+            if old_cset is not None:
+                old_cset.discard(x)
 
 
 class preinst_contents_reset(triggers.base):

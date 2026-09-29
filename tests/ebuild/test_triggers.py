@@ -1,6 +1,6 @@
 from pkgcore.ebuild import triggers
 from pkgcore.fs.contents import contentsSet
-from pkgcore.fs.fs import fsSymlink
+from pkgcore.fs.fs import fsFile, fsSymlink
 
 
 class fake_format_op:
@@ -42,3 +42,26 @@ class TestFixImageSymlinks:
         assert targets[f"{self.image}/usr/lib/foo.so"] == "/usr/lib/foo.so.1"
         # symlinks not pointing into $D are left untouched
         assert targets[f"{self.image}/usr/lib/bar.so"] == "/usr/lib/bar.so.1"
+
+
+class TestUninstallIgnore:
+    def mk_cset(self):
+        return contentsSet(
+            [
+                fsFile("/lib/modules/6.1/foo.ko", strict=False),
+                fsFile("/usr/bin/foo", strict=False),
+            ]
+        )
+
+    def test_uninstall(self):
+        existing, uninstall = self.mk_cset(), self.mk_cset()
+        trig = triggers.UninstallIgnore(["/lib/modules/*"])
+        trig.trigger(fake_engine(), existing, uninstall)
+        assert sorted(x.location for x in uninstall) == ["/usr/bin/foo"]
+
+    def test_replace(self):
+        existing, uninstall, old = self.mk_cset(), self.mk_cset(), self.mk_cset()
+        trig = triggers.UninstallIgnore(["/lib/modules/*"])
+        trig.trigger(fake_engine(), existing, uninstall, old)
+        assert sorted(x.location for x in uninstall) == ["/usr/bin/foo"]
+        assert sorted(x.location for x in old) == ["/usr/bin/foo"]

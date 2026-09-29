@@ -77,6 +77,11 @@ class TestGet:
         assert sorted(bugs) == [1, 2]
         assert bugs[1].summary == "bug 1"
 
+    def test_no_ids_sends_nothing(self, client):
+        handler, bz = client()
+        assert bz.get([]) == {}
+        assert handler.calls == []
+
     def test_several_tolerates_missing(self, client):
         _, bz = client(response({"bugs": [raw_bug(1)]}))
         assert list(bz.get([1, 2])) == [1]

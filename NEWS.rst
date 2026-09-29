@@ -81,6 +81,9 @@ Fixes
 - ``FEATURES=unmerge-backup`` saves a binpkg of the package being removed again
   (Arthur Zamarin)
 
+- ``pkgcore.bugzilla``: searching an empty list of bug ids or packages
+  returns nothing instead of every bug on the server (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

@@ -266,11 +266,16 @@ class BugQuery:
         parameter or a :class:`Criterion` marked splittable; everything else is
         repeated in every batch. Sizing uses the encoded length rather than a
         count, so it adapts to long atoms instead of guessing.
+
+        An axis with no values matches nothing, so it yields no batches; left
+        in, it would render as no constraint at all and match everything.
         """
         if (axis := self._split_axis()) is None:
             yield self
             return
         key, values, rebuild = axis
+        if not values:
+            return
         empty = rebuild(())
         budget = max_length - base_length - len(urllib.parse.urlencode(empty.params()))
         batch: list[str] = []
@@ -298,6 +303,10 @@ class BugQuery:
         )
         if not candidates:
             return None
+        for axis in candidates:
+            if not axis[1]:
+                # an empty axis matches nothing, whichever axis is widest
+                return axis
         return max(candidates, key=lambda axis: len("".join(axis[1])))
 
     def _rebuild_simple(self, key: str, values: typing.Sequence[str]) -> "BugQuery":

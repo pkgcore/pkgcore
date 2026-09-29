@@ -265,6 +265,14 @@ class TestBatches:
             v for b in batches for k, v in b.params() if k.startswith("v")
         ] == packages
 
+    def test_empty_ids_yield_no_batches(self):
+        assert list(BugQuery.ids(()).batches()) == []
+        assert list(BugQuery.package_list_any(()).batches()) == []
+
+    def test_empty_axis_wins_over_a_wider_one(self):
+        query = BugQuery.ids(()) & BugQuery.package_list_any(["dev-libs/foo"])
+        assert list(query.batches()) == []
+
     def test_base_length_shrinks_batches(self):
         ids = list(range(900000, 902000))
         wide = len(list(BugQuery.ids(ids).batches(base_length=0)))

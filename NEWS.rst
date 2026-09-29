@@ -57,6 +57,8 @@ Fixes
 
 - an unquoted ``EAPI=8 # comment`` line is accepted again (Arthur Zamarin)
 
+- binpkgs containing device nodes can be read (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

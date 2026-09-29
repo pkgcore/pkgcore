@@ -121,8 +121,10 @@ def archive_to_fsobj(src_tar):
         elif member.isfifo():
             yield fsFifo(location, **d)
         elif member.isdev():
-            d["major"] = int(member.major)
-            d["minor"] = int(member.minor)
+            # tar only stores the permission bits; restore the device type
+            d["mode"] |= stat.S_IFCHR if member.ischr() else stat.S_IFBLK
+            d["major"] = member.devmajor
+            d["minor"] = member.devminor
             yield fsDev(location, **d)
         else:
             raise AssertionError(

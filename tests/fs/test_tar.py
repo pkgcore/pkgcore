@@ -1,11 +1,12 @@
 import bz2
+import stat
 import tarfile
 
 import pytest
 from snakeoil.data_source import data_source
 
 from pkgcore.fs import contents, tar
-from pkgcore.fs.fs import fsDir, fsFile, fsSymlink
+from pkgcore.fs.fs import fsDev, fsDir, fsFile, fsSymlink
 
 
 def mk_file(location, data=b"", **kwds):
@@ -54,3 +55,25 @@ class TestGenerateContents:
         assert regular.data.bytes_fileobj().read() == b"hello"
         # the hardlink resolves back to the target's inode
         assert new_cset["/usr/hard"].inode == regular.inode
+
+    def test_device_roundtrip(self, tmp_path):
+        path = str(tmp_path / "test.tar.bz2")
+        attrs = {"uid": 0, "gid": 0, "mtime": 0}
+        cset = contents.contentsSet(
+            [
+                fsDir("/dev", mode=0o755, **attrs),
+                fsDev(
+                    "/dev/null", mode=stat.S_IFCHR | 0o666, major=1, minor=3, **attrs
+                ),
+                fsDev(
+                    "/dev/nvme", mode=stat.S_IFBLK | 0o660, major=259, minor=3, **attrs
+                ),
+            ]
+        )
+        tar.write_set(cset, path)
+
+        new_cset = tar.generate_contents(path)
+        null = new_cset["/dev/null"]
+        assert (null.mode, null.major, null.minor) == (stat.S_IFCHR | 0o666, 1, 3)
+        nvme = new_cset["/dev/nvme"]
+        assert (nvme.mode, nvme.major, nvme.minor) == (stat.S_IFBLK | 0o660, 259, 3)

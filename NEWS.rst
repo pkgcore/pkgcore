@@ -43,6 +43,9 @@ Fixes
 - profiles can be looked up by absolute path, which also fixes
   ``pkgcheck --profiles /path/to/profile`` (Arthur Zamarin)
 
+- ``ACCEPT_KEYWORDS`` wildcards (``*``, ``~*`` and ``**``) work without any
+  package.accept_keywords entries (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

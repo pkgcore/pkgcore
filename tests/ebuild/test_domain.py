@@ -147,6 +147,23 @@ class TestDomain:
         assert "stableflag" not in enabled
         assert "globalflag" not in enabled
 
+    @pytest.mark.parametrize(
+        ("accept", "accepted"),
+        (
+            ("**", {(), ("amd64",), ("~amd64",), ("~x86",)}),
+            ("*", {("amd64",)}),
+            ("~*", {("~amd64",), ("~x86",)}),
+        ),
+    )
+    def test_accept_keywords_wildcards(self, accept, accepted):
+        (self.profile1 / "make.defaults").write_text(
+            f'ARCH="amd64"\nACCEPT_KEYWORDS="{accept}"\n'
+        )
+        filt = self.mk_domain()._make_keywords_filter((accept,), ())
+        for keywords in ((), ("amd64",), ("~amd64",), ("~x86",)):
+            pkg = FakePkg("dev-util/foo-1", keywords=keywords)
+            assert filt.match(pkg) == (keywords in accepted), keywords
+
     def test_use_flag_parsing_enforcement(self, caplog):
         (self.pusedir / "a").write_text("*/* X:")
         assert ((packages.AlwaysTrue, ((), ())),) == self.mk_domain().pkg_use

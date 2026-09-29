@@ -565,7 +565,8 @@ class domain(config_domain):
 
     def _make_keywords_filter(self, default_keys, accept_keywords):
         """Generates a restrict that matches iff the keywords are allowed."""
-        if not accept_keywords and not self.profile.keywords:
+        wildcards = {"*", "~*", "**"}.intersection(default_keys)
+        if not (accept_keywords or self.profile.keywords or wildcards):
             return packages.PackageRestriction(
                 "keywords", values.ContainmentMatch(frozenset(default_keys))
             )

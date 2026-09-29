@@ -98,6 +98,10 @@ Fixes
 - ``pkgcore.bugzilla``: redirects are refused with a caller supplied opener
   too, so the api key isn't sent on to another host (Arthur Zamarin)
 
+- ``pkgcore.bugzilla.ListChange``: combining a ``setting()`` with adds or
+  removes keeps it a set of the resulting list, instead of dropping the set
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

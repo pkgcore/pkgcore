@@ -90,6 +90,12 @@ class ListChange[T]:
     def __or__(self, other: "ListChange[T]") -> "ListChange[T]":
         if other.replace is not None:
             return other
+        if self.replace is not None:
+            # still a wholesale set, now of the list other's changes produce
+            kept = tuple(x for x in self.replace if x not in other.remove)
+            return ListChange(
+                replace=kept + tuple(x for x in other.add if x not in kept)
+            )
         return ListChange(
             add=self.add + tuple(x for x in other.add if x not in self.add),
             remove=self.remove + tuple(x for x in other.remove if x not in self.remove),

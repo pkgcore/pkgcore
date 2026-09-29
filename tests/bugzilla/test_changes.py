@@ -72,6 +72,11 @@ class TestListChange:
         merged = ListChange.adding("a") | ListChange.setting("z")
         assert merged.to_wire() == {"set": ["z"]}
 
+    def test_merge_onto_replace_keeps_the_set(self):
+        merged = ListChange.setting("a", "b") | ListChange(add=("c",), remove=("a",))
+        assert merged.to_wire() == {"set": ["b", "c"]}
+        assert (ListChange.setting("a") | ListChange.adding("a")).replace == ("a",)
+
     def test_frozen(self):
         change = ListChange.adding("a")
         with pytest.raises(AttributeError):

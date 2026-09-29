@@ -135,12 +135,7 @@ class choice_point:
 
     def force_next_pkg(self):
         """Force next package to be selected from available matches."""
-        if self.matches is None:
-            return False
-        for self.matches_cur in self.matches:  # noqa: B020 (idiomatic "pull next from iterator")
-            break
-        else:
-            self.matches_cur = self.matches = None
+        if self.matches is None or not self._internal_force_next():
             return False
         return self.reduce_atoms([])
 

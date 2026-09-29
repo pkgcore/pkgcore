@@ -12,6 +12,9 @@ Fixes
 - resolver: resolve a package's IDEPEND instead of resolving its PDEPEND
   twice (Arthur Zamarin)
 
+- resolver: when a candidate fails to insert, check the next one against its
+  own dependencies rather than the previous candidate's (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

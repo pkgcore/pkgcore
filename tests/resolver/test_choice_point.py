@@ -115,3 +115,22 @@ class TestChoicePoint:
         assert c.idepend == [["idep2"]]
         assert c.reduce_atoms("idep2")
         assert c.current_pkg.marker == 2
+
+    def test_force_next_pkg(self):
+        c = choice_point(
+            "asdf",
+            (
+                fake_package(marker=1, depend=AndRestriction("d1")),
+                fake_package(marker=2, depend=AndRestriction("d2")),
+                fake_package(marker=3),
+            ),
+        )
+        assert c.current_pkg.marker == 1
+        c.solution_filters.add("d1")
+        assert not c.force_next_pkg()
+        assert c.current_pkg.marker == 2
+        assert c.depend == [["d2"]]
+        c.force_next_pkg()
+        assert c.current_pkg.marker == 3
+        assert not c.force_next_pkg()
+        assert not c

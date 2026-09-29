@@ -26,13 +26,14 @@ class TestDomain:
         self.pkeywordsdir = self.confdir / "package.accept_keywords"
         self.pkeywordsdir.mkdir()
 
-    def mk_domain(self):
+    def mk_domain(self, **settings):
         return domain_mod.domain(
             profiles.OnDiskProfile(str(self.profile_base), "profile1"),
             [],
             [],
             ROOT=self.rootdir,
             config_dir=self.confdir,
+            **settings,
         )
 
     def test_sorting(self):
@@ -163,6 +164,53 @@ class TestDomain:
         for keywords in ((), ("amd64",), ("~amd64",), ("~x86",)):
             pkg = FakePkg("dev-util/foo-1", keywords=keywords)
             assert filt.match(pkg) == (keywords in accepted), keywords
+
+    def use_layers_domain(self, **settings):
+        (self.profile1 / "make.defaults").write_text(
+            'ARCH="amd64"\nACCEPT_KEYWORDS="amd64"\nUSE="profileflag"\n'
+            'USE_EXPAND="VIDEO_CARDS"\nVIDEO_CARDS="fbdev"\n'
+        )
+        (self.profile1 / "package.use").write_text(
+            "dev-util/foo foo -bar video_cards_intel\n"
+        )
+        return self.mk_domain(**settings)
+
+    def enabled(self, domain, cpv="dev-util/foo-1"):
+        iuse = ("foo", "bar", "profileflag", "video_cards_intel", "video_cards_amdgpu")
+        pkg = FakePkg(cpv, iuse=iuse, keywords=["amd64"])
+        _, enabled, _ = domain.get_package_use_unconfigured(pkg)
+        return enabled.intersection(iuse)
+
+    def test_profile_package_use(self):
+        assert self.enabled(self.use_layers_domain()) == {
+            "foo",
+            "profileflag",
+            "video_cards_intel",
+        }
+
+    def test_make_conf_overrides_profile_package_use(self):
+        domain = self.use_layers_domain(USE="-foo bar")
+        assert self.enabled(domain) == {"bar", "profileflag", "video_cards_intel"}
+
+    def test_make_conf_use_expand_replaces_profile_package_use(self):
+        domain = self.use_layers_domain(VIDEO_CARDS="amdgpu")
+        assert self.enabled(domain) == {"foo", "profileflag", "video_cards_amdgpu"}
+
+    def test_make_conf_clear_all(self):
+        domain = self.use_layers_domain(USE="-* bar")
+        assert self.enabled(domain) == {"bar"}
+        assert self.enabled(domain, "dev-util/other-1") == {"bar"}
+
+    def test_user_package_use_overrides_make_conf(self):
+        (self.pusedir / "a").write_text("dev-util/foo foo")
+        domain = self.use_layers_domain(USE="-foo")
+        assert "foo" in self.enabled(domain)
+
+    def test_env_overrides_user_package_use(self, monkeypatch):
+        (self.pusedir / "a").write_text("dev-util/foo foo")
+        monkeypatch.setenv("USE", "-foo")
+        domain = self.use_layers_domain()
+        assert "foo" not in self.enabled(domain)
 
     def test_use_flag_parsing_enforcement(self, caplog):
         (self.pusedir / "a").write_text("*/* X:")

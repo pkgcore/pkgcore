@@ -415,23 +415,52 @@ class domain(config_domain):
 
         return frozenset(optimize_incrementals(use + os.environ.get("USE", "").split()))
 
-    @klass.jit_attr_named("_jit_reset_enabled_use", uncached_val=None)
-    def enabled_use(self):
+    @klass.jit_attr_named("_jit_reset_conf_use", uncached_val=None)
+    def conf_use(self):
+        """USE flags set by make.conf, including its USE_EXPAND variables.
+
+        A USE_EXPAND variable replaces every flag with its prefix set below
+        it, matching portage.
+        """
+        conf = self._settings.orig
+        use = conf.get("USE", ())
+        if isinstance(use, str):
+            use = use.split()
+        use = list(use)
+        for u in self.profile.use_expand:
+            if (value := conf.get(u)) is None:
+                continue
+            if not isinstance(value, str):
+                value = " ".join(value)
+            prefix = u.lower() + "_"
+            use.append(f"-{prefix}*")
+            use.extend(
+                f"-{prefix}{x[1:]}" if x[0] == "-" else prefix + x
+                for x in value.split()
+            )
+        return tuple(optimize_incrementals(use))
+
+    def _stack_use(self, profile_pkg_use):
+        # Evaluated left to right, as portage's USE_ORDER does: profile and
+        # make.conf USE, profile package.use, make.conf again so it overrides
+        # profile package.use, user package.use, and the environment last.
         use = ChunkedDataDict()
         use.add_bare_global(*split_negations(self.use))
-        use.merge(self.profile.pkg_use)
+        use.merge(profile_pkg_use)
+        use.add_bare_global(*split_negations(self.conf_use))
         use.update_from_stream(chunked_data(k, *v) for k, v in self.pkg_use)
+        env_use = tuple(optimize_incrementals(os.environ.get("USE", "").split()))
+        use.add_bare_global(*split_negations(env_use))
         use.freeze()
         return use
 
+    @klass.jit_attr_named("_jit_reset_enabled_use", uncached_val=None)
+    def enabled_use(self):
+        return self._stack_use(self.profile.pkg_use)
+
     @klass.jit_attr_named("_jit_reset_stable_enabled_use", uncached_val=None)
     def stable_enabled_use(self):
-        use = ChunkedDataDict()
-        use.add_bare_global(*split_negations(self.use))
-        use.merge(self.profile.stable_use)
-        use.update_from_stream(chunked_data(k, *v) for k, v in self.pkg_use)
-        use.freeze()
-        return use
+        return self._stack_use(self.profile.stable_use)
 
     @klass.jit_attr_none
     def forced_use(self):

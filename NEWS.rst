@@ -46,6 +46,11 @@ Fixes
 - ``ACCEPT_KEYWORDS`` wildcards (``*``, ``~*`` and ``**``) work without any
   package.accept_keywords entries (Arthur Zamarin)
 
+- USE is now stacked in portage's order: make.conf USE, including ``-*`` and
+  USE_EXPAND variables such as ``VIDEO_CARDS``, overrides the profile's
+  package.use, and ``USE`` from the environment overrides package.use
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

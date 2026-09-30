@@ -135,14 +135,22 @@ class IpcCommand:
 
     @staticmethod
     def _encode_ret(ret):
-        """Encode exit status and any returned value to be sent back to the bash side."""
+        """Encode exit status and any returned value to be sent back to the bash side.
+
+        The bash side reads a single line, so a multi-line response, such as
+        an error carrying a command's stderr, is joined onto one.
+        """
+
+        def one_line(response):
+            return "; ".join(x for x in map(str.strip, str(response).splitlines()) if x)
+
         if ret is None:
             return 0
         elif isinstance(ret, tuple):
             code, response = ret
-            return f"{code}\x07{response}"
+            return f"{code}\x07{one_line(response)}"
         elif isinstance(ret, (int, str)):
-            return f"0\x07{ret}"
+            return f"0\x07{one_line(ret)}"
         raise TypeError(f"unsupported return status type: {type(ret)}")
 
     def parse_args(self, options, args):

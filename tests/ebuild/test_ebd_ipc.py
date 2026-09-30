@@ -148,3 +148,9 @@ class TestEapply:
         eapply.opts = ebd_ipc.arghparse.Namespace()
         with pytest.raises(ebd_ipc.IpcCommandError, match="no patches in directory"):
             list(eapply.parse_args([], [str(tmp_path)]))
+
+
+def test_multi_line_reply_stays_on_one_line():
+    ret = ebd_ipc.IpcCommand._encode_ret((1, "install: cannot stat 'x'\n  hint\n"))
+    assert ret == "1\x07install: cannot stat 'x'; hint"
+    assert ebd_ipc.IpcCommand._encode_ret("a\nb") == "0\x07a; b"

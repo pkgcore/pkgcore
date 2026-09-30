@@ -152,6 +152,10 @@ Fixes
 - ebd: shutting down a daemon that stopped answering kills it instead of
   hanging forever, as on Ctrl-C during a phase (Arthur Zamarin)
 
+- ebd: a multi-line error from a ``nonfatal`` helper, such as ``install``'s
+  stderr, no longer leaves stray lines that confuse the next helper call
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

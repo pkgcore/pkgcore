@@ -719,16 +719,18 @@ class EbuildProcessor:
         proc = self._proc
         if proc is None:
             return
-        kill = force
+        kill = True
         if not force:
             try:
                 if self.is_responsive:
                     self.write("shutdown_daemon", disable_runtime_exceptions=True)
-                    self.ebd_write.close()
-                    self.ebd_read.close()
                     kill = False
             except (OSError, ValueError):
-                kill = True
+                pass
+        for pipe in (getattr(self, "ebd_write", None), getattr(self, "ebd_read", None)):
+            if pipe is not None:
+                with contextlib.suppress(OSError, ValueError):
+                    pipe.close()
 
         if kill:
             with contextlib.suppress(ProcessLookupError):

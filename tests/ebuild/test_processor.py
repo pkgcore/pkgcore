@@ -1,3 +1,5 @@
+import signal
+
 from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.processor import EbuildProcessor
@@ -86,3 +88,24 @@ class TestClearPreloadedEclasses:
         finally:
             processor.drop_ebuild_processor(ebp)
             ebp.shutdown_processor()
+
+
+def test_unresponsive_daemon_is_killed_on_shutdown(monkeypatch):
+    def hung(*args):
+        raise AssertionError("shutdown waited on an unresponsive daemon")
+
+    ebp = processor.request_ebuild_processor()
+    processor.drop_ebuild_processor(ebp)
+    proc = ebp._proc
+    monkeypatch.setattr(EbuildProcessor, "is_responsive", property(lambda s: False))
+    old = signal.signal(signal.SIGALRM, hung)
+    signal.alarm(10)
+    try:
+        ebp.shutdown_processor()
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old)
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()
+    assert ebp.ebd_write.closed and ebp.ebd_read.closed

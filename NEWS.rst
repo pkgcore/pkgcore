@@ -149,6 +149,9 @@ Fixes
   world writable setgid directory is left alone, as portage does
   (Arthur Zamarin)
 
+- ebd: shutting down a daemon that stopped answering kills it instead of
+  hanging forever, as on Ctrl-C during a phase (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

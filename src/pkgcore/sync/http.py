@@ -51,7 +51,7 @@ class http_syncer(base.Syncer):
         try:
             resp = urllib.request.urlopen(req, context=context)
         except urllib.error.URLError as e:
-            if e.getcode() == 304:  # Not Modified
+            if isinstance(e, urllib.error.HTTPError) and e.code == 304:  # Not Modified
                 logger.debug("content is unchanged")
                 return True
             raise base.SyncError(f"failed fetching {self.uri!r}: {e.reason}") from e

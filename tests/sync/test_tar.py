@@ -1,4 +1,6 @@
 import os
+import urllib.error
+from unittest import mock
 
 import pytest
 
@@ -23,6 +25,21 @@ class TestTarSyncer:
                 for uri in (f"tar+{proto}://repo{ext}", f"{proto}://repo{ext}"):
                     o = tar_syncer("/tmp/foon", uri)
                     assert o.uri == f"{proto}://repo{ext}"
+
+    @mock.patch("urllib.request.urlopen")
+    def test_connection_error(self, urlopen, tmp_path):
+        urlopen.side_effect = urllib.error.URLError("Name or service not known")
+        syncer = tar_syncer(str(tmp_path / "repo"), "https://example.org/repo.tar.gz")
+        with pytest.raises(base.SyncError, match="Name or service not known"):
+            syncer.sync()
+
+    @mock.patch("urllib.request.urlopen")
+    def test_not_modified(self, urlopen, tmp_path):
+        urlopen.side_effect = urllib.error.HTTPError(
+            "https://example.org/repo.tar.gz", 304, "Not Modified", {}, None
+        )
+        syncer = tar_syncer(str(tmp_path / "repo"), "https://example.org/repo.tar.gz")
+        assert syncer.sync()
 
 
 @pytest.mark_network

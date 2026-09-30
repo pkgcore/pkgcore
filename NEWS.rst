@@ -138,6 +138,9 @@ Fixes
   disable EAPI 9, and a bash that can't be queried no longer fails the import
   (Arthur Zamarin)
 
+- http, tar and sqfs sync: a DNS or connection failure is reported as a sync
+  error instead of crashing with ``AttributeError`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

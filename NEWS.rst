@@ -141,6 +141,10 @@ Fixes
 - http, tar and sqfs sync: a DNS or connection failure is reported as a sync
   error instead of crashing with ``AttributeError`` (Arthur Zamarin)
 
+- a failed fetch through package operations created without an observer
+  reports the fetch failure instead of crashing with ``AttributeError``
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

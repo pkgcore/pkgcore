@@ -132,13 +132,15 @@ class operations(_operations_mod.base):
 
     @_operations_mod.is_standalone
     def _cmd_api_fetch(self, fetchables=None, observer=klass.sentinel, distdir=None):
-        observer = observer if observer is not klass.sentinel else self.observer
+        observer = self._get_observer(
+            observer if observer is not klass.sentinel else self.observer
+        )
         if fetchables is None:
             fetchables = self.pkg.fetchables
         elif not isinstance(fetchables, (tuple, list)):
             fetchables = [fetchables]
         fetcher = self._fetch_kls(self.domain, self.pkg, fetchables, distdir)
-        verified, failures = fetcher.fetch_all(self._get_observer(observer))
+        verified, failures = fetcher.fetch_all(observer)
 
         if failures:
             # run pkg_nofetch phase for fetch restricted pkgs

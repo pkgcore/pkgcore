@@ -153,6 +153,11 @@ class _optionals_cls(ImmutableDict):
     inject_getitem_as_getattr(locals())
 
 
+def _version_key(version: str) -> tuple[int, ...]:
+    """Split a dotted version into ints, so 5.10 sorts after 5.3"""
+    return tuple(int(x) for x in version.split("."))
+
+
 class EAPI(immutable.Strict):
     known_eapis = WeakValueDictionary()
     unknown_eapis = WeakValueDictionary()
@@ -221,12 +226,13 @@ class EAPI(immutable.Strict):
             )
 
         if (
-            getattr(eapi.options, "bash_compat", False)
-            and bash_version() < eapi.options.bash_compat
+            (required := getattr(eapi.options, "bash_compat", False))
+            and (system := bash_version()) is not None
+            and _version_key(system) < _version_key(required)
         ):
             logger.warning(
                 f"EAPI '{eapi}' requires >=bash-{eapi.options.bash_compat}, "
-                f"system version: {bash_version()}; disabling EAPI"
+                f"system version: {system}; disabling EAPI"
             )
             sys.stderr.flush()
             cls.unknown_eapis[eapi.magic] = eapi

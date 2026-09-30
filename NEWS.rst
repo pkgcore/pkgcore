@@ -134,6 +134,10 @@ Fixes
   ones, so ``portage-2`` repos with an extra format keep directory support
   (Arthur Zamarin)
 
+- the bash version an EAPI needs is compared numerically, so bash 5.10 won't
+  disable EAPI 9, and a bash that can't be queried no longer fails the import
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

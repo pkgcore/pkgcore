@@ -55,6 +55,14 @@ class TestEAPI:
             test_eapi = EAPI.register(magic="test1", optionals={"bash_compat": "4.1"})
             assert test_eapi.magic == "test1"
             assert "test1" in EAPI.known_eapis
+            bash_version.return_value = "5.10.0"
+            test_eapi = EAPI.register(magic="test2", optionals={"bash_compat": "5.3"})
+            assert "test2" in EAPI.known_eapis
+
+            # unknown system bash version
+            bash_version.return_value = None
+            test_eapi = EAPI.register(magic="test3", optionals={"bash_compat": "5.3"})
+            assert "test3" in EAPI.known_eapis
 
     def test_system_bash_supports_bundled_eapis(self):
         bash_version.cache_clear()

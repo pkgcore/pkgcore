@@ -235,12 +235,11 @@ def get_repos(options, out, err):
 def find_profile_paths_by_repo_id(config, repo_id, fullpath=False):
     repo = config.repo.get(repo_id, None)
     if repo is not None and getattr(repo, "location", None) is not None:
-        profiles = repo.config.profiles.arch_profiles
-        for arch in profiles:
-            for path, stability in profiles[arch]:
-                if fullpath:
-                    path = os.path.join(repo.location, "profiles", path)
-                yield path
+        for profile in repo.config.profiles:
+            path = profile.path
+            if fullpath:
+                path = os.path.join(repo.location, "profiles", path)
+            yield path
 
 
 @BaseCommand.make_command("repo_id", bind=query_commands)

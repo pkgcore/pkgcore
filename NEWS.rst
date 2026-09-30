@@ -117,6 +117,9 @@ Fixes
 - ``bugzilla_cassette`` fixture: a test that fails no longer gets an extra
   "unused recordings" error on top (Arthur Zamarin)
 
+- ``pinspect profile status`` and ``pinspect query get_profiles`` work again
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

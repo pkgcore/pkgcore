@@ -385,41 +385,47 @@ def convert_string(central, value, arg_type: str):
 
 def convert_asis(central, value, arg_type: str):
     """ "Conversion" func assuming the types are already correct."""
-    if arg_type == "callable":
-        if not callable(value):
-            raise errors.ConfigurationError(f"{value!r} is not callable")
-        return value
-    elif arg_type.startswith("ref:"):
-        if not isinstance(value, ConfigSection):
-            raise errors.ConfigurationError(f"{value!r} is not a config section")
-        return LazyUnnamedSectionRef(central, arg_type, value)
-    elif arg_type.startswith("refs:"):
-        l = []
-        for section in value:
-            if not isinstance(section, ConfigSection):
+    match arg_type:
+        case "callable":
+            if not callable(value):
+                raise errors.ConfigurationError(f"{value!r} is not callable")
+            return value
+        case _ if arg_type.startswith("ref:"):
+            if not isinstance(value, ConfigSection):
                 raise errors.ConfigurationError(f"{value!r} is not a config section")
-            l.append(LazyUnnamedSectionRef(central, arg_type, section))
-        return l
-    elif arg_type == "repr":
-        if callable(value):
-            return "callable", value
-        if isinstance(value, ConfigSection):
-            return "ref", value
-        if isinstance(value, str):
-            return "str", value
-        if isinstance(value, bool):
-            return "bool", value
-        if isinstance(value, (list, tuple)):
-            if not value or isinstance(value[0], str):
-                return "list", value
-            if isinstance(value[0], ConfigSection):
-                return "refs", value
-        raise errors.ConfigurationError(f"unsupported type for {value!r}")
-    elif not isinstance(
-        value, {"list": (list, tuple), "str": str, "bool": bool, "int": int}[arg_type]
-    ):
-        raise errors.ConfigurationError(f"{value!r} does not have type {arg_type!r}")
-    return value
+            return LazyUnnamedSectionRef(central, arg_type, value)
+        case _ if arg_type.startswith("refs:"):
+            l = []
+            for section in value:
+                if not isinstance(section, ConfigSection):
+                    raise errors.ConfigurationError(
+                        f"{value!r} is not a config section"
+                    )
+                l.append(LazyUnnamedSectionRef(central, arg_type, section))
+            return l
+        case "repr":
+            match value:
+                case _ if callable(value):
+                    return "callable", value
+                case ConfigSection():
+                    return "ref", value
+                case str():
+                    return "str", value
+                case bool():
+                    return "bool", value
+                case list() | tuple() if not value or isinstance(value[0], str):
+                    return "list", value
+                case list() | tuple() if isinstance(value[0], ConfigSection):
+                    return "refs", value
+            raise errors.ConfigurationError(f"unsupported type for {value!r}")
+        case "list" | "str" | "bool" | "int":
+            expected = {"list": (list, tuple), "str": str, "bool": bool, "int": int}
+            if not isinstance(value, expected[arg_type]):
+                raise errors.ConfigurationError(
+                    f"{value!r} does not have type {arg_type!r}"
+                )
+            return value
+    raise errors.ConfigurationError(f"unknown type {arg_type!r}")
 
 
 def convert_hybrid(central, value, arg_type: str):

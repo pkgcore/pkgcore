@@ -156,7 +156,7 @@ class rsync_syncer(base.ExternalSyncer):
             if ret == 0:
                 return True
             elif ret == 1:
-                raise base.SyncError("rsync command syntax error: {' '.join(cmd)}")
+                raise base.SyncError(f"rsync command syntax error: {' '.join(cmd)}")
             elif ret == 11:
                 raise base.SyncError("rsync ran out of disk space")
         # need to do something here instead of just restarting...

@@ -21,6 +21,14 @@ def make_fetcher(distdir: str, attempts=2):
     )
 
 
+def chksums_for(data: bytes):
+    from snakeoil import data_source
+    from snakeoil.chksum import get_handlers
+
+    handlers = get_handlers()
+    return {chf: handlers[chf](data_source.data_source(data)) for chf in handlers}
+
+
 def partial_content(path: str):
     with open(path, "wb") as f:
         f.write(b"partial download content")
@@ -142,3 +150,94 @@ class TestFetch:
         with mock.patch("pkgcore.fetch.custom.subprocess.run", side_effect=fake_run):
             assert fetcher.fetch(target) == expected_path
         assert len(calls) == attempts
+
+
+class TestCommand:
+    def test_placeholders_are_rewritten(self, distdir: str):
+        fetcher = custom.fetcher(
+            distdir=distdir,
+            command="wget ${URI} -O ${DISTDIR}/${FILE}",
+            resume_command="wget -c $URI -O $DISTDIR/$FILE",
+        )
+        assert fetcher.command == f"wget %(URI)s -O {distdir}/%(FILE)s"
+        assert fetcher.resume_command == f"wget -c %(URI)s -O {distdir}/%(FILE)s"
+
+    def test_resume_defaults_to_command(self, distdir: str):
+        fetcher = custom.fetcher(distdir=distdir, command="wget ${URI}")
+        assert fetcher.resume_command == fetcher.command
+
+    @pytest.mark.parametrize(
+        "command", ("wget http://example.org/x", "wget ${URI} %(OTHER)s")
+    )
+    def test_malformed(self, distdir: str, command):
+        with pytest.raises(custom.MalformedCommand):
+            custom.fetcher(distdir=distdir, command=command)
+
+
+class TestFetchAttempts:
+    data = b"complete file content for checksum"
+
+    def mk_fetcher(self, distdir, attempts=3):
+        return custom.fetcher(
+            distdir=distdir,
+            command="fetch ${URI} ${FILE}",
+            resume_command="resume ${URI} ${FILE}",
+            userpriv=False,
+            attempts=attempts,
+        )
+
+    def target(self, *uris):
+        return fetchable("file.tar.gz", uri=list(uris), chksums=chksums_for(self.data))
+
+    def test_partial_download_is_resumed(self, distdir: str):
+        path = os.path.join(distdir, "file.tar.gz")
+        commands = []
+
+        def fake_run(cmd, **kwargs):
+            commands.append(cmd[-1])
+            with open(path, "wb") as f:
+                f.write(
+                    self.data[: len(self.data) // 2 if len(commands) == 1 else None]
+                )
+            return subprocess.CompletedProcess(cmd, 0)
+
+        target = self.target("http://a.example.org/f", "http://b.example.org/f")
+        with mock.patch("pkgcore.fetch.custom.subprocess.run", side_effect=fake_run):
+            assert self.mk_fetcher(distdir).fetch(target) == path
+        assert commands[0].startswith("fetch http://a.example.org/f")
+        assert commands[1].startswith("resume http://b.example.org/f")
+
+    def test_runs_out_of_uris(self, distdir: str):
+        target = self.target("http://a.example.org/f")
+        with (
+            mock.patch(
+                "pkgcore.fetch.custom.subprocess.run",
+                return_value=subprocess.CompletedProcess([], 1),
+            ) as run,
+            pytest.raises(errors.FetchFailed, match="ran out of urls"),
+        ):
+            self.mk_fetcher(distdir).fetch(target)
+        assert run.call_count == 1
+
+    def test_corrupt_existing_file_is_not_refetched(self, distdir: str):
+        with open(os.path.join(distdir, "file.tar.gz"), "wb") as f:
+            f.write(b"x" * len(self.data))
+        target = self.target("http://a.example.org/f")
+        with (
+            mock.patch("pkgcore.fetch.custom.subprocess.run") as run,
+            pytest.raises(errors.ChksumFailure),
+        ):
+            self.mk_fetcher(distdir).fetch(target)
+        run.assert_not_called()
+
+    def test_existing_valid_file_is_not_refetched(self, distdir: str):
+        path = os.path.join(distdir, "file.tar.gz")
+        with open(path, "wb") as f:
+            f.write(self.data)
+        with mock.patch("pkgcore.fetch.custom.subprocess.run") as run:
+            assert self.mk_fetcher(distdir).fetch(self.target("http://a/f")) == path
+        run.assert_not_called()
+
+    def test_rejects_non_fetchables(self, distdir: str):
+        with pytest.raises(TypeError):
+            self.mk_fetcher(distdir).fetch("file.tar.gz")

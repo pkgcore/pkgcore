@@ -341,6 +341,11 @@ class TestConvertAsIs:
                     with pytest.raises(errors.ConfigurationError):
                         basics.convert_asis(None, value, typename)
 
+    def test_int(self):
+        assert basics.convert_asis(None, 42, "int") == 42
+        with pytest.raises(errors.ConfigurationError):
+            basics.convert_asis(None, "42", "int")
+
     def test_repr(self):
         for typename, value in self.source.items():
             assert (typename, value) == basics.convert_asis(None, value, "repr")

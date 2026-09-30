@@ -156,6 +156,9 @@ Fixes
   stderr, no longer leaves stray lines that confuse the next helper call
   (Arthur Zamarin)
 
+- config: a native int given to an int typed setting, as from Python built
+  config sections, is accepted instead of failing to convert (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

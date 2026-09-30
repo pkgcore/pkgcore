@@ -416,7 +416,7 @@ def convert_asis(central, value, arg_type: str):
                 return "refs", value
         raise errors.ConfigurationError(f"unsupported type for {value!r}")
     elif not isinstance(
-        value, {"list": (list, tuple), "str": str, "bool": bool}[arg_type]
+        value, {"list": (list, tuple), "str": str, "bool": bool, "int": int}[arg_type]
     ):
         raise errors.ConfigurationError(f"{value!r} does not have type {arg_type!r}")
     return value

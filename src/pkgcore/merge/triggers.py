@@ -536,19 +536,18 @@ class fix_set_bits(base):
 
     def trigger(self, engine, cset):
         reporter = engine.observer
-        # if s(uid|gid) *and* world writable...
-        l = [x for x in cset.iterlinks(True) if (x.mode & 0o6000) and (x.mode & 0o002)]
+        # files that are s(uid|gid) *and* world writable; a setgid shared
+        # directory is fine, as portage also only checks files
+        l = [x for x in cset.iterfiles() if (x.mode & 0o6000) and (x.mode & 0o002)]
 
         if reporter is not None:
             for x in l:
-                if x.mode & 0o4000:
-                    reporter.warn(
-                        f"correcting unsafe world writable SetGID: {x.location}"
-                    )
-                else:
-                    reporter.warn(
-                        f"correcting unsafe world writable SetUID: {x.location}"
-                    )
+                bits = " and ".join(
+                    name
+                    for bit, name in ((0o4000, "SetUID"), (0o2000, "SetGID"))
+                    if x.mode & bit
+                )
+                reporter.warn(f"correcting unsafe world writable {bits}: {x.location}")
         if l:
             # wipe setgid/setuid
             cset.update(x.change_attributes(mode=x.mode & ~0o6002) for x in l)

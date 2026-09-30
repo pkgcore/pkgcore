@@ -145,6 +145,10 @@ Fixes
   reports the fetch failure instead of crashing with ``AttributeError``
   (Arthur Zamarin)
 
+- the unsafe world writable SetUID/SetGID warning names the right bit, and a
+  world writable setgid directory is left alone, as portage does
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

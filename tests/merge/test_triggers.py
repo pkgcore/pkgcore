@@ -500,16 +500,41 @@ class Test_fix_gid_perms(single_attr_change_base):
     attr = "gid"
 
 
-class Test_fix_set_bits(single_attr_change_base):
-    kls = triggers.fix_set_bits
-    trigger = property(lambda self: self.kls())
-    attr = "mode"
+class Test_fix_set_bits:
+    def run(self, *objs):
+        warnings = []
+        engine = fake_engine(
+            mode=const.INSTALL_MODE, observer=fake_reporter(warn=warnings.append)
+        )
+        cset = contentsSet(objs)
+        triggers.fix_set_bits().trigger(engine, cset)
+        return {x.location: x.mode for x in cset}, warnings
 
-    @staticmethod
-    def good_val(val):
-        if val & 0o6000 and val & 0o002:
-            return val & ~0o6002
-        return val
+    def test_metadata(self):
+        assert triggers.fix_set_bits._engine_types == triggers.INSTALLING_MODES
+        assert triggers.fix_set_bits.required_csets == ("new_cset",)
+
+    @pytest.mark.parametrize(
+        ("mode", "label"),
+        ((0o4777, "SetUID"), (0o2777, "SetGID"), (0o6777, "SetUID and SetGID")),
+    )
+    def test_world_writable_set_bits_are_wiped(self, mode, label):
+        modes, warnings = self.run(fs.fsFile("/usr/bin/foo", mode=mode, strict=False))
+        assert modes == {"/usr/bin/foo": 0o775}
+        assert warnings == [f"correcting unsafe world writable {label}: /usr/bin/foo"]
+
+    def test_safe_files_are_left_alone(self):
+        modes, warnings = self.run(
+            fs.fsFile("/usr/bin/suid", mode=0o4755, strict=False),
+            fs.fsFile("/usr/bin/writable", mode=0o777, strict=False),
+        )
+        assert modes == {"/usr/bin/suid": 0o4755, "/usr/bin/writable": 0o777}
+        assert warnings == []
+
+    def test_setgid_shared_directory_is_left_alone(self):
+        modes, warnings = self.run(fs.fsDir("/var/shared", mode=0o2777, strict=False))
+        assert modes == {"/var/shared": 0o2777}
+        assert warnings == []
 
 
 class Test_detect_world_writable(single_attr_change_base):

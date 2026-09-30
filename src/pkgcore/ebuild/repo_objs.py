@@ -956,7 +956,8 @@ class RepoConfig(syncable.tree, immutable.Strict):
                 ", ".join(sorted(unknown)),
             )
             profile_formats.difference_update(unknown)
-            profile_formats.add("pms")
+            if not profile_formats:
+                profile_formats.add("pms")
         sf(self, "profile_formats", profile_formats)
 
     @klass.jit_attr

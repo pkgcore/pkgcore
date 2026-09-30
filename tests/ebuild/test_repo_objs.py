@@ -837,7 +837,7 @@ class TestRepoConfig:
         with open(self.metadata_path, "w") as f:
             f.write("masters =\nprofile-formats = foo portage-2\n")
         repo_config = repo_objs.RepoConfig(self.repo_path)
-        assert repo_config.profile_formats == {"pms", "portage-2"}
+        assert repo_config.profile_formats == {"portage-2"}
         assert not caplog.text
         caplog.clear()
 

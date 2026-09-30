@@ -159,6 +159,9 @@ Fixes
 - config: a native int given to an int typed setting, as from Python built
   config sections, is accepted instead of failing to convert (Arthur Zamarin)
 
+- ``pconfig dump`` and ``pconfig dump-uncollapsed`` show int settings
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

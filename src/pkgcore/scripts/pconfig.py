@@ -41,6 +41,8 @@ def dump_section(config, out):
             out.write(f"{key} {val!r};")
         elif typename == "bool":
             out.write(f"{key} {bool(val)};")
+        elif typename == "int":
+            out.write(f"{key} {val};")
         elif typename == "list":
             out.write(f"{key} {' '.join(map(repr, val))};")
         elif typename == "callable":
@@ -342,7 +344,7 @@ def _dump_uncollapsed_section(config, out, err, section):
         out.write(f"{key!r} = ", autoline=False)
         if kind == "callable":
             out.write(value.__module__, value.__name__)
-        elif kind == "bool":
+        elif kind in ("bool", "int"):
             out.write(str(value))
         elif kind == "ref":
             out.first_prefix.append("    ")

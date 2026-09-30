@@ -44,6 +44,11 @@ def broken_type(*args):
     """Noop."""
 
 
+@configurable(types={"count": "int"})
+def counter(count=0):
+    """Configurable with an int setting."""
+
+
 @configurable(types={"inc": "list"}, allow_unknowns=True)
 def increment(inc=()):
     """Noop."""
@@ -180,6 +185,20 @@ class TestDump(ArgParseMixin):
             ),
         )
 
+    def test_int(self):
+        self.assertOut(
+            [
+                "'spork' {",
+                "    # typename of this section: counter",
+                "    class tests.scripts.test_pconfig.counter;",
+                "    # type: int",
+                "    count 3;",
+                "}",
+                "",
+            ],
+            spork=basics.HardCodedConfigSection({"class": counter, "count": 3}),
+        )
+
     def test_serialise(self):
         nest = basics.HardCodedConfigSection({"class": pseudospork})
         self.assertOut(
@@ -304,6 +323,30 @@ class WeirdSection(basics.ConfigSection):
 
 class TestDumpUncollapsed(ArgParseMixin):
     _argparser = pconfig.dump_uncollapsed
+
+    def test_int(self):
+        self.assertOut(
+            [
+                "# Warning:",
+                "# Do not copy this output to a configuration file directly,",
+                "# because the types you see here are only guesses.",
+                '# A value used as "list" in the collapsed config will often',
+                '# show up as "string" here and may need to be converted',
+                "# (for example from space-separated to comma-separated)",
+                "# to work in a config file with a different format.",
+                "",
+                "********",
+                "Source 1",
+                "********",
+                "",
+                "spork",
+                "=====",
+                "# type: int",
+                "'count' = 3",
+                "",
+            ],
+            spork=basics.HardCodedConfigSection({"count": 3}),
+        )
 
     def test_dump_uncollapsed(self):
         self.assertOut(

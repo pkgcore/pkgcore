@@ -413,6 +413,8 @@ def convert_asis(central, value, arg_type: str):
                     return "str", value
                 case bool():
                     return "bool", value
+                case int():
+                    return "int", value
                 case list() | tuple() if not value or isinstance(value[0], str):
                     return "list", value
                 case list() | tuple() if isinstance(value[0], ConfigSection):

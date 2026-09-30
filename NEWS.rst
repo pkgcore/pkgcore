@@ -126,6 +126,10 @@ Fixes
   than as local time, so the "is the tree new enough" check isn't skewed by the
   local timezone (Arthur Zamarin)
 
+- libtool archive fixing no longer rewrites every ``.la`` file that has an
+  ``inherited_linker_flags`` entry, and moves thread flags into that entry
+  when present, as portage does (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

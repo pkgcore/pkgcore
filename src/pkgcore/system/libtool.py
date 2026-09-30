@@ -65,8 +65,11 @@ def rewrite_lafile(handle, filename):
         return False, None
 
     original_libs = raw_dep_libs.split()
-    rpaths, libs, libladirs, inherited_flags = [], [], [], []
-    original_inherited_flags = data.get("inherited_linker_flags", [])
+    rpaths, libs, libladirs = [], [], []
+    # flags only move into inherited_linker_flags if the file already has it
+    raw_inherited_flags = data.get("inherited_linker_flags")
+    original_inherited_flags = (raw_inherited_flags or "").split()
+    inherited_flags = list(original_inherited_flags)
 
     for item in unique_stable(original_libs):
         if item.startswith("-l"):
@@ -89,7 +92,7 @@ def rewrite_lafile(handle, filename):
         elif item.startswith("-R"):
             rpaths.append(item)
         elif flags_match(item):
-            if inherited_flags:
+            if raw_inherited_flags is not None:
                 inherited_flags.append(item)
             else:
                 libs.append(item)
@@ -102,9 +105,9 @@ def rewrite_lafile(handle, filename):
 
     # must be prefixed with a space
     data["dependency_libs"] = " " + (" ".join(libs))
-    if inherited_flags:
+    if raw_inherited_flags is not None:
         # must be prefixed with a space
-        data["inherited_flags"] = " " + (" ".join(inherited_flags))
+        data["inherited_linker_flags"] = "".join(f" {x}" for x in inherited_flags)
     content = "\n".join(f"{k}='{v}'" for k, v in sorted(data.items()))
     return True, template % {"content": content, "file": filename}
 

@@ -35,6 +35,7 @@ class TestCVSSyncer:
             assert o.module == "module"
             assert o.rsh is None
             assert o.env["CVSROOT"] == ":anoncvs:dar"
+            assert o._initial_pull()[-1] == "module"
 
             o = cvs.cvs_syncer(str(self.repo_path), "cvs+pserver://dar:module")
             assert o.uri == ":pserver:dar"

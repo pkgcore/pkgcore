@@ -61,4 +61,4 @@ class cvs_syncer(base.VcsSyncer):
         return [self.binary_path, "up"]
 
     def _initial_pull(self):
-        return [self.binary_path, "co", "-d", self.basedir]
+        return [self.binary_path, "co", "-d", self.basedir, self.module]

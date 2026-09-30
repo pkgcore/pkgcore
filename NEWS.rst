@@ -120,6 +120,8 @@ Fixes
 - ``pinspect profile status`` and ``pinspect query get_profiles`` work again
   (Arthur Zamarin)
 
+- cvs sync: the first checkout names the module to check out (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

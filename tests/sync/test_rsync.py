@@ -1,5 +1,6 @@
 import datetime
 import os
+import time
 from unittest import mock
 
 import pytest
@@ -156,3 +157,34 @@ class TestRsyncTimestampCheck:
         assert run.call_count == 2
         cmd = run.call_args.args[0]
         assert cmd[2].rstrip("/") == str(self.repo_path)
+
+
+class TestCurrentTimestamp:
+    @pytest.fixture(autouse=True)
+    def _setup(self, tmp_path, monkeypatch):
+        # a non-UTC local zone, to catch parsing in local time
+        monkeypatch.setenv("TZ", "Asia/Jerusalem")
+        time.tzset()
+        yield
+        monkeypatch.undo()
+        time.tzset()
+
+    @pytest.mark.parametrize(
+        "stamp",
+        (
+            "Mon, 28 Sep 2026 10:00:00 +0000",
+            "Mon, 28 Sep 2026 12:30:00 +0230",
+            "Mon, 28 Sep 2026 05:00:00 -0500",
+            "Mon, 28 Sep 2026 10:00:00 -0000",
+        ),
+    )
+    def test_offsets(self, tmp_path, stamp):
+        path = tmp_path / "timestamp.chk"
+        path.write_text(stamp + "\n")
+        expected = datetime.datetime(2026, 9, 28, 10, tzinfo=datetime.UTC).timestamp()
+        assert rsync.rsync_timestamp_syncer.current_timestamp(None, path) == expected
+
+    def test_malformed(self, tmp_path):
+        path = tmp_path / "timestamp.chk"
+        path.write_text("not a date\n")
+        assert rsync.rsync_timestamp_syncer.current_timestamp(None, path) is None

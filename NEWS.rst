@@ -122,6 +122,10 @@ Fixes
 
 - cvs sync: the first checkout names the module to check out (Arthur Zamarin)
 
+- rsync sync: ``metadata/timestamp.chk`` is read as UTC with its offset, rather
+  than as local time, so the "is the tree new enough" check isn't skewed by the
+  local timezone (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

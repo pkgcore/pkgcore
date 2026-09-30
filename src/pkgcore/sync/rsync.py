@@ -9,6 +9,8 @@ import socket
 import tempfile
 import time
 import typing
+from datetime import UTC
+from email.utils import parsedate_to_datetime
 from itertools import islice
 from os.path import join as pjoin
 
@@ -175,20 +177,18 @@ class rsync_timestamp_syncer(rsync_syncer):
     def current_timestamp(self, path=None):
         """
         :param path: override the default path for the timestamp to read
-        :return: string of the timestamp data
+        :return: seconds since the epoch, or None if missing or malformed
         """
         if path is None:
             path = pjoin(self.basedir, "metadata", "timestamp.chk")
         try:
             with open(path) as f:
-                date, offset = f.read().strip().rsplit("+", 1)
-            date = time.mktime(time.strptime(date, "%a, %d %b %Y %H:%M:%S "))
-            # add the hour/minute offset
-            date += int(offset[:2]) * 60 + int(offset[2:])
-            return date
+                date = parsedate_to_datetime(f.read().strip())
+            # "-0000" means UTC with the zone unknown, and parses as naive
+            return date.replace(tzinfo=date.tzinfo or UTC).timestamp()
         except (FileNotFoundError, NotADirectoryError):
             return None
-        except ValueError:
+        except (TypeError, ValueError):
             # malformed timestamp
             return None
 

@@ -317,27 +317,21 @@ class domain(config_domain):
         if "MAKEOPTS" not in settings:
             settings["MAKEOPTS"] = f"-j{cpu_count()}"
 
-        # reformat env.d and make.conf incrementals
-        system_profile_settings = {}
-        for x in INCREMENTALS:
-            system_profile_val = self.system_shell_profile.get(x, ())
-            make_conf_val = settings.get(x, ())
-            if isinstance(system_profile_val, str):
-                system_profile_val = tuple(system_profile_val.split())
-            if isinstance(make_conf_val, str):
-                make_conf_val = tuple(make_conf_val.split())
-            system_profile_settings[x] = system_profile_val
-            settings[x] = make_conf_val
-
         # roughly... all incremental stacks should be interpreted left -> right
         # as such we start with the env.d settings, append profile settings,
         # and finally append make.conf settings onto that.
+        def as_tuple(val):
+            return tuple(val.split()) if isinstance(val, str) else tuple(val)
+
+        for x in INCREMENTALS:
+            settings[x] = (
+                as_tuple(self.system_shell_profile.get(x, ()))
+                + as_tuple(self.profile.default_env.get(x, ()))
+                + as_tuple(settings.get(x, ()))
+            )
         for k, v in self.profile.default_env.items():
             if k not in settings:
                 settings[k] = v
-                continue
-            if k in INCREMENTALS:
-                settings[k] = system_profile_settings[k] + v + settings[k]
 
         # next we finalize incrementals.
         for incremental in INCREMENTALS:

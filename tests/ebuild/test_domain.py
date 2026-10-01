@@ -212,6 +212,22 @@ class TestDomain:
         domain = self.use_layers_domain()
         assert "foo" not in self.enabled(domain)
 
+    def test_env_d_incrementals(self):
+        (self.rootdir / "etc").mkdir()
+        (self.rootdir / "etc" / "profile.env").write_text(
+            "export CONFIG_PROTECT='/usr/share/config'\n"
+            "export CONFIG_PROTECT_MASK='/etc/sandbox.d'\n"
+        )
+        (self.profile1 / "make.defaults").write_text(
+            'ARCH="amd64"\nACCEPT_KEYWORDS="amd64"\nCONFIG_PROTECT="/etc"\n'
+        )
+        domain = self.mk_domain(CONFIG_PROTECT_MASK="/etc/env.d")
+        # these are handed over to the triggers rather than kept in settings
+        assert "CONFIG_PROTECT_MASK" not in domain.settings
+        opts = domain._triggers.opts
+        assert set(opts["CONFIG_PROTECT"]) == {"/usr/share/config", "/etc"}
+        assert set(opts["CONFIG_PROTECT_MASK"]) == {"/etc/sandbox.d", "/etc/env.d"}
+
     def test_use_flag_parsing_enforcement(self, caplog):
         (self.pusedir / "a").write_text("*/* X:")
         assert ((packages.AlwaysTrue, ((), ())),) == self.mk_domain().pkg_use

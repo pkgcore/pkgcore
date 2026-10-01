@@ -165,6 +165,9 @@ Fixes
 - ``pmaint eclass <dir>`` reads the eclasses from that directory rather than
   the current one (Arthur Zamarin)
 
+- incremental settings from ``/etc/profile.env``, such as ``CONFIG_PROTECT_MASK``,
+  are kept even when the profile doesn't set them (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

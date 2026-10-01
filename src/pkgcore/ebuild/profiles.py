@@ -178,6 +178,15 @@ _make_incrementals_dict = partial(misc.IncrementalsDict, INCREMENTALS)
 _Packages = namedtuple("_Packages", ("system", "profile"))
 
 
+def _log_bad_parent(node, lineno, line, error):
+    """Report a parent entry that doesn't load, for profiles in a repo or not"""
+    if (repoconfig := node.repoconfig) is not None:
+        where = f"repo {repoconfig.repo_id!r}: '{node.name}/parent'"
+    else:
+        where = f"'{pjoin(node.path, 'parent')}'"
+    logger.error(f"{where} (line {lineno}), bad profile parent {line!r}: {error}")
+
+
 class ProfileNode(WeaklyCached):
     _repo_map = None
 
@@ -295,11 +304,7 @@ class ProfileNode(WeaklyCached):
             try:
                 parents.append(kls(path))
             except ProfileError as e:
-                repo_id = self.repoconfig.repo_id
-                logger.error(
-                    f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
-                    f"bad profile parent {line!r}: {e.error}"
-                )
+                _log_bad_parent(self, lineno, line, e.error)
                 continue
         return tuple(parents)
 
@@ -697,11 +702,7 @@ class ProfileStack:
                 try:
                     x = self._node_kls._autodetect_and_create(path)
                 except ProfileError as exc:
-                    repo_id = node.repoconfig.repo_id
-                    logger.error(
-                        f"repo {repo_id!r}: '{self.name}/parent' (line {lineno}), "
-                        f"bad profile parent {line!r}: {exc.error}"
-                    )
+                    _log_bad_parent(node, lineno, line, exc.error)
                     continue
                 yield from f(x)
             yield node

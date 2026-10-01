@@ -168,6 +168,10 @@ Fixes
 - incremental settings from ``/etc/profile.env``, such as ``CONFIG_PROTECT_MASK``,
   are kept even when the profile doesn't set them (Arthur Zamarin)
 
+- a bad ``parent`` entry in a profile outside a repo, such as a stale
+  ``/etc/portage/make.profile`` directory, is logged instead of crashing with
+  ``AttributeError`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

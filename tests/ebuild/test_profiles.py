@@ -1883,3 +1883,17 @@ class TestProfileEapiDefault:
         profiles_base.mkdir(parents=True)
         (profiles_base / "repo_name").write_text("test\n")
         assert str(profiles.EmptyRootNode(str(profiles_base)).eapi) == "0"
+
+
+@pytest.mark.parametrize("attr", ("stack", "parents"))
+def test_bad_parent_outside_a_repo(tmp_path, caplog, attr):
+    profile = tmp_path / "make.profile"
+    profile.mkdir()
+    (profile / "parent").write_text("../removed\n")
+    target = profiles.ProfileStack(str(profile))
+    if attr == "parents":
+        target = target.node
+    getattr(target, attr)
+    assert (
+        f"'{profile}/parent' (line 1), bad profile parent '../removed'" in caplog.text
+    )

@@ -186,6 +186,9 @@ Fixes
   only ``--pretend`` lists them, one bare path per line when redirected
   (Arthur Zamarin)
 
+- ``restrictions``: the DNF solutions of a negated ``OrRestriction`` are only
+  the negated terms, without the original ones after them (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

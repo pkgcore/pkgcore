@@ -142,6 +142,10 @@ class TestOrRestriction(base):
         ]
         assert self.kls().dnf_solutions() == [[]]
 
+    def test_negate_dnf_solutions(self):
+        (solution,) = self.kls(true, false, negate=True).dnf_solutions()
+        assert [x.match(None) for x in solution] == [False, True]
+
     def test_cnf_solutions(self):
         assert self.kls(true, true).cnf_solutions() == [[true, true]]
         assert [

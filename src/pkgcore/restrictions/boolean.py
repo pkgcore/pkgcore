@@ -515,11 +515,11 @@ class OrRestriction(base):
         """
         if self.negate:
             # hack- this is an experiment
-            for x in AndRestriction(
+            yield from AndRestriction(
                 *[restriction.Negate(x) for x in self.restrictions],
                 node_type=self.type,
-            ).iter_dnf_solutions():
-                yield x
+            ).iter_dnf_solutions(full_solution_expansion)
+            return
         if not self.restrictions:
             yield []
             return

@@ -328,6 +328,7 @@ class ContainmentMatch(_HashedGenericEquality, base):
             for k in vals:
                 if k in val:
                     return not self.negate
+            return self.negate
 
     def force_False(self, pkg, attr, val, _values_override=None):
         # "More than one statement on a single line"

@@ -248,7 +248,7 @@ class StrGlobMatch(_HashedGenericEquality, base):
             s = "not "
         if self.prefix:
             return f"{s}{self.glob}*"
-        return "{s}*{self.glob}"
+        return f"{s}*{self.glob}"
 
 
 class EqualityMatch(base):

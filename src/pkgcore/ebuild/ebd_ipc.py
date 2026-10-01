@@ -722,7 +722,7 @@ class Doman(_InstallWrapper):
     insoptions_default = "-m0644"
 
     arg_parser = IpcArgumentParser(parents=(_InstallWrapper.arg_parser,))
-    arg_parser.add_argument("-i18n", action="store_true", default="")
+    arg_parser.add_argument("-i18n")
 
     detect_lang_re = re.compile(r"^(\w+)\.([a-z]{2}([A-Z]{2})?)\.(\w+)$")
     valid_mandir_re = re.compile(r"man[0-9n](f|p|pm)?$")
@@ -745,13 +745,15 @@ class Doman(_InstallWrapper):
             name = basename
             mandir = f"man{ext[1:]}"
 
-            if self.language_override and self.opts.i18n:
-                mandir = pjoin(self.opts.i18n, mandir)
-            elif self.language_detect:
-                match = self.detect_lang_re.match(basename)
-                if match:
-                    name = f"{match.group(1)}.{match.group(4)}"
-                    mandir = pjoin(match.group(2), mandir)
+            # -i18n, even an empty one, wins over a language in the filename
+            # in EAPIs with language_override, and loses in the others
+            i18n = self.opts.i18n
+            match = self.language_detect and self.detect_lang_re.match(basename)
+            if match and (i18n is None or not self.language_override):
+                name = f"{match.group(1)}.{match.group(4)}"
+                mandir = pjoin(match.group(2), mandir)
+            elif i18n:
+                mandir = pjoin(i18n, mandir)
 
             if self.valid_mandir_re.match(os.path.basename(mandir)):
                 if mandir not in dirs:

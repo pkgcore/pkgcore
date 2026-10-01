@@ -154,3 +154,28 @@ def test_multi_line_reply_stays_on_one_line():
     ret = ebd_ipc.IpcCommand._encode_ret((1, "install: cannot stat 'x'\n  hint\n"))
     assert ret == "1\x07install: cannot stat 'x'; hint"
     assert ebd_ipc.IpcCommand._encode_ret("a\nb") == "0\x07a; b"
+
+
+@pytest.mark.parametrize(
+    ("eapi", "args", "installed"),
+    (
+        ("8", ["foo.1"], "man1/foo.1"),
+        ("8", ["foo.fr.1"], "fr/man1/foo.1"),
+        ("8", ["-i18n=de", "foo.1"], "de/man1/foo.1"),
+        ("8", ["-i18n=de", "foo.fr.1"], "de/man1/foo.fr.1"),
+        ("8", ["-i18n=", "foo.fr.1"], "man1/foo.fr.1"),
+        ("3", ["-i18n=de", "foo.fr.1"], "fr/man1/foo.1"),
+        ("3", ["-i18n=de", "foo.1"], "de/man1/foo.1"),
+        ("0", ["-i18n=de", "foo.fr.1"], "de/man1/foo.fr.1"),
+    ),
+)
+def test_doman_i18n(tmp_path, eapi, args, installed):
+    (tmp_path / args[-1]).write_text("man page")
+    image = tmp_path / "image"
+    op = FakeOp(FakePkg("cat/pkg-1", eapi=eapi), FakeDomain([]))
+    op.ED = str(image)
+    cmd = ebd_ipc.Doman(op)
+    cmd.opts = ebd_ipc.arghparse.Namespace()
+    with chdir(tmp_path):
+        cmd.run(cmd.parse_args(["--dest=/usr/share/man"], args))
+    assert (image / "usr/share/man" / installed).read_text() == "man page"

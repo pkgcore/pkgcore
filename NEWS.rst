@@ -172,6 +172,9 @@ Fixes
   ``/etc/portage/make.profile`` directory, is logged instead of crashing with
   ``AttributeError`` (Arthur Zamarin)
 
+- ebd: ``doman -i18n=<lang>`` installs into that language's man directory
+  instead of failing (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

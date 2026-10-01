@@ -641,7 +641,7 @@ class EclassArgs(argparse.Action):
             for val in values:
                 path = os.path.realpath(val)
                 if os.path.isdir(path):
-                    eclasses.extend(os.listdir(path))
+                    eclasses.extend(pjoin(path, x) for x in os.listdir(path))
                 elif val.endswith(".eclass"):
                     eclasses.append(path)
                 else:

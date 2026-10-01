@@ -162,6 +162,9 @@ Fixes
 - ``pconfig dump`` and ``pconfig dump-uncollapsed`` show int settings
   (Arthur Zamarin)
 
+- ``pmaint eclass <dir>`` reads the eclasses from that directory rather than
+  the current one (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

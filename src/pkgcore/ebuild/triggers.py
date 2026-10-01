@@ -629,7 +629,7 @@ class GenerateTriggers:
             "MULTILIB_STRICT_EXEMPT",
             "MULTILIB_STRICT_DENY",
             "DEB_REPO_ROOT",
-            "DEB_MAINAINER",
+            "DEB_MAINTAINER",
             "DEB_ARCHITECTURE",
         )
         for x in config_opts:

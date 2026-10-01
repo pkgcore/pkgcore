@@ -179,6 +179,9 @@ Fixes
   the link's own directory, and an absolute target under ``ROOT``, rather than
   checking the wrong path or the host system (Arthur Zamarin)
 
+- ``pmerge -x`` and ``--pdb-intercept`` given more than once keep every value,
+  not only the last one (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

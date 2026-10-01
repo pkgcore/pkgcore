@@ -65,7 +65,9 @@ class StoreTarget(argparse._AppendAction):
     def __call__(self, parser, namespace, values, option_string=None):
         if self.separator is not None:
             values = values.split(self.separator)
-        if self.use_sets:
+        if self.use_sets and not isinstance(
+            getattr(namespace, self.use_sets, None), list
+        ):
             setattr(namespace, self.use_sets, [])
 
         if isinstance(values, str):
@@ -80,8 +82,9 @@ class StoreTarget(argparse._AppendAction):
                     self, "'-' is only valid when piping data in"
                 )
 
-        # override default empty tuple value to appendable list
-        if values:
+        # override default empty tuple value to appendable list, once, so a
+        # repeated option adds to the values given before it
+        if values and not isinstance(getattr(namespace, self.dest, None), list):
             setattr(namespace, self.dest, [])
 
         for token in values:

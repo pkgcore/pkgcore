@@ -691,27 +691,29 @@ def _remove(
     out: snakeoil.formatters.PlainTextFormatter,
     err: snakeoil.formatters.PlainTextFormatter,
 ):
-    """Generic removal runner."""
+    """Generic removal runner.
+
+    With ``--pretend`` and stdout redirected, the targets are listed bare, one
+    per line, for scripts to consume.
+    """
     ret = 0
-    if sys.stdout.isatty():
-        # TODO: parallelize this
-        for func, target in options.remove:
-            if options.pretend and options.verbosity >= 0:
+    bare = not sys.stdout.isatty()
+    # TODO: parallelize this
+    for func, target in options.remove:
+        if options.pretend:
+            if bare:
+                out.write(target)
+            elif options.verbosity >= 0:
                 out.write(f"Would remove {target}")
-            elif options.verbosity > 0:
-                out.write(f"Removing {target}")
-            try:
-                if not options.pretend:
-                    func(target)
-            except OSError as e:
-                if options.verbosity >= 0:
-                    err.write(
-                        f"{options.prog}: failed to remove {target!r}: {e.strerror}"
-                    )
-                ret = 1
-                continue
-    else:
-        out.write("\n".join(target for _, target in options.remove))
+            continue
+        if options.verbosity > 0:
+            out.write(f"Removing {target}")
+        try:
+            func(target)
+        except OSError as e:
+            if options.verbosity >= 0:
+                err.write(f"{options.prog}: failed to remove {target!r}: {e.strerror}")
+            ret = 1
     return ret
 
 

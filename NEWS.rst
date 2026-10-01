@@ -182,6 +182,10 @@ Fixes
 - ``pmerge -x`` and ``--pdb-intercept`` given more than once keep every value,
   not only the last one (Arthur Zamarin)
 
+- ``pclean`` removes files even when its output is redirected, as from cron;
+  only ``--pretend`` lists them, one bare path per line when redirected
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

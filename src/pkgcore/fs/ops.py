@@ -286,9 +286,14 @@ def merge_contents(cset, offset=None, callback=None):
                 raise
 
             # by this time, all directories should've been merged.
-            # thus we can check the target
+            # thus we can check the target; locations carry the offset but
+            # targets don't, so an absolute target is under the offset
+            if os.path.isabs(x.target):
+                target = pjoin(offset or "/", x.target.lstrip(os.path.sep))
+            else:
+                target = pjoin(os.path.dirname(x.location), x.target)
             try:
-                if not fs.isdir(gen_obj(pjoin(x.location, x.target))):
+                if not fs.isdir(gen_obj(target)):
                     raise
             except OSError:
                 raise cf

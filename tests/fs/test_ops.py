@@ -199,6 +199,28 @@ class TestMergeContents(ContentsMixin):
         fp.mkdir()
         ops.merge_contents(cset)
 
+    def sym_over_dir(self, root, target):
+        """Merge /usr/lib -> target where root/usr/lib is already a directory"""
+        (root / "usr" / "lib").mkdir(parents=True)
+        sym = fs.fsSymlink(
+            "/usr/lib", target, mode=0o777, mtime=0, uid=os.getuid(), gid=os.getgid()
+        )
+        return ops.merge_contents(contents.contentsSet([sym]), offset=str(root))
+
+    def test_sym_over_dir_relative_target(self, tmp_path):
+        (tmp_path / "usr" / "lib64").mkdir(parents=True)
+        assert self.sym_over_dir(tmp_path, "lib64")
+        assert fs.isdir(livefs.gen_obj(str(tmp_path / "usr" / "lib")))
+
+    def test_sym_over_dir_absolute_target_is_under_the_offset(self, tmp_path):
+        (tmp_path / "opt" / "pkgcore-test-target").mkdir(parents=True)
+        assert self.sym_over_dir(tmp_path, "/opt/pkgcore-test-target")
+
+    def test_sym_over_dir_target_only_on_the_host(self, tmp_path):
+        # /etc exists on the host, but not under the offset
+        with pytest.raises(ops.CannotOverwrite):
+            self.sym_over_dir(tmp_path, "/etc")
+
     def test_dir_over_file(self, tmp_path):
         # according to the spec, dirs can't be merged over files that
         # aren't dirs or symlinks to dirs

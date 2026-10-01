@@ -175,6 +175,10 @@ Fixes
 - ebd: ``doman -i18n=<lang>`` installs into that language's man directory
   instead of failing (Arthur Zamarin)
 
+- merging a symlink over an existing directory resolves the link's target from
+  the link's own directory, and an absolute target under ``ROOT``, rather than
+  checking the wrong path or the host system (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

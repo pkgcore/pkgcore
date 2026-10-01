@@ -208,7 +208,7 @@ class atom(boolean.AndRestriction):
                     if chunk[0] in "-.":
                         raise errors.MalformedAtom(
                             orig_atom,
-                            "Slot targets must not start with a hypen or dot: {chunk!r}",
+                            f"Slot targets must not start with a hyphen or dot: {chunk!r}",
                         )
                     elif not valid_slot_chars.issuperset(chunk):
                         invalid_chars = ", ".join(
@@ -235,7 +235,7 @@ class atom(boolean.AndRestriction):
             if atom.startswith("!"):
                 if not eapi_obj.options.strong_blockers:
                     raise MalformedAtom(
-                        f"strong blockers are not supported in EAPI {eapi}"
+                        orig_atom, f"strong blockers are not supported in EAPI {eapi}"
                     )
                 atom = atom[1:]
                 self.blocks_strongly = True
@@ -267,7 +267,7 @@ class atom(boolean.AndRestriction):
 
         if self.slot is not None and not eapi_obj.options.has_slot_deps:
             raise errors.MalformedAtom(
-                orig_atom, f"{x} SLOT dep atoms aren't supported in EAPI {eapi}"
+                orig_atom, f"SLOT dep atoms aren't supported in EAPI {eapi}"
             )
 
         elif self.use is not None and not eapi_obj.options.has_use_deps:
@@ -312,8 +312,6 @@ class atom(boolean.AndRestriction):
             atom = f"={self.cpvstr}*"
         else:
             atom = self.op + self.cpvstr
-        if self.blocks:
-            atom = "!" + atom
         if self.blocks:
             if self.blocks_strongly:
                 atom = "!!" + atom

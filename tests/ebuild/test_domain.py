@@ -31,7 +31,7 @@ class TestDomain:
             profiles.OnDiskProfile(str(self.profile_base), "profile1"),
             [],
             [],
-            ROOT=self.rootdir,
+            root=str(self.rootdir),
             config_dir=self.confdir,
             **settings,
         )

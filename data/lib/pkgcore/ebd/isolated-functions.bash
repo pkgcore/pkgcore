@@ -217,7 +217,7 @@ __var_push() {
 
 		# If the specified variable currently has a value we save it;
 		# otherwise, just push the variable name onto the stack.
-		if orig_val=$(declare -p ${var} 2>/dev/null); then
+		if [[ -v ${var} ]] && orig_val=$(declare -p ${var} 2>/dev/null); then
 			orig_val=${orig_val/declare *${var}=[\'\"]/${var}=}
 			orig_val=${orig_val%[\'\"]}
 		else

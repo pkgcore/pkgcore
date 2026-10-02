@@ -774,7 +774,8 @@ class EbuildProcessor:
             elif "'" not in val:
                 assign = f"{key}='{val}'"
             else:
-                assign = f"{key}=$'{val.replace("'", "\\'")}'"
+                escaped = val.replace("\\", "\\\\").replace("'", "\\'")
+                assign = f"{key}=$'{escaped}'"
 
             (plain if key in nonexported else exported).append(assign)
 

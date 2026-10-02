@@ -1,4 +1,5 @@
 import signal
+import subprocess
 
 from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
@@ -63,6 +64,17 @@ class TestGenerateEnvStr:
         # when nothing is exported there is no export line
         out = self._gen({"PKGCORE_NONEXPORTED_VARS": "P", "P": "foo-1"})
         assert out == "P='foo-1'"
+
+    def test_values_round_trip_through_bash(self):
+        val = "it's C:\\new $HOME `id`\n"
+        out = self._gen({"V": val})
+        res = subprocess.run(
+            ["bash", "-c", f'{out}\nprintf %s "$V"'],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert res.stdout == val
 
 
 class TestSandboxSummary:

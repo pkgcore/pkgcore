@@ -205,6 +205,10 @@ Fixes
   image instead of on the host, and ``dohard`` links a file from the image
   instead of the host's copy (Arthur Zamarin)
 
+- ``pkgcore.ebuild.processor``: environment values containing both a quote and
+  a backslash, such as ``it's C:\new``, reach the ebuild unchanged instead of
+  with the backslash sequences expanded (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

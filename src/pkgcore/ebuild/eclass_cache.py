@@ -13,7 +13,7 @@ from weakref import WeakValueDictionary
 from snakeoil.chksum import LazilyHashedPath
 from snakeoil.data_source import local_source
 from snakeoil.klass import jit_attr_ext_method
-from snakeoil.mappings import ImmutableDict, OrderedFrozenSet, StackedDict
+from snakeoil.mappings import ImmutableDict, StackedDict
 from snakeoil.osutils import listdir_files
 
 from ..config.hint import ConfigHint
@@ -40,7 +40,7 @@ class base:
         this cache.
         """
 
-        keys = OrderedFrozenSet(inherits)
+        keys = tuple(dict.fromkeys(inherits))
         o = self._eclass_data_inst_cache.get(keys)
         if o is None:
             o = ImmutableDict((k, self.eclasses[k]) for k in keys)

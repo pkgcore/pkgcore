@@ -244,6 +244,10 @@ Fixes
 - profiles: a repo inside a directory named ``profiles`` gets the right
   profile names and file paths (Arthur Zamarin)
 
+- ``pmaint regen``: ``_eclasses_`` in the metadata cache follows each
+  package's inherit order, so regenerating no longer reorders unchanged
+  entries (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

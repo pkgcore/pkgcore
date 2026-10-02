@@ -47,6 +47,12 @@ class TestBase:
         data = self.ec.get_eclass_data(["eclass1"])
         assert data == {"eclass1": self.ec.eclasses["eclass1"]}
 
+    def test_get_eclass_data_inherit_order(self):
+        data1 = self.ec.get_eclass_data(["eclass1", "eclass2"])
+        data2 = self.ec.get_eclass_data(["eclass2", "eclass1", "eclass2"])
+        assert list(data1) == ["eclass1", "eclass2"]
+        assert list(data2) == ["eclass2", "eclass1"]
+
 
 class TestEclassCache(TestBase):
     @pytest.fixture(autouse=True)

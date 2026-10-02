@@ -98,6 +98,18 @@ class TestDoins:
         self.run(cmd, tmp_path, "bar")
         assert (dest / "bar").read_text() == "bar"
 
+    def test_directory_without_recursive(self, tmp_path):
+        image = tmp_path / "image"
+        (tmp_path / "dir").mkdir()
+        (tmp_path / "bar").write_text("bar")
+        op = FakeOp(FakePkg("cat/pkg-1", eapi="8"), FakeDomain([]))
+        op.ED = str(image)
+        with pytest.raises(ebd_ipc.IpcCommandError, match="missing -r"):
+            self.run(ebd_ipc.Doins(op), tmp_path, "dir")
+        self.run(ebd_ipc.Doins(op), tmp_path, "dir", "bar")
+        assert (image / "usr/share/foo/bar").read_text() == "bar"
+        assert not (image / "usr/share/foo/dir").exists()
+
 
 class FakeObserver:
     def __getattr__(self, name):

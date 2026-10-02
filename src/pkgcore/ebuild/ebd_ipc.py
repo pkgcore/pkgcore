@@ -559,6 +559,10 @@ class Doins(_InstallWrapper):
         files, dirs = partition(targets, predicate=os.path.isdir)
         if self.opts.recursive:
             self.install_from_dirs(dirs)
+        else:
+            files = list(files)
+            if not files and (dirs := list(dirs)):
+                raise IpcCommandError(f"{dirs[0]!r} is a directory, missing -r option?")
         self.install((f, os.path.basename(f)) for f in files)
 
 

@@ -209,6 +209,10 @@ Fixes
   a backslash, such as ``it's C:\new``, reach the ebuild unchanged instead of
   with the backslash sequences expanded (Arthur Zamarin)
 
+- ``pkgcore.ebuild.ebd_ipc``: ``doins`` given only directories without ``-r``
+  fails instead of installing nothing and succeeding, as in Portage
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

@@ -6,6 +6,7 @@ from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import DepsetParseError
 from pkgcore.restrictions import boolean, packages
+from pkgcore.test.misc import FakePkg, FakeRepo
 
 
 class base:
@@ -370,3 +371,14 @@ class TestDepSetEvaluate(base):
             )
             if not ("?" in src or kwds.get("transitive_use_atoms")):
                 assert orig is collapsed
+
+
+def test_slotdep_str():
+    class Domain:
+        all_installed_repos = FakeRepo(
+            [FakePkg("dev-libs/a-1", slot="2", subslot="2.1")]
+        )
+
+    depset = conditionals.DepSet.parse("|| ( dev-libs/a:= dev-libs/b:= )", atom)
+    assert depset.slotdep_str(Domain()) == "|| ( dev-libs/a:2/2.1= dev-libs/b:= )"
+    assert str(atom("dev-libs/a:=")) == "dev-libs/a:="

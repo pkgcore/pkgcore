@@ -213,6 +213,12 @@ Fixes
   fails instead of installing nothing and succeeding, as in Portage
   (Arthur Zamarin)
 
+- ``pkgcore.ebuild.conditionals``: merging a package with ``:=`` deps that
+  aren't all installed, such as ``|| ( a:= b:= )``, no longer crashes; the
+  unmatched atoms are recorded as written, as in Portage. Recording the slots
+  also no longer changes the same atoms elsewhere in the process
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

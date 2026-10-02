@@ -328,12 +328,15 @@ def _internal_stringify_boolean(
             )
         )
     else:
-        if domain is not None and (
-            isinstance(node, atom) and node.slot_operator == "="
+        # unmatched atoms, e.g. an uninstalled || branch, are kept as is
+        if (
+            domain is not None
+            and isinstance(node, atom)
+            and node.slot_operator == "="
+            and (pkg := max(domain.all_installed_repos.itermatch(node), default=None))
+            is not None
         ):
-            pkg = max(sorted(domain.all_installed_repos.itermatch(node)))
-            object.__setattr__(node, "slot", pkg.slot)
-            object.__setattr__(node, "subslot", pkg.subslot)
+            node = node.with_slot(pkg.slot, pkg.subslot)
         visit(func(node))
         return
     for child in iterable:

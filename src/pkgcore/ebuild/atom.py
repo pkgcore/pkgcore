@@ -59,6 +59,9 @@ class atom(boolean.AndRestriction):
 
     type = restriction.package_type
 
+    # with_slot() copies these; restrictions are rebuilt on demand
+    _copied_attrs = tuple(x for x in __slots__ if x != "_restrictions")
+
     negate = False
 
     _evaluate_collapse = True
@@ -513,6 +516,16 @@ class atom(boolean.AndRestriction):
         if self.subslot:
             s += f"/{self.subslot}"
         return atom(s)
+
+    def with_slot(self, slot, subslot=None):
+        """Return a copy of this atom with ``slot`` and ``subslot`` set."""
+        new = object.__new__(self.__class__)
+        for attr in self._copied_attrs:
+            object.__setattr__(new, attr, object.__getattribute__(self, attr))
+        object.__setattr__(new, "slot", slot)
+        object.__setattr__(new, "subslot", subslot)
+        object.__setattr__(new, "_hash", hash(str(new)))
+        return new
 
     def intersects(self, other):
         """Check if a passed in atom "intersects" this restriction's atom.

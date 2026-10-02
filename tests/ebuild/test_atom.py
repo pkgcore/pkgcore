@@ -659,6 +659,25 @@ class TestAtom(TestRestriction):
         assert str(orig_atom.get_atom_without_use_deps) == wanted
 
     @pytest.mark.parametrize(
+        "original",
+        (
+            "dev-util/diffball:=",
+            ">=dev-util/diffball-1:2=::gentoo[debug=,-test]",
+            "!!dev-util/diffball:=",
+            "=dev-util/diffball-1*:=[debug?]",
+        ),
+    )
+    def test_with_slot(self, original):
+        orig_atom = self.kls(original)
+        _ = orig_atom.restrictions
+        new = orig_atom.with_slot("3", "3.1")
+        wanted = self.kls(str(new))
+        assert ":3/3.1=" in str(new)
+        assert new == wanted and hash(new) == hash(wanted)
+        assert new.restrictions == wanted.restrictions
+        assert str(orig_atom) == str(self.kls(original))
+
+    @pytest.mark.parametrize(
         ("dep", "iuse", "use", "wanted", "eapi"),
         (
             ("x(-)", {"x"}, {"x"}, True, "5"),

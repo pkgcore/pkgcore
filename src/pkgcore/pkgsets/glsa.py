@@ -206,8 +206,11 @@ class GlsaDirSet(GenericEquality):
             restrictions.append(
                 atom_restricts.VersionMatch(restrict, base.version, rev=base.revision),
             )
-        if slot:
+        if slot and slot != "*":
+            slot, _, subslot = slot.partition("/")
             restrictions.append(atom_restricts.SlotDep(slot))
+            if subslot:
+                restrictions.append(atom_restricts.SubSlotDep(subslot))
         return packages.AndRestriction(*restrictions, negate=negate)
 
 

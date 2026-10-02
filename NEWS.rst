@@ -193,6 +193,10 @@ Fixes
   marks the vulnerable versions safe and the fixed ones vulnerable, and glob and
   ``-r0`` revision ranges respect the GLSA's slot (Arthur Zamarin)
 
+- ``pkgcore.pkgsets.glsa``: a GLSA range with a subslot, such as
+  ``slot="0/esr78"``, matches that slot and subslot instead of nothing, and
+  ``slot="*"`` matches any slot (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

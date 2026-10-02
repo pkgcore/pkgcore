@@ -118,3 +118,18 @@ class TestGlsaDirSet:
         restrict = OrRestriction(*glsa.GlsaDirSet(str(tmp_path)))
         assert restrict.match(atom.atom(f"=dev-util/diffball-{ver}:1"))
         assert not restrict.match(atom.atom(f"=dev-util/diffball-{ver}:0"))
+
+    @pytest.mark.parametrize(
+        ("slot", "matches", "nonmatches"),
+        (
+            pytest.param("0/esr78", ["0/esr78"], ["0/esr91", "1/esr78"], id="subslot"),
+            pytest.param("*", ["0", "1/esr78"], [], id="any"),
+        ),
+    )
+    def test_slot_forms(self, tmp_path, slot, matches, nonmatches):
+        self.mk_glsa(tmp_path, [("dev-util/diffball", slot, ([], ["<2"]), "*")])
+        restrict = OrRestriction(*glsa.GlsaDirSet(str(tmp_path)))
+        for s in matches:
+            assert restrict.match(atom.atom(f"=dev-util/diffball-1:{s}"))
+        for s in nonmatches:
+            assert not restrict.match(atom.atom(f"=dev-util/diffball-1:{s}"))

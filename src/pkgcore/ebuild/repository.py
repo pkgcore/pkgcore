@@ -592,9 +592,8 @@ class UnconfiguredTree(prototype.tree):
 
             if raw:
                 yield pkg
-            elif (
-                self._bad_masked.has_match(pkg.versioned_atom)
-                and error_callback is not None
+            elif error_callback is not None and self._bad_masked.has_match(
+                pkg.versioned_atom
             ):
                 error_callback(self._bad_masked[pkg.versioned_atom])
             else:

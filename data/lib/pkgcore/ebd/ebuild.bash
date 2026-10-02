@@ -502,26 +502,23 @@ __dump_metadata_keys() {
 	# be invoked after ebuild code has done it's thing, as such we no longer care,
 	# and directly screw w/ it for speed reasons- about 5% speedup in metadata regen.
 	set -f
-	local key phases phase
+	local key phases phase val out
+	local -a words
 	for key in "${PKGCORE_METADATA_KEYS[@]}"; do
 		if [[ ${key} == DEFINED_PHASES ]]; then
 			for phase in "${PKGCORE_EBUILD_PHASES[@]}"; do
 				__is_function "${phase}" && phases+=( ${phase} )
 			done
-			__ebd_write_line "key DEFINED_PHASES=${phases[@]:--}"
-		else
-			# deref the val, if it's not empty/unset, then spit a key command to EBD
-			# after using echo to normalize whitespace (specifically removal of newlines)
-			if [[ ${!key:-unset} != "unset" ]]; then
-				# note that we explicitly bypass the normal functions, and directly
-				# write to the FD. This is done since it's about 25% faster for our usage;
-				# if we used the functions, we'd have to subshell the 'echo ${!key}', which
-				# because of bash behaviour, means the content would be read byte by byte.
-				echo -n "key ${key}=" >&${PKGCORE_EBD_WRITE_FD}
-				echo ${!key} >&${PKGCORE_EBD_WRITE_FD}
-			fi
+			out+="key DEFINED_PHASES=${phases[@]:--}"$'\n'
+		elif [[ ${!key:-unset} != "unset" ]]; then
+			# normalize whitespace (specifically removal of newlines)
+			words=( ${!key} )
+			printf -v val '%s ' "${words[@]}"
+			out+="key ${key}=${val% }"$'\n'
 		fi
 	done
+	# a single write is notably faster than writing each key separately
+	printf '%s' "${out}" >&${PKGCORE_EBD_WRITE_FD}
 	set +f
 }
 

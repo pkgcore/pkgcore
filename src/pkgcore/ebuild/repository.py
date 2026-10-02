@@ -815,7 +815,9 @@ class _RegenOpHelper:
 
     def __call__(self, pkg):
         try:
-            return pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
+            data = pkg._fetch_metadata(ebp=self.ebp, force_regen=self.force)
+            object.__setattr__(pkg, "data", data)
+            return data
         except pkg_errors.MetadataException:
             # ebuild processor is dead, so force a replacement request
             self.ebp = self.request_ebp()

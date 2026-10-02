@@ -96,3 +96,25 @@ class TestGlsaDirSet:
         assert not restrict.match(atom.atom("=dev-util/pkgcheck-1:0"))
         assert not restrict.match(atom.atom("dev-util/pkgcheck:0"))
         assert not restrict.match(atom.atom("dev-util/pkgcheck"))
+
+    def test_glob_unaffected(self, tmp_path):
+        self.mk_glsa(tmp_path, [("dev-util/diffball", (["=1.5*"], ["<2"]))])
+        restrict = OrRestriction(*glsa.GlsaDirSet(str(tmp_path)))
+        for ver in ("1.0", "1.9"):
+            assert restrict.match(cpv.VersionedCPV(f"dev-util/diffball-{ver}"))
+        for ver in ("1.5", "1.5.1", "2"):
+            assert not restrict.match(cpv.VersionedCPV(f"dev-util/diffball-{ver}"))
+
+    @pytest.mark.parametrize(
+        ("vuln_range", "ver"),
+        (
+            pytest.param("=1*", "1.2", id="eq_glob"),
+            pytest.param("~<=2", "2", id="rle_r0"),
+            pytest.param("~>=2", "2-r1", id="rge_r0"),
+        ),
+    )
+    def test_slotted_range(self, tmp_path, vuln_range, ver):
+        self.mk_glsa(tmp_path, [("dev-util/diffball", "1", ([], [vuln_range]), "*")])
+        restrict = OrRestriction(*glsa.GlsaDirSet(str(tmp_path)))
+        assert restrict.match(atom.atom(f"=dev-util/diffball-{ver}:1"))
+        assert not restrict.match(atom.atom(f"=dev-util/diffball-{ver}:0"))

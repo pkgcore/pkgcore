@@ -189,6 +189,10 @@ Fixes
 - ``restrictions``: the DNF solutions of a negated ``OrRestriction`` are only
   the negated terms, without the original ones after them (Arthur Zamarin)
 
+- ``pkgcore.pkgsets.glsa``: an unaffected glob range such as ``1.5*`` no longer
+  marks the vulnerable versions safe and the fixed ones vulnerable, and glob and
+  ``-r0`` revision ranges respect the GLSA's slot (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

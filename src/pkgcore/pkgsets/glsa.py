@@ -184,26 +184,28 @@ class GlsaDirSet(GenericEquality):
         if glob:
             if op != "eq":
                 raise ValueError(f"glob cannot be used with {op} ops")
-            return packages.PackageRestriction(
-                "fullver", values.StrGlobMatch(base.fullver)
+            restrictions = [
+                packages.PackageRestriction(
+                    "fullver", values.StrGlobMatch(base.fullver)
+                )
+            ]
+        elif op.startswith("r") and not base.revision and op != "rgt":
+            if op == "rlt":  # rlt -r0 can never match
+                # this is a non-range.
+                raise ValueError(
+                    f"range {op} version {node.text.strip()} is a guaranteed empty set"
+                )
+            # rle -r0 -> = -r0, rge -r0 -> ~
+            match_op = "=" if op == "rle" else "~"
+            restrictions = [atom_restricts.VersionMatch(match_op, base.version)]
+        else:
+            restrictions = []
+            if op.startswith("r"):
+                # rgt -r0 passes through to regular ~ + >
+                restrictions.append(atom_restricts.VersionMatch("~", base.version))
+            restrictions.append(
+                atom_restricts.VersionMatch(restrict, base.version, rev=base.revision),
             )
-        restrictions = []
-        if op.startswith("r"):
-            if not base.revision:
-                if op == "rlt":  # rlt -r0 can never match
-                    # this is a non-range.
-                    raise ValueError(
-                        f"range {op} version {node.text.strip()} is a guaranteed empty set"
-                    )
-                elif op == "rle":  # rle -r0 -> = -r0
-                    return atom_restricts.VersionMatch("=", base.version, negate=negate)
-                elif op == "rge":  # rge -r0 -> ~
-                    return atom_restricts.VersionMatch("~", base.version, negate=negate)
-            # rgt -r0 passes through to regular ~ + >
-            restrictions.append(atom_restricts.VersionMatch("~", base.version))
-        restrictions.append(
-            atom_restricts.VersionMatch(restrict, base.version, rev=base.revision),
-        )
         if slot:
             restrictions.append(atom_restricts.SlotDep(slot))
         return packages.AndRestriction(*restrictions, negate=negate)

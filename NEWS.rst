@@ -241,6 +241,9 @@ Fixes
   above 255, such as NVMe disks, get their real numbers instead of truncated
   ones (Arthur Zamarin)
 
+- profiles: a repo inside a directory named ``profiles`` gets the right
+  profile names and file paths (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

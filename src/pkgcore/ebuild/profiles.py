@@ -64,15 +64,23 @@ class NonexistentProfile(ProfileError):
         super().__init__(path, "", "nonexistent profile directory")
 
 
+def _split_profiles_path(path):
+    """Split a path into its repo and the part under that repo's profiles directory."""
+    # strip '/' so we don't get '/usr/portage' == ('', 'usr', 'portage')
+    chunks = path.lstrip("/").split("/")
+    try:
+        pindex = max(idx for idx, x in enumerate(chunks) if x == "profiles")
+    except ValueError:
+        # not in a repo...
+        return None, None
+    return pjoin("/", *chunks[:pindex]), "/".join(chunks[pindex + 1 :])
+
+
 def _read_profile_files(files, allow_line_cont=False):
     """Read all the given data files."""
     for path in files:
         # determine file path relative to the profiles dir
-        try:
-            relpath = path.split("/profiles/")[1]
-        except IndexError:
-            # profiles base path
-            relpath = os.path.basename(path)
+        relpath = _split_profiles_path(path)[1] or os.path.basename(path)
 
         for lineno, line in read_bash(
             path, allow_line_cont=allow_line_cont, enum_line=True
@@ -208,11 +216,7 @@ class ProfileNode(WeaklyCached):
     @klass.jit_attr
     def name(self):
         """Relative path to the profile from the profiles directory."""
-        try:
-            return self.path.split("/profiles/")[1]
-        except IndexError:
-            # profiles base path
-            return ""
+        return _split_profiles_path(self.path)[1] or ""
 
     @load_property("packages")
     def packages(self, data):
@@ -633,15 +637,9 @@ class ProfileNode(WeaklyCached):
 
     @staticmethod
     def _load_repoconfig_from_path(path):
-        path = abspath(path)
-        # strip '/' so we don't get '/usr/portage' == ('', 'usr', 'portage')
-        chunks = path.lstrip("/").split("/")
-        try:
-            pindex = max(idx for idx, x in enumerate(chunks) if x == "profiles")
-        except ValueError:
-            # not in a repo...
+        repo_path = _split_profiles_path(abspath(path))[0]
+        if repo_path is None:
             return None
-        repo_path = pjoin("/", *chunks[:pindex])
         return repo_objs.RepoConfig(repo_path)
 
     @classmethod

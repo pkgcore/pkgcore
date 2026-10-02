@@ -1897,3 +1897,15 @@ def test_bad_parent_outside_a_repo(tmp_path, caplog, attr):
     assert (
         f"'{profile}/parent' (line 1), bad profile parent '../removed'" in caplog.text
     )
+
+
+def test_name_in_repo_under_profiles_dir(tmp_path):
+    profiles_base = tmp_path / "profiles" / "repo" / "profiles"
+    path = profiles_base / "default" / "linux"
+    path.mkdir(parents=True)
+    (path / "package.mask").write_text("cat/pkg\n")
+    assert profiles.ProfileNode(str(path)).name == "default/linux"
+    assert profiles.ProfileNode(str(profiles_base)).name == ""
+    files = [str(path / "package.mask")]
+    relpaths = [relpath for _, _, relpath in profiles._read_profile_files(files)]
+    assert relpaths == ["default/linux/package.mask"]

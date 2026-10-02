@@ -285,10 +285,8 @@ __ebd_process_ebuild_phases() {
 }
 
 __ebd_process_metadata() {
-	# protect the env.
-	# note the local usage is redundant in light of it, but prefer to write it this
-	# way so that if someone ever drops the (), it'll still not bleed out.
-	(
+	# only run via $(), which protects the env
+	{
 		# Heavy QA checks (IFS, shopt, etc) are suppressed for speed
 		declare -r PKGCORE_QA_SUPPRESSED=false
 		# Wipe __mode; it bleeds from our parent.
@@ -317,7 +315,7 @@ __ebd_process_metadata() {
 		__execute_phases "${2:-depend}" && exit 0
 		__ebd_process_sandbox_results
 		exit 1
-	)
+	}
 }
 
 __make_preloaded_eclass_func() {

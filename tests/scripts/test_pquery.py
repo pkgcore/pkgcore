@@ -107,6 +107,20 @@ class TestCommandline(ArgParseMixin):
     def test_no_contents(self):
         self.assertOut([], "--contents", "--all", test_domain=domain_config)
 
+    def test_first_across_repos(self):
+        two_repos = basics.HardCodedConfigSection(
+            {
+                "class": FakeDomain,
+                "repos": [
+                    basics.HardCodedConfigSection({"class": fake_repo}),
+                    basics.HardCodedConfigSection({"class": fake_repo}),
+                ],
+                "vdb": [basics.HardCodedConfigSection({"class": fake_vdb})],
+                "default": True,
+            }
+        )
+        self.assertOut(["spork/foon-1"], "-1", "spork/foon", test_domain=two_repos)
+
     def test_stdin_skips_blank_lines(self, monkeypatch):
         monkeypatch.setattr(pquery.sys, "stdin", io.StringIO("spork/foon\n\n  \n"))
         self.assertOut(["spork/foon-2"], "--max", "-", test_domain=domain_config)

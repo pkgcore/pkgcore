@@ -1277,7 +1277,7 @@ def main(
                         if options.first:
                             break
                 if options.first:
-                    break
+                    return 0
 
         except KeyboardInterrupt:
             raise

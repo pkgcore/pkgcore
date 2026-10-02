@@ -234,6 +234,9 @@ Fixes
 - ``pquery -`` and ``patom -F FORMAT -`` skip blank lines read from stdin
   instead of rejecting them as invalid atoms (Arthur Zamarin)
 
+- ``pquery -1`` stops at the first match instead of printing one per repo
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

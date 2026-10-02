@@ -12,7 +12,7 @@ import string
 from snakeoil import klass
 from snakeoil.compatibility import cmp
 
-from ..restrictions import boolean, packages, restriction, values
+from ..restrictions import boolean, packages, restriction
 from ..restrictions.packages import AndRestriction as PkgAndRestriction
 from ..restrictions.packages import Conditional
 from ..restrictions.values import ContainmentMatch
@@ -369,7 +369,7 @@ class atom(boolean.AndRestriction):
             if self.op == "=*":
                 r.append(
                     packages.PackageRestriction(
-                        "fullver", values.StrGlobMatch(self.fullver)
+                        "fullver", restricts.VersionGlobMatch(self.fullver)
                     )
                 )
             else:
@@ -587,13 +587,13 @@ class atom(boolean.AndRestriction):
         # If one of us is an exact match we intersect if the other matches it:
         if self.op == "=":
             if other.op == "=*":
-                return self.fullver.startswith(other.fullver)
+                return restricts.VersionGlobMatch(other.fullver).match(self.fullver)
             return restricts.VersionMatch(
                 other.op, other.version, other.revision
             ).match(self)
         if other.op == "=":
             if self.op == "=*":
-                return other.fullver.startswith(self.fullver)
+                return restricts.VersionGlobMatch(self.fullver).match(other.fullver)
             return restricts.VersionMatch(self.op, self.version, self.revision).match(
                 other
             )
@@ -604,16 +604,16 @@ class atom(boolean.AndRestriction):
 
         # If we are both glob matches we match if one of us matches the other.
         if self.op == other.op == "=*":
-            return self.fullver.startswith(other.fullver) or other.fullver.startswith(
+            return restricts.VersionGlobMatch(other.fullver).match(
                 self.fullver
-            )
+            ) or restricts.VersionGlobMatch(self.fullver).match(other.fullver)
 
         # If one of us is a glob match and the other a ~ we match if the glob
         # matches the ~ (ignoring a revision on the glob):
         if self.op == "=*" and other.op == "~":
-            return other.fullver.startswith(self.version)
+            return restricts.VersionGlobMatch(self.version).match(other.fullver)
         if other.op == "=*" and self.op == "~":
-            return self.fullver.startswith(other.version)
+            return restricts.VersionGlobMatch(other.version).match(self.fullver)
 
         # If we get here at least one of us is a <, <=, > or >=:
         if self.op in ("<", "<=", ">", ">="):
@@ -675,7 +675,7 @@ class atom(boolean.AndRestriction):
                 # If and only if other also matches ranged then
                 # ranged will also match one of those smaller packages.
                 # XXX (I think, need to try harder to verify this.)
-                return ranged.fullver.startswith(other.version)
+                return restricts.VersionGlobMatch(other.version).match(ranged.fullver)
             else:
                 # Remaining cases where this intersects: there is a
                 # package greater than ranged.fullver and
@@ -686,7 +686,7 @@ class atom(boolean.AndRestriction):
                 # If and only if other also matches ranged then
                 # ranged will match such a larger package
                 # XXX (I think, need to try harder to verify this.)
-                return ranged.fullver.startswith(other.version)
+                return restricts.VersionGlobMatch(other.version).match(ranged.fullver)
 
         # Handled all possible ops.
         raise NotImplementedError(

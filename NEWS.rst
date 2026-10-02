@@ -197,6 +197,10 @@ Fixes
   ``slot="0/esr78"``, matches that slot and subslot instead of nothing, and
   ``slot="*"`` matches any slot (Arthur Zamarin)
 
+- ``pkgcore.ebuild.atom``: an ``=*`` glob only matches up to a version
+  component boundary, so ``=cat/pkg-1*`` no longer matches ``cat/pkg-10``, as
+  in Portage; GLSA glob ranges follow the same rule (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

@@ -186,7 +186,7 @@ class GlsaDirSet(GenericEquality):
                 raise ValueError(f"glob cannot be used with {op} ops")
             restrictions = [
                 packages.PackageRestriction(
-                    "fullver", values.StrGlobMatch(base.fullver)
+                    "fullver", atom_restricts.VersionGlobMatch(base.fullver)
                 )
             ]
         elif op.startswith("r") and not base.revision and op != "rgt":

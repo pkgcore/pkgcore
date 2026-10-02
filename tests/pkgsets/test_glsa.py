@@ -24,7 +24,9 @@ class TestGlsaDirSet:
             pytest.param("<=1-r2", ["1", "1-r1"], ["1-r3", "2"], id="le"),
             pytest.param("<1-r2", ["1", "1-r0"], ["1-r2", "2"], id="lt"),
             pytest.param("=1-r2", ["1-r2"], ["1-r3", "1", "2"], id="eq"),
-            pytest.param("=1*", ["1-r2", "1.0.2", "10"], ["2", "3", "0"], id="eq_glob"),
+            pytest.param(
+                "=1*", ["1-r2", "1.0.2", "1_p1"], ["2", "10", "0"], id="eq_glob"
+            ),
             pytest.param("~>=1-r2", ["1-r2", "1-r7"], ["2", "1-r1", "1"], id="rge"),
             pytest.param("~>1-r1", ["1-r2", "1-r6"], ["2", "1-r1", "1"], id="rgt"),
             pytest.param(

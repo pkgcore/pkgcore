@@ -13,6 +13,7 @@ __all__ = (
     "StaticUseDep",
     "SubSlotDep",
     "UseDepDefault",
+    "VersionGlobMatch",
     "VersionMatch",
 )
 
@@ -152,6 +153,31 @@ class VersionMatch(packages.PackageRestriction):
 
     def match(self, pkg, *args, **kwds):
         return self.restriction.match(pkg)
+
+
+class VersionGlobMatch(values.StrGlobMatch):
+    """``=*`` version glob, matching a prefix that ends on a version component boundary"""
+
+    __slots__ = ()
+
+    def __init__(self, glob, negate=False):
+        super().__init__(glob, negate=negate)
+
+    def match(self, value):
+        value = str(value)
+        if value.startswith(self.glob):
+            nxt = value[len(self.glob) : len(self.glob) + 1]
+            matched = (
+                not nxt or nxt in "._-" or self.glob[-1].isdigit() != nxt.isdigit()
+            )
+        else:
+            matched = False
+        return matched != self.negate
+
+    def __eq__(self, other):
+        return type(self) is type(other) and super().__eq__(other)
+
+    __hash__ = values.StrGlobMatch.__hash__
 
 
 class SlotDep(packages.PackageRestriction):

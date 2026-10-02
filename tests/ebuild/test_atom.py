@@ -6,6 +6,7 @@ from snakeoil.compatibility import cmp
 
 from pkgcore.ebuild import atom, errors, restricts
 from pkgcore.ebuild.cpv import CPV
+from pkgcore.restrictions import values
 from pkgcore.restrictions.boolean import AndRestriction
 from pkgcore.test.misc import FakePkg, FakeRepo
 
@@ -113,6 +114,11 @@ class TestAtom(TestRestriction):
         self.assertMatch(a, FakePkg("dev-util/diffball-1.2-r1"))
         self.assertMatch(a, FakePkg("dev-util/diffball-1.2_alpha"))
         self.assertNotMatch(a, FakePkg("dev-util/diffball-1"))
+        self.assertMatch(a, FakePkg("dev-util/diffball-1.2a"))
+        self.assertNotMatch(a, FakePkg("dev-util/diffball-1.20"))
+        glob = restricts.VersionGlobMatch("1.2")
+        assert glob != values.StrGlobMatch("1.2")
+        assert values.StrGlobMatch("1.2") != glob
 
     def test_nonversioned(self):
         a = self.kls("kde-base/kde")
@@ -531,6 +537,9 @@ class TestAtom(TestRestriction):
             # known to cause an assplosion, thus redundant test.
             ("=sys-devel/gcc-4.1.1-r3", "=sys-devel/gcc-3.3*", False),
             ("=sys-libs/db-4*", "~sys-libs/db-4.3.29", True),
+            ("=cat/pkg-1*", "=cat/pkg-10", False),
+            ("=cat/pkg-1*", "=cat/pkg-10*", False),
+            ("=cat/pkg-1*", "~cat/pkg-10", False),
         ),
     )
     def test_intersects(self, this, that, result):

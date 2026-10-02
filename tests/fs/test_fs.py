@@ -1,5 +1,7 @@
+import os
 from os.path import join as pjoin
 from os.path import normpath
+from types import SimpleNamespace
 
 import pytest
 from snakeoil.chksum import get_chksums
@@ -185,6 +187,11 @@ class Test_fsDev(base):
             mkobj(minor=-1, strict=True)
         assert mkobj(major=1).major == 1
         assert mkobj(minor=1).minor == 1
+
+    @pytest.mark.parametrize(("major", "minor"), ((8, 1), (259, 3), (4095, 1048575)))
+    def test_get_major_minor(self, major, minor):
+        st = SimpleNamespace(st_rdev=os.makedev(major, minor))
+        assert fs.get_major_minor(st) == (major, minor)
 
 
 class Test_fsFifo(base):

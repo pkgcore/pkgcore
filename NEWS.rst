@@ -237,6 +237,10 @@ Fixes
 - ``pquery -1`` stops at the first match instead of printing one per repo
   (Arthur Zamarin)
 
+- ``pkgcore.fs.fs.get_major_minor``: device files with a major or minor number
+  above 255, such as NVMe disks, get their real numbers instead of truncated
+  ones (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

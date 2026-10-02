@@ -3,6 +3,7 @@ filesystem entry abstractions
 """
 
 import fnmatch
+import os
 import stat
 import typing
 from functools import total_ordering
@@ -305,7 +306,7 @@ def get_major_minor(stat_inst):
     """get major/minor from a stat instance
     :return: major,minor tuple of ints
     """
-    return (stat_inst.st_rdev >> 8) & 0xFF, stat_inst.st_rdev & 0xFF
+    return os.major(stat_inst.st_rdev), os.minor(stat_inst.st_rdev)
 
 
 class fsFifo(fsBase):

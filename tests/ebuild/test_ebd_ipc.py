@@ -179,3 +179,24 @@ def test_doman_i18n(tmp_path, eapi, args, installed):
     with chdir(tmp_path):
         cmd.run(cmd.parse_args(["--dest=/usr/share/man"], args))
     assert (image / "usr/share/man" / installed).read_text() == "man page"
+
+
+def test_links_use_image_paths(tmp_path):
+    image = tmp_path / "image"
+    (image / "usr/share/foo").mkdir(parents=True)
+    (image / "bin").mkdir()
+    (image / "bin/a").write_text("a")
+    op = FakeOp(FakePkg("cat/pkg-1", eapi="3"), FakeDomain([]))
+    op.ED = str(image)
+
+    def run(kls, *args):
+        cmd = kls(op)
+        cmd.opts = ebd_ipc.arghparse.Namespace()
+        cmd.run(cmd.parse_args([], list(args)))
+
+    run(ebd_ipc.Dosym, "foo", "/usr/lib")
+    assert (image / "usr/lib").is_symlink()
+    with pytest.raises(ebd_ipc.IpcCommandError, match="missing filename"):
+        run(ebd_ipc.Dosym, "foo", "/usr/share/foo")
+    run(ebd_ipc.Dohard, "/bin/a", "/bin/b")
+    assert (image / "bin/a").samefile(image / "bin/b")

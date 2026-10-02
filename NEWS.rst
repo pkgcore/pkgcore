@@ -201,6 +201,10 @@ Fixes
   component boundary, so ``=cat/pkg-1*`` no longer matches ``cat/pkg-10``, as
   in Portage; GLSA glob ranges follow the same rule (Arthur Zamarin)
 
+- ``pkgcore.ebuild.ebd_ipc``: ``dosym`` checks for a directory target in the
+  image instead of on the host, and ``dohard`` links a file from the image
+  instead of the host's copy (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

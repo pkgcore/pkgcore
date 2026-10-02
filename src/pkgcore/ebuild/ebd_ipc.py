@@ -694,8 +694,9 @@ class Dosym(_Symlink):
 
     def run(self, args):
         target = args.target
+        image_target = pjoin(self.op.ED, target.lstrip(os.path.sep))
         if target.endswith(os.path.sep) or (
-            os.path.isdir(target) and not os.path.islink(target)
+            os.path.isdir(image_target) and not os.path.islink(image_target)
         ):
             # bug 379899
             raise IpcCommandError(f"missing filename target: {target!r}")
@@ -714,6 +715,10 @@ class Dohard(_Symlink):
     """Python wrapper for dohard."""
 
     _link = os.link
+
+    def run(self, args):
+        args.source = pjoin(self.op.ED, args.source.lstrip(os.path.sep))
+        super().run(args)
 
 
 class Doman(_InstallWrapper):

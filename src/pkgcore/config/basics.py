@@ -183,13 +183,17 @@ class LazySectionRef:
         """Override this in a subclass."""
         raise NotImplementedError(self._collapse)
 
+    def _describe(self) -> str:
+        """Override this in a subclass."""
+        raise NotImplementedError(self._describe)
+
     def collapse(self):
         """:return: :obj:`pkgcore.config.central.CollapsedConfig`."""
         if self.cached_config is None:
             config = self.cached_config = self._collapse()
             if self.typename is not None and config.type.name != self.typename:
                 raise errors.ConfigurationError(
-                    f"reference {self.name!r} should be of type "
+                    f"{self._describe()} should be of type "
                     f"{self.typename!r}, got {config.type.name!r}"
                 )
         return self.cached_config
@@ -209,6 +213,9 @@ class LazyNamedSectionRef(LazySectionRef):
     def _collapse(self):
         return self.central.collapse_named_section(self.name)
 
+    def _describe(self) -> str:
+        return f"reference {self.name!r}"
+
 
 class LazyUnnamedSectionRef(LazySectionRef):
     def __init__(self, central, typename: str, section) -> None:
@@ -217,6 +224,9 @@ class LazyUnnamedSectionRef(LazySectionRef):
 
     def _collapse(self):
         return self.central.collapse_section([self.section])
+
+    def _describe(self) -> str:
+        return "inline section"
 
 
 class ConfigSection(ABC):

@@ -652,6 +652,28 @@ def test_typecheck():
     )
     assert ["repo!"] == manager.objects.repo["right"]
 
+    manager = central.ConfigManager(
+        [
+            {
+                "wrong": basics.HardCodedConfigSection(
+                    {
+                        "class": reporef,
+                        "myrepo": basics.HardCodedConfigSection({"class": drawer}),
+                    }
+                ),
+            }
+        ]
+    )
+    check_error(
+        "Collapsing section named 'wrong':\n"
+        "Failed collapsing section key 'myrepo':\n"
+        "inline section should be of type 'repo', got 'drawer'",
+        get_config_obj,
+        manager,
+        "repo",
+        "wrong",
+    )
+
 
 def test_default():
     manager = central.ConfigManager(

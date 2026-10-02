@@ -227,6 +227,10 @@ Fixes
   passed once per binary instead of piling up with each one stripped
   (Arthur Zamarin)
 
+- ``pkgcore.config.basics``: an inline config section of the wrong type is
+  reported as such instead of failing with an ``AttributeError``
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

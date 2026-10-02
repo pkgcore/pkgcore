@@ -1,3 +1,4 @@
+import argparse
 import os
 from functools import partial
 from os.path import join as pjoin
@@ -49,7 +50,18 @@ def make_atom(value):
     return arghparse.DelayedValue(partial(_render_atom, value), 100)
 
 
-def _render_atom(value, namespace, attr):
+class _StoreAtoms(argparse.Action):
+    """Store multiple atoms, parsed once ``--eapi`` and ``--use`` are known."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(
+            namespace,
+            self.dest,
+            arghparse.DelayedValue(partial(_render_atoms, values), 100),
+        )
+
+
+def _parse_atom(namespace, value):
     a = namespace.atom_kls(value)
     if isinstance(a, atom.transitive_use_atom):
         _ = a.restrictions
@@ -57,7 +69,15 @@ def _render_atom(value, namespace, attr):
         a = conditionals.DepSet(a.restrictions, atom.atom, True)
         a = a.evaluate_depset(getattr(namespace, "use", ()))
         a = AndRestriction(*a.restrictions)
-    setattr(namespace, attr, a)
+    return a
+
+
+def _render_atom(value, namespace, attr):
+    setattr(namespace, attr, _parse_atom(namespace, value))
+
+
+def _render_atoms(values, namespace, attr):
+    setattr(namespace, attr, [_parse_atom(namespace, x) for x in values])
 
 
 class BaseCommand(arghparse.ArgparseCommand):
@@ -98,9 +118,11 @@ class BaseCommand(arghparse.ArgparseCommand):
                 kwds["nargs"] = token[-1]
                 token = token[:-1]
             if token == "atom":
-                parser.add_argument(
-                    "atom", help="atom to inspect", type=make_atom, **kwds
-                )
+                if "nargs" in kwds:
+                    kwds["action"] = _StoreAtoms
+                else:
+                    kwds["type"] = make_atom
+                parser.add_argument("atom", help="atom to inspect", **kwds)
             else:
                 parser.add_argument(token, help=f"{token} to inspect", **kwds)
 

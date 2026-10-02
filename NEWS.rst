@@ -219,6 +219,10 @@ Fixes
   also no longer changes the same atoms elsewhere in the process
   (Arthur Zamarin)
 
+- ``pkgcore.ebuild.portageq``: ``pinspect query mass_best_version`` and its
+  ``pinspect portageq`` form print each best version instead of failing with a
+  TypeError (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

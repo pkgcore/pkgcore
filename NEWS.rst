@@ -231,6 +231,9 @@ Fixes
   reported as such instead of failing with an ``AttributeError``
   (Arthur Zamarin)
 
+- ``pquery -`` and ``patom -F FORMAT -`` skip blank lines read from stdin
+  instead of rejecting them as invalid atoms (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

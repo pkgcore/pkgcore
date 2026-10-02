@@ -1,3 +1,5 @@
+import io
+
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild import atom, cpv
@@ -104,6 +106,10 @@ class TestCommandline(ArgParseMixin):
 
     def test_no_contents(self):
         self.assertOut([], "--contents", "--all", test_domain=domain_config)
+
+    def test_stdin_skips_blank_lines(self, monkeypatch):
+        monkeypatch.setattr(pquery.sys, "stdin", io.StringIO("spork/foon\n\n  \n"))
+        self.assertOut(["spork/foon-2"], "--max", "-", test_domain=domain_config)
 
 
 def test_revdep_pkgs_match_ignores_use_deps():

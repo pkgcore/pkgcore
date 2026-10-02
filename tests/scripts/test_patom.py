@@ -1,3 +1,5 @@
+import io
+
 import pytest
 
 from pkgcore.scripts import patom
@@ -28,6 +30,10 @@ class TestFormat(ArgParseMixin):
             "%{PACKAGE}",
             "=dev-utils/spork",
         )
+
+    def test_stdin_skips_blank_lines(self, monkeypatch):
+        monkeypatch.setattr(patom.sys, "stdin", io.StringIO("dev-utils/spork\n\n  \n"))
+        self.assertOut(["spork"], "--format", "%{PACKAGE}", "-")
 
     def test_unknown_key(self):
         self.assertErr(

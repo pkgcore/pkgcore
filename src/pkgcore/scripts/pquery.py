@@ -742,7 +742,7 @@ def matches_finalize(targets: list[str], namespace):
     if "-" in targets:
         if not sys.stdin.isatty():
             idx = targets.index("-")
-            in_targets = [x.strip() for x in sys.stdin.readlines()]
+            in_targets = [x.strip() for x in sys.stdin.readlines() if x.strip()]
             targets = targets[:idx] + in_targets + targets[idx + 1 :]
         else:
             argparser.error("reading from stdin is only valid when piping data in")

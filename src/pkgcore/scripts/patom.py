@@ -95,7 +95,7 @@ def main(options, out, err):
         if "-" in atoms:
             atoms = [atom for atom in atoms if atom != "-"]
             if not sys.stdin.isatty():
-                atoms += [x.strip() for x in sys.stdin.readlines()]
+                atoms += [x.strip() for x in sys.stdin.readlines() if x.strip()]
             else:
                 argparser.error("reading from stdin is only valid when piping data in")
 

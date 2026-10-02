@@ -767,7 +767,7 @@ class BinaryDebug(ThreadedTrigger):
     def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):
         args = self._strip_flags
         if "executable" in ftype or "shared object" in ftype:
-            args += self._extra_strip_flags
+            args = args + self._extra_strip_flags
         elif "current ar archive" in ftype:
             args = ["-g"]
         if not quiet:

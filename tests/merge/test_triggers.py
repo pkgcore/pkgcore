@@ -688,3 +688,16 @@ class TestSavePkgUnmerging:
         assert len(self.run(trigger, pkg)) == 1
         other = fake_reporter(repo="vdb", versioned_atom="cat/other-1")
         assert len(self.run(trigger, other)) == 1
+
+
+def test_strip_flags_per_file(tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(triggers, "_run", lambda argv: calls.append(argv) or 0)
+    trigger = triggers.BinaryDebug(mode="strip", extra_strip_flags=["-x"])
+    trigger.strip_binary = "strip"
+    for name in ("a", "b"):
+        (path := tmp_path / name).touch()
+        trigger._strip_fsobj(gen_obj(str(path)), "executable", None, quiet=True)
+    assert calls == [
+        ["strip", *trigger.default_strip_flags, "-x", str(tmp_path / x)] for x in "ab"
+    ]

@@ -223,6 +223,10 @@ Fixes
   ``pinspect portageq`` form print each best version instead of failing with a
   TypeError (Arthur Zamarin)
 
+- ``pkgcore.merge.triggers.BinaryDebug``: configured extra strip flags are
+  passed once per binary instead of piling up with each one stripped
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.44 (2029-09-26)
 ----------------------------

@@ -465,3 +465,17 @@ class TestUpdateDescFiles:
         # AtomicWriteFile resolves the target before deriving the temporary name
         temp_file = target_dir.resolve() / f".update.{filename}"
         assert f"Permission denied: {str(temp_file)!r}" in msg
+
+    def test_pkg_desc_index(self, repo):
+        repo.create_ebuild("cat/pkg-1", description="old")
+        repo.create_ebuild("cat/pkg-2", description="new")
+        repo.create_ebuild("cat/pkg-10", data="die broken")
+        repo.create_ebuild("cat/other-1", description="other")
+        repo.create_ebuild("acat/pkg-1", description="first")
+        repo.sync()
+        observer = self.FakeObserver()
+        assert pmaint.update_pkg_desc_index(repo._repo, observer) == 1
+        with open(os.path.join(repo.location, "metadata", "pkg_desc_index")) as f:
+            assert f.read() == (
+                "acat/pkg 1: first\ncat/other 1: other\ncat/pkg 1 2 10: new\n"
+            )

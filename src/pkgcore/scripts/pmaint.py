@@ -4,7 +4,9 @@ import argparse
 import os
 import textwrap
 import time
+from itertools import groupby
 from multiprocessing import cpu_count
+from operator import attrgetter
 from os.path import join as pjoin
 from unittest.mock import patch
 
@@ -17,7 +19,6 @@ from ..cache.flat_hash import md5_cache
 from ..config import load_config
 from ..ebuild import overlays, portage_conf, triggers
 from ..ebuild import repository as ebuild_repo
-from ..ebuild.cpv import CPV
 from ..ebuild.eclass import EclassDoc
 from ..exceptions import PkgcoreUserException
 from ..fs import contents, livefs
@@ -27,6 +28,7 @@ from ..operations import observer as observer_mod
 from ..package import mutated
 from ..package.errors import MetadataException
 from ..repository.util import get_raw_repos
+from ..restrictions import packages
 from ..util import commandline
 
 pkgcore_opts = commandline.ArgumentParser(domain=False, script=(__file__, __name__))
@@ -430,26 +432,30 @@ def update_use_local_desc(repo, observer):
     return ret
 
 
-def update_pkg_desc_index(repo, observer):
-    """Update a repo's package description cache (metadata/pkg_desc_index)"""
+def update_pkg_desc_index(repo, observer, pkgs=None):
+    """Update a repo's package description cache (metadata/pkg_desc_index)
+
+    :param pkgs: the repo's packages sorted, defaults to all of them
+    """
     ret = 0
     pkg_desc_index = pjoin(repo.location, "metadata", "pkg_desc_index")
     f = None
     try:
         f = AtomicWriteFile(pkg_desc_index)
-        for cat, pkgs in sorted(repo.packages.items()):
-            for pkg in sorted(pkgs):
-                cpvs = sorted(CPV(cat, pkg, v) for v in repo.versions[(cat, pkg)])
-                # get the most recent pkg description, skipping bad pkgs
-                for cpv in reversed(cpvs):
-                    try:
-                        desc = repo[(cat, pkg, cpv.fullver)].description
-                        versions = " ".join(x.fullver for x in cpvs)
-                        f.write(f"{cat}/{pkg} {versions}: {desc}\n")
-                        break
-                    except MetadataException:
-                        # should be caught and outputted already by cache regen
-                        ret = 1
+        if pkgs is None:
+            pkgs = repo.itermatch(packages.AlwaysTrue, sorter=sorted, pkg_filter=None)
+        for key, key_pkgs in groupby(pkgs, key=attrgetter("key")):
+            key_pkgs = list(key_pkgs)
+            # get the most recent pkg description, skipping bad pkgs
+            for pkg in reversed(key_pkgs):
+                try:
+                    desc = pkg.description
+                    versions = " ".join(x.fullver for x in key_pkgs)
+                    f.write(f"{key} {versions}: {desc}\n")
+                    break
+                except MetadataException:
+                    # should be caught and outputted already by cache regen
+                    ret = 1
         f.close()
     except OSError as e:
         observer.error(
@@ -566,6 +572,12 @@ def regen_main(options, out, err):
             out.write(f"skipping repo {repo}: cache disabled")
             continue
 
+        # held across the regen, so pkg_desc_index reuses the metadata it loads
+        pkgs = None
+        if options.pkg_desc_index:
+            pkgs = list(
+                repo.itermatch(packages.AlwaysTrue, sorter=sorted, pkg_filter=None)
+            )
         start_time = time.time()
         ret.append(
             repo.operations.regen_cache(
@@ -596,7 +608,7 @@ def regen_main(options, out, err):
         if options.use_local_desc:
             ret.append(update_use_local_desc(repo, observer))
         if options.pkg_desc_index:
-            ret.append(update_pkg_desc_index(repo, observer))
+            ret.append(update_pkg_desc_index(repo, observer, pkgs))
 
     return int(any(ret))
 

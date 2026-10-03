@@ -327,7 +327,7 @@ class StoreRepoObject(StoreConfigObject):
             return StoreConfigObject._get_sections(self, config, namespace)
 
         self.config = config
-        self.domain = config.get_default("domain")
+        self.domain = domain
 
         # return the type of repos requested
         return getattr(self.domain, self.repo_key)

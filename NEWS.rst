@@ -245,6 +245,10 @@ Fixes
   repos in the domain chosen with ``--domain`` instead of always in the default
   domain (Arthur Zamarin)
 
+- ``FEATURES=multilib-strict`` without ``MULTILIB_STRICT_DIRS`` or
+  ``MULTILIB_STRICT_DENY`` set skips the check, as in Portage, instead of
+  crashing every merge (Arthur Zamarin)
+
 - profiles: a repo inside a directory named ``profiles`` gets the right
   profile names and file paths (Arthur Zamarin)
 

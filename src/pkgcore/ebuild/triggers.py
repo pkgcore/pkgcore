@@ -661,8 +661,11 @@ class GenerateTriggers:
                 self.opts["COLLISION_IGNORE"],
             )
 
-        if "multilib-strict" in self.domain.features:
-            yield register_multilib_strict_trigger(self.opts)
+        if (
+            "multilib-strict" in self.domain.features
+            and (trigger := register_multilib_strict_trigger(self.opts)) is not None
+        ):
+            yield trigger
 
         if "sfperms" in self.domain.features:
             yield SFPerms()

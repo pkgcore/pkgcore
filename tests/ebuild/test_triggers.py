@@ -65,3 +65,11 @@ class TestUninstallIgnore:
         trig.trigger(fake_engine(), existing, uninstall, old)
         assert sorted(x.location for x in uninstall) == ["/usr/bin/foo"]
         assert sorted(x.location for x in old) == ["/usr/bin/foo"]
+
+
+def test_multilib_strict_without_settings():
+    class domain:
+        features = frozenset(["multilib-strict", "nostrip"])
+        binary_repos_raw = ()
+
+    assert None not in triggers.GenerateTriggers(domain, {})

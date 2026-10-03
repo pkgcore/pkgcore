@@ -34,7 +34,7 @@ class force_unpacking(triggers.base):
     priority = 5
     _hooks = ("sanity_check",)
     _label = "forced decompression"
-    _engine_type = triggers.INSTALLING_MODES
+    _engine_types = triggers.INSTALLING_MODES
 
     def __init__(self, format_op):
         self.format_op = format_op

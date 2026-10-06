@@ -40,7 +40,7 @@ def map_async(iterable, functor, *args, **kwds):
     kill.clear()
 
     def iter_queue(kill, qlist, empty_signal):
-        while not kill.isSet():
+        while not kill.is_set():
             item = qlist.get()
             if item is empty_signal:
                 return

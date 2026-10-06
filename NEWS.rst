@@ -13,6 +13,10 @@ Fixes
   such as a ``/etc/portage/make.profile`` directory, now work (Arthur Zamarin,
   #440)
 
+- ``pmaint regen`` no longer deletes the ``Manifest.gz`` files in the
+  metadata cache of rsync checkouts, and reading the cache no longer fails
+  on them (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

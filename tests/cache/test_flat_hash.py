@@ -1,7 +1,11 @@
+import gzip
+import os
+
 import pytest
 from snakeoil.chksum import LazilyHashedPath
 
 from pkgcore.cache import errors, flat_hash
+from pkgcore.ebuild import repo_objs, repository
 
 from . import test_base
 
@@ -96,3 +100,24 @@ class TestFlatHash:
         for key, raw_data in self.test_data:
             d = dict(raw_data)
             db[key] = d
+
+
+def test_regen_keeps_rsync_manifests(repo):
+    repo.create_ebuild("cat/pkg-1")
+    cache_dir = os.path.join(repo.location, "metadata", "md5-cache")
+    manifests = [
+        os.path.join(cache_dir, "Manifest.gz"),
+        os.path.join(cache_dir, "cat", "Manifest.gz"),
+    ]
+    os.makedirs(os.path.dirname(manifests[1]))
+    for path in manifests:
+        with gzip.open(path, "wt") as f:
+            f.write("DATA pkg-1 1 BLAKE2B 00\n")
+    tree = repository.UnconfiguredTree(
+        repo.location,
+        repo_config=repo_objs.RepoConfig(location=repo.location),
+        cache=(flat_hash.md5_cache(repo.location),),
+    )
+    assert tree.operations.regen_cache() == 0
+    assert all(os.path.exists(path) for path in manifests)
+    assert sorted(tree.cache[0]) == ["cat/pkg-1"]

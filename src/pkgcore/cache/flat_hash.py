@@ -11,6 +11,8 @@ from os.path import join as pjoin
 from snakeoil.fileutils import readlines_utf8
 
 from ..config.hint import ConfigHint
+from ..ebuild.cpv import VersionedCPV
+from ..ebuild.errors import InvalidCPV
 from . import errors, fs_template
 
 
@@ -110,13 +112,14 @@ class database(fs_template.FsBased):
         return os.path.exists(pjoin(self.location, cpv))
 
     def keys(self):
-        """generator for walking the dir struct"""
-        dirs = [self.location]
+        """Yield the cache entries, skipping files that aren't a versioned CPV,
+        such as the Manifest.gz files of rsync checkouts."""
+        dirs = [(0, self.location)]
         len_base = len(self.location)
         # Note: the misc try/except clauses are to protect against concurrent
         # modification of the cache resulting in transient errors.
         while dirs:
-            d = dirs.pop(0)
+            depth, d = dirs.pop(0)
             try:
                 subdirs = os.listdir(d)
             except FileNotFoundError:
@@ -124,8 +127,6 @@ class database(fs_template.FsBased):
             except OSError as e:
                 raise KeyError(d, f"access failure: {e}") from e
             for l in subdirs:
-                if l.endswith(".cpickle"):
-                    continue
                 p = pjoin(d, l)
                 try:
                     st = os.lstat(p)
@@ -134,9 +135,15 @@ class database(fs_template.FsBased):
                 except OSError as e:
                     raise KeyError(d, f"Unhandled IO error: {e}") from e
                 if stat.S_ISDIR(st.st_mode):
-                    dirs.append(p)
+                    if depth < 1:
+                        dirs.append((depth + 1, p))
                     continue
-                yield p[len_base + 1 :]
+                key = p[len_base + 1 :]
+                try:
+                    VersionedCPV(key)
+                except InvalidCPV:
+                    continue
+                yield key
 
 
 class md5_cache(database):

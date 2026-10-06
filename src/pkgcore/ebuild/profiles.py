@@ -261,28 +261,31 @@ class ProfileNode(WeaklyCached):
     @load_property("parent")
     def parent_paths(self, data):
         repo_config = self.repoconfig
-        if repo_config is not None and "portage-2" in repo_config.profile_formats:
+        # like portage, profiles outside a repo allow repo:path parents
+        if repo_config is None or "portage-2" in repo_config.profile_formats:
             l = []
             for line, lineno, relpath in data:
                 repo_id, separator, profile_path = line.partition(":")
                 if separator:
                     if repo_id:
-                        try:
-                            location = self._repo_map[repo_id]
-                        except KeyError:
-                            # check if requested repo ID matches the current
-                            # repo which could be the case when running against
-                            # unconfigured, external repos.
-                            if repo_id == repo_config.repo_id:
-                                location = repo_config.location
-                            else:
-                                logger.error(
-                                    f"repo {repo_config.repo_id!r}: "
-                                    f"{relpath!r} (line {lineno}), "
-                                    f"bad profile parent {line!r}: "
-                                    f"unknown repo {repo_id!r}"
-                                )
-                                continue
+                        location = (self._repo_map or {}).get(repo_id)
+                        # check if requested repo ID matches the current
+                        # repo which could be the case when running against
+                        # unconfigured, external repos.
+                        if (
+                            location is None
+                            and repo_config is not None
+                            and repo_id == repo_config.repo_id
+                        ):
+                            location = repo_config.location
+                        if location is None:
+                            _log_bad_parent(
+                                self, lineno, line, f"unknown repo {repo_id!r}"
+                            )
+                            continue
+                    elif repo_config is None:
+                        _log_bad_parent(self, lineno, line, "not in a repo")
+                        continue
                     else:
                         location = repo_config.location
                     l.append(

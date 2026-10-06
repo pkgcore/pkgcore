@@ -3,6 +3,17 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.46 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- ``repo:path`` entries in the ``parent`` file of a profile outside a repo,
+  such as a ``/etc/portage/make.profile`` directory, now work (Arthur Zamarin,
+  #440)
+
+----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------
 

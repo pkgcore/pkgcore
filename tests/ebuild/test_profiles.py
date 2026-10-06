@@ -1909,3 +1909,16 @@ def test_name_in_repo_under_profiles_dir(tmp_path):
     files = [str(path / "package.mask")]
     relpaths = [relpath for _, _, relpath in profiles._read_profile_files(files)]
     assert relpaths == ["default/linux/package.mask"]
+
+
+def test_repo_parent_outside_a_repo(tmp_path, monkeypatch, caplog):
+    repo = tmp_path / "repo"
+    (repo / "profiles" / "base").mkdir(parents=True)
+    profile = tmp_path / "make.profile"
+    profile.mkdir()
+    (profile / "parent").write_text("gentoo:base\nother:base\n:base\n")
+    monkeypatch.setattr(profiles.ProfileNode, "_repo_map", {"gentoo": str(repo)})
+    node = profiles.ProfileNode(str(profile))
+    assert [x.path for x in node.parents] == [str(repo / "profiles" / "base")]
+    assert "bad profile parent 'other:base': unknown repo 'other'" in caplog.text
+    assert "bad profile parent ':base': not in a repo" in caplog.text

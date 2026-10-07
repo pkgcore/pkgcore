@@ -102,6 +102,20 @@ class TestClearPreloadedEclasses:
             ebp.shutdown_processor()
 
 
+def test_is_responsive_disarms_timeout_with_async_expects(tmp_path):
+    eclass = tmp_path / "foo.eclass"
+    eclass.write_text("foo() { :; }\n")
+    ebp = processor.request_ebuild_processor()
+    try:
+        assert ebp._preload_eclass(str(eclass), async_req=True)
+        assert ebp.is_responsive
+        assert signal.getitimer(signal.ITIMER_REAL) == (0.0, 0.0)
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        processor.drop_ebuild_processor(ebp)
+        ebp.shutdown_processor()
+
+
 def test_unresponsive_daemon_is_killed_on_shutdown(monkeypatch):
     def hung(*args):
         raise AssertionError("shutdown waited on an unresponsive daemon")

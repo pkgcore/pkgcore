@@ -17,6 +17,9 @@ Fixes
   metadata cache of rsync checkouts, and reading the cache no longer fails
   on them (Arthur Zamarin)
 
+- ``pmaint regen`` no longer fails with ``TimeoutError: ebp for pid ...
+  appears dead`` while updating ``use.local.desc`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

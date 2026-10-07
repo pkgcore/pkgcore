@@ -535,27 +535,26 @@ class EbuildProcessor:
         :param want: string we're expecting
         :return: boolean, was what was read == want?
         """
-        if timeout:
-            signal.signal(signal.SIGALRM, self._timeout_ebp)
-            signal.setitimer(signal.ITIMER_REAL, timeout)
-
         if async_req:
             self._outstanding_expects.append((flush, want))
             return True
-        if flush:
-            self.ebd_write.flush()
-        if not self._outstanding_expects:
-            try:
-                return want == self.read().rstrip("\n")
-            except TimeoutError:
-                return False
-            finally:
-                if timeout:
-                    signal.setitimer(signal.ITIMER_REAL, 0)
-                    signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
-        self._outstanding_expects.append((flush, want))
-        return self._consume_async_expects()
+        if timeout:
+            signal.signal(signal.SIGALRM, self._timeout_ebp)
+            signal.setitimer(signal.ITIMER_REAL, timeout)
+        try:
+            if flush:
+                self.ebd_write.flush()
+            if not self._outstanding_expects:
+                return want == self.read().rstrip("\n")
+            self._outstanding_expects.append((flush, want))
+            return self._consume_async_expects()
+        except TimeoutError:
+            return False
+        finally:
+            if timeout:
+                signal.setitimer(signal.ITIMER_REAL, 0)
+                signal.signal(signal.SIGALRM, signal.SIG_DFL)
 
     def readlines(self, lines):
         mydata = []

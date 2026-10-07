@@ -18,6 +18,7 @@ __all__ = (
 
 import contextlib
 import errno
+import io
 import os
 import platform
 import subprocess
@@ -180,20 +181,23 @@ class MetadataXml:
         locals()[attr] = property(post_curry(_generic_attr, "_" + attr))
     del attr
 
-    def _parse_xml(self, source=None):
+    def _set_empty(self):
+        self._maintainers = ()
+        self._upstream = None
+        self._upstreams = ()
+        self._local_use = mappings.ImmutableDict()
+        self._longdescription = None
+        self._source = None
+        self._stabilize_allarches = FlagWithRestrict(value=False, restrict=None)
+        self._straight_to_stable = FlagWithRestrict(value=False, restrict=None)
+
+    def _parse_xml(self, source=None, base_url=None):
         if source is None:
             source = self._source.bytes_fileobj()
         try:
-            tree = etree.parse(source)
+            tree = etree.parse(source, base_url=base_url)
         except etree.XMLSyntaxError as e:
-            self._maintainers = ()
-            self._upstream = None
-            self._upstreams = ()
-            self._local_use = mappings.ImmutableDict()
-            self._longdescription = None
-            self._source = None
-            self._stabilize_allarches = FlagWithRestrict(value=False, restrict=None)
-            self._straight_to_stable = FlagWithRestrict(value=False, restrict=None)
+            self._set_empty()
             logger.error(e)
             return
 
@@ -309,18 +313,19 @@ class LocalMetadataXml(MetadataXml):
     __slots__ = ()
 
     def _parse_xml(self):
+        # parse from memory: lxml reports bad bytes read from a file as an
+        # OSError, without the line
         try:
-            with open(self._source, "rb", 32768) as src:
-                MetadataXml._parse_xml(self, src)
+            with open(self._source, "rb") as f:
+                data = f.read()
         except FileNotFoundError:
-            self._maintainers = ()
-            self._upstream = None
-            self._upstreams = ()
-            self._local_use = mappings.ImmutableDict()
-            self._longdescription = None
-            self._source = None
-            self._stabilize_allarches = FlagWithRestrict(value=False, restrict=None)
-            self._straight_to_stable = FlagWithRestrict(value=False, restrict=None)
+            self._set_empty()
+            return
+        except OSError as e:
+            self._set_empty()
+            logger.error(e)
+            return
+        MetadataXml._parse_xml(self, io.BytesIO(data), base_url=self._source)
 
 
 class SharedPkgData:

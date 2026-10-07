@@ -54,6 +54,10 @@ Fixes
   ``pkg-1.0-rc1.ebuild``, is skipped with a warning like in portage,
   instead of aborting ``pmaint regen`` (Arthur Zamarin)
 
+- ``pmaint regen --use-local-desc`` reports a ``metadata.xml`` that isn't
+  valid UTF-8 or can't be read as an error for that package, instead of
+  not writing ``use.local.desc`` at all (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

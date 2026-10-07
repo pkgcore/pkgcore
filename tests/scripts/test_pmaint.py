@@ -523,3 +523,25 @@ class TestUpdateDescFiles:
             assert f.read() == "cat/pkg 1: café\n".encode()
         with open(os.path.join(repo.location, "profiles", "use.local.desc"), "rb") as f:
             assert f.read().endswith("cat/pkg:foo - Build foo by Jörg\n".encode())
+
+    @pytest.mark.parametrize("bad", ("latin1", "directory"))
+    def test_use_local_desc_with_unreadable_metadata_xml(self, repo, bad):
+        repo.create_ebuild("cat/bad-1")
+        repo.create_ebuild("cat/good-1", iuse="foo")
+        xml = '<pkgmetadata><use><flag name="foo">{}</flag></use></pkgmetadata>\n'
+        good = os.path.join(repo.location, "cat", "good", "metadata.xml")
+        with open(good, "w") as f:
+            f.write(xml.format("Build foo"))
+        bad_xml = os.path.join(repo.location, "cat", "bad", "metadata.xml")
+        if bad == "latin1":
+            with open(bad_xml, "wb") as f:
+                f.write(xml.format("Jörg").encode("latin1"))
+        else:
+            os.mkdir(bad_xml)
+        repo.sync()
+        observer = self.FakeObserver()
+        assert pmaint.update_use_local_desc(repo._repo, observer) == 1
+        assert len(observer.errors) == 1
+        assert observer.errors[0].startswith("cat/bad: failed parsing metadata.xml: ")
+        with open(os.path.join(repo.location, "profiles", "use.local.desc")) as f:
+            assert f.read().endswith("cat/good:foo - Build foo\n")

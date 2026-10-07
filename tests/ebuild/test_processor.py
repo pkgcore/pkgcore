@@ -1,7 +1,11 @@
 import os
 import signal
 import subprocess
+import sys
+import textwrap
 import threading
+
+import pytest
 
 from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
@@ -218,3 +222,35 @@ def test_expect_timeout_kills_unresponsive_daemon():
         assert not ebp.is_alive
     finally:
         ebp.shutdown_processor(force=True)
+
+
+@pytest.mark.skipif(not hasattr(signal, "sigtimedwait"), reason="no sigtimedwait")
+def test_write_to_dead_daemon_raises_with_default_sigpipe():
+    # pkgcore scripts run with SIGPIPE at SIG_DFL (snakeoil.cli.tool)
+    script = textwrap.dedent(
+        """
+        import os, signal, time
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+        from pkgcore.ebuild import processor
+        ebp = processor.request_ebuild_processor()
+        processor.drop_ebuild_processor(ebp)
+        os.killpg(ebp.pid, signal.SIGKILL)
+        # the sandbox's bash child may hold the pipe open a little longer
+        for _ in range(100):
+            try:
+                ebp.write("alive")
+            except RuntimeError:
+                print("raised")
+                break
+            time.sleep(0.1)
+        ebp.shutdown_processor(force=True)
+        """
+    )
+    ret = subprocess.run(
+        [sys.executable, "-c", script],
+        capture_output=True,
+        text=True,
+        timeout=60,
+        check=False,
+    )
+    assert (ret.returncode, ret.stdout) == (0, "raised\n")

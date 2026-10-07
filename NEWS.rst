@@ -30,6 +30,9 @@ Fixes
 - ``pmaint regen`` of several repos no longer crashes with ``signal only
   works in main thread`` when an ebuild fails to source (Arthur Zamarin)
 
+- pkgcore tools no longer exit silently with status 141 when an ebuild
+  processor dies, e.g. from the OOM killer (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

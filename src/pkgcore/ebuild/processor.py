@@ -26,6 +26,7 @@ import atexit
 import contextlib
 import errno
 import fcntl
+import io
 import os
 import resource
 import signal
@@ -219,6 +220,21 @@ class InternalError(ProcessingInterruption):
         super().__init__(f"Internal error occurred: line={line!r}, msg={msg!r}")
         self.line, self.msg = line, msg
         self.args = (line, msg)
+
+
+class _EbdPipe(io.FileIO):
+    """Pipe to an ebd that raises BrokenPipeError, not SIGPIPE, once it's dead."""
+
+    def write(self, b):
+        old = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGPIPE})
+        try:
+            return super().write(b)
+        except BrokenPipeError:
+            if signal.SIGPIPE not in old:
+                signal.sigtimedwait({signal.SIGPIPE}, 0)
+            raise
+        finally:
+            signal.pthread_sigmask(signal.SIG_SETMASK, old)
 
 
 class _ResponseTimeout:
@@ -471,7 +487,12 @@ class EbuildProcessor:
             for fd in (cread, dwrite, ebd_read, ebd_write):
                 if fd is not None:
                     os.close(fd)
-        self.ebd_write = os.fdopen(cwrite, "w", encoding="utf-8")
+        if hasattr(signal, "sigtimedwait"):
+            self.ebd_write = io.TextIOWrapper(
+                io.BufferedWriter(_EbdPipe(cwrite, "w")), encoding="utf-8"
+            )
+        else:
+            self.ebd_write = os.fdopen(cwrite, "w", encoding="utf-8")
         # binary: receive_env's payload is prefixed by its byte count, so
         # read(n) must read n bytes rather than n characters
         self.ebd_read = os.fdopen(dread, "rb")

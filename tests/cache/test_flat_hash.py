@@ -121,3 +121,30 @@ def test_regen_keeps_rsync_manifests(repo):
     assert tree.operations.regen_cache() == 0
     assert all(os.path.exists(path) for path in manifests)
     assert sorted(tree.cache[0]) == ["cat/pkg-1"]
+
+
+def test_regen_removes_interrupted_writes(repo):
+    repo.create_ebuild("cat/pkg-1")
+    cache_dir = os.path.join(repo.location, "metadata", "md5-cache")
+    leftover = os.path.join(cache_dir, "cat", ".update.4242.pkg-1")
+    os.makedirs(os.path.dirname(leftover))
+    with open(leftover, "w") as f:
+        f.write("EAPI=8\n")
+    tree = repository.UnconfiguredTree(
+        repo.location,
+        repo_config=repo_objs.RepoConfig(location=repo.location),
+        cache=(flat_hash.md5_cache(repo.location),),
+    )
+    assert tree.operations.regen_cache() == 0
+    assert os.listdir(os.path.dirname(leftover)) == ["pkg-1"]
+
+
+def test_failed_write_removes_temp_file(tmp_path):
+    class Unwritable:
+        def __str__(self):
+            raise OSError(28, "No space left on device")
+
+    cache = flat_hash.database(str(tmp_path), auxdbkeys=["DESCRIPTION"])
+    with pytest.raises(errors.CacheCorruption):
+        cache._setitem("cat/pkg-1", {"DESCRIPTION": Unwritable()})
+    assert os.listdir(tmp_path / "cat") == []

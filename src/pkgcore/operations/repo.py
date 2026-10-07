@@ -220,6 +220,7 @@ class operations(sync_operations):
         if pkgs is None:
             pkgs = frozenset(pkg.cpvstr for pkg in self.repo)
         for cache in caches:
+            cache.remove_leftovers()
             cache_pkgs = frozenset(cache)
             for p in cache_pkgs - pkgs:
                 del cache[p]

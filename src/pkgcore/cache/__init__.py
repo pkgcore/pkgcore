@@ -204,6 +204,9 @@ class base:
         for key in list(self):
             del self[key]
 
+    def remove_leftovers(self):
+        """Remove what interrupted writes left behind."""
+
     def set_sync_rate(self, rate=0):
         self.sync_rate = rate
         if rate == 0:

@@ -4,6 +4,7 @@ per key file based backend
 
 __all__ = ("database",)
 
+import contextlib
 import os
 import stat
 from os.path import join as pjoin
@@ -84,9 +85,13 @@ class database(fs_template.FsBased):
 
         if self._mtime_used and not self.mtime_in_entry:
             mtime = values["_mtime_"]
-        myf.writelines(f"{k}={v}\n" for k, v in sorted(values.items()))
-
-        myf.close()
+        try:
+            with myf:
+                myf.writelines(f"{k}={v}\n" for k, v in sorted(values.items()))
+        except OSError as e:
+            with contextlib.suppress(OSError):
+                os.remove(fp)
+            raise errors.CacheCorruption(cpv, e) from e
         if self._mtime_used and not self.mtime_in_entry:
             self._ensure_access(fp, mtime=mtime)
         else:
@@ -114,6 +119,22 @@ class database(fs_template.FsBased):
     def keys(self):
         """Yield the cache entries, skipping files that aren't a versioned CPV,
         such as the Manifest.gz files of rsync checkouts."""
+        for key in self._files():
+            try:
+                VersionedCPV(key)
+            except InvalidCPV:
+                continue
+            yield key
+
+    def remove_leftovers(self):
+        """Remove the temporary files of interrupted writes."""
+        for path in self._files():
+            if os.path.basename(path).startswith(".update."):
+                with contextlib.suppress(OSError):
+                    os.remove(pjoin(self.location, path))
+
+    def _files(self):
+        """Yield the paths of files up to one directory deep."""
         dirs = [(0, self.location)]
         len_base = len(self.location)
         # Note: the misc try/except clauses are to protect against concurrent
@@ -138,12 +159,7 @@ class database(fs_template.FsBased):
                     if depth < 1:
                         dirs.append((depth + 1, p))
                     continue
-                key = p[len_base + 1 :]
-                try:
-                    VersionedCPV(key)
-                except InvalidCPV:
-                    continue
-                yield key
+                yield p[len_base + 1 :]
 
 
 class md5_cache(database):

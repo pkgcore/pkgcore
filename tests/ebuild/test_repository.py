@@ -1,10 +1,13 @@
+import os
+import signal
 import textwrap
 from contextlib import chdir
 from pathlib import Path
 
 import pytest
 
-from pkgcore.ebuild import eclass_cache, processor, repository, restricts
+from pkgcore.cache import flat_hash
+from pkgcore.ebuild import eclass_cache, processor, repo_objs, repository, restricts
 from pkgcore.ebuild.atom import atom
 from pkgcore.package.errors import MetadataException
 from pkgcore.repository import errors
@@ -412,3 +415,31 @@ def test_misnamed_ebuilds_are_skipped(repo, caplog):
     assert [x.cpvstr for x in pkgs] == ["cat/pkg-1"]
     assert "pkg-1.0-rc1.ebuild" in caplog.text
     assert "pkg-bar-1.ebuild" in caplog.text
+
+
+def _cached_tree(repo):
+    return repository.UnconfiguredTree(
+        repo.location,
+        repo_config=repo_objs.RepoConfig(location=repo.location),
+        cache=(flat_hash.md5_cache(repo.location),),
+    )
+
+
+def test_regen_survives_processor_protocol_errors(repo):
+    repo.create_ebuild("cat/bogus-1", data='echo "bogus" >&${PKGCORE_EBD_WRITE_FD}\n')
+    repo.create_ebuild("cat/good-1")
+    tree = _cached_tree(repo)
+    assert tree.operations.regen_cache() == 1
+    assert sorted(tree.cache[0]) == ["cat/good-1"]
+
+
+def test_regen_replaces_a_dead_processor(repo):
+    repo.create_ebuild("cat/pkg-1")
+    repo.create_ebuild("cat/pkg-2")
+    pkg1, pkg2 = sorted(repo.itermatch(atom("cat/pkg"), pkg_filter=None))
+    helper = repository._RegenOpHelper(repo)
+    os.killpg(helper.ebp.pid, signal.SIGKILL)
+    helper.ebp._proc.wait()
+    with pytest.raises(MetadataException):
+        helper(pkg1)
+    assert helper(pkg2)

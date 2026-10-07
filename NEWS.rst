@@ -58,6 +58,10 @@ Fixes
   valid UTF-8 or can't be read as an error for that package, instead of
   not writing ``use.local.desc`` at all (Arthur Zamarin)
 
+- ``pmaint regen`` reports an ebuild that confuses or kills its ebuild
+  processor as failing to source, instead of crashing after the regen
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

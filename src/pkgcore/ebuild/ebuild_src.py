@@ -540,6 +540,14 @@ class package_factory(metadata.factory):
                 raise metadata_errors.MetadataException(
                     pkg, "data", "failed sourcing ebuild", e
                 )
+            # protocol errors, or a dead daemon's broken pipe
+            except (processor.ProcessingInterruption, OSError, RuntimeError) as e:
+                raise metadata_errors.MetadataException(
+                    pkg,
+                    "data",
+                    "failed sourcing ebuild",
+                    processor.ProcessorError(str(e)),
+                ) from e
 
         # Rewrite defined_phases as needed, since we now know the EAPI.
         eapi = get_eapi(mydata.get("EAPI", "0"))

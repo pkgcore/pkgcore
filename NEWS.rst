@@ -27,6 +27,9 @@ Fixes
   processors, or when an ebuild processor fails during startup (Arthur
   Zamarin)
 
+- ``pmaint regen`` of several repos no longer crashes with ``signal only
+  works in main thread`` when an ebuild fails to source (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

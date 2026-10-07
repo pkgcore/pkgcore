@@ -1,3 +1,4 @@
+import os
 import signal
 import subprocess
 import threading
@@ -181,3 +182,39 @@ def test_ebd_sigterm_while_holding_processor_lock():
     t.join(10)
     assert not t.is_alive()
     assert not ebp.is_alive
+
+
+def test_reuse_processor_from_worker_thread():
+    ebp = processor.request_ebuild_processor()
+    processor.release_ebuild_processor(ebp)
+    got = []
+    t = threading.Thread(
+        target=lambda: got.append(processor.request_ebuild_processor())
+    )
+    t.start()
+    t.join(30)
+    try:
+        assert len(got) == 1 and got[0].is_alive
+    finally:
+        for x in got:
+            processor.release_ebuild_processor(x)
+
+
+def test_expect_timeout_kills_unresponsive_daemon():
+    ebp = processor.request_ebuild_processor()
+    processor.drop_ebuild_processor(ebp)
+    os.killpg(ebp.pid, signal.SIGSTOP)
+    ebp.write("alive")
+    results = []
+
+    def expect():
+        results.append(ebp.expect("yep!", timeout=0.5))
+
+    try:
+        t = threading.Thread(target=expect, daemon=True)
+        t.start()
+        t.join(10)
+        assert results == [False]
+        assert not ebp.is_alive
+    finally:
+        ebp.shutdown_processor(force=True)

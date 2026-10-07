@@ -221,8 +221,38 @@ class InternalError(ProcessingInterruption):
         self.args = (line, msg)
 
 
-class TimeoutError(PkgcoreException):
-    """Bash processor timed out."""
+class _ResponseTimeout:
+    """Kill an ebd that doesn't reply within a timeout, ending a blocked read."""
+
+    def __init__(self, ebp, timeout):
+        self._ebp = ebp
+        self._lock = threading.Lock()
+        self._done = False
+        self.expired = False
+        self._timer = None
+        if timeout:
+            self._timer = threading.Timer(timeout, self._expire)
+            self._timer.daemon = True
+
+    def __enter__(self):
+        if self._timer is not None:
+            self._timer.start()
+        return self
+
+    def __exit__(self, *exc_info):
+        if self._timer is not None:
+            with self._lock:
+                self._done = True
+            self._timer.cancel()
+
+    def _expire(self):
+        with self._lock:
+            if self._done:
+                return
+            self.expired = True
+            if (proc := self._ebp._proc) is not None:
+                with contextlib.suppress(ProcessLookupError):
+                    os.killpg(proc.pid, signal.SIGKILL)
 
 
 class ProcessorError(PkgcoreUserException):
@@ -526,35 +556,32 @@ class EbuildProcessor:
         self._outstanding_expects = []
         return ret
 
-    def _timeout_ebp(self, signum, frame):
-        raise TimeoutError(f"ebp for pid '{self.pid}' appears dead, timing out")
-
     def expect(self, want, async_req=False, flush=False, timeout=0):
         """Read from the daemon, check if the returned string is expected.
 
         :param want: string we're expecting
+        :param timeout: seconds to wait for the reply before killing the
+            daemon, or 0 to wait forever
         :return: boolean, was what was read == want?
         """
         if async_req:
             self._outstanding_expects.append((flush, want))
             return True
 
-        if timeout:
-            signal.signal(signal.SIGALRM, self._timeout_ebp)
-            signal.setitimer(signal.ITIMER_REAL, timeout)
-        try:
-            if flush:
-                self.ebd_write.flush()
-            if not self._outstanding_expects:
-                return want == self.read().rstrip("\n")
-            self._outstanding_expects.append((flush, want))
-            return self._consume_async_expects()
-        except TimeoutError:
-            return False
-        finally:
-            if timeout:
-                signal.setitimer(signal.ITIMER_REAL, 0)
-                signal.signal(signal.SIGALRM, signal.SIG_DFL)
+        with _ResponseTimeout(self, timeout) as deadline:
+            try:
+                if flush:
+                    self.ebd_write.flush()
+                if not self._outstanding_expects:
+                    ret = want == self.read().rstrip("\n")
+                else:
+                    self._outstanding_expects.append((flush, want))
+                    ret = self._consume_async_expects()
+            except OSError:
+                if not deadline.expired:
+                    raise
+                ret = False
+        return ret and not deadline.expired
 
     def readlines(self, lines):
         mydata = []

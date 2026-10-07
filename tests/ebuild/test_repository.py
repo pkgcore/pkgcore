@@ -64,6 +64,10 @@ class TestUnconfiguredTree:
         (pdir / "thirdpartymirrors").write_text("foon  dar\n")
         assert set(self.mk_tree(tmp_path).mirrors.keys()) == {"foon"}
 
+    def test_thirdpartymirrors_without_uris(self, tmp_path, pdir):
+        (pdir / "thirdpartymirrors").write_text("spork http://sporks/\ndead\n")
+        assert dict(self.mk_tree(tmp_path).mirrors) == {"spork": ["http://sporks/"]}
+
     def test_repo_id(self, tmp_path):
         repo = self.mk_tree(dir1 := tmp_path / "1")
         assert repo.repo_id == str(dir1)

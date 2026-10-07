@@ -15,7 +15,7 @@ from sys import intern
 from weakref import WeakValueDictionary
 
 from snakeoil import chksum, klass
-from snakeoil.bash import read_dict
+from snakeoil.bash import read_bash
 from snakeoil.containers import InvertedContains
 from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines_utf8
@@ -484,8 +484,11 @@ class UnconfiguredTree(prototype.tree):
         mirrors = {}
         fp = pjoin(self.location, "profiles", "thirdpartymirrors")
         try:
-            for k, v in read_dict(fp, splitter=None).items():
-                v = v.split()
+            for line in read_bash(fp):
+                k, *v = line.split()
+                if not v:
+                    # portage skips a mirror without URIs too
+                    continue
                 # shuffle mirrors so the same ones aren't used every time
                 shuffle(v)
                 mirrors[k] = v

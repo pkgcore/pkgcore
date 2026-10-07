@@ -47,6 +47,9 @@ Fixes
   ``use.local.desc`` and ``timestamp.chk`` world-writable, with snakeoil
   0.11.7 (Arthur Zamarin)
 
+- A ``thirdpartymirrors`` line naming a mirror without URIs is skipped like
+  in portage, instead of failing to load the repo (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

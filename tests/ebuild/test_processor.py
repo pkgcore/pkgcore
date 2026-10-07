@@ -165,3 +165,19 @@ def test_unresponsive_daemon_is_killed_on_shutdown(monkeypatch):
             proc.kill()
             proc.wait()
     assert ebp.ebd_write.closed and ebp.ebd_read.closed
+
+
+def test_ebd_sigterm_while_holding_processor_lock():
+    ebp = processor.request_ebuild_processor()
+
+    def handle():
+        # the SIGTERM and die() handlers run while request_ebuild_processor()
+        # or shutdown_all_processors() already hold the lock
+        with processor._global_ebp_lock:
+            processor.chuck_TermInterrupt(ebp)
+
+    t = threading.Thread(target=handle, daemon=True)
+    t.start()
+    t.join(10)
+    assert not t.is_alive()
+    assert not ebp.is_alive

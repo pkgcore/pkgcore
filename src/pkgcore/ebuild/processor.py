@@ -49,7 +49,7 @@ from ..spawn import (
 )
 from . import const as e_const
 
-_global_ebp_lock = threading.Lock()
+_global_ebp_lock = threading.RLock()
 inactive_ebp_list = []
 active_ebp_list = []
 

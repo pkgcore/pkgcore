@@ -23,6 +23,10 @@ Fixes
 - Sourcing ebuilds from a repo whose path has non-ASCII characters no
   longer fails for every package (Arthur Zamarin)
 
+- pkgcore tools no longer hang when terminated while starting ebuild
+  processors, or when an ebuild processor fails during startup (Arthur
+  Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

@@ -2,6 +2,7 @@ import pytest
 
 from pkgcore.config import basics, errors
 from pkgcore.config.hint import configurable
+from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts.helpers import ArgParseMixin
 
@@ -301,6 +302,10 @@ class TestConfigurables(ArgParseMixin):
 
     def test_configurables(self):
         self.assertError("unrecognized arguments: bar", "foo", "bar")
+
+
+def test_all_configurables():
+    assert UnconfiguredTree in set(pconfig.all_configurables())
 
 
 class WeirdSection(basics.ConfigSection):

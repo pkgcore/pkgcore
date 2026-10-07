@@ -82,6 +82,9 @@ Fixes
 - An eclass changing during ``pmaint regen`` no longer makes the next
   packages sourced by the same processor fail (Arthur Zamarin)
 
+- ``pconfig configurables`` no longer crashes with a ``TypeError``
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

@@ -268,7 +268,9 @@ def dump_main(options, out: snakeoil.formatters.PlainTextFormatter, _err):
 
 
 def all_configurables():
-    import_submodules_of(__import__("pkgcore"), dont_try=["pkgcore.test"])
+    import_submodules_of(
+        __import__("pkgcore"), dont_import=["pkgcore.test"], ignore_import_failures=True
+    )
     # note: just because we said "don't load pkgcore.test" doesn't mean it's not already in
     # memory due to tests being ran.  Still filter.
     for cls in get_subclasses_of(object):  # yep, walking the full class hierachy.

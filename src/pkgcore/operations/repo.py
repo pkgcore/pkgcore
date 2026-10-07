@@ -13,7 +13,7 @@ __all__ = (
 )
 
 import typing
-from functools import partial
+from functools import cached_property, partial
 
 from snakeoil import klass
 from snakeoil.currying import post_curry
@@ -287,11 +287,11 @@ class operations(sync_operations):
 class operations_proxy(operations):
     # cache this; this is to prevent the target operations mutating resulting
     # in our proxy setup not matching the target.
-    @klass.cached_property
+    @cached_property
     def raw_operations(self):
         return self.repo.raw_repo.operations
 
-    @klass.cached_property
+    @cached_property
     def enabled_operations(self):
         s = set(self.raw_operations.enabled_operations)
         return frozenset(self._apply_overrides(s))

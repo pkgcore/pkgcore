@@ -5,10 +5,9 @@ repository that combines multiple repos together
 __all__ = ("operations", "tree")
 
 import os
-from functools import cmp_to_key, partial
+from functools import cached_property, cmp_to_key, partial
 from itertools import chain
 
-from snakeoil import klass
 from snakeoil.iterables import iter_sort
 
 from ..config.hint import ConfigHint
@@ -19,7 +18,7 @@ from . import errors, prototype
 class operations(repo_interface.operations_proxy):
     ops_stop_after_first_supported = frozenset({"install", "uninstall", "replace"})
 
-    @klass.cached_property
+    @cached_property
     def raw_operations(self):
         return frozenset(
             chain.from_iterable(
@@ -27,7 +26,7 @@ class operations(repo_interface.operations_proxy):
             )
         )
 
-    @klass.cached_property
+    @cached_property
     def enabled_operations(self):
         s = set(
             chain.from_iterable(

@@ -10,9 +10,8 @@ Basically it's a crappy form of zope interfaces; converting to zope.interfaces
 may occur down the line if dependencies can be kept as minimal as possible.
 """
 
-from functools import partial
+from functools import cached_property, partial
 
-from snakeoil import klass
 from snakeoil.currying import pretty_docs
 
 from ..exceptions import PkgcoreException
@@ -46,7 +45,7 @@ class base:
             return observer
         return _observer.null_output()
 
-    @klass.cached_property
+    @cached_property
     def raw_operations(self):
         return frozenset(
             x[len("_cmd_api_") :]
@@ -54,7 +53,7 @@ class base:
             if x.startswith("_cmd_api_")
         )
 
-    @klass.cached_property
+    @cached_property
     def enabled_operations(self):
         enabled_ops = set(self._filter_disabled_commands(self.raw_operations))
         return frozenset(self._apply_overrides(enabled_ops))

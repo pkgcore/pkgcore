@@ -71,6 +71,17 @@ class TestUnconfiguredTree:
         (pdir / "thirdpartymirrors").write_text("spork http://sporks/\ndead\n")
         assert dict(self.mk_tree(tmp_path).mirrors) == {"spork": ["http://sporks/"]}
 
+    def test_non_utf8_repo_files(self, tmp_path, pdir):
+        # portage replaces bytes that aren't UTF-8 instead of failing
+        (tmp_path / "metadata" / "layout.conf").write_bytes(b"masters =\n# J\xf6rg\n")
+        (pdir / "repo_name").write_bytes(b"t\xe4st\n")
+        (pdir / "categories").write_bytes(b"cat\nc\xe4t\n")
+        (pdir / "thirdpartymirrors").write_bytes(b"gnu https://gnu/ # J\xf6rg\n")
+        repo = self.mk_tree(tmp_path)
+        assert repo.repo_id == "t\ufffdst"
+        assert repo.config.categories == ("cat", "c\ufffdt")
+        assert dict(repo.mirrors) == {"gnu": ["https://gnu/"]}
+
     def test_repo_id(self, tmp_path):
         repo = self.mk_tree(dir1 := tmp_path / "1")
         assert repo.repo_id == str(dir1)

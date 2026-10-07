@@ -32,7 +32,6 @@ from lxml import etree
 from snakeoil import klass, mappings
 from snakeoil.bash import BashParseError, read_bash, read_dict
 from snakeoil.currying import post_curry
-from snakeoil.fileutils import readfile, readlines
 from snakeoil.klass import immutable
 from snakeoil.osutils import listdir_files
 from snakeoil.osutils.mount import umount
@@ -50,6 +49,18 @@ from . import atom, pkg_updates, profiles
 from .cpv import VersionedCPV
 from .digest import Manifest
 from .eapi import get_eapi
+
+
+def readlines_replace(path):
+    """Return a repo file's stripped lines, or None if it's missing.
+
+    Bytes that aren't valid UTF-8 become U+FFFD instead of failing, as in portage.
+    """
+    try:
+        with open(path, encoding="utf8", errors="replace") as f:
+            return [line.strip() for line in f]
+    except (FileNotFoundError, NotADirectoryError):
+        return None
 
 
 class Maintainer(immutable.Simple):
@@ -839,7 +850,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         """Load data from the repo's metadata/layout.conf file."""
         path = pjoin(self.location, self.layout_offset)
         data = read_dict(
-            read_bash(readlines(path, strip_whitespace=True, swallow_missing=True)),
+            read_bash(readlines_replace(path) or ()),
             source_isiter=True,
             strip=True,
             filename=path,
@@ -1121,10 +1132,10 @@ class RepoConfig(syncable.tree, immutable.Strict):
         We're more lenient than the spec and don't verify it conforms to the
         specified format.
         """
-        name = readfile(pjoin(self.profiles_base, "repo_name"), none_on_missing=True)
-        if name is not None:
-            name = name.split("\n", 1)[0].strip()
-        return name
+        lines = readlines_replace(pjoin(self.profiles_base, "repo_name"))
+        if lines is None:
+            return None
+        return lines[0] if lines else ""
 
     @klass.jit_attr
     def repo_id(self) -> str:
@@ -1154,9 +1165,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
 
     @klass.jit_attr
     def categories(self) -> tuple[str, ...]:
-        categories = readlines(
-            pjoin(self.profiles_base, "categories"), True, True, True
-        )
+        categories = readlines_replace(pjoin(self.profiles_base, "categories"))
         if categories is not None:
             return tuple(map(intern, categories))
         return ()

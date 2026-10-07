@@ -70,6 +70,11 @@ Fixes
   unknown eclass to ``INHERITED``, is reported as bad metadata instead of
   crashing ``pmaint regen`` (Arthur Zamarin)
 
+- A repo whose ``profiles/categories``, ``profiles/repo_name``,
+  ``profiles/thirdpartymirrors`` or ``metadata/layout.conf`` isn't valid
+  UTF-8 loads with the bad bytes replaced like in portage, instead of
+  failing (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

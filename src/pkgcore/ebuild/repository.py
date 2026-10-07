@@ -483,17 +483,14 @@ class UnconfiguredTree(prototype.tree):
     def thirdpartymirrors(self):
         mirrors = {}
         fp = pjoin(self.location, "profiles", "thirdpartymirrors")
-        try:
-            for line in read_bash(fp):
-                k, *v = line.split()
-                if not v:
-                    # portage skips a mirror without URIs too
-                    continue
-                # shuffle mirrors so the same ones aren't used every time
-                shuffle(v)
-                mirrors[k] = v
-        except FileNotFoundError:
-            pass
+        for line in read_bash(repo_objs.readlines_replace(fp) or ()):
+            k, *v = line.split()
+            if not v:
+                # portage skips a mirror without URIs too
+                continue
+            # shuffle mirrors so the same ones aren't used every time
+            shuffle(v)
+            mirrors[k] = v
         return ImmutableDict(mirrors)
 
     @klass.jit_attr

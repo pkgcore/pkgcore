@@ -899,6 +899,10 @@ class EbuildProcessor:
         # depend phases; use /dev/null since "" == "."
         if extra_commands is None:
             extra_commands = {}
+        # check queued eclass preloads before sending anything else; one fails
+        # if its eclass changed since it was sourced
+        if self._outstanding_expects and not self._consume_async_expects():
+            self.clear_preloaded_eclasses()
         self._ensure_metadata_paths(("/dev/null",))
 
         env = expected_ebuild_env(package_inst, env, depends=True)

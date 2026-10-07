@@ -487,3 +487,15 @@ def test_regen_reports_bad_sourced_metadata(repo):
     tree = _cached_tree(repo)
     assert tree.operations.regen_cache() == 2
     assert sorted(tree.cache[0]) == ["cat/good-1"]
+
+
+def test_regen_after_failed_eclass_preload(repo, tmp_path):
+    repo.create_ebuild("cat/pkg-1")
+    repo.create_ebuild("cat/pkg-2")
+    pkg1, pkg2 = sorted(repo.itermatch(atom("cat/pkg"), pkg_filter=None))
+    (broken := tmp_path / "broken.eclass").write_text("if then fi\n")
+    helper = repository._RegenOpHelper(repo)
+    assert helper(pkg1)
+    assert helper.ebp._preload_eclass(str(broken), async_req=True)
+    assert helper(pkg2)
+    assert helper(pkg1)

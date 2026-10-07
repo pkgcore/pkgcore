@@ -79,6 +79,9 @@ Fixes
   read is logged and treated as empty, instead of crashing ``pmaint regen``
   (Arthur Zamarin)
 
+- An eclass changing during ``pmaint regen`` no longer makes the next
+  packages sourced by the same processor fail (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

@@ -400,3 +400,15 @@ def test_regen_failure_doesnt_leak_processors(repo):
     assert helper(good)
     alive = [x for x in processor.active_ebp_list if x not in before and x.is_alive]
     assert alive == [helper.ebp]
+
+
+def test_misnamed_ebuilds_are_skipped(repo, caplog):
+    repo.create_ebuild("cat/pkg-1")
+    pkgdir = Path(repo.location) / "cat" / "pkg"
+    for name in ("pkg-1.0-rc1", "pkg-bar-1"):
+        (pkgdir / f"{name}.ebuild").write_text("EAPI=8\nSLOT=0\n")
+    repo.sync()
+    pkgs = repo.itermatch(atom("cat/pkg"), pkg_filter=None)
+    assert [x.cpvstr for x in pkgs] == ["cat/pkg-1"]
+    assert "pkg-1.0-rc1.ebuild" in caplog.text
+    assert "pkg-bar-1.ebuild" in caplog.text

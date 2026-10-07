@@ -570,17 +570,28 @@ class UnconfiguredTree(prototype.tree):
         extension = self.extension
         ext_len = -len(extension)
         try:
-            return tuple(
-                x[lp:ext_len]
-                for x in listdir_files(cppath)
-                if x[ext_len:] == extension and x[:lp] == pkg
-            )
+            files = listdir_files(cppath)
         except OSError as e:
             raise KeyError(
                 "failed fetching versions for package {}: {}".format(
                     pjoin(self.base, "/".join(catpkg)), str(e)
                 )
             ) from e
+        versions = []
+        for x in files:
+            if x[ext_len:] != extension or x[:lp] != pkg:
+                continue
+            version = x[lp:ext_len]
+            try:
+                # "pkg-bar-1" parses, as the version of another package
+                valid = cpv.VersionedCPV(*catpkg, version).package == catpkg[1]
+            except ebuild_errors.InvalidCPV:
+                valid = False
+            if valid:
+                versions.append(version)
+            else:
+                logger.warning(f"invalid ebuild name: {pjoin(cppath, x)!r}")
+        return tuple(versions)
 
     def _pkg_filter(self, raw, error_callback, pkgs):
         """Filter packages with bad metadata."""

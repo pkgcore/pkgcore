@@ -50,6 +50,10 @@ Fixes
 - A ``thirdpartymirrors`` line naming a mirror without URIs is skipped like
   in portage, instead of failing to load the repo (Arthur Zamarin)
 
+- An ebuild file whose name isn't a valid version of its package, such as
+  ``pkg-1.0-rc1.ebuild``, is skipped with a warning like in portage,
+  instead of aborting ``pmaint regen`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

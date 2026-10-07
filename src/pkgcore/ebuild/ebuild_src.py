@@ -550,7 +550,10 @@ class package_factory(metadata.factory):
                 ) from e
 
         # Rewrite defined_phases as needed, since we now know the EAPI.
-        eapi = get_eapi(mydata.get("EAPI", "0"))
+        try:
+            eapi = get_eapi(mydata.get("EAPI", "0"))
+        except ValueError as e:
+            raise metadata_errors.MetadataException(pkg, "eapi", str(e)) from e
         if parsed_eapi != eapi:
             raise metadata_errors.MetadataException(
                 pkg,
@@ -570,7 +573,12 @@ class package_factory(metadata.factory):
             mydata["DEFINED_PHASES"] = " ".join(sorted(phases))
 
         if inherited := mydata.pop("INHERITED", None):
-            mydata["_eclasses_"] = self._ecache.get_eclass_data(inherited.split())
+            try:
+                mydata["_eclasses_"] = self._ecache.get_eclass_data(inherited.split())
+            except KeyError as e:
+                raise metadata_errors.MetadataException(
+                    pkg, "data", f"inherited unknown eclass {e.args[0]!r}"
+                ) from e
         mydata["_chf_"] = chksum.LazilyHashedPath(pkg.path)
 
         for x in wipes:

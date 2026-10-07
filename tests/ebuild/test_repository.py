@@ -457,3 +457,12 @@ def test_regen_replaces_a_dead_processor(repo):
     with pytest.raises(MetadataException):
         helper(pkg1)
     assert helper(pkg2)
+
+
+def test_regen_reports_bad_sourced_metadata(repo):
+    repo.create_ebuild("cat/eapi-1", eapi="8", data='EAPI="8 x"\n')
+    repo.create_ebuild("cat/inherited-1", data='INHERITED+=" nonexistent"\n')
+    repo.create_ebuild("cat/good-1")
+    tree = _cached_tree(repo)
+    assert tree.operations.regen_cache() == 2
+    assert sorted(tree.cache[0]) == ["cat/good-1"]

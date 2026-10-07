@@ -66,6 +66,10 @@ Fixes
   a package, instead of losing it with its worker thread and exiting 0
   (Arthur Zamarin)
 
+- An ebuild that sets an invalid ``EAPI`` after its header, or adds an
+  unknown eclass to ``INHERITED``, is reported as bad metadata instead of
+  crashing ``pmaint regen`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

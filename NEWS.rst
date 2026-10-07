@@ -20,6 +20,9 @@ Fixes
 - ``pmaint regen`` no longer fails with ``TimeoutError: ebp for pid ...
   appears dead`` while updating ``use.local.desc`` (Arthur Zamarin)
 
+- Sourcing ebuilds from a repo whose path has non-ASCII characters no
+  longer fails for every package (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

@@ -441,7 +441,7 @@ class EbuildProcessor:
             for fd in (cread, dwrite, ebd_read, ebd_write):
                 if fd is not None:
                     os.close(fd)
-        self.ebd_write = os.fdopen(cwrite, "w")
+        self.ebd_write = os.fdopen(cwrite, "w", encoding="utf-8")
         # binary: receive_env's payload is prefixed by its byte count, so
         # read(n) must read n bytes rather than n characters
         self.ebd_read = os.fdopen(dread, "rb")
@@ -805,7 +805,8 @@ class EbuildProcessor:
             self.write(f"start_receiving_env file {path}")
         else:
             self.write(
-                f"start_receiving_env bytes {len(data)}\n{data}", append_newline=False
+                f"start_receiving_env bytes {len(data.encode())}\n{data}",
+                append_newline=False,
             )
         os.umask(old_umask)
         return self.expect("env_received", async_req=async_req, flush=True)
@@ -838,7 +839,9 @@ class EbuildProcessor:
         # filter here, so that a screwy default doesn't result in resetting it
         # every time.
         data = os.pathsep.join(filter(None, paths))
-        self.write(f"set_metadata_path {len(data)}\n{data}", append_newline=False)
+        self.write(
+            f"set_metadata_path {len(data.encode())}\n{data}", append_newline=False
+        )
         if self.expect("metadata_path_received", flush=True):
             self._metadata_paths = paths
 
@@ -853,7 +856,7 @@ class EbuildProcessor:
 
         env = expected_ebuild_env(package_inst, env, depends=True)
         data = self._generate_env_str(env)
-        self.write(f"{command} {len(data)}\n{data}", append_newline=False)
+        self.write(f"{command} {len(data.encode())}\n{data}", append_newline=False)
 
         updates = None
         if self._eclass_caching:

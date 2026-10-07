@@ -25,6 +25,8 @@ __ebd_read_array() {
 
 # read -N usage requires bash-4.1 or so (EAPI 6 requires >= 4.2)
 __ebd_read_size() {
+	# python sends sizes in bytes
+	local LC_ALL=C
 	read -u ${PKGCORE_EBD_READ_FD} -r -N $1 $2
 	local ret=$?
 	[[ ${ret} -ne 0 ]] && \

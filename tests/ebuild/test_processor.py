@@ -1,9 +1,11 @@
 import signal
 import subprocess
+import threading
 
 from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.processor import EbuildProcessor
+from pkgcore.pytest.plugin import EbuildRepo
 
 
 class TestEnvironmentDump:
@@ -17,6 +19,34 @@ class TestEnvironmentDump:
         pkg = max(repo.itermatch(atom("cat/pkg")))
         env = pkg.environment.text_fileobj().read()
         assert "café résumé naïve größe" in env
+
+
+def test_metadata_from_non_ascii_repo_path(tmp_path):
+    repo = EbuildRepo(str(tmp_path / "תיקייה"))
+    (tmp_path / "תיקייה" / "eclass" / "foo.eclass").write_text("foo() { :; }\n")
+    repo.create_ebuild("cat/pkg-1", eapi="8", data="inherit foo\n")
+    repo.sync()
+    pkg = max(repo.itermatch(atom("cat/pkg")))
+    assert list(pkg.inherited) == ["foo"]
+
+
+def test_send_env_after_env_sets_utf8_locale():
+    env = {"LC_ALL": "C.UTF-8", "X": "תיקייה"}
+    ebp = processor.request_ebuild_processor(sandbox=False)
+    results = []
+
+    def send():
+        ebp.write("process_ebuild setup")
+        results.extend(ebp.send_env(env) for _ in range(2))
+
+    try:
+        t = threading.Thread(target=send, daemon=True)
+        t.start()
+        t.join(10)
+        assert results == [True, True]
+    finally:
+        processor.drop_ebuild_processor(ebp)
+        ebp.shutdown_processor(force=True)
 
 
 class TestGenerateEnvStr:

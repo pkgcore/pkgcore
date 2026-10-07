@@ -551,10 +551,9 @@ class UnconfiguredTree(prototype.tree):
                 # ignore it, since it's PMS mandated that it be allowed.
                 return ()
         except OSError as e:
-            category = pjoin(self.base, category.lstrip(os.path.sep))
-            raise KeyError(
-                f"failed fetching packages for category {category}: {e}"
-            ) from e
+            # e.g. a listed category that's a file or unreadable
+            logger.error(f"failed listing packages of category {category!r}: {e}")
+            return ()
 
     def _get_versions(self, catpkg):
         """Determine available versions for a given package.

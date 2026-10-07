@@ -75,6 +75,10 @@ Fixes
   UTF-8 loads with the bad bytes replaced like in portage, instead of
   failing (Arthur Zamarin)
 
+- A category listed in ``profiles/categories`` that's a file or can't be
+  read is logged and treated as empty, instead of crashing ``pmaint regen``
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

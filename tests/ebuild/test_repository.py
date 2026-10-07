@@ -11,6 +11,7 @@ from pkgcore.ebuild import eclass_cache, processor, repo_objs, repository, restr
 from pkgcore.ebuild.atom import atom
 from pkgcore.package.errors import MetadataException
 from pkgcore.repository import errors
+from pkgcore.restrictions import packages
 
 
 class TestUnconfiguredTree:
@@ -81,6 +82,15 @@ class TestUnconfiguredTree:
         assert repo.repo_id == "t\ufffdst"
         assert repo.config.categories == ("cat", "c\ufffdt")
         assert dict(repo.mirrors) == {"gnu": ["https://gnu/"]}
+
+    def test_category_not_a_directory(self, tmp_path, pdir, caplog):
+        (pdir / "categories").write_text("cat\nnotdir\n")
+        (tmp_path / "cat" / "pkg").mkdir(parents=True)
+        (tmp_path / "cat" / "pkg" / "pkg-1.ebuild").write_text("EAPI=8\nSLOT=0\n")
+        (tmp_path / "notdir").write_text("")
+        repo = self.mk_tree(tmp_path)
+        assert [x.cpvstr for x in repo.itermatch(packages.AlwaysTrue)] == ["cat/pkg-1"]
+        assert "failed listing packages of category 'notdir'" in caplog.text
 
     def test_repo_id(self, tmp_path):
         repo = self.mk_tree(dir1 := tmp_path / "1")

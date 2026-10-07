@@ -39,6 +39,10 @@ Fixes
 - ``pmaint regen`` no longer leaves an ebuild processor running for each
   ebuild that fails to source without calling ``die`` (Arthur Zamarin)
 
+- ``pmaint regen`` writes ``use.local.desc`` and ``pkg_desc_index`` as UTF-8
+  instead of failing on non-ASCII text in a non-UTF-8 locale (Arthur
+  Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

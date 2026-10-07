@@ -1,4 +1,7 @@
 import os
+import subprocess
+import sys
+import textwrap
 from functools import partial
 from io import BytesIO
 
@@ -479,3 +482,44 @@ class TestUpdateDescFiles:
             assert f.read() == (
                 "acat/pkg 1: first\ncat/other 1: other\ncat/pkg 1 2 10: new\n"
             )
+
+    def test_written_as_utf8_in_any_locale(self, repo):
+        repo.create_ebuild("cat/pkg-1", description="café", iuse="foo")
+        with open(os.path.join(repo.location, "cat", "pkg", "metadata.xml"), "w") as f:
+            f.write(
+                '<?xml version="1.0" encoding="UTF-8"?>\n<pkgmetadata><use>'
+                '<flag name="foo">Build foo by Jörg</flag></use></pkgmetadata>\n'
+            )
+        script = textwrap.dedent(
+            """
+            import sys
+            from pkgcore.ebuild import repo_objs, repository
+            from pkgcore.scripts import pmaint
+
+            class Observer:
+                def error(self, msg):
+                    print(msg)
+
+            loc = sys.argv[1]
+            repo = repository.UnconfiguredTree(
+                loc, repo_config=repo_objs.RepoConfig(location=loc)
+            )
+            sys.exit(
+                pmaint.update_use_local_desc(repo, Observer())
+                or pmaint.update_pkg_desc_index(repo, Observer())
+            )
+            """
+        )
+        env = dict(os.environ, LC_ALL="C", PYTHONUTF8="0", PYTHONCOERCECLOCALE="0")
+        ret = subprocess.run(
+            [sys.executable, "-c", script, repo.location],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        assert ret.returncode == 0, ret.stdout + ret.stderr
+        with open(os.path.join(repo.location, "metadata", "pkg_desc_index"), "rb") as f:
+            assert f.read() == "cat/pkg 1: café\n".encode()
+        with open(os.path.join(repo.location, "profiles", "use.local.desc"), "rb") as f:
+            assert f.read().endswith("cat/pkg:foo - Build foo by Jörg\n".encode())

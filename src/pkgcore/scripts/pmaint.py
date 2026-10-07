@@ -404,21 +404,21 @@ def update_use_local_desc(repo, observer):
         ret = 1
 
     try:
-        f = AtomicWriteFile(use_local_desc)
+        f = AtomicWriteFile(use_local_desc, binary=True)
         f.write(
             textwrap.dedent(
                 """\
             # This file is deprecated as per GLEP 56 in favor of metadata.xml.
             # Please add your descriptions to your package's metadata.xml ONLY.
             # * generated automatically using pmaint *\n\n"""
-            )
+            ).encode()
         )
         with patch("pkgcore.log.logger.error", _raise_xml_error):
             for cat, pkgs in sorted(repo.packages.items()):
                 for pkg in sorted(pkgs):
                     metadata = repo._get_metadata_xml(cat, pkg)
                     for flag, desc in sorted(metadata.local_use.items()):
-                        f.write(f"{cat}/{pkg}:{flag} - {desc}\n")
+                        f.write(f"{cat}/{pkg}:{flag} - {desc}\n".encode())
         f.close()
     except OSError as e:
         observer.error(
@@ -441,7 +441,7 @@ def update_pkg_desc_index(repo, observer, pkgs=None):
     pkg_desc_index = pjoin(repo.location, "metadata", "pkg_desc_index")
     f = None
     try:
-        f = AtomicWriteFile(pkg_desc_index)
+        f = AtomicWriteFile(pkg_desc_index, binary=True)
         if pkgs is None:
             pkgs = repo.itermatch(packages.AlwaysTrue, sorter=sorted, pkg_filter=None)
         for key, key_pkgs in groupby(pkgs, key=attrgetter("key")):
@@ -451,7 +451,7 @@ def update_pkg_desc_index(repo, observer, pkgs=None):
                 try:
                     desc = pkg.description
                     versions = " ".join(x.fullver for x in key_pkgs)
-                    f.write(f"{key} {versions}: {desc}\n")
+                    f.write(f"{key} {versions}: {desc}\n".encode())
                     break
                 except MetadataException:
                     # should be caught and outputted already by cache regen

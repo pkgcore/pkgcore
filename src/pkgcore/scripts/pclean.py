@@ -16,7 +16,6 @@ from os.path import join as pjoin
 
 import snakeoil.formatters
 from snakeoil.mappings import DictMixin
-from snakeoil.osutils import listdir_dirs, listdir_files
 from snakeoil.sequences import iflatten_instance, split_negations
 from snakeoil.strings import pluralism
 
@@ -422,7 +421,7 @@ def _dist_validate_args(parser, namespace):
     if repo is None:
         repo = multiplex.tree(*get_virtual_repos(namespace.domain.source_repos, False))
 
-    all_dist_files = {os.path.basename(f) for f in listdir_files(distdir)}
+    all_dist_files = {e.name for e in os.scandir(distdir) if e.is_file()}
     target_files = set()
     installed_dist = set()
     exists_dist = set()
@@ -676,9 +675,9 @@ def _tmp_validate_args(parser, namespace):
     else:
         # not in a configured repo dir, remove all tmpdir entries
         dir_removal_func = partial(shutil.rmtree)
-        dirs = ((dir_removal_func, pjoin(tmpdir, d)) for d in listdir_dirs(tmpdir))
+        dirs = [(dir_removal_func, e.path) for e in os.scandir(tmpdir) if e.is_dir()]
         file_removal_func = partial(os.remove)
-        files = ((file_removal_func, pjoin(tmpdir, f)) for f in listdir_files(tmpdir))
+        files = [(file_removal_func, e.path) for e in os.scandir(tmpdir) if e.is_file()]
 
     namespace.remove = chain(dirs, files)
 

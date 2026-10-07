@@ -24,7 +24,6 @@ from os.path import normpath
 
 from snakeoil.bash import read_bash_dict
 from snakeoil.fileutils import AtomicWriteFile
-from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance, unique_stable
 
 from .. import os_data
@@ -71,7 +70,7 @@ incrementals = frozenset(
 def collapse_envd(base):
     collapsed_d = {}
     try:
-        env_d_files = sorted(listdir_files(base))
+        env_d_files = sorted(e.name for e in os.scandir(base) if e.is_file())
     except FileNotFoundError:
         pass
     else:
@@ -281,7 +280,9 @@ class ConfigProtectInstall(triggers.base):
             updates = {x[0]: [] for x in entries}
             try:
                 existing = sorted(
-                    x for x in listdir_files(dir_loc) if x.startswith("._cfg")
+                    e.name
+                    for e in os.scandir(dir_loc)
+                    if e.name.startswith("._cfg") and e.is_file()
                 )
             except FileNotFoundError:
                 # this shouldn't occur.

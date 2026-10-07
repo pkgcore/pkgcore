@@ -1,7 +1,7 @@
+import os
 from collections import defaultdict, deque
 from os.path import join as pjoin
 
-from snakeoil.osutils import listdir_files
 from snakeoil.sequences import iflatten_instance
 
 from ..log import logger
@@ -10,7 +10,7 @@ from .atom import atom
 
 def _scan_directory(path, eapi):
     files = []
-    for filename in listdir_files(path):
+    for filename in [e.name for e in os.scandir(path) if e.is_file()]:
         match = eapi.options.update_regex.match(filename)
         if match is not None:
             files.append(filename)

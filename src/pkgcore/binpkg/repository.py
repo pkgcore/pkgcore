@@ -13,7 +13,6 @@ from snakeoil import chksum, compression
 from snakeoil.data_source import data_source, local_source
 from snakeoil.klass import alias_attr, jit_attr, jit_attr_named
 from snakeoil.mappings import DictMixin, StackedDict
-from snakeoil.osutils import listdir_dirs, listdir_files
 
 from ..config.hint import ConfigHint
 from ..ebuild import ebd, ebuild_built
@@ -243,7 +242,11 @@ class tree(prototype.tree):
 
     def _get_categories(self):
         try:
-            return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
+            return tuple(
+                e.name
+                for e in os.scandir(self.base)
+                if e.name.lower() != "all" and e.is_dir()
+            )
         except OSError as e:
             raise KeyError(f"failed fetching categories: {e}") from e
 
@@ -253,7 +256,7 @@ class tree(prototype.tree):
         d = {}
         lext = len(self.extension)
         try:
-            for x in listdir_files(cpath):
+            for x in [e.name for e in os.scandir(cpath) if e.is_file()]:
                 # don't use lstat; symlinks may exist
                 if (
                     x.endswith(".lockfile")

@@ -21,7 +21,6 @@ from os.path import join as pjoin
 from snakeoil.bash import read_bash_dict
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.mappings import DictMixin, ImmutableDict
-from snakeoil.osutils import listdir_files
 
 from .. import const
 from .. import exceptions as base_errors
@@ -534,7 +533,7 @@ class PortageConfig(DictMixin):
 
         set_fp = pjoin(self.dir, "sets")
         try:
-            for setname in listdir_files(set_fp):
+            for setname in [e.name for e in os.scandir(set_fp) if e.is_file()]:
                 # Potential for name clashes here, those will just make
                 # the set not show up in config.
                 if setname in ("system", "world"):

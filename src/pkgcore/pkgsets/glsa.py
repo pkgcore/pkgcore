@@ -12,7 +12,6 @@ from lxml import etree
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import GenericEquality
-from snakeoil.osutils import listdir_files
 
 from ..config.hint import ConfigHint
 from ..ebuild import atom, cpv
@@ -89,7 +88,7 @@ class GlsaDirSet(GenericEquality):
     def iter_vulnerabilities(self):
         """generator yielding each GLSA restriction"""
         for path in self.paths:
-            for fn in listdir_files(path):
+            for fn in [e.name for e in os.scandir(path) if e.is_file()]:
                 # glsa-1234-12.xml
                 if not (fn.startswith("glsa-") and fn.endswith(".xml")):
                     if fn not in self.METADATA_FILES:

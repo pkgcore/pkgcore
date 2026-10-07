@@ -37,7 +37,7 @@ from snakeoil import process
 from snakeoil.bash import read_bash
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import touch
-from snakeoil.osutils import ensure_dirs, listdir_files
+from snakeoil.osutils import ensure_dirs
 
 from .. import os_data
 from ..fs import contents, fs
@@ -399,7 +399,7 @@ class InfoRegen(base):
     def regen(self, binary, basepath):
         ignores = ("dir", "dir.old")
         try:
-            files = listdir_files(basepath)
+            files = [e.name for e in os.scandir(basepath) if e.is_file()]
         except FileNotFoundError:
             return
 

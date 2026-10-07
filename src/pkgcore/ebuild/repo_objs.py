@@ -33,7 +33,6 @@ from snakeoil import klass, mappings
 from snakeoil.bash import BashParseError, read_bash, read_dict
 from snakeoil.currying import post_curry
 from snakeoil.klass import immutable
-from snakeoil.osutils import listdir_files
 from snakeoil.osutils.mount import umount
 from snakeoil.process.namespaces import simple_unshare
 from snakeoil.sequences import unique_stable
@@ -602,7 +601,7 @@ class Licenses(immutable.Simple):
     def licenses(self):
         """Return the set of all defined licenses in a repo."""
         try:
-            content = listdir_files(self.licenses_dir)
+            content = [e.name for e in os.scandir(self.licenses_dir) if e.is_file()]
         except OSError:
             content = ()
         return frozenset(chain(content, *self._license_instances))
@@ -1051,7 +1050,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         base = pjoin(self.profiles_base, "desc")
         d = {}
         try:
-            targets = listdir_files(base)
+            targets = [e.name for e in os.scandir(base) if e.is_file()]
         except FileNotFoundError:
             targets = []
 
@@ -1073,7 +1072,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         base = pjoin(self.profiles_base, "desc")
         d = {}
         try:
-            targets = listdir_files(base)
+            targets = [e.name for e in os.scandir(base) if e.is_file()]
         except FileNotFoundError:
             targets = []
 

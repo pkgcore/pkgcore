@@ -14,7 +14,6 @@ from snakeoil.chksum import LazilyHashedPath
 from snakeoil.data_source import local_source
 from snakeoil.klass import jit_attr_ext_method
 from snakeoil.mappings import ImmutableDict, StackedDict
-from snakeoil.osutils import listdir_files
 
 from ..config.hint import ConfigHint
 
@@ -101,7 +100,7 @@ class cache(base):
         ec = {}
         eclass_len = len(".eclass")
         try:
-            files = listdir_files(self.eclassdir)
+            files = [e.name for e in os.scandir(self.eclassdir) if e.is_file()]
         except (FileNotFoundError, NotADirectoryError):
             return ImmutableDict()
         for y in sorted(files):

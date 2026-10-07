@@ -10,7 +10,6 @@ from os.path import join as pjoin
 from snakeoil import data_source
 from snakeoil.fileutils import readfile
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.osutils import listdir_dirs
 
 from ..config.hint import ConfigHint
 from ..ebuild import ebd, ebuild_built
@@ -78,7 +77,9 @@ class tree(prototype.tree):
         try:
             try:
                 return tuple(
-                    x for x in listdir_dirs(self.location) if not x.startswith(".")
+                    e.name
+                    for e in os.scandir(self.location)
+                    if not e.name.startswith(".") and e.is_dir()
                 )
             except OSError as e:
                 raise KeyError(f"failed fetching categories: {e}") from e
@@ -91,7 +92,7 @@ class tree(prototype.tree):
         d = {}
         bad = False
         try:
-            for x in listdir_dirs(cpath):
+            for x in [e.name for e in os.scandir(cpath) if e.is_dir()]:
                 if x.startswith((".tmp.", "-MERGING-")) or x.endswith(".lockfile"):
                     continue
                 try:

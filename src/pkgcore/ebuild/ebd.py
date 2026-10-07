@@ -32,7 +32,7 @@ from snakeoil import data_source, klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.fileutils import touch
-from snakeoil.osutils import ensure_dirs, listdir_files
+from snakeoil.osutils import ensure_dirs
 from snakeoil.sequences import iflatten_instance, unique_stable
 
 from .. import const
@@ -493,7 +493,11 @@ class ebd:
     def _reload_state(self):
         try:
             self.__set_stage_state__(
-                [x[1:] for x in listdir_files(self.builddir) if x.startswith(".")]
+                [
+                    e.name[1:]
+                    for e in os.scandir(self.builddir)
+                    if e.name.startswith(".") and e.is_file()
+                ]
             )
         except OSError as e:
             if e.errno not in (errno.ENOTDIR, errno.ENOENT):

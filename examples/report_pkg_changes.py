@@ -4,7 +4,6 @@ import os
 import sys
 
 from snakeoil.bash import read_bash
-from snakeoil.osutils import listdir_files
 
 from pkgcore.config import load_config
 from pkgcore.ebuild.atom import atom
@@ -76,7 +75,9 @@ def parse_moves(location):
         return tuple(reversed(fname.split("-")))
 
     moves = {}
-    for update_file in sorted(listdir_files(location), key=get_key):
+    for update_file in sorted(
+        [e.name for e in os.scandir(location) if e.is_file()], key=get_key
+    ):
         for line in read_bash(pjoin(location, update_file)):
             line = line.split()
             if line[0] != "move":

@@ -21,7 +21,6 @@ from snakeoil.data_source import local_source
 from snakeoil.fileutils import readlines_utf8
 from snakeoil.mappings import ImmutableDict
 from snakeoil.obj import make_kls
-from snakeoil.osutils import listdir_dirs, listdir_files
 from snakeoil.sequences import iflatten_instance, unique_stable
 from snakeoil.strings import pluralism
 
@@ -526,7 +525,11 @@ class UnconfiguredTree(prototype.tree):
                     intern,
                     filterfalse(
                         self.false_categories.__contains__,
-                        (x for x in listdir_dirs(self.base) if not x.startswith(".")),
+                        (
+                            e.name
+                            for e in os.scandir(self.base)
+                            if not e.name.startswith(".") and e.is_dir()
+                        ),
                     ),
                 )
             )
@@ -545,7 +548,7 @@ class UnconfiguredTree(prototype.tree):
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
         try:
-            return tuple(listdir_dirs(cpath))
+            return tuple(e.name for e in os.scandir(cpath) if e.is_dir())
         except FileNotFoundError:
             if category in self.categories:
                 # ignore it, since it's PMS mandated that it be allowed.
@@ -566,7 +569,7 @@ class UnconfiguredTree(prototype.tree):
         extension = self.extension
         ext_len = -len(extension)
         try:
-            files = listdir_files(cppath)
+            files = [e.name for e in os.scandir(cppath) if e.is_file()]
         except OSError as e:
             raise KeyError(
                 "failed fetching versions for package {}: {}".format(

@@ -467,7 +467,7 @@ class TestUpdateDescFiles:
         assert f"Unable to update {filename} file {str(target_dir / filename)!r}" in msg
         # AtomicWriteFile resolves the target before deriving the temporary name
         temp_file = target_dir.resolve() / f".update.{filename}"
-        assert f"Permission denied: {str(temp_file)!r}" in msg
+        assert f"Permission denied: '{temp_file}" in msg
 
     def test_pkg_desc_index(self, repo):
         repo.create_ebuild("cat/pkg-1", description="old")

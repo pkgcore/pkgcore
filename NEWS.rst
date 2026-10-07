@@ -62,6 +62,10 @@ Fixes
   processor as failing to source, instead of crashing after the regen
   (Arthur Zamarin)
 
+- ``pmaint regen`` reports and counts a ``RuntimeError`` while regenerating
+  a package, instead of losing it with its worker thread and exiting 0
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

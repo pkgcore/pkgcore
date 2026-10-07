@@ -1,5 +1,3 @@
-from snakeoil.compatibility import IGNORED_EXCEPTIONS
-
 from ..package.errors import MetadataException
 from ..util.thread_pool import map_async
 
@@ -8,9 +6,9 @@ def regen_iter(iterable, regen_func, observer):
     for pkg in iterable:
         try:
             regen_func(pkg)
-        except IGNORED_EXCEPTIONS as e:
-            if isinstance(e, KeyboardInterrupt):
-                return
+        except KeyboardInterrupt:
+            return
+        except (MemoryError, SystemExit):
             raise
         except MetadataException:
             # handled at a higher level by scanning for metadata masked pkgs

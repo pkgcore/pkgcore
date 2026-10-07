@@ -425,6 +425,20 @@ def _cached_tree(repo):
     )
 
 
+def test_regen_counts_runtime_errors(repo, monkeypatch):
+    repo.create_ebuild("cat/pkg-1")
+    tree = _cached_tree(repo)
+
+    def helper(**kwargs):
+        def regen(pkg):
+            raise RuntimeError("boom")
+
+        return regen
+
+    monkeypatch.setattr(tree, "_regen_operation_helper", helper)
+    assert tree.operations.regen_cache() == 1
+
+
 def test_regen_survives_processor_protocol_errors(repo):
     repo.create_ebuild("cat/bogus-1", data='echo "bogus" >&${PKGCORE_EBD_WRITE_FD}\n')
     repo.create_ebuild("cat/good-1")

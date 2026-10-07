@@ -13,9 +13,10 @@ __all__ = ("install", "operations", "replace", "uninstall")
 
 import os
 from os.path import join as pjoin
+from pathlib import Path
 
 from snakeoil.compression import compress_data
-from snakeoil.osutils import ensure_dirs, unlink_if_exists
+from snakeoil.osutils import ensure_dirs
 
 from ..fs import tar
 from ..log import logger
@@ -94,7 +95,7 @@ class install(repo_interfaces.install):
             os.chmod(tmp_path, 0o644)
         except Exception:
             try:
-                unlink_if_exists(tmp_path)
+                Path(tmp_path).unlink(missing_ok=True)
             except OSError as e:
                 logger.warning(f"failed removing {tmp_path!r}: {e}")
             raise

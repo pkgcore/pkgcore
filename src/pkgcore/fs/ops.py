@@ -10,8 +10,9 @@ import os
 import subprocess
 from functools import partial
 from os.path import join as pjoin
+from pathlib import Path
 
-from snakeoil.osutils import ensure_dirs, unlink_if_exists
+from snakeoil.osutils import ensure_dirs
 
 from . import contents, fs
 from .livefs import gen_obj
@@ -177,19 +178,19 @@ def do_link(src, trg):
         raise
 
     path = trg.location + "#new"
-    unlink_if_exists(path)
+    Path(path).unlink(missing_ok=True)
     try:
         os.link(src.location, path)
     except OSError as e:
         if e.errno != errno.EXDEV:
-            # someone is screwing with us, or unlink_if_exists is broken.
+            # someone is screwing with us
             raise
         # hardlink is impossible, force copyfile
         return False
     try:
         os.rename(path, trg.location)
     except OSError as e:
-        unlink_if_exists(path)
+        Path(path).unlink(missing_ok=True)
         if e.errno != errno.EXDEV:
             # weird error, broken FS codes, perms, or someone is screwing with us.
             raise
@@ -324,7 +325,7 @@ def unmerge_contents(cset, offset=None, callback=None):
 
     for x in iterate(cset.iterdirs(invert=True)):
         callback(x)
-        unlink_if_exists(x.location)
+        Path(x.location).unlink(missing_ok=True)
 
     # this is a fair sight faster then using sorted/reversed
     l = list(iterate(cset.iterdirs()))

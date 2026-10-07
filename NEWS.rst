@@ -43,6 +43,10 @@ Fixes
   instead of failing on non-ASCII text in a non-UTF-8 locale (Arthur
   Zamarin)
 
+- ``pmaint regen`` with threads no longer writes ``pkg_desc_index``,
+  ``use.local.desc`` and ``timestamp.chk`` world-writable, with snakeoil
+  0.11.7 (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

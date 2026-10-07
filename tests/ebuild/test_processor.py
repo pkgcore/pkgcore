@@ -4,6 +4,7 @@ import subprocess
 import sys
 import textwrap
 import threading
+from unittest import mock
 
 import pytest
 
@@ -274,3 +275,16 @@ def test_die_output_cut_short_by_daemon_exit():
 
     with pytest.raises(processor.EbdError, match="cat/pkg-1 failed"):
         processor.chuck_DyingInterrupt(DeadEbp())
+
+
+def test_send_env_file_leaves_umask_alone(tmp_path):
+    ebp = processor.request_ebuild_processor(sandbox=False)
+    try:
+        ebp.write("process_ebuild setup")
+        with mock.patch("pkgcore.ebuild.processor.os.umask") as umask:
+            assert ebp.send_env({"X": "1"}, tmpdir=str(tmp_path))
+        umask.assert_not_called()
+        assert (tmp_path / "ebd-env-transfer").stat().st_mode & 0o777 == 0o664
+    finally:
+        processor.drop_ebuild_processor(ebp)
+        ebp.shutdown_processor(force=True)

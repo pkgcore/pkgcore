@@ -1,4 +1,5 @@
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -8,6 +9,7 @@ from unittest import mock
 
 import pytest
 
+from pkgcore.ebuild import const as e_const
 from pkgcore.ebuild import processor
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.processor import EbuildProcessor
@@ -287,4 +289,20 @@ def test_send_env_file_leaves_umask_alone(tmp_path):
         assert (tmp_path / "ebd-env-transfer").stat().st_mode & 0o777 == 0o664
     finally:
         processor.drop_ebuild_processor(ebp)
+        ebp.shutdown_processor(force=True)
+
+
+def test_ebd_reads_generated_global_funcs(tmp_path, monkeypatch):
+    if not os.path.exists(os.path.join(e_const.EBD_PATH, ".generated/funcs/global")):
+        pytest.skip("no generated function lists, run make in the ebd dir")
+    ebd = tmp_path / "ebd"
+    shutil.copytree(e_const.EBD_PATH, ebd, symlinks=True)
+    # startup fails if the daemon regenerates the list instead of reading it
+    (ebd / "generate_global_func_list").write_text("#!/bin/sh\nexit 1\n")
+    monkeypatch.setattr(e_const, "EBD_PATH", str(ebd))
+    monkeypatch.setattr(e_const, "EBUILD_DAEMON_PATH", str(ebd / "ebuild-daemon.bash"))
+    ebp = EbuildProcessor(userpriv=False, sandbox=False)
+    try:
+        assert ebp.is_responsive
+    finally:
         ebp.shutdown_processor(force=True)

@@ -5,13 +5,10 @@ repository that combines multiple repos together
 __all__ = ("operations", "tree")
 
 import os
-from functools import partial
+from functools import cmp_to_key, partial
 from itertools import chain
-from operator import itemgetter
 
 from snakeoil import klass
-from snakeoil.compatibility import sorted_cmp
-from snakeoil.currying import post_curry
 from snakeoil.iterables import iter_sort
 
 from ..config.hint import ConfigHint
@@ -160,8 +157,11 @@ class tree(prototype.tree):
                 return 1
             return -1
 
-        f = post_curry(sorted_cmp, f, key=itemgetter(0))
-        return iter_sort(f, *[repo.itermatch(restrict, **kwds) for repo in self.trees])
+        key = cmp_to_key(f)
+        return iter_sort(
+            partial(sorted, key=lambda x: key(x[0])),
+            *[repo.itermatch(restrict, **kwds) for repo in self.trees],
+        )
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
         "@param", "@keyword"

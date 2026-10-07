@@ -5,11 +5,11 @@ binpkg tar utilities
 import os
 import stat
 import tarfile
-from functools import partial
+from functools import cmp_to_key, partial
 from itertools import count
 
 from snakeoil import compression
-from snakeoil.compatibility import cmp, sorted_cmp
+from snakeoil.compatibility import cmp
 from snakeoil.data_source import invokable_data_source
 
 from . import contents
@@ -252,4 +252,6 @@ def convert_archive(archive):
             return -1
         return cmp(x, y)
 
-    return contents.OrderedContentsSet(sorted_cmp(t, sort_func), mutable=False)
+    return contents.OrderedContentsSet(
+        sorted(t, key=cmp_to_key(sort_func)), mutable=False
+    )

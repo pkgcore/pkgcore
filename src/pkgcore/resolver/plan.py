@@ -3,10 +3,10 @@ __all__ = ("merge_plan", "resolver_frame", "resolver_stack")
 import operator
 import sys
 from collections import deque
-from functools import partial
+from functools import cmp_to_key, partial
 from itertools import chain, filterfalse, islice
 
-from snakeoil.compatibility import cmp, sort_cmp
+from snakeoil.compatibility import cmp
 from snakeoil.iterables import caching_iter
 
 # XXX: hack; see insert_blockers
@@ -54,7 +54,8 @@ def highest_iter_sort(l, pkg_grabber=pkg_grabber):
             return -1
         return 0
 
-    sort_cmp(l, f, key=pkg_grabber, reverse=True)
+    key = cmp_to_key(f)
+    l.sort(key=lambda x: key(pkg_grabber(x)), reverse=True)
     return l
 
 
@@ -82,7 +83,8 @@ def downgrade_iter_sort(restrict, l, pkg_grabber=pkg_grabber):
             return 1
         return c
 
-    sort_cmp(l, f, key=pkg_grabber, reverse=True)
+    key = cmp_to_key(f)
+    l.sort(key=lambda x: key(pkg_grabber(x)), reverse=True)
     return l
 
 
@@ -106,7 +108,8 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
             return 1
         return 0
 
-    sort_cmp(l, f, key=pkg_grabber)
+    key = cmp_to_key(f)
+    l.sort(key=lambda x: key(pkg_grabber(x)))
     return l
 
 

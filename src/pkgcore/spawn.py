@@ -21,14 +21,13 @@ __all__ = (
 )
 
 import os
+import shutil
 import subprocess
 from collections.abc import Iterable, Sequence
 from functools import cache
 
-from snakeoil.process import find_binary
-
-BASH_BINARY = find_binary("bash", fallback="/bin/bash")
-SANDBOX_BINARY = find_binary("sandbox", fallback="/usr/bin/sandbox")
+BASH_BINARY = shutil.which("bash") or "/bin/bash"
+SANDBOX_BINARY = shutil.which("sandbox") or "/usr/bin/sandbox"
 
 
 def bash_command(command: str | Iterable[str], debug: bool = False) -> list[str]:

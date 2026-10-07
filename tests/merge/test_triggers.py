@@ -1,4 +1,5 @@
 import os
+import shutil
 import sys
 import textwrap
 import time
@@ -7,7 +8,6 @@ from math import ceil, floor
 from os.path import normpath
 
 import pytest
-from snakeoil import process
 from snakeoil.contexts import os_environ
 from snakeoil.currying import post_curry
 from snakeoil.osutils import ensure_dirs
@@ -332,13 +332,9 @@ class TestInfoRegen(trigger_mixin):
         self.trigger.location = [self.dir]
 
     def test_binary_path(self):
-        try:
-            path = process.find_binary("install-info")
-        except process.CommandNotFound:
-            path = None
-        assert path == self.trigger.get_binary_path()
+        assert shutil.which("install-info") == self.trigger.get_binary_path()
 
-        with os_environ("PATH"):
+        with os_environ(PATH=""):
             assert self.trigger.get_binary_path() is None
 
     @pytest.mark.skipif(
@@ -380,7 +376,7 @@ class TestInfoRegen(trigger_mixin):
         reason="can't verify regen behavior due to install-info not being available",
     )
     def test_trigger(self, tmp_path):
-        with os_environ("PATH"):
+        with os_environ(PATH=""):
             self.engine.phase = "post_merge"
             assert self.trigger(self.engine, {}) is None
 

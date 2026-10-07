@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-from snakeoil.process import CommandNotFound
 
 from pkgcore.sync import base, bzr
 
@@ -18,13 +17,13 @@ class TestBzrSyncer:
             bzr.bzr_syncer.parse_uri("bzr://dar")
 
         # external binary doesn't exist
-        with mock.patch("snakeoil.process.find_binary") as find_binary:
-            find_binary.side_effect = CommandNotFound("bzr")
+        with mock.patch("shutil.which") as which:
+            which.return_value = None
             with pytest.raises(base.SyncError):
                 bzr.bzr_syncer(str(self.repo_path), "bzr+http://foon.com/dar")
 
         # fake that the external binary exists
-        with mock.patch("snakeoil.process.find_binary") as find_binary:
-            find_binary.return_value = "bzr"
+        with mock.patch("shutil.which") as which:
+            which.return_value = "bzr"
             o = bzr.bzr_syncer(str(self.repo_path), "bzr+http://dar")
             assert o.uri == "http://dar"

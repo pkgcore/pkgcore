@@ -4,7 +4,6 @@ import time
 from unittest import mock
 
 import pytest
-from snakeoil.process import CommandNotFound
 
 from pkgcore.sync import base, rsync
 from pkgcore.sync.tar import tar_syncer
@@ -23,20 +22,20 @@ class TestRsyncSyncer:
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
         self.repo_path = str(tmp_path / "repo")
-        with mock.patch("snakeoil.process.find_binary", return_value="rsync"):
+        with mock.patch("shutil.which", return_value="rsync"):
             self.syncer = self._syncer_class(
                 self.repo_path, "rsync://rsync.gentoo.org/gentoo-portage"
             )
 
-    @mock.patch("snakeoil.process.find_binary")
-    def test_uri_parse_rsync_missing(self, find_binary, run, getaddrinfo):
-        find_binary.side_effect = CommandNotFound("rsync")
+    @mock.patch("shutil.which")
+    def test_uri_parse_rsync_missing(self, which, run, getaddrinfo):
+        which.return_value = None
         with pytest.raises(base.SyncError):
             self._syncer_class(self.repo_path, "rsync://foon.com/dar")
 
-    @mock.patch("snakeoil.process.find_binary")
-    def test_uri_parse(self, find_binary, run, getaddrinfo):
-        find_binary.side_effect = lambda x: x
+    @mock.patch("shutil.which")
+    def test_uri_parse(self, which, run, getaddrinfo):
+        which.side_effect = lambda x: x
         o = self._syncer_class(self.repo_path, "rsync://dar/module")
         assert o.uri == "rsync://dar/module/"
         assert o.rsh is None
@@ -127,9 +126,7 @@ class TestRsyncTimestampCheck:
         self.repo_path = tmp_path / "repo"
         (self.repo_path / "metadata").mkdir(parents=True)
         (self.repo_path / "metadata" / "timestamp.chk").write_text(self.stamp)
-        with mock.patch(
-            "snakeoil.process.find_binary", side_effect=lambda x: f"/bin/{x}"
-        ):
+        with mock.patch("shutil.which", side_effect=lambda x: f"/bin/{x}"):
             self.syncer = rsync.rsync_timestamp_syncer(
                 str(self.repo_path),
                 "rsync+ssh://user@example.org/gentoo",

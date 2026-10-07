@@ -3,7 +3,6 @@ import pwd
 from unittest import mock
 
 import pytest
-from snakeoil.process import CommandNotFound
 
 from pkgcore import os_data
 from pkgcore.sync import base, git, tar
@@ -61,37 +60,45 @@ class TestSyncer:
             assert o.gid == 5678
 
 
-@mock.patch("snakeoil.process.find_binary")
+def test_require_binary_skips_cwd(tmp_path, monkeypatch):
+    (binary := tmp_path / "foo").write_text("#!/bin/sh\n")
+    binary.chmod(0o755)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("PATH", "")
+    assert base.ExternalSyncer.require_binary("foo", fatal=False) is None
+
+
+@mock.patch("shutil.which")
 class TestExternalSyncer:
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path):
         self.repo_path = str(tmp_path / "repo")
 
-    def test_missing_binary(self, find_binary):
-        find_binary.side_effect = CommandNotFound("foo")
+    def test_missing_binary(self, which):
+        which.return_value = None
         with pytest.raises(base.MissingBinary):
             base.ExternalSyncer(self.repo_path, "http://dar")
 
-    def test_existing_binary(self, find_binary):
+    def test_existing_binary(self, which):
         # fake external syncer
         class FooSyncer(base.ExternalSyncer):
             binary = "foo"
 
         # fake that the external binary exists
-        find_binary.side_effect = lambda x: x
+        which.side_effect = lambda x: x
 
         o = FooSyncer(self.repo_path, "http://dar")
         assert o.uri == "http://dar"
         assert o.binary == "foo"
 
     @mock.patch("pkgcore.sync.base.subprocess.run")
-    def test_usersync(self, run, find_binary):
+    def test_usersync(self, run, which):
         # fake external syncer
         class FooSyncer(base.ExternalSyncer):
             binary = "foo"
 
         # fake that the external binary exists
-        find_binary.side_effect = lambda x: x
+        which.side_effect = lambda x: x
 
         o = FooSyncer(self.repo_path, "http://dar")
         o.uid = 1234
@@ -101,21 +108,21 @@ class TestExternalSyncer:
         assert run.call_args[1]["group"] == o.gid
 
 
-@mock.patch("snakeoil.process.find_binary", return_value="git")
+@mock.patch("shutil.which", return_value="git")
 @mock.patch("pkgcore.sync.base.subprocess.run")
 class TestVcsSyncer:
-    def test_hyphen_uri(self, run, find_binary, tmp_path):
+    def test_hyphen_uri(self, run, which, tmp_path):
         with pytest.raises(base.UriError) as excinfo:
             git.git_syncer(str(tmp_path), "git+--upload-pack=whatever")
         assert "must not start with a hyphen" in str(excinfo.value)
 
-    def test_basedir_perms_error(self, run, find_binary, tmp_path):
+    def test_basedir_perms_error(self, run, which, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
         with pytest.raises(base.PathError), mock.patch("os.stat") as stat:
             stat.side_effect = OSError("fake exception")
             syncer.sync()
 
-    def test_basedir_is_file_error(self, run, find_binary, tmp_path):
+    def test_basedir_is_file_error(self, run, which, tmp_path):
         repo = tmp_path / "repo"
         repo.touch()
         syncer = git.git_syncer(str(repo), "git://blah.git")
@@ -130,14 +137,14 @@ class TestVcsSyncer:
             syncer.sync()
         assert "isn't a directory" in str(excinfo.value)
 
-    def test_verbose_sync(self, run, find_binary, tmp_path):
+    def test_verbose_sync(self, run, which, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
         syncer.sync(verbosity=1)
         assert "-v" == run.call_args[0][0][-1]
         syncer.sync(verbosity=2)
         assert "-vv" == run.call_args[0][0][-1]
 
-    def test_quiet_sync(self, run, find_binary, tmp_path):
+    def test_quiet_sync(self, run, which, tmp_path):
         syncer = git.git_syncer(str(tmp_path), "git://blah.git")
         syncer.sync(verbosity=-1)
         assert "-q" == run.call_args[0][0][-1]
@@ -166,8 +173,8 @@ class TestAutodetectSyncer:
         syncer = base.AutodetectSyncer(str(tmp_path))
         assert isinstance(syncer, base.DisabledSyncer)
 
-    @mock.patch("snakeoil.process.find_binary", return_value="git")
-    def test_syncer_detected(self, find_binary, tmp_path):
+    @mock.patch("shutil.which", return_value="git")
+    def test_syncer_detected(self, which, tmp_path):
         d = tmp_path / ".git"
         d.mkdir()
         syncer = base.AutodetectSyncer(str(tmp_path))

@@ -1,7 +1,6 @@
 from unittest import mock
 
 import pytest
-from snakeoil.process import CommandNotFound
 
 from pkgcore.sync import base, cvs
 
@@ -13,14 +12,14 @@ class TestCVSSyncer:
 
     def test_uri_parse(self):
         # external binary doesn't exist
-        with mock.patch("snakeoil.process.find_binary") as find_binary:
-            find_binary.side_effect = CommandNotFound("cvs")
+        with mock.patch("shutil.which") as which:
+            which.return_value = None
             with pytest.raises(base.SyncError):
                 cvs.cvs_syncer(str(self.repo_path), "cvs+/bin/sh://foon.com/dar")
 
         # fake that the external binary exists
-        with mock.patch("snakeoil.process.find_binary") as find_binary:
-            find_binary.return_value = "cvs"
+        with mock.patch("shutil.which") as which:
+            which.return_value = "cvs"
 
             # nonexistent rsh
             with mock.patch(

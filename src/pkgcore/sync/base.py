@@ -13,12 +13,11 @@ __all__ = (
 
 import os
 import pwd
+import shutil
 import stat
 import subprocess
 import sys
 from importlib import import_module
-
-from snakeoil import process
 
 from .. import os_data
 from ..config.hint import ConfigHint, configurable
@@ -169,12 +168,9 @@ class ExternalSyncer(Syncer):
 
     @staticmethod
     def require_binary(bin_name, fatal=True):
-        try:
-            return process.find_binary(bin_name)
-        except process.CommandNotFound as exc:
-            if fatal:
-                raise MissingBinary(bin_name, str(exc))
-            return None
+        if (path := shutil.which(bin_name)) is None and fatal:
+            raise MissingBinary(bin_name, f"failed to find binary: {bin_name!r}")
+        return path
 
     @classmethod
     def _plugin_disabled_check(cls):

@@ -25,6 +25,7 @@ __all__ = (
 import os
 import platform
 import re
+import shutil
 import subprocess
 import time
 import typing
@@ -361,11 +362,7 @@ class InfoRegen(base):
         self.saved_mtimes = mtime_watcher()
 
     def get_binary_path(self):
-        try:
-            return process.find_binary("install-info")
-        except process.CommandNotFound:
-            # swallow it.
-            return None
+        return shutil.which("install-info")
 
     def trigger(self, engine):
         locations = [
@@ -758,10 +755,9 @@ class BinaryDebug(ThreadedTrigger):
         for x in progs:
             obj = getattr(self, f"_{x}_binary")
             if obj is None:
-                try:
-                    obj = process.find_binary(f"{pkg.chost}-{x}")
-                except process.CommandNotFound:
-                    obj = process.find_binary(x)
+                obj = shutil.which(f"{pkg.chost}-{x}") or shutil.which(x)
+                if obj is None:
+                    raise process.CommandNotFound(x)
             setattr(self, f"{x}_binary", obj)
 
     def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):

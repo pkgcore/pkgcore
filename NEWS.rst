@@ -36,6 +36,9 @@ Fixes
 - An ebuild processor dying while reporting a ``die`` no longer leaves
   pkgcore looping forever with growing memory (Arthur Zamarin)
 
+- ``pmaint regen`` no longer leaves an ebuild processor running for each
+  ebuild that fails to source without calling ``die`` (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

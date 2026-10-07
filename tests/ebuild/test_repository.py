@@ -4,8 +4,9 @@ from pathlib import Path
 
 import pytest
 
-from pkgcore.ebuild import eclass_cache, repository, restricts
+from pkgcore.ebuild import eclass_cache, processor, repository, restricts
 from pkgcore.ebuild.atom import atom
+from pkgcore.package.errors import MetadataException
 from pkgcore.repository import errors
 
 
@@ -381,3 +382,17 @@ class TestSlavedTree(TestUnconfiguredTree):
     def test_masters(self, slave_repo):
         repo = self.mk_tree(slave_repo)
         assert repo.masters == (self.master_repo,)
+
+
+def test_regen_failure_doesnt_leak_processors(repo):
+    repo.create_ebuild("cat/pkg-1", data="exit 1\n")
+    repo.create_ebuild("cat/pkg-2")
+    bad, good = sorted(repo.itermatch(atom("cat/pkg"), pkg_filter=None))
+    before = list(processor.active_ebp_list)
+    helper = repository._RegenOpHelper(repo)
+    for _ in range(2):
+        with pytest.raises(MetadataException):
+            helper(bad)
+    assert helper(good)
+    alive = [x for x in processor.active_ebp_list if x not in before and x.is_alive]
+    assert alive == [helper.ebp]

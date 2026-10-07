@@ -818,8 +818,11 @@ class _RegenOpHelper:
             object.__setattr__(pkg, "data", data)
             return data
         except pkg_errors.MetadataException:
-            # ebuild processor is dead, so force a replacement request
-            self.ebp = self.request_ebp()
+            # the failure may have killed the processor or left it out of sync
+            if not self.ebp.is_responsive:
+                processor.drop_ebuild_processor(self.ebp)
+                self.ebp.shutdown_processor(force=True)
+                self.ebp = self.request_ebp()
             raise
 
     def __del__(self):

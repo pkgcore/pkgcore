@@ -254,3 +254,23 @@ def test_write_to_dead_daemon_raises_with_default_sigpipe():
         check=False,
     )
     assert (ret.returncode, ret.stdout) == (0, "raised\n")
+
+
+def test_die_output_cut_short_by_daemon_exit():
+    class DeadEbp:
+        def __init__(self):
+            self.lines = iter(["ERROR: cat/pkg-1 failed\n"])
+            self.eof_reads = 0
+
+        def read(self):
+            if (line := next(self.lines, None)) is not None:
+                return line
+            self.eof_reads += 1
+            assert self.eof_reads < 100, "kept reading past EOF"
+            return ""
+
+        def shutdown_processor(self, force=False):
+            pass
+
+    with pytest.raises(processor.EbdError, match="cat/pkg-1 failed"):
+        processor.chuck_DyingInterrupt(DeadEbp())

@@ -321,7 +321,7 @@ def chuck_DyingInterrupt(ebp, logfile=None, *args):
     error = []
     while True:
         line = ebp.read()
-        if line.strip() == "dead":
+        if not line or line.strip() == "dead":
             break
         error.append(line)
     drop_ebuild_processor(ebp)

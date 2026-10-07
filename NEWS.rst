@@ -33,6 +33,9 @@ Fixes
 - pkgcore tools no longer exit silently with status 141 when an ebuild
   processor dies, e.g. from the OOM killer (Arthur Zamarin)
 
+- An ebuild processor dying while reporting a ``die`` no longer leaves
+  pkgcore looping forever with growing memory (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

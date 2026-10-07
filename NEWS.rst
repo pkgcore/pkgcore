@@ -85,6 +85,9 @@ Fixes
 - ``pconfig configurables`` no longer crashes with a ``TypeError``
   (Arthur Zamarin)
 
+- With ``--sandbox`` confinement and ``TMPDIR`` set, ebuilds using here-strings
+  or here-documents in global scope no longer fail to source (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.45 (2026-10-03)
 ----------------------------

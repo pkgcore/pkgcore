@@ -70,12 +70,20 @@ except ImportError:  # pragma: no cover
     Landlock = None
 
 
+# where bash puts here-documents without TMPDIR: the first writable of these
+_BASH_TMPDIRS = ("/tmp", "/var/tmp", "/usr/tmp")
+
+
 def _ebd_paths() -> Iterator[str]:
     """Paths that sourcing an ebuild needs to be able to write, whatever else does."""
-    # The ebuild daemon is handed a minimal environment, so the bash sourcing
-    # ebuilds never sees a redirected TMPDIR and falls back to the system one.
-    # Here-documents too big for a pipe land there.
+    # pkgcore's own temporary files
     yield tempfile.gettempdir()
+    # The ebuild daemon is handed a minimal environment, so the bash sourcing
+    # ebuilds never sees a redirected TMPDIR and falls back to the system one
+    for path in _BASH_TMPDIRS:
+        if os.path.isdir(path) and os.access(path, os.W_OK | os.X_OK):
+            yield path
+            break
     # opened read-write by subprocess.DEVNULL, among others
     yield os.devnull
     # where sandbox(1) reports access violations; losing them would hide the

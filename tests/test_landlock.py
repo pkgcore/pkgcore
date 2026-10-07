@@ -111,6 +111,7 @@ def tmpdir(tmp_path, monkeypatch):
     """
     (path := tmp_path / "tmp").mkdir()
     monkeypatch.setattr(tempfile, "tempdir", str(path))
+    monkeypatch.setattr(landlock, "_BASH_TMPDIRS", (str(path),))
     return path
 
 
@@ -175,6 +176,15 @@ class TestConfinement:
     def test_tmpdir_always_granted(self, tmp_path, landlock_kernel, tmpdir):
         # the bash sourcing ebuilds falls back to it for big here-documents
         assert run_confined(partial(write_denied, tmpdir)) == "False"
+
+    def test_bash_tmpdir_granted_with_tmpdir_set(
+        self, tmp_path, monkeypatch, landlock_kernel, tmpdir
+    ):
+        # TMPDIR doesn't reach the ebuild daemon, so its bash uses the system dir
+        (redirected := tmp_path / "redirected").mkdir()
+        monkeypatch.setattr(tempfile, "tempdir", str(redirected))
+        assert run_confined(partial(write_denied, tmpdir)) == "False"
+        assert run_confined(partial(write_denied, redirected)) == "False"
 
     def test_devnull_always_granted(self, landlock_kernel, tmpdir):
         # subprocess.DEVNULL opens it read-write

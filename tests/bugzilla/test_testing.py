@@ -142,6 +142,9 @@ class TestGlobalInstall:
 
 
 class TestCassetteFixture:
+    # load the plugin explicitly, the inner run inherits PYTEST_DISABLE_PLUGIN_AUTOLOAD
+    args = ("-p", "pkgcore", "-p", "no:cacheprovider")
+
     def test_unused_recordings_fail_a_passing_test(self, pytester):
         pytester.makepyfile(
             """
@@ -151,7 +154,7 @@ class TestCassetteFixture:
                 bugzilla_cassette.expect(response({}))
             """
         )
-        pytester.runpytest("-p", "no:cacheprovider").assert_outcomes(passed=1, errors=1)
+        pytester.runpytest(*self.args).assert_outcomes(passed=1, errors=1)
 
     def test_failing_test_gets_no_extra_error(self, pytester):
         pytester.makepyfile(
@@ -163,4 +166,4 @@ class TestCassetteFixture:
                 assert False
             """
         )
-        pytester.runpytest("-p", "no:cacheprovider").assert_outcomes(failed=1)
+        pytester.runpytest(*self.args).assert_outcomes(failed=1)

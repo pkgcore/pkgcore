@@ -9,6 +9,7 @@ import pytest
 from snakeoil.cli.arghparse import ArgumentParser, Namespace
 
 from pkgcore import landlock
+from pkgcore.binpkg import repository as binpkg_repo
 from pkgcore.exceptions import PkgcoreUserException
 
 # these tests have to fork: confinement can't be undone, and the callables under
@@ -144,6 +145,11 @@ class TestWritableCachePaths:
             repo(cache=(Namespace(location=str(b), readonly=True),)),
         ]
         assert list(landlock.writable_cache_paths(*repos)) == [str(a)]
+
+    def test_binpkg_repo_skipped(self, tmp_path):
+        assert (
+            list(landlock.writable_cache_paths(binpkg_repo.tree(str(tmp_path)))) == []
+        )
 
 
 class TestAvailability:

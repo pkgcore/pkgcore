@@ -30,6 +30,7 @@ from collections.abc import Iterator
 
 from snakeoil.cli import arghparse
 
+from .cache import base as cache_base
 from .exceptions import PkgcoreUserException
 from .log import logger
 
@@ -99,7 +100,10 @@ def writable_cache_paths(*repos) -> Iterator[str]:
     involved in a run grants no more than pkgcore would have written anyway.
     """
     for repo in repos:
-        for cache in getattr(repo, "cache", ()):
+        caches = getattr(repo, "cache", ())
+        if isinstance(caches, cache_base):
+            continue
+        for cache in caches:
             if cache.readonly:
                 continue
             # pkgcore creates a missing cache dir on demand and decides

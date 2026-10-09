@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ----------------------------
+pkgcore 0.12.47 (unreleased)
+----------------------------
+
+Fixes
+~~~~~
+
+- ``pquery`` no longer crashes with ``NotImplementedError`` when a binpkg
+  repo is configured in ``repos.conf`` (Arthur Zamarin)
+
+----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------
 

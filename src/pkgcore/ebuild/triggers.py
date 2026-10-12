@@ -302,15 +302,14 @@ class ConfigProtectInstall(triggers.base):
 
             # now we rename.
             for fname, entry in entries:
-                # check for any updates with the same chksums.
+                # reuse the newest pending update if it's identical, as portage does
                 count = 0
-                for cfg_count, cfg_fname in updates[fname]:
-                    if simple_chksum_compare(
-                        livefs.gen_obj(pjoin(dir_loc, cfg_fname)), entry
-                    ):
-                        count = cfg_count
-                        break
-                    count = max(count, cfg_count + 1)
+                if updates[fname]:
+                    last = max(cfg_count for cfg_count, _ in updates[fname])
+                    last_obj = livefs.gen_obj(
+                        pjoin(dir_loc, f"._cfg{last:04d}_{fname}")
+                    )
+                    count = last if simple_chksum_compare(last_obj, entry) else last + 1
                 try:
                     install_cset.remove(entry)
                 except KeyError:

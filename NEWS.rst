@@ -12,6 +12,10 @@ Fixes
 - ``pquery`` no longer crashes with ``NotImplementedError`` when a binpkg
   repo is configured in ``repos.conf`` (Arthur Zamarin)
 
+- Remerging a package whose protected config file already has an identical
+  pending ``._cfg`` update reuses it instead of adding another
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

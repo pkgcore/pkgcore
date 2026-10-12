@@ -1,4 +1,10 @@
+import os
+from types import SimpleNamespace
+
+import pytest
+
 from pkgcore.ebuild import triggers
+from pkgcore.fs import livefs
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.fs import fsFile, fsSymlink
 
@@ -73,3 +79,28 @@ def test_multilib_strict_without_settings():
         binary_repos_raw = ()
 
     assert None not in triggers.GenerateTriggers(domain, {})
+
+
+@pytest.mark.parametrize(
+    ("pending", "expected"),
+    (
+        (("new",), "._cfg0000_foo.conf"),
+        (("new", "other"), "._cfg0002_foo.conf"),
+        (("other",), "._cfg0001_foo.conf"),
+    ),
+)
+def test_config_protect_reuses_newest_identical_cfg(tmp_path, pending, expected):
+    (etc := tmp_path / "etc").mkdir()
+    (etc / "foo.conf").write_text("old\n")
+    for count, content in enumerate(pending):
+        (etc / f"._cfg{count:04d}_foo.conf").write_text(f"{content}\n")
+    (image := tmp_path / "image").write_text("new\n")
+    live = livefs.gen_obj(str(etc / "foo.conf")).change_attributes(
+        location="/etc/foo.conf"
+    )
+    install = contentsSet(
+        [livefs.gen_obj(str(image)).change_attributes(location="/etc/foo.conf")]
+    )
+    engine = SimpleNamespace(offset=str(tmp_path), observer=None)
+    triggers.ConfigProtectInstall().trigger(engine, contentsSet([live]), install)
+    assert [os.path.basename(x.location) for x in install] == [expected]

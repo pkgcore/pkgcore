@@ -374,6 +374,16 @@ def chuck_StoppingCommand(ebp, line):
         raise ProcessorError(args[1])
 
 
+def _bash_quote(val: str) -> str:
+    """Quote a value for a bash assignment."""
+    if val.isalnum():
+        return val
+    if "'" not in val:
+        return f"'{val}'"
+    escaped = val.replace("\\", "\\\\").replace("'", "\\'")
+    return f"$'{escaped}'"
+
+
 class EbuildProcessor:
     """Abstraction of a running ebd instance.
 
@@ -815,14 +825,12 @@ class EbuildProcessor:
                 )
 
             if isinstance(val, (list, tuple)):
-                assign = f"{key}=({' '.join(f'[{i}]="{value}"' for i, value in enumerate(val))})"
-            elif val.isalnum():
-                assign = f"{key}={val}"
-            elif "'" not in val:
-                assign = f"{key}='{val}'"
+                elements = " ".join(
+                    f"[{i}]={_bash_quote(value)}" for i, value in enumerate(val)
+                )
+                assign = f"{key}=({elements})"
             else:
-                escaped = val.replace("\\", "\\\\").replace("'", "\\'")
-                assign = f"{key}=$'{escaped}'"
+                assign = f"{key}={_bash_quote(val)}"
 
             (plain if key in nonexported else exported).append(assign)
 

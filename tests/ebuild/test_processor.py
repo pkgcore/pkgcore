@@ -70,7 +70,7 @@ class TestGenerateEnvStr:
         assert "\n" not in out
         assert out.startswith("export ")
         assert "P='foo-1'" in out
-        assert 'arr=([0]="x" [1]="y")' in out
+        assert "arr=([0]=x [1]=y)" in out
 
     def test_nonexported_split(self):
         out = self._gen(
@@ -113,6 +113,17 @@ class TestGenerateEnvStr:
             check=True,
         )
         assert res.stdout == val
+
+    def test_array_values_round_trip_through_bash(self):
+        vals = ["plain", "", "a b", 'say "hi"', "it's C:\\new $HOME `id`\n"]
+        out = self._gen({"V": vals})
+        res = subprocess.run(
+            ["bash", "-c", f'{out}\nprintf "%s\\0" "${{V[@]}}"'],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        assert res.stdout.split("\0")[:-1] == vals
 
 
 class TestSandboxSummary:

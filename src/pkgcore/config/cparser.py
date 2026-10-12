@@ -30,10 +30,12 @@ def config_from_file(file_obj: typing.Iterable[str]) -> mappings.LazyValDict:
     cparser = CaseSensitiveConfigParser()
     try:
         cparser.read_file(file_obj)
-    except configparser.ParsingError as e:
+        # interpolate now, so a bad % is reported as a parse error of this file
+        sections = {name: dict(cparser.items(name)) for name in cparser.sections()}
+    except configparser.Error as e:
         raise errors.ParsingError(f"while parsing {file_obj}", e) from e
 
     def get_section(section):
-        return basics.ConfigSectionFromStringDict(dict(cparser.items(section)))
+        return basics.ConfigSectionFromStringDict(sections[section])
 
     return mappings.LazyValDict(cparser.sections, get_section)

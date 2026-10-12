@@ -60,3 +60,18 @@ class TestConfigFromIni:
             section.render_value(
                 central.ConfigManager([]), "ref", "ref:drawer"
             ).collapse()
+
+
+@pytest.mark.parametrize(
+    "value", ("https://example.org/%7Euser", "%(missing)s"), ids=("stray", "missing")
+)
+def test_bad_interpolation_is_a_parsing_error(value):
+    with pytest.raises(errors.ParsingError):
+        cparser.config_from_file(StringIO(f"[test]\nvalue = {value}\n"))
+
+
+def test_interpolation():
+    config = cparser.config_from_file(
+        StringIO("[test]\nbase = /srv\nvalue = %(base)s/repo 100%%\n")
+    )
+    assert config["test"].render_value(None, "value", "str") == "/srv/repo 100%"

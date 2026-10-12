@@ -19,6 +19,10 @@ Fixes
 - ``pkgcore.binpkg.xpak.Xpak``: close the binpkg after each read instead of
   leaving it open until garbage collection (Arthur Zamarin)
 
+- A ``%`` in a ``pkgcore.conf`` value that isn't a valid interpolation is
+  reported as a config parsing error naming the file, instead of a traceback
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

@@ -16,6 +16,9 @@ Fixes
   pending ``._cfg`` update reuses it instead of adding another
   (Arthur Zamarin)
 
+- ``pkgcore.binpkg.xpak.Xpak``: close the binpkg after each read instead of
+  leaving it open until garbage collection (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

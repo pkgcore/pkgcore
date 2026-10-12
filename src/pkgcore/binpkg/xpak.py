@@ -7,6 +7,7 @@ __all__ = ("MalformedXpak", "Xpak")
 import os
 import typing
 from collections import OrderedDict
+from contextlib import contextmanager
 
 from snakeoil import klass
 from snakeoil import struct_compat as struct
@@ -57,13 +58,15 @@ class Xpak:
         # keys_dict becomes an ordereddict after _load_offsets; reason for
         # it is so that reads are serialized.
 
-    @property
-    def _fd(self):
-        # we do this annoying little dance to avoid having a couple
-        # hundred fds open if they're accessing a lot of binpkgs
+    @contextmanager
+    def _open(self):
+        """Yield the source, opening a path per use and closing it after."""
+        # avoids a couple hundred open fds when accessing a lot of binpkgs
         if self._source_is_path:
-            return open(self._source, "rb")
-        return self._source
+            with open(self._source, "rb") as fd:
+                yield fd
+        else:
+            yield self._source
 
     @classmethod
     def write_xpak(cls, target_source, data):
@@ -137,7 +140,10 @@ class Xpak:
 
     @klass.jit_attr
     def keys_dict(self):
-        fd = self._fd
+        with self._open() as fd:
+            return self._read_keys(fd)
+
+    def _read_keys(self, fd):
         index_start, index_len, data_len = self._check_magic(fd)
         data_start = index_start + index_len
         keys_dict = OrderedDict()
@@ -200,13 +206,15 @@ class Xpak:
         return self.keys_dict.keys()
 
     def values(self):
-        fd = self._fd
-        return (self._get_data(fd, *v) for v in self.keys_dict.values())
+        with self._open() as fd:
+            for v in self.keys_dict.values():
+                yield self._get_data(fd, *v)
 
     def items(self):
         # note that it's an OrderedDict, so this works.
-        fd = self._fd
-        return ((k, self._get_data(fd, *v)) for k, v in self.keys_dict.items())
+        with self._open() as fd:
+            for k, v in self.keys_dict.items():
+                yield k, self._get_data(fd, *v)
 
     def __len__(self):
         return len(self.keys_dict)
@@ -221,7 +229,8 @@ class Xpak:
         return iter(self.keys_dict)
 
     def __getitem__(self, key):
-        return self._get_data(self._fd, *self.keys_dict[key])
+        with self._open() as fd:
+            return self._get_data(fd, *self.keys_dict[key])
 
     def __delitem__(self, key):
         del self.keys_dict[key]

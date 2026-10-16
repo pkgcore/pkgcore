@@ -5,7 +5,6 @@ misc. stuff we've not found a spot for yet.
 __all__ = (
     "ChunkedDataDict",
     "IncrementalsDict",
-    "PayloadDict",
     "chunked_data",
     "collapsed_restrict_to_data",
     "get_relative_dosym_target",
@@ -459,11 +458,6 @@ class ChunkedDataDict(GenericEquality):
                 "merge expects a ChunkedDataDict instance; "
                 f"got type {type(cdict)}, {cdict!r}"
             )
-        if isinstance(cdict, PayloadDict) and not isinstance(self, PayloadDict):
-            raise TypeError(
-                "merge expects a PayloadDataDict instance; "
-                f"got type {type(cdict)}, {cdict!r}"
-            )
         # straight extensions for this, rather than update_from_stream.
         d = self._dict
         for key, values in cdict._dict.items():
@@ -528,7 +522,6 @@ class ChunkedDataDict(GenericEquality):
             g_stream = _build_cp_atom_payload(
                 self._global_settings,
                 packages.AlwaysTrue,
-                payload_form=isinstance(self, PayloadDict),
                 interner=interner,
             )
         else:
@@ -540,7 +533,6 @@ class ChunkedDataDict(GenericEquality):
                 cache,
                 self._global_settings,
                 packages.AlwaysTrue,
-                payload_form=isinstance(self, PayloadDict),
             )
 
         if self.frozen:
@@ -557,7 +549,6 @@ class ChunkedDataDict(GenericEquality):
         return d
 
     def render_to_payload(self):
-        d = PayloadDict()
         d = {
             atom.atom(k): _build_cp_atom_payload(v, atom.atom(k), True)
             for k, v in self._dict.items()
@@ -582,43 +573,6 @@ class ChunkedDataDict(GenericEquality):
         s = set(pre_defaults)
         incremental_chunked(s, (cinst for cinst in items if cinst.key.match(pkg)))
         return s
-
-    pull_data = render_pkg
-
-
-class PayloadDict(ChunkedDataDict):
-    def mk_item(self, key, neg, pos):
-        return restrict_payload(key, tuple(chain(("-" + x for x in neg), pos)))
-
-    def add_bare_global(self, payload):
-        neg = [x[1:] for x in payload if x[0] == "-"]
-        pos = [x for x in payload if x[0] != "-"]
-        ChunkedDataDict.add_bare_global(self, neg, pos)
-
-    def add_global(self, pinst):
-        neg = [x[1:] for x in pinst.data if x[0] == "-"]
-        pos = [x for x in pinst.data if x[0] != "-"]
-        return ChunkedDataDict.add_global(self, chunked_data(pinst.restrict, neg, pos))
-
-    def update_from_stream(self, stream):
-        for pinst in stream:
-            if getattr(pinst.restrict, "key", None) is not None:
-                # atom, or something similar.  use the key lookup.
-                # hack also... recreate the restriction; this is due to
-                # internal idiocy in ChunkedDataDict that will be fixed.
-                self._dict[pinst.restrict.key].append(pinst)
-            else:
-                self.add_global(pinst)
-
-    def render_pkg(self, pkg, pre_defaults=()):
-        items = self._dict.get(atom.atom(pkg.key))
-        if items is None:
-            items = self._global_settings
-        s = set(pre_defaults)
-        data = chain.from_iterable(
-            item.data for item in items if item.restrict.match(pkg)
-        )
-        return incremental_expansion(data, orig=s)
 
     pull_data = render_pkg
 

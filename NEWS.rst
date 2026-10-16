@@ -34,6 +34,10 @@ Fixes
 - ``pquery --owns`` finds files through symlinked directories, so
   ``/bin/ls`` matches ``/usr/bin/ls`` on merged-usr systems (Arthur Zamarin)
 
+- Support the ``profile-default-eapi`` profile format: profiles without an
+  ``eapi`` file use ``profile_eapi_when_unspecified`` from ``layout.conf``
+  instead of EAPI 0 (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

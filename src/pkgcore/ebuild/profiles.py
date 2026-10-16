@@ -597,15 +597,25 @@ class ProfileNode(WeaklyCached):
     def _default_eapi(self):
         """EAPI used when the profile directory lacks its own eapi file.
 
-        Defaults to EAPI 0, unless the top-level profiles directory uses an EAPI
-        that enables the profile-eapi-default feature (EAPI 9+), in which case
-        that EAPI is inherited; see PMS.
+        If the top-level profiles directory uses an EAPI that enables the
+        profile-eapi-default feature (EAPI 9+), that EAPI is inherited; see PMS.
+        Otherwise it is the repo's ``profile_eapi_when_unspecified`` from
+        layout.conf, or EAPI 0.
         """
         repo_config = self.repoconfig
         if repo_config is not None:
             top_level = repo_config.eapi
             if top_level.options.profile_eapi_default:
                 return top_level
+        return self._layout_default_eapi()
+
+    def _layout_default_eapi(self):
+        repo_config = self.repoconfig
+        if (
+            repo_config is not None
+            and repo_config.profile_eapi_when_unspecified is not None
+        ):
+            return repo_config.profile_eapi_when_unspecified
         return get_eapi("0")
 
     @load_property("eapi", fallback=None)
@@ -678,7 +688,7 @@ class EmptyRootNode(ProfileNode):
     def _default_eapi(self):
         # this node *is* the top-level profiles directory, so its eapi is read
         # directly from profiles/eapi; avoid recursing back through repoconfig.
-        return get_eapi("0")
+        return self._layout_default_eapi()
 
 
 class ProfileStack:

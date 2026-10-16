@@ -1854,11 +1854,14 @@ class TestProfileEapiDefault:
     the top-level profiles directory EAPI; see PMS."""
 
     @staticmethod
-    def _mk_profile(base, top_level_eapi=None, profile_eapi=None):
+    def _mk_profile(base, top_level_eapi=None, profile_eapi=None, layout=None):
         # build a minimal repo: <base>/profiles/{eapi,default/eapi}
         profiles_base = base / "profiles"
         (profiles_base / "default").mkdir(parents=True)
         (profiles_base / "repo_name").write_text("test\n")
+        if layout is not None:
+            (base / "metadata").mkdir()
+            (base / "metadata" / "layout.conf").write_text(f"masters =\n{layout}\n")
         if top_level_eapi is not None:
             (profiles_base / "eapi").write_text(f"{top_level_eapi}\n")
         if profile_eapi is not None:
@@ -1883,6 +1886,46 @@ class TestProfileEapiDefault:
         profiles_base.mkdir(parents=True)
         (profiles_base / "repo_name").write_text("test\n")
         assert str(profiles.EmptyRootNode(str(profiles_base)).eapi) == "0"
+
+    _layout_default = (
+        "profile-formats = portage-2 profile-default-eapi\n"
+        "profile_eapi_when_unspecified = 8"
+    )
+
+    def test_layout_default(self, tmp_path):
+        node = self._mk_profile(tmp_path / "r", layout=self._layout_default)
+        (tmp_path / "r" / "profiles" / "default" / "package.mask").write_text(
+            "cat/pkg:0\n"
+        )
+        assert str(node.eapi) == "8"
+        assert [str(x) for x in node.masks[1]] == ["cat/pkg:0"]
+        top_level = profiles.EmptyRootNode(str(tmp_path / "r" / "profiles"))
+        assert str(top_level.eapi) == "8"
+
+    def test_layout_default_loses_to_top_level_feature(self, tmp_path):
+        node = self._mk_profile(
+            tmp_path / "r", top_level_eapi="9", layout=self._layout_default
+        )
+        assert str(node.eapi) == "9"
+
+    def test_layout_default_needs_profile_format(self, tmp_path, caplog):
+        node = self._mk_profile(
+            tmp_path / "r",
+            layout="profile-formats = portage-2\nprofile_eapi_when_unspecified = 8",
+        )
+        assert str(node.eapi) == "0"
+        assert "without the profile-default-eapi profile format" in caplog.text
+
+    def test_layout_default_unknown_eapi(self, tmp_path, caplog):
+        node = self._mk_profile(
+            tmp_path / "r",
+            layout=(
+                "profile-formats = profile-default-eapi\n"
+                "profile_eapi_when_unspecified = 999"
+            ),
+        )
+        assert str(node.eapi) == "0"
+        assert "unsupported profile_eapi_when_unspecified EAPI '999'" in caplog.text
 
 
 @pytest.mark.parametrize("attr", ("stack", "parents"))

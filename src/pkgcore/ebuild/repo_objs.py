@@ -47,7 +47,7 @@ from ..restrictions import boolean, packages, restriction
 from . import atom, pkg_updates, profiles
 from .cpv import VersionedCPV
 from .digest import Manifest
-from .eapi import get_eapi
+from .eapi import EAPI, get_eapi
 
 
 def readlines_replace(path):
@@ -816,6 +816,7 @@ class RepoConfig(syncable.tree, immutable.Strict):
         "portage-1",
         "portage-2",
         "profile-bashrcs",
+        "profile-default-eapi",
         "profile-set",
     )
     supported_cache_formats = ("md5-dict", "pms")
@@ -974,6 +975,25 @@ class RepoConfig(syncable.tree, immutable.Strict):
             if not profile_formats:
                 profile_formats.add("pms")
         sf(self, "profile_formats", profile_formats)
+
+        default_eapi = data.get("profile_eapi_when_unspecified")
+        if default_eapi is not None:
+            if "profile-default-eapi" not in profile_formats:
+                logger.warning(
+                    f"{self.repo_id!r} repo at {self.location!r} sets "
+                    "profile_eapi_when_unspecified without the "
+                    "profile-default-eapi profile format, ignoring it"
+                )
+                default_eapi = None
+            elif default_eapi not in EAPI.known_eapis:
+                logger.warning(
+                    f"{self.repo_id!r} repo at {self.location!r} has unsupported "
+                    f"profile_eapi_when_unspecified EAPI {default_eapi!r}, ignoring it"
+                )
+                default_eapi = None
+            else:
+                default_eapi = get_eapi(default_eapi)
+        sf(self, "profile_eapi_when_unspecified", default_eapi)
 
     @klass.jit_attr
     def known_arches(self) -> frozenset[str]:
@@ -1176,7 +1196,9 @@ class RepoConfig(syncable.tree, immutable.Strict):
     @klass.jit_attr
     def base_profile(self):
         pms_strict = "pms" in self.profile_formats
-        return profiles.EmptyRootNode(self.profiles_base, pms_strict=pms_strict)
+        node = profiles.EmptyRootNode(self.profiles_base, pms_strict=pms_strict)
+        object.__setattr__(node, "_repoconfig", self)
+        return node
 
     @klass.jit_attr
     def eapi(self):

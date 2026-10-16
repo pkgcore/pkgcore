@@ -131,7 +131,15 @@ def _internal_offset_iter_scan(
     path = normpath(path)
     dirs = collections.deque([path[len(offset) :]])
     if dirs[0]:
-        yield gen_obj(dirs[0], chksum_handlers=chksum_handlers, stat_func=stat_func)
+        obj = gen_obj(
+            dirs[0],
+            chksum_handlers=chksum_handlers,
+            real_location=path,
+            stat_func=stat_func,
+        )
+        yield obj
+        if not obj.is_dir:
+            return
 
     sep = os.path.sep
     while dirs:
@@ -148,7 +156,7 @@ def _internal_offset_iter_scan(
                 path,
                 chksum_handlers=chksum_handlers,
                 real_location=pjoin(real_base, x),
-                stat_func=os.lstat,
+                stat_func=stat_func,
             )
             yield obj
             if obj.is_dir:

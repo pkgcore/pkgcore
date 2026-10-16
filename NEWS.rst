@@ -23,6 +23,10 @@ Fixes
   reported as a config parsing error naming the file, instead of a traceback
   (Arthur Zamarin)
 
+- ``pkgcore.fs.livefs.iter_scan``: with an ``offset``, stat the top entry inside
+  the offset rather than the host path of the same name, stop at a top entry
+  that is a file, and honor ``follow_symlinks`` below the top (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

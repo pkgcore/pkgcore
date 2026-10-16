@@ -88,6 +88,28 @@ class TestFsObjs:
             seen.append(obj.location)
         assert [str(files[0])] == sorted(seen)
 
+    def test_offset_iterscan_top_from_offset(self, tmp_path):
+        # a path that doesn't exist on the host, with a mode the host wouldn't have
+        (top := tmp_path / "opt" / "pkgcore-only").mkdir(parents=True)
+        top.chmod(0o700)
+        (top / "file").write_text("x")
+        objs = list(livefs.iter_scan(str(top), offset=str(tmp_path)))
+        assert objs[0].location == "/opt/pkgcore-only"
+        self.check_attrs(objs[0], Path("opt/pkgcore-only"), offset=tmp_path)
+        assert [o.location for o in objs[1:]] == ["/opt/pkgcore-only/file"]
+
+    def test_offset_iterscan_file(self, tmp_path):
+        (path := tmp_path / "file").write_text("x")
+        objs = list(livefs.iter_scan(str(path), offset=str(tmp_path)))
+        assert [o.location for o in objs] == ["/file"]
+
+    def test_offset_iterscan_follow_symlinks(self, tmp_path):
+        (target := tmp_path / "target").write_text("x")
+        (image := tmp_path / "image").mkdir()
+        (image / "link").symlink_to(target)
+        objs = livefs.iter_scan(str(image), offset=str(image), follow_symlinks=True)
+        assert [o.__class__ for o in objs] == [fs.fsFile]
+
     def test_sorted_scan(self, tmp_path):
         for x in ("tmp", "blah", "dar"):
             (tmp_path / x).touch()

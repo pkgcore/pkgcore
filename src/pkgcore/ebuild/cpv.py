@@ -156,15 +156,16 @@ def ver_cmp(ver1: str, rev1: str, ver2: str, rev2: str) -> int:
         ver_parts2_len = len(ver_parts2)
 
         # Iterate through the components
-        for v1, v2 in zip(ver_parts1, ver_parts2):
+        for i, (v1, v2) in enumerate(zip(ver_parts1, ver_parts2)):
             # If the string components are equal, the numerical
             # components will be equal too.
             if v1 == v2:
                 continue
 
-            # If one of the components begins with a "0" then they
-            # are compared as floats so that 1.1 > 1.02; else ints.
-            if v1[0] != "0" and v2[0] != "0":
+            # The first component is always an integer (PMS algorithm 3.2).
+            # Later ones beginning with a "0" are compared as floats so
+            # that 1.1 > 1.02; else ints.
+            if i == 0 or (v1[0] != "0" and v2[0] != "0"):
                 v1 = int(v1)
                 v2 = int(v2)
             else:

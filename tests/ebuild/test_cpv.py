@@ -278,6 +278,13 @@ class TestCPV:
         assert vkls("da/ba-6.01.0") == vkls("da/ba-6.010.0")
         assert vkls("da/ba-6.0.1") == vkls("da/ba-6.000.1")
 
+        # PMS compares the first component as an integer, leading zeros or not
+        assert vkls("da/ba-01") == vkls("da/ba-1")
+        assert vkls("da/ba-010") == vkls("da/ba-10")
+        assert vkls("da/ba-01.1") == vkls("da/ba-1.1")
+        assert vkls("da/ba-02") > vkls("da/ba-1")
+        assert vkls("da/ba-09") < vkls("da/ba-10")
+
         # equivalent revisions
         assert vkls("da/ba-6.01.0") == vkls("da/ba-6.01.0-r0")
         assert vkls("da/ba-6.01.0-r0") == vkls("da/ba-6.01.0-r00")

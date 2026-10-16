@@ -27,6 +27,10 @@ Fixes
   the offset rather than the host path of the same name, stop at a top entry
   that is a file, and honor ``follow_symlinks`` below the top (Arthur Zamarin)
 
+- Version comparison treats the first version component as an integer, as PMS
+  and Portage do, so ``pkg-01`` equals ``pkg-1`` and ``=cat/pkg-1`` matches it
+  (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

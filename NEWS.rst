@@ -31,6 +31,9 @@ Fixes
   and Portage do, so ``pkg-01`` equals ``pkg-1`` and ``=cat/pkg-1`` matches it
   (Arthur Zamarin)
 
+- ``pquery --owns`` finds files through symlinked directories, so
+  ``/bin/ls`` matches ``/usr/bin/ls`` on merged-usr systems (Arthur Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

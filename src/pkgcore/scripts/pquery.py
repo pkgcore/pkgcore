@@ -911,14 +911,53 @@ def parse_eapi(value):
     return packages.PackageRestriction("eapi", values.StrExactMatch(value))
 
 
-@bind_add_query("--owns", action="append", help="exact match on an owned file/dir")
-def parse_owns(value):
-    return packages.PackageRestriction(
-        "contents",
-        values.AnyMatch(
-            values.GetAttrRestriction("location", values.StrExactMatch(value))
-        ),
+def _stat_dir(root, path):
+    try:
+        return os.stat(os.path.join(root, os.path.dirname(path).lstrip(os.sep)))
+    except OSError:
+        return None
+
+
+def _owns_match(root, path, contents):
+    """Whether *contents* has *path*, also through symlinked parent dirs."""
+    if path in contents:
+        return True
+    name = os.path.basename(path)
+    if (parent := _stat_dir(root, path)) is None:
+        return False
+    return any(
+        obj.basename == name
+        and (st := _stat_dir(root, obj.location)) is not None
+        and os.path.samestat(st, parent)
+        for obj in contents
     )
+
+
+@bind_add_query(
+    "--owns",
+    action="append",
+    type=None,
+    default=[],
+    bind="final_converter",
+    help="match packages owning a file/dir",
+    docs="""
+        Match packages owning the given path. Symlinked parent directories
+        are resolved, so ``/bin/ls`` matches ``/usr/bin/ls`` on merged-usr.
+    """,
+)
+def owns_finalize(sequence, namespace):
+    if not sequence:
+        return []
+    root = namespace.domain.root
+    return [
+        packages.PackageRestriction(
+            "contents",
+            values.FunctionRestriction(
+                partial(_owns_match, root, os.path.normpath(value))
+            ),
+        )
+        for value in sequence
+    ]
 
 
 @bind_add_query(

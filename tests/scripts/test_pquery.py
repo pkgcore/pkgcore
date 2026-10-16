@@ -3,6 +3,8 @@ import io
 from pkgcore.config import basics
 from pkgcore.config.hint import ConfigHint, configurable
 from pkgcore.ebuild import atom, cpv
+from pkgcore.fs import fs
+from pkgcore.fs.contents import contentsSet
 from pkgcore.repository import util
 from pkgcore.scripts import pquery
 from pkgcore.test.misc import FakePkg
@@ -11,13 +13,15 @@ from pkgcore.test.scripts.helpers import ArgParseMixin
 
 class FakeDomain:
     pkgcore_config_type = ConfigHint(
-        types={"repos": "refs:repo", "vdb": "refs:repo"}, typename="domain"
+        types={"repos": "refs:repo", "vdb": "refs:repo", "root": "str"},
+        typename="domain",
     )
 
-    def __init__(self, repos, vdb):
+    def __init__(self, repos, vdb, root="/"):
         object.__init__(self)
         self.source_repos = repos
         self.installed_repos = vdb
+        self.root = root
 
 
 @configurable(typename="repo")
@@ -124,6 +128,29 @@ class TestCommandline(ArgParseMixin):
     def test_stdin_skips_blank_lines(self, monkeypatch):
         monkeypatch.setattr(pquery.sys, "stdin", io.StringIO("spork/foon\n\n  \n"))
         self.assertOut(["spork/foon-2"], "--max", "-", test_domain=domain_config)
+
+    def test_owns_through_symlinked_dir(self, tmp_path):
+        (tmp_path / "usr" / "bin").mkdir(parents=True)
+        (tmp_path / "bin").symlink_to("usr/bin")
+
+        class Pkg(cpv.VersionedCPV):
+            contents = contentsSet([fs.fsFile("/usr/bin/ls", strict=False)])
+
+        vdb = configurable(typename="repo")(
+            lambda: util.SimpleTree({"sys-apps": {"coreutils": ("1",)}}, pkg_klass=Pkg)
+        )
+        config = basics.HardCodedConfigSection(
+            {
+                "class": FakeDomain,
+                "repos": [],
+                "vdb": [basics.HardCodedConfigSection({"class": vdb})],
+                "root": str(tmp_path),
+                "default": True,
+            }
+        )
+        for path in ("/usr/bin/ls", "/bin/ls", "/usr/bin/../bin/ls"):
+            self.assertOut(["sys-apps/coreutils-1"], "--owns", path, test_domain=config)
+        self.assertOut([], "--owns", "/sbin/ls", test_domain=config)
 
 
 def test_revdep_pkgs_match_ignores_use_deps():

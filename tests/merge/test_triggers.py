@@ -8,7 +8,6 @@ from math import ceil, floor
 from os.path import normpath
 
 import pytest
-from snakeoil.contexts import os_environ
 from snakeoil.currying import post_curry
 from snakeoil.osutils import ensure_dirs
 
@@ -331,11 +330,11 @@ class TestInfoRegen(trigger_mixin):
         trigger_mixin.reset_objects(self, **kwargs)
         self.trigger.location = [self.dir]
 
-    def test_binary_path(self):
+    def test_binary_path(self, monkeypatch):
         assert shutil.which("install-info") == self.trigger.get_binary_path()
 
-        with os_environ(PATH=""):
-            assert self.trigger.get_binary_path() is None
+        monkeypatch.setenv("PATH", "")
+        assert self.trigger.get_binary_path() is None
 
     @pytest.mark.skipif(
         triggers.InfoRegen().get_binary_path() is None,
@@ -375,8 +374,9 @@ class TestInfoRegen(trigger_mixin):
         triggers.InfoRegen().get_binary_path() is None,
         reason="can't verify regen behavior due to install-info not being available",
     )
-    def test_trigger(self, tmp_path):
-        with os_environ(PATH=""):
+    def test_trigger(self, tmp_path, monkeypatch):
+        with monkeypatch.context() as m:
+            m.setenv("PATH", "")
             self.engine.phase = "post_merge"
             assert self.trigger(self.engine, {}) is None
 

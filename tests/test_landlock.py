@@ -295,6 +295,7 @@ class TestStaleProcessors:
         """confine() drops them itself, so no caller can forget to."""
         from pkgcore.ebuild import processor
 
+        pytest.importorskip("py_landlock")
         monkeypatch.setattr(processor, "inactive_ebp_list", ["stale ebp"])
         monkeypatch.setattr(landlock, "Landlock", FakeLandlock)
         assert landlock.confine(required=True)

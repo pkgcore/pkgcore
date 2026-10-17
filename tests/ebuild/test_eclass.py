@@ -1,5 +1,6 @@
 import logging
 import re
+import textwrap
 from contextlib import chdir
 
 import pytest
@@ -437,3 +438,33 @@ class TestRewriteQuoting:
         )
         doc = eclass.EclassDoc(str(tmp_path / "foo.eclass"))
         assert "echo `date`" in doc.description
+
+
+def test_sourced_names_defined_for_some_eapis(tmp_path):
+    (path := tmp_path / "gu.eclass").write_text(
+        textwrap.dedent(
+            """\
+            # @ECLASS: gu.eclass
+            # @MAINTAINER:
+            # a@b.c
+            # @SUPPORTED_EAPIS: 6 7 8
+            # @BLURB: test
+
+            case ${EAPI} in
+            \t6) gu_case() { :; }; GU_CASE=1 ;;
+            esac
+            if [[ ${EAPI} == [67] ]]; then
+            \tgu_if() { :; }
+            fi
+            gu_always() { :; }
+            """
+        )
+    )
+    doc = eclass.EclassDoc(str(path), sourced=True)
+    assert doc.exported_function_names == {"gu_always", "gu_case", "gu_if"}
+    assert doc.eapi_exported_function_names("6") == doc.exported_function_names
+    assert doc.eapi_exported_function_names("7") == {"gu_always", "gu_if"}
+    assert doc.eapi_exported_function_names("8") == {"gu_always"}
+    assert doc.eapi_exported_variable_names("6") == {"GU_CASE"}
+    assert doc.eapi_exported_variable_names("8") == set()
+    assert "6" not in doc._eapi_missing_funcs

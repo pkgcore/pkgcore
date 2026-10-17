@@ -426,7 +426,7 @@ _eclass_blocks_re = regexp(
 class EclassDoc(AttrDict):
     """Support parsing eclass docs for a given eclass path."""
 
-    ABI_VERSION = 6
+    ABI_VERSION = 7
 
     def __init__(self, path, /, *, sourced=False, repo=None):
         self.mtime = os.path.getmtime(path)
@@ -440,7 +440,7 @@ class EclassDoc(AttrDict):
 
         # inject full lists of exported funcs and vars
         if sourced:
-            data.update(self._source_eclass(path))
+            data.update(self._source_eclass(path, data["supported_eapis"]))
 
         super().__init__(data)
 
@@ -458,10 +458,22 @@ class EclassDoc(AttrDict):
         return tuple(out)
 
     @staticmethod
-    def _source_eclass(path):
+    def _source_eclass(path, eapis=()):
+        """Functions, variables and PROPERTIES the eclass defines.
+
+        Functions and variables are also collected with ``EAPI`` set to each of
+        *eapis*, and the names missing under an EAPI are recorded only for the
+        EAPIs that lack some.
+        """
         data = {}
         # TODO: support this via pkgcore's ebd
-        # source eclass to determine PROPERTIES
+        path = shlex.quote(path)
+        per_eapi = "".join(
+            f"echo @{shlex.quote(eapi)}; "
+            f"(EAPI={shlex.quote(eapi)}; source {path} >/dev/null; compgen -A function; "
+            f"printf '$%s\\n' $(compgen -A variable)); "
+            for eapi in eapis
+        )
         p = subprocess.run(
             [
                 "env",
@@ -469,7 +481,9 @@ class EclassDoc(AttrDict):
                 "bash",
                 "-c",
                 (
-                    f"source {shlex.quote(path)}; "
+                    f"{per_eapi}"
+                    f'echo "#"; '
+                    f"source {path} >/dev/null; "
                     f"compgen -A function; "
                     f'echo "#"; '
                     f"compgen -A variable; "
@@ -483,12 +497,37 @@ class EclassDoc(AttrDict):
             check=False,
         )
         if p.returncode == 0:
-            eclass_obj = ParseEclassDoc.blocks["@ECLASS:"]
-            funcs, variables, properties = p.stdout.split("#\n")
-            data["_exported_funcs"] = tuple(funcs.split())
-            data["_exported_vars"] = tuple(
-                x for x in variables.split() if x not in eclass_obj.bash_env_vars
-            )
+            bash_env_vars = ParseEclassDoc.blocks["@ECLASS:"].bash_env_vars | {"EAPI"}
+            per_eapi_out, funcs, variables, properties = p.stdout.split("#\n")
+
+            eapi_names = {}
+            for name in per_eapi_out.split():
+                if name.startswith("@"):
+                    eapi_names[name[1:]] = (eapi_funcs := set()), (eapi_vars := set())
+                elif name.startswith("$"):
+                    eapi_vars.add(name[1:])
+                else:
+                    eapi_funcs.add(name)
+
+            funcs = set(funcs.split())
+            variables = set(variables.split())
+            for eapi_funcs, eapi_vars in eapi_names.values():
+                funcs.update(eapi_funcs)
+                variables.update(eapi_vars)
+            variables.difference_update(bash_env_vars)
+
+            data["_exported_funcs"] = tuple(sorted(funcs))
+            data["_exported_vars"] = tuple(sorted(variables))
+            data["_eapi_missing_funcs"] = {
+                eapi: missing
+                for eapi, (eapi_funcs, _) in eapi_names.items()
+                if (missing := tuple(sorted(funcs - eapi_funcs)))
+            }
+            data["_eapi_missing_vars"] = {
+                eapi: missing
+                for eapi, (_, eapi_vars) in eapi_names.items()
+                if (missing := tuple(sorted(variables - eapi_vars)))
+            }
             data["_properties"] = conditionals.DepSet.parse(
                 properties, str, operators={}, attr="PROPERTIES"
             )
@@ -513,6 +552,11 @@ class EclassDoc(AttrDict):
         """Set of all exported function names in the eclass."""
         return frozenset(self._dict.get("_exported_funcs", ()))
 
+    def eapi_exported_function_names(self, eapi):
+        """Set of exported function names in the eclass under *eapi*."""
+        missing = self._dict.get("_eapi_missing_funcs", {}).get(str(eapi), ())
+        return self.exported_function_names.difference(missing)
+
     @property
     def variable_names(self):
         """Set of documented variable names in the eclass."""
@@ -535,6 +579,11 @@ class EclassDoc(AttrDict):
         it's assumed they are private.
         """
         return frozenset(self._dict.get("_exported_vars", ()))
+
+    def eapi_exported_variable_names(self, eapi):
+        """Set of exported variable names in the eclass under *eapi*."""
+        missing = self._dict.get("_eapi_missing_vars", {}).get(str(eapi), ())
+        return self.exported_variable_names.difference(missing)
 
     @property
     def function_variable_names(self):

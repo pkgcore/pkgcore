@@ -38,6 +38,12 @@ Fixes
   ``eapi`` file use ``profile_eapi_when_unspecified`` from ``layout.conf``
   instead of EAPI 0 (Arthur Zamarin)
 
+- ``pkgcore.ebuild.eclass.EclassDoc``: functions and variables an eclass
+  defines only for some of its ``@SUPPORTED_EAPIS`` are now included, fixing
+  pkgcheck UnusedInherits false positives; ``eapi_exported_function_names``
+  and ``eapi_exported_variable_names`` give the names for one EAPI (Arthur
+  Zamarin)
+
 ----------------------------
 pkgcore 0.12.46 (2026-10-08)
 ----------------------------

@@ -5,12 +5,12 @@ XPAK container support
 __all__ = ("MalformedXpak", "Xpak")
 
 import os
+import struct
 import typing
 from collections import OrderedDict
 from contextlib import contextmanager
 
 from snakeoil import klass
-from snakeoil import struct_compat as struct
 
 from ..exceptions import PkgcoreException
 
@@ -121,18 +121,21 @@ class Xpak:
         new_data = joiner.join(new_data)
 
         handle.seek(start, 0)
-        cls.header.write(handle, cls.header_pre_magic, len(new_index), len(new_data))
+        handle.write(
+            cls.header.pack(cls.header_pre_magic, len(new_index), len(new_data))
+        )
 
         handle.write(
             struct.pack(f">{len(new_index)}s{len(new_data)}s", new_index, new_data)
         )
 
         # the +8 is for the longs for new_index/new_data
-        cls.trailer.write(
-            handle,
-            cls.trailer_pre_magic,
-            len(new_index) + len(new_data) + cls.trailer.size + 8,
-            cls.trailer_post_magic,
+        handle.write(
+            cls.trailer.pack(
+                cls.trailer_pre_magic,
+                len(new_index) + len(new_data) + cls.trailer.size + 8,
+                cls.trailer_post_magic,
+            )
         )
         handle.truncate()
         handle.close()
@@ -175,7 +178,7 @@ class Xpak:
     def _check_magic(self, fd):
         fd.seek(-16, 2)
         try:
-            pre, size, post = self.trailer.read(fd)
+            pre, size, post = self.trailer.unpack(fd.read(self.trailer.size))
             if pre != self.trailer_pre_magic or post != self.trailer_post_magic:
                 raise MalformedXpak(
                     f"not an xpak segment, trailer didn't match: {fd!r}"
@@ -192,7 +195,7 @@ class Xpak:
         fd.seek(-(size + 8), 2)
         self.xpak_start = fd.tell()
         try:
-            pre, index_len, data_len = self.header.read(fd)
+            pre, index_len, data_len = self.header.unpack(fd.read(self.header.size))
             if pre != self.header_pre_magic:
                 raise MalformedXpak(f"not an xpak segment, header didn't match: {fd!r}")
         except struct.error as e:

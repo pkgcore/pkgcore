@@ -24,20 +24,20 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: ['3.12', '3.13', '3.14']
+        python-version: ['3.12', '3.13', '3.14', '3.15']
         deps: [newest-deps]
         experimental: [false]
         include:
           - os: ubuntu-latest
-            python-version: '3.13'
+            python-version: '3.14'
             deps: minimal-deps
             experimental: false
-          - os: ubuntu-latest
-            python-version: '3.14-dev'
-            deps: newest-deps
-            experimental: true
+          # - os: ubuntu-latest
+          #   python-version: '3.16-dev'
+          #   deps: newest-deps
+          #   experimental: true
           - os: macos-latest
-            python-version: '3.13'
+            python-version: '3.14'
             deps: newest-deps
             experimental: false
       fail-fast: false
@@ -119,10 +119,10 @@ jobs:
         path: ${{ matrix.repo }}
         ref: refs/tags/${{ env.LATEST_TAG }}
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.14
       uses: actions/setup-python@v5
       with:
-        python-version: '3.13'
+        python-version: '3.14'
         cache: 'pip'
         cache-dependency-path: |
           pkgcore/pyproject.toml

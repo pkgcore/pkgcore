@@ -26,10 +26,10 @@ jobs:
       continue-on-error: ${{ github.ref_type == 'branch' && github.ref_name != 'release-test-full' }}
       uses: pkgcore/gh-actions/reject-python-vcs-deps@main
 
-    - name: Set up Python 3.13
+    - name: Set up Python 3.14
       uses: actions/setup-python@v5
       with:
-        python-version: "3.13"
+        python-version: "3.14"
         cache: 'pip'
         cache-dependency-path: pyproject.toml
 

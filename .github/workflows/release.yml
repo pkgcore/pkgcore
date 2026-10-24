@@ -17,7 +17,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
 
     - name: Install bash 5.3
       uses: pkgcore/gh-actions/bash-5.3@main
@@ -27,7 +27,7 @@ jobs:
       uses: pkgcore/gh-actions/reject-python-vcs-deps@main
 
     - name: Set up Python 3.14
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.14"
         cache: 'pip'
@@ -54,7 +54,7 @@ jobs:
 
     - name: Upload wheel
       id: upload-wheel
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: wheel-release
         path: dist/*.whl
@@ -62,7 +62,7 @@ jobs:
 
     - name: Upload release source
       id: upload-release
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: release-source
         path: dist/*.tar.gz
@@ -87,20 +87,20 @@ jobs:
     steps:
     - &common_download_artifacts
       name: Download artifacts
-      uses: actions/download-artifact@v5
+      uses: actions/download-artifact@v8
       with:
         merge-multiple: true # store both in the root, not in named directories
         artifact-ids: ${{ needs.build.outputs.release-artifact-id }},${{ needs.build.outputs.wheel-artifact-id }}
 
     - name: Publish github source
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         files: '*.tar.*'
         fail_on_unmatched_files: true
         draft: true
 
     - name: Publish to PyPi server
-      uses: pypa/gh-action-pypi-publish@release/v1.13
+      uses: pypa/gh-action-pypi-publish@release/v1.14
       with:
         packages-dir: .
 
@@ -117,7 +117,7 @@ jobs:
     steps:
     - *common_download_artifacts
     - name: Publish github source
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: github.ref_name == 'release-test-github' || github.ref_name == 'release-test-full'
       with:
         files: '*.tar.*'
@@ -126,7 +126,7 @@ jobs:
 
     - name: Publish to Test PyPi server
       if: github.ref_name == 'release-test-pypi' || github.ref_name == 'release-test-full'
-      uses: pypa/gh-action-pypi-publish@release/v1.13
+      uses: pypa/gh-action-pypi-publish@release/v1.14
       with:
         packages-dir: .
         repository-url: https://test.pypi.org/legacy/

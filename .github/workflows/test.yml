@@ -56,7 +56,7 @@ jobs:
       run: sed -e '/dependencies/,$s/~=/==/' -i pyproject.toml
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -80,7 +80,7 @@ jobs:
 
     - name: Submit code coverage to codecov
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v7
       with:
         files: ./coverage.xml
 
@@ -113,14 +113,14 @@ jobs:
         echo "LATEST_TAG=$latest" >> $GITHUB_ENV
 
     - name: Checkout ${{ matrix.repo }} ${{ env.LATEST_TAG }}
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
       with:
         repository: pkgcore/${{ matrix.repo }}
         path: ${{ matrix.repo }}
         ref: refs/tags/${{ env.LATEST_TAG }}
 
     - name: Set up Python 3.14
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.14'
         cache: 'pip'
@@ -145,10 +145,10 @@ jobs:
     if: inputs.disable-format-check == ''
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v5
+      uses: actions/checkout@v7
 
     - name: Ruff lint check
-      uses: astral-sh/ruff-action@v3
+      uses: astral-sh/ruff-action@v4.1.0
       with:
         args: "check --diff"
 
@@ -157,8 +157,8 @@ jobs:
     if: inputs.disable-format-check == ''
     steps:
     - name: Checkout pkgcore
-      uses: actions/checkout@v5
-    - uses: astral-sh/ruff-action@v3
+      uses: actions/checkout@v7
+    - uses: astral-sh/ruff-action@v4.1.0
       with:
         args: "format --check --diff"
 
@@ -174,7 +174,7 @@ jobs:
         path: pkgcore
 
     - name: Checkout gentoo
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
         repository: gentoo/gentoo
         path: gentoo

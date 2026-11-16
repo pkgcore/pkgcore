@@ -120,6 +120,7 @@ class UpstreamMaintainer(NamedTuple):
     name: str | None
     email: str | None
     status: str | None
+    cc_on_bugs: bool = False
 
 
 class UpstreamMetadata(NamedTuple):
@@ -249,7 +250,12 @@ class MetadataXml:
                     elif e.tag == "email":
                         email = e.text
                 up_maintainers.append(
-                    UpstreamMaintainer(name=name, email=email, status=m.get("status"))
+                    UpstreamMaintainer(
+                        name=name,
+                        email=email,
+                        status=m.get("status"),
+                        cc_on_bugs=m.get("cc-on-bugs") == "yes",
+                    )
                 )
 
             changelog = bugs_to = doc = None

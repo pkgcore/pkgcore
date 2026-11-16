@@ -264,6 +264,25 @@ Blake-light tragedy among the scholars of war.
             repo_objs.UpstreamMaintainer("Foo Bar", "foo@example.com", "active"),
             repo_objs.UpstreamMaintainer("Baz", None, "inactive"),
         )
+        assert not any(m.cc_on_bugs for m in mx.upstream.maintainers)
+
+    def test_upstream_maintainers_cc_on_bugs(self):
+        mx = self.get_metadata_xml(
+            upstream="""<upstream>
+            <maintainer cc-on-bugs="yes">
+                <name>Foo Bar</name>
+                <email>foo@example.com</email>
+            </maintainer>
+            <maintainer status="active" cc-on-bugs="no">
+                <name>Baz</name>
+                <email>baz@example.com</email>
+            </maintainer>
+            </upstream>"""
+        )
+        assert mx.upstream.maintainers == (
+            repo_objs.UpstreamMaintainer("Foo Bar", "foo@example.com", None, True),
+            repo_objs.UpstreamMaintainer("Baz", "baz@example.com", "active", False),
+        )
 
 
 class TestProjectsXml:

@@ -6,6 +6,17 @@ Release Notes
 pkgcore 0.12.49 (unreleased)
 ----------------------------
 
+Features
+~~~~~~~~
+
+- metadata.xsd: add the ``maintainer-and-proxy`` value of the ``proxied``
+  attribute and the ``cc-on-bugs`` attribute of upstream ``<maintainer>``
+  from GLEP 67 v1.2 and GLEP 68 v1.6 (Matt Turner, #487)
+
+- ``pkgcore.ebuild.repo_objs.UpstreamMaintainer``: new ``cc_on_bugs`` field,
+  true when the upstream ``<maintainer>`` has ``cc-on-bugs="yes"``
+  (Matt Turner, #487)
+
 ----------------------------
 pkgcore 0.12.48 (2026-10-24)
 ----------------------------

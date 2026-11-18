@@ -103,6 +103,8 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1.14
       with:
         packages-dir: .
+        print-hash: false
+        verbose: false
 
   test-publish:
     # use the full form to ensure insane tags and errors in 'on' filter still don't kick.
@@ -129,6 +131,8 @@ jobs:
       uses: pypa/gh-action-pypi-publish@release/v1.14
       with:
         packages-dir: .
+        print-hash: false
+        verbose: false
         repository-url: https://test.pypi.org/legacy/
         # attestations are bound in a way re-releasing isn't possible.  Disable for tests.
         attestations: false
